@@ -1,0 +1,46 @@
+<resources>
+    <string name="app_name">Hexagone</string>
+
+    <!-- Tooltips -->
+    <string name="undo_last_move">Undo last move</string>
+    <string name="redo_previous_move">Redo previous move</string>
+    <string name="restart_the_level">Restart the level</string>
+    <string name="show_a_hint">Show a hint</string>
+    <string name="test_the_level">Test the level</string>
+    <string name="save_the_level">Save the level</string>
+    <string name="decrement">Decrement</string>
+    <string name="increment">Increment</string>
+    <string name="go_to_previous_level">Go to the previous level</string>
+    <string name="go_to_next_level">Go to the next level</string>
+    <string name="go_to_level_creator">Go to the level creator</string>
+    <string name="go_to_daily_challenge">Go to the daily challenge</string>
+    <string name="start_of_the_level">Start of the level</string>
+    <string name="end_of_the_level">End of the level</string>
+    <string name="remove_level">Remove the level</string>
+    <string name="start_game">Start the game</string>
+    <string name="go_back">Go back</string>
+    <string name="show_tutorial">Show tutorial</string>
+
+    <!-- Content -->
+    <string name="continue_where_you_left_off">Continue where you left off</string>
+    <string name="generate">Generate</string>
+    <string name="reset">Reset</string>
+    <string name="resize">Resize</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="width">Width</string>
+    <string name="height">Height</string>
+    <string name="no_hints_available">No hints available\nTry undoing moves</string>
+    <string name="need_a_hint">Need a hint?</string>
+    <string name="daily_challenge">Daily\nchallenge</string>
+    <string name="easy">Easy</string>
+    <string name="medium">Medium</string>
+    <string name="hard">Hard</string>
+    <string name="today">Today</string>
+
+    <!-- Tutorial -->
+    <string name="tutorial_1">Swipe across the screen to move</string>
+    <string name="tutorial_2">The adjacent tile will change color</string>
+    <string name="tutorial_3">Paint the empty tiles across</string>
+    <string name="tutorial_4">Move only onto a tile with a different color</string>
+</resources>
