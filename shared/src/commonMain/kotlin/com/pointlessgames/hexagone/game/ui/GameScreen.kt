@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -21,13 +22,21 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.pointlessgames.hexagone.game.GameViewModel
+import com.pointlessgames.hexagone.game.model.Particle
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.random.Random
 
 @Composable
 internal fun GameScreen(viewModel: GameViewModel) {
@@ -37,6 +46,26 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val density = LocalDensity.current
 
     var finishedMergeCount by remember { mutableStateOf(0) }
+    var particles by remember { mutableStateOf(emptyList<Particle>()) }
+
+    LaunchedEffect(particles.isNotEmpty()) {
+        if (particles.isEmpty()) return@LaunchedEffect
+        var lastTime = withFrameNanos { it }
+        while (particles.isNotEmpty()) {
+            val currentTime = withFrameNanos { it }
+            val dt = (currentTime - lastTime) / 1_000_000_000f
+            lastTime = currentTime
+
+            particles = particles.mapNotNull { p ->
+                if (p.life <= 0) null
+                else p.copy(
+                    x = p.x + p.vx * dt,
+                    y = p.y + p.vy * dt,
+                    life = p.life - dt * 2f,
+                )
+            }
+        }
+    }
 
     LaunchedEffect(pendingMerge) {
         if (pendingMerge != null) {
@@ -44,17 +73,11 @@ internal fun GameScreen(viewModel: GameViewModel) {
         }
     }
 
-    LaunchedEffect(finishedMergeCount, pendingMerge) {
-        val merge = pendingMerge
-        if (merge != null && finishedMergeCount >= merge.mergingCells.size) {
-            viewModel.onMergeAnimationFinished()
-        }
-    }
-
     val moveAnimationSpec = remember {
-        spring<androidx.compose.ui.unit.IntOffset>(
+        spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessMediumLow,
+            visibilityThreshold = IntOffset(10, 10),
         )
     }
 
@@ -71,13 +94,50 @@ internal fun GameScreen(viewModel: GameViewModel) {
             val rows = 4
             val itemGap = 4.dp
 
-            BoxWithConstraints(modifier = Modifier.padding(16.dp)) {
+            BoxWithConstraints(
+                modifier = Modifier.padding(16.dp),
+            ) {
                 val gapPx = with(density) { itemGap.toPx() }
                 val cellWidth = constraints.maxWidth / (1f + (columns - 1) * 0.75f)
                 val cellHeight = cellWidth * (sqrt(3f) / 2f)
 
                 val itemWidth = (cellWidth - gapPx).coerceAtLeast(0f)
                 val itemHeight = (cellHeight - gapPx).coerceAtLeast(0f)
+
+                LaunchedEffect(finishedMergeCount, pendingMerge) {
+                    val merge = pendingMerge
+                    if (merge != null && finishedMergeCount >= merge.mergingCells.size) {
+                        val targetOffset = HexagonGridDefaults.calculateOffset(
+                            merge.targetX,
+                            merge.targetY,
+                            cellWidth,
+                            cellHeight,
+                            gapPx,
+                        )
+                        val center = Offset(
+                            targetOffset.x + itemWidth / 2,
+                            targetOffset.y + itemHeight / 2,
+                        )
+                        val color = HexagonGridDefaults.getColorForValue(merge.newValue)
+
+                        val newParticles = List(30) {
+                            val angle = Random.nextFloat() * 2 * PI.toFloat()
+                            val speed = Random.nextFloat() * 400f + 200f
+                            Particle(
+                                id = Random.nextLong(),
+                                x = center.x,
+                                y = center.y,
+                                vx = cos(angle) * speed,
+                                vy = sin(angle) * speed,
+                                color = color,
+                                life = 1f,
+                                size = Random.nextFloat() * 8f + 4f,
+                            )
+                        }
+                        particles = particles + newParticles
+                        viewModel.onMergeAnimationFinished()
+                    }
+                }
 
                 HexagonGrid(
                     columns = columns,
@@ -154,7 +214,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
                                     if (pendingMerge?.mergingCells?.any { it.id == cell.id } == true) {
                                         finishedMergeCount++
                                     }
-                                }
+                                },
                             )
 
                             var targetScale by remember { mutableStateOf(0f) }
@@ -185,6 +245,17 @@ internal fun GameScreen(viewModel: GameViewModel) {
                                     },
                             )
                         }
+                    }
+                }
+
+                Canvas(modifier = Modifier.matchParentSize()) {
+                    particles.forEach { p ->
+                        drawCircle(
+                            color = p.color,
+                            radius = p.size * p.life,
+                            center = Offset(p.x, p.y),
+                            alpha = p.life,
+                        )
                     }
                 }
             }
