@@ -133,6 +133,20 @@ private fun PerkButton(
                         )
                         drawCircle(Color.White, radius = size.minDimension * 0.2f)
                     }
+
+                    Perk.SWAP_TILES -> {
+                        // Two horizontal arrows in opposite directions
+                        val arrowSize = size.width * 0.3f
+                        // Top arrow (right)
+                        drawLine(Color.White, Offset(0f, size.height * 0.3f), Offset(size.width, size.height * 0.3f), strokeWidth)
+                        drawLine(Color.White, Offset(size.width, size.height * 0.3f), Offset(size.width - arrowSize, size.height * 0.15f), strokeWidth)
+                        drawLine(Color.White, Offset(size.width, size.height * 0.3f), Offset(size.width - arrowSize, size.height * 0.45f), strokeWidth)
+                        
+                        // Bottom arrow (left)
+                        drawLine(Color.White, Offset(0f, size.height * 0.7f), Offset(size.width, size.height * 0.7f), strokeWidth)
+                        drawLine(Color.White, Offset(0f, size.height * 0.7f), Offset(arrowSize, size.height * 0.55f), strokeWidth)
+                        drawLine(Color.White, Offset(0f, size.height * 0.7f), Offset(arrowSize, size.height * 0.85f), strokeWidth)
+                    }
                 }
             }
 

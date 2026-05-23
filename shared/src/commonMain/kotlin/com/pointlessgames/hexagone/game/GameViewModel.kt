@@ -144,6 +144,14 @@ internal class GameViewModel : ViewModel() {
                 _previewState.value = engine.pickRandomPreviews(_gridState.value, remaining, 3)
                 finishPerkAction(Perk.REMOVE_TILE)
             }
+            Perk.SWAP_TILES -> {
+                val selectedId = _selectedCellId.value
+                if (selectedId == null) {
+                    _selectedCellId.value = preview.id
+                } else if (selectedId != preview.id) {
+                    swapTiles(selectedId, preview.id)
+                }
+            }
             else -> {}
         }
     }
@@ -151,7 +159,7 @@ internal class GameViewModel : ViewModel() {
     fun onCellClicked(cell: HexagonCell) {
         if (_pendingMerge.value != null) return
 
-        when (_activePerk.value) {
+        when (val perk = _activePerk.value) {
             Perk.MOVE_TILE -> {
                 _selectedCellId.value = cell.id
             }
@@ -159,8 +167,54 @@ internal class GameViewModel : ViewModel() {
                 _gridState.value = _gridState.value.filter { it.id != cell.id }
                 finishPerkAction(Perk.REMOVE_TILE)
             }
+            Perk.SWAP_TILES -> {
+                val selectedId = _selectedCellId.value
+                if (selectedId == null) {
+                    _selectedCellId.value = cell.id
+                } else if (selectedId != cell.id) {
+                    swapTiles(selectedId, cell.id)
+                }
+            }
             else -> {}
         }
+    }
+
+    private fun swapTiles(id1: String, id2: String) {
+        val grid = _gridState.value
+        val previews = _previewState.value
+
+        val cell1 = grid.find { it.id == id1 }
+        val cell2 = grid.find { it.id == id2 }
+        val preview1 = previews.find { it.id == id1 }
+        val preview2 = previews.find { it.id == id2 }
+
+        // Determine coordinates
+        val x1 = cell1?.x ?: preview1?.x ?: return
+        val y1 = cell1?.y ?: preview1?.y ?: return
+        val x2 = cell2?.x ?: preview2?.x ?: return
+        val y2 = cell2?.y ?: preview2?.y ?: return
+
+        if (cell1 != null) {
+            _gridState.value = _gridState.value.map {
+                if (it.id == id1) it.copy(x = x2, y = y2) else it
+            }
+        } else if (preview1 != null) {
+            _previewState.value = _previewState.value.map {
+                if (it.id == id1) it.copy(x = x2, y = y2) else it
+            }
+        }
+
+        if (cell2 != null) {
+            _gridState.value = _gridState.value.map {
+                if (it.id == id2) it.copy(x = x1, y = y1) else it
+            }
+        } else if (preview2 != null) {
+            _previewState.value = _previewState.value.map {
+                if (it.id == id2) it.copy(x = x1, y = y1) else it
+            }
+        }
+
+        finishPerkAction(Perk.SWAP_TILES)
     }
 
     private fun consumePerk(perk: Perk) {
@@ -189,6 +243,7 @@ internal class GameViewModel : ViewModel() {
             Perk.MOVE_TILE -> _activePerk.value = Perk.MOVE_TILE
             Perk.REMOVE_TILE -> _activePerk.value = Perk.REMOVE_TILE
             Perk.FUSION -> _activePerk.value = Perk.FUSION
+            Perk.SWAP_TILES -> _activePerk.value = Perk.SWAP_TILES
         }
     }
 

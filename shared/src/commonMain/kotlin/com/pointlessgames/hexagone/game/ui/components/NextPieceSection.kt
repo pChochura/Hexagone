@@ -50,6 +50,8 @@ fun NextPieceSection(
                         Perk.MOVE_TILE if selectedCellId == null -> "Select a tile to move"
                         Perk.MOVE_TILE -> "Select empty spot"
                         Perk.REMOVE_TILE -> "Select a tile to remove"
+                        Perk.SWAP_TILES if selectedCellId == null -> "Select first tile to swap"
+                        Perk.SWAP_TILES -> "Select second tile to swap"
                         else -> "Select an empty spot for fusion"
                     },
                     color = Color.White.copy(alpha = 0.6f),

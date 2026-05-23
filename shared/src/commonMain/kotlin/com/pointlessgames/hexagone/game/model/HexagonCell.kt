@@ -28,7 +28,8 @@ enum class Perk(val displayName: String, val description: String) {
     ADVANCE_QUEUE("ADVANCE QUEUE", "Instantly spawn the next piece from your queue."),
     MOVE_TILE("MOVE TILE", "Select a tile and move it to any empty spot."),
     REMOVE_TILE("REMOVE TILE", "Select a tile and remove it from the board."),
-    FUSION("FUSION", "Merge all surrounding tiles into a single superior tile.")
+    FUSION("FUSION", "Merge all surrounding tiles into a single superior tile."),
+    SWAP_TILES("SWAP TILES", "Select two tiles to swap their positions.")
 }
 
 data class Particle(
