@@ -7,6 +7,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -55,6 +56,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.model.Particle
+import com.pointlessgames.hexagone.game.model.Perk
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.pow
@@ -72,7 +74,10 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val level by viewModel.level.collectAsState()
     val isStuck by viewModel.isStuck.collectAsState()
     val isGameOver by viewModel.isGameOver.collectAsState()
-    val refreshCooldown by viewModel.refreshCooldown.collectAsState()
+    val perkOptions by viewModel.perkOptions.collectAsState()
+    val collectedPerks by viewModel.collectedPerks.collectAsState()
+    val activePerk by viewModel.activePerk.collectAsState()
+    val selectedCellId by viewModel.selectedCellId.collectAsState()
     val density = LocalDensity.current
 
     var finishedMergeCount by remember { mutableStateOf(0) }
@@ -100,6 +105,13 @@ internal fun GameScreen(viewModel: GameViewModel) {
     LaunchedEffect(pendingMerge) {
         if (pendingMerge != null) {
             finishedMergeCount = 0
+        }
+    }
+
+    LaunchedEffect(finishedMergeCount, pendingMerge) {
+        val merge = pendingMerge
+        if (merge != null && finishedMergeCount >= merge.mergingCells.size) {
+            viewModel.onMergeAnimationFinished()
         }
     }
 
@@ -137,43 +149,39 @@ internal fun GameScreen(viewModel: GameViewModel) {
             )
         }
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(24.dp))
 
-        // Next Piece section
-        Text(
-            text = "NEXT PIECE",
-            color = Color.White.copy(alpha = 0.5f),
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
-        )
+        if (activePerk != null) {
+            Text(
+                text = "ACTIVE PERK: ${activePerk?.displayName}",
+                color = Color(0xFFF06292),
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+            Text(
+                text = if (activePerk == Perk.MOVE_TILE && selectedCellId == null) "Select a tile to move" 
+                       else if (activePerk == Perk.MOVE_TILE) "Select empty spot"
+                       else "Select a tile to remove",
+                color = Color.White.copy(alpha = 0.6f),
+                fontSize = 14.sp
+            )
+        } else {
+            // Next Piece section
+            Text(
+                text = "NEXT PIECE",
+                color = Color.White.copy(alpha = 0.5f),
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+            )
 
-        Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
             Box(modifier = Modifier.size(60.dp)) {
                 val nextValue = previewState.firstOrNull()?.value ?: 1
                 Hexagon(
                     value = nextValue.toString(),
                     backgroundColor = HexagonGridDefaults.getColorForValue(nextValue),
                     modifier = Modifier.fillMaxSize().aspectRatio(1 / 0.866f),
-                )
-            }
-
-            Button(
-                onClick = { viewModel.onAdvanceQueueClicked() },
-                enabled = refreshCooldown == 0 && pendingMerge == null,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF06292).copy(alpha = if (refreshCooldown == 0) 1f else 0.3f),
-                    contentColor = Color.White,
-                ),
-            ) {
-                Text(
-                    text = if (refreshCooldown > 0) "$refreshCooldown" else "ADVANCE",
-                    fontWeight = FontWeight.Bold,
                 )
             }
         }
@@ -225,7 +233,6 @@ internal fun GameScreen(viewModel: GameViewModel) {
                             )
                         }
                         particles = particles + newParticles
-                        viewModel.onMergeAnimationFinished()
                     }
                 }
 
@@ -329,6 +336,8 @@ internal fun GameScreen(viewModel: GameViewModel) {
                                 targetScale = 1f
                             }
 
+                            val isSelected = selectedCellId == cell.id
+
                             Hexagon(
                                 value = cell.value.toString(),
                                 backgroundColor = HexagonGridDefaults.getColorForValue(cell.value),
@@ -340,9 +349,11 @@ internal fun GameScreen(viewModel: GameViewModel) {
                                     .offset { animatedOffset }
                                     .graphicsLayer {
                                         this.alpha = alpha
-                                        scaleX = scale
-                                        scaleY = scale
-                                    },
+                                        scaleX = scale * (if (isSelected) 1.2f else 1f)
+                                        scaleY = scale * (if (isSelected) 1.2f else 1f)
+                                    }
+                                    .then(if (isSelected) Modifier.border(2.dp, Color.White, FlatTopHexagonShape()) else Modifier),
+                                onClick = { viewModel.onCellClicked(cell) }
                             )
                         }
                     }
@@ -358,6 +369,31 @@ internal fun GameScreen(viewModel: GameViewModel) {
                         )
                     }
                 }
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // Perk Bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            collectedPerks.distinct().forEach { perk ->
+                val count = collectedPerks.count { it == perk }
+                val isActive = activePerk == perk
+                
+                PerkButton(
+                    perk = perk,
+                    count = count,
+                    isActive = isActive,
+                    onClick = { viewModel.onUsePerkClicked(perk) }
+                )
+                
+                Spacer(Modifier.size(16.dp))
             }
         }
 
@@ -385,8 +421,8 @@ internal fun GameScreen(viewModel: GameViewModel) {
 
         Spacer(Modifier.height(8.dp))
 
-        val currentLevelThreshold = 50 * (2.0.pow(level - 1) - 1).toFloat()
-        val nextLevelThreshold = 50 * (2.0.pow(level) - 1).toFloat()
+        val currentLevelThreshold = 20 * (2.0.pow(level - 1) - 1).toFloat()
+        val nextLevelThreshold = 20 * (2.0.pow(level) - 1).toFloat()
         val progress =
             ((score - currentLevelThreshold) / (nextLevelThreshold - currentLevelThreshold)).coerceIn(
                 0f,
@@ -407,16 +443,175 @@ internal fun GameScreen(viewModel: GameViewModel) {
     if (isStuck || isGameOver) {
         StatusDialog(
             isGameOver = isGameOver,
-            onUseQueue = { viewModel.onAdvanceQueueClicked() },
+            collectedPerks = collectedPerks,
+            onUsePerk = { viewModel.onUsePerkClicked(it) },
             onRestart = { viewModel.onRestartClicked() },
         )
+    }
+
+    if (perkOptions.isNotEmpty()) {
+        PerkSelectionDialog(
+            options = perkOptions,
+            onPerkSelected = { viewModel.onPerkSelected(it) }
+        )
+    }
+}
+
+@Composable
+fun PerkButton(
+    perk: Perk,
+    count: Int,
+    isActive: Boolean,
+    onClick: () -> Unit
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .background(
+                    if (isActive) Color(0xFFF06292).copy(alpha = 0.2f) else Color(0xFF2A2A36),
+                    CircleShape
+                )
+                .border(
+                    width = if (isActive) 2.dp else 1.dp,
+                    color = if (isActive) Color(0xFFF06292) else Color.White.copy(alpha = 0.1f),
+                    shape = CircleShape
+                )
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.size(24.dp)) {
+                val strokeWidth = 2.dp.toPx()
+                when (perk) {
+                    Perk.ADVANCE_QUEUE -> {
+                        // Double arrow
+                        val path = androidx.compose.ui.graphics.Path().apply {
+                            moveTo(0f, 0f)
+                            lineTo(size.width * 0.5f, size.height * 0.5f)
+                            lineTo(0f, size.height)
+                            moveTo(size.width * 0.5f, 0f)
+                            lineTo(size.width, size.height * 0.5f)
+                            lineTo(size.width * 0.5f, size.height)
+                        }
+                        drawPath(path, color = Color.White, style = Stroke(width = strokeWidth))
+                    }
+                    Perk.MOVE_TILE -> {
+                        // Plus with arrows
+                        drawLine(Color.White, Offset(size.width * 0.5f, 0f), Offset(size.width * 0.5f, size.height), strokeWidth)
+                        drawLine(Color.White, Offset(0f, size.height * 0.5f), Offset(size.width, size.height * 0.5f), strokeWidth)
+                    }
+                    Perk.REMOVE_TILE -> {
+                        // Trash bin simple
+                        drawRect(Color.White, Offset(size.width * 0.2f, size.height * 0.3f), size.copy(width = size.width * 0.6f, height = size.height * 0.6f), style = Stroke(width = strokeWidth))
+                        drawLine(Color.White, Offset(size.width * 0.1f, size.height * 0.2f), Offset(size.width * 0.9f, size.height * 0.2f), strokeWidth)
+                    }
+                }
+            }
+            
+            // Count badge
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 4.dp, y = (-4).dp)
+                    .background(Color(0xFFF06292), CircleShape)
+                    .size(20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = count.toString(),
+                    color = Color.White,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            perk.displayName.split(" ").first(),
+            color = Color.White.copy(alpha = 0.5f),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+fun PerkSelectionDialog(
+    options: List<Perk>,
+    onPerkSelected: (Perk) -> Unit
+) {
+    Dialog(
+        onDismissRequest = { },
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.85f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(32.dp)
+                    .fillMaxWidth()
+                    .background(Color(0xFF1C1C24), RoundedCornerShape(24.dp))
+                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "LEVEL UP!",
+                    color = Color(0xFFF06292),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 28.sp,
+                    textAlign = TextAlign.Center,
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = "Choose your perk",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 18.sp,
+                    textAlign = TextAlign.Center,
+                )
+
+                Spacer(Modifier.height(32.dp))
+
+                options.forEachIndexed { index, perk ->
+                    Button(
+                        onClick = { onPerkSelected(perk) },
+                        modifier = Modifier.fillMaxWidth().height(80.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2A2A36),
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(perk.displayName, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Text(
+                                perk.description,
+                                color = Color.White.copy(alpha = 0.5f),
+                                fontSize = 12.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                    if (index < options.size - 1) {
+                        Spacer(Modifier.height(12.dp))
+                    }
+                }
+            }
+        }
     }
 }
 
 @Composable
 fun StatusDialog(
     isGameOver: Boolean,
-    onUseQueue: () -> Unit,
+    collectedPerks: List<Perk>,
+    onUsePerk: (Perk) -> Unit,
     onRestart: () -> Unit,
 ) {
     Dialog(
@@ -438,7 +633,6 @@ fun StatusDialog(
                     .padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // Icon replacement using Canvas since icons are not available
                 Canvas(
                     modifier = Modifier
                         .size(80.dp)
@@ -477,7 +671,7 @@ fun StatusDialog(
                 Text(
                     text = if (isGameOver)
                         "No more moves left. Better luck next time!"
-                    else "The board is locked. You can use your queue to force a spawn or restart the match to try again.",
+                    else "The board is locked. You can use your collected perks to save the match or restart.",
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 16.sp,
                     textAlign = TextAlign.Center,
@@ -487,19 +681,21 @@ fun StatusDialog(
                 Spacer(Modifier.height(32.dp))
 
                 if (!isGameOver) {
-                    Button(
-                        onClick = onUseQueue,
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF4F6BFF),
-                            contentColor = Color.White,
-                        ),
-                    ) {
-                        Text("USE QUEUE", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    collectedPerks.distinct().forEach { perk ->
+                        val count = collectedPerks.count { it == perk }
+                        Button(
+                            onClick = { onUsePerk(perk) },
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF4F6BFF),
+                                contentColor = Color.White,
+                            ),
+                        ) {
+                            Text("${perk.displayName} ($count)", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        }
+                        Spacer(Modifier.height(12.dp))
                     }
-
-                    Spacer(Modifier.height(12.dp))
                 }
 
                 OutlinedButton(

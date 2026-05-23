@@ -3,6 +3,7 @@ package com.pointlessgames.hexagone.game
 import androidx.lifecycle.ViewModel
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
+import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PreviewCell
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,12 +40,22 @@ internal class GameViewModel : ViewModel() {
     private val _isGameOver = MutableStateFlow(false)
     val isGameOver: StateFlow<Boolean> = _isGameOver.asStateFlow()
 
-    private val _refreshCooldown = MutableStateFlow(0)
-    val refreshCooldown: StateFlow<Int> = _refreshCooldown.asStateFlow()
+    private val _collectedPerks = MutableStateFlow<List<Perk>>(emptyList())
+    val collectedPerks: StateFlow<List<Perk>> = _collectedPerks.asStateFlow()
+
+    private val _perkOptions = MutableStateFlow<List<Perk>>(emptyList())
+    val perkOptions: StateFlow<List<Perk>> = _perkOptions.asStateFlow()
+
+    private val _activePerk = MutableStateFlow<Perk?>(null)
+    val activePerk: StateFlow<Perk?> = _activePerk.asStateFlow()
+
+    private val _selectedCellId = MutableStateFlow<String?>(null)
+    val selectedCellId: StateFlow<String?> = _selectedCellId.asStateFlow()
 
     private val columns = 5
     private val rows = 4
     private var idCounter = 0
+    private var lastLevel = 1
 
     init {
         generateInitialGrid()
@@ -55,27 +66,23 @@ internal class GameViewModel : ViewModel() {
 
     private fun updateLevel() {
         val currentScore = _score.value
-        // Level threshold formula: 50 * (2^(level-1) - 1)
-        // Level 1: 0
-        // Level 2: 50
-        // Level 3: 150
-        // Level 4: 350
-        // Level 5: 750
-        
         var lvl = 1
-        while (currentScore >= 50 * (2.0.pow(lvl) - 1)) {
+        while (currentScore >= 20 * (2.0.pow(lvl) - 1)) {
             lvl++
         }
-        _level.value = lvl
+        
+        if (lvl > lastLevel) {
+            lastLevel = lvl
+            _perkOptions.value = List(3) { Perk.entries.random() }
+        }
 
+        _level.value = lvl
         val highest = _gridState.value.maxOfOrNull { it.value } ?: 1
         _highestValue.value = highest
     }
 
     private fun generateInitialGrid() {
         val cells = mutableListOf<HexagonCell>()
-        
-        // 1. Guaranteed move: Pick two adjacent random cells and give them same value
         val startX = Random.nextInt(columns)
         val startY = Random.nextInt(rows)
         val neighbors = getNeighbors(startX, startY)
@@ -87,7 +94,6 @@ internal class GameViewModel : ViewModel() {
             cells.add(HexagonCell("cell_${idCounter++}", nx, ny, startValue))
         }
 
-        // 2. Add 3-5 more random tiles to the board
         val count = Random.nextInt(2, 4)
         repeat(count) {
             val occupied = cells.map { it.x to it.y }.toSet()
@@ -102,7 +108,6 @@ internal class GameViewModel : ViewModel() {
                 cells.add(HexagonCell("cell_${idCounter++}", rx, ry, Random.nextInt(1, 3)))
             }
         }
-        
         _gridState.value = cells
     }
 
@@ -134,29 +139,34 @@ internal class GameViewModel : ViewModel() {
 
             if (emptyPositions.isNotEmpty()) {
                 val value = spawnPool.random()
-                
-                // Smart positioning: Prefer spots near tiles with the same value
                 val matchingPositions = emptyPositions.filter { pos ->
                     getNeighbors(pos.first, pos.second).any { (nx, ny) ->
                         currentGrid.any { it.x == nx && it.y == ny && it.value == value }
                     }
                 }
-                
-                val finalPos = if (matchingPositions.isNotEmpty() && Random.nextFloat() < 0.6f) {
-                    matchingPositions.random()
-                } else {
-                    emptyPositions.random()
-                }
-                
+                val finalPos = if (matchingPositions.isNotEmpty() && Random.nextFloat() < 0.6f) matchingPositions.random() else emptyPositions.random()
                 newPreviews.add(PreviewCell("preview_${previewIdCounter++}", finalPos.first, finalPos.second, value, newPreviews.size))
             }
         }
-        
         return newPreviews.mapIndexed { index, p -> p.copy(rank = index) }
     }
 
     fun onEmptySpaceClicked(x: Int, y: Int) {
-        if (_pendingMerge.value != null) return // Ignore clicks while animating
+        if (_pendingMerge.value != null) return
+
+        val perk = _activePerk.value
+        val selectedId = _selectedCellId.value
+
+        if (perk == Perk.MOVE_TILE && selectedId != null) {
+            _gridState.value = _gridState.value.map { 
+                if (it.id == selectedId) it.copy(x = x, y = y) else it
+            }
+            consumePerk(Perk.MOVE_TILE)
+            _activePerk.value = null
+            _selectedCellId.value = null
+            checkValidMoves()
+            return
+        }
 
         val currentState = _gridState.value
         if (currentState.any { it.x == x && it.y == y }) return
@@ -166,54 +176,105 @@ internal class GameViewModel : ViewModel() {
             neighborCoords.any { it.first == cell.x && it.second == cell.y }
         }
 
-        val valuesToMove = neighborCells.groupBy { it.value }
-            .filter { it.value.size > 1 }
-            .keys
+        val valuesToMove = neighborCells.groupBy { it.value }.filter { it.value.size > 1 }.keys
 
         if (valuesToMove.isNotEmpty()) {
             val mergingCells = neighborCells.filter { it.value in valuesToMove }
-            
             val vMax = mergingCells.maxOf { it.value }
             val n = mergingCells.size
             val k = mergingCells.distinctBy { it.value }.size
             val newValue = vMax + n - k
 
-            // Move the cells in gridState to trigger animation
             _gridState.value = currentState.map { cell ->
-                if (mergingCells.any { it.id == cell.id }) {
-                    cell.copy(x = x, y = y)
-                } else {
-                    cell
-                }
+                if (mergingCells.any { it.id == cell.id }) cell.copy(x = x, y = y) else cell
             }
-
-            // Set pending merge to signal UI to notify us when done
             _pendingMerge.value = MergeTransition(x, y, mergingCells, newValue)
         }
+    }
+
+    fun onCellClicked(cell: HexagonCell) {
+        if (_pendingMerge.value != null) return
+
+        when (_activePerk.value) {
+            Perk.MOVE_TILE -> {
+                _selectedCellId.value = cell.id
+            }
+            Perk.REMOVE_TILE -> {
+                _gridState.value = _gridState.value.filter { it.id != cell.id }
+                consumePerk(Perk.REMOVE_TILE)
+                _activePerk.value = null
+                checkValidMoves()
+            }
+            else -> {}
+        }
+    }
+
+    private fun consumePerk(perk: Perk) {
+        val perkIndex = _collectedPerks.value.indexOf(perk)
+        if (perkIndex != -1) {
+            val newList = _collectedPerks.value.toMutableList()
+            newList.removeAt(perkIndex)
+            _collectedPerks.value = newList
+        }
+    }
+
+    fun onUsePerkClicked(perk: Perk) {
+        if (_activePerk.value == perk) {
+            _activePerk.value = null
+            _selectedCellId.value = null
+            return
+        }
+
+        _isStuck.value = false
+        when (perk) {
+            Perk.ADVANCE_QUEUE -> {
+                consumePerk(Perk.ADVANCE_QUEUE)
+                spawnFromQueue(_gridState.value)
+                checkValidMoves()
+            }
+            Perk.MOVE_TILE -> {
+                _activePerk.value = Perk.MOVE_TILE
+            }
+            Perk.REMOVE_TILE -> {
+                _activePerk.value = Perk.REMOVE_TILE
+            }
+        }
+    }
+
+    fun onPerkSelected(perk: Perk) {
+        _collectedPerks.value = _collectedPerks.value + perk
+        _perkOptions.value = emptyList()
+        checkValidMoves()
+    }
+
+    fun onRestartClicked() {
+        _score.value = 0
+        _isGameOver.value = false
+        _isStuck.value = false
+        _collectedPerks.value = emptyList()
+        _perkOptions.value = emptyList()
+        _activePerk.value = null
+        _selectedCellId.value = null
+        lastLevel = 1
+        generateInitialGrid()
+        generateInitialPreview()
+        updateLevel()
+        checkValidMoves()
     }
 
     fun onMergeAnimationFinished() {
         val merge = _pendingMerge.value ?: return
         _pendingMerge.value = null
 
-        val currentState = _gridState.value
-        val stateAfterMerge = currentState.filter { cell ->
+        val stateAfterMerge = _gridState.value.filter { cell ->
             merge.mergingCells.none { it.id == cell.id }
         } + HexagonCell("cell_${idCounter++}", merge.targetX, merge.targetY, merge.newValue)
 
         _gridState.value = stateAfterMerge
-        
-        // Playful score update
-        _score.value += merge.newValue * (merge.mergingCells.size)
-        if (_score.value > _bestScore.value) {
-            _bestScore.value = _score.value
-        }
+        _score.value += merge.newValue * merge.mergingCells.size
+        if (_score.value > _bestScore.value) _bestScore.value = _score.value
 
         spawnFromQueue(stateAfterMerge)
-        
-        if (_refreshCooldown.value > 0) {
-            _refreshCooldown.value--
-        }
         checkValidMoves()
     }
 
@@ -221,26 +282,25 @@ internal class GameViewModel : ViewModel() {
         val currentState = _gridState.value
         if (isMovePossible(currentState)) {
             _isStuck.value = false
+            _isGameOver.value = false
             return
         }
 
-        if (_refreshCooldown.value == 0) {
-            val currentPreviews = _previewState.value
-            val spawnableIndex = currentPreviews.indexOfFirst { p ->
-                currentState.none { it.x == p.x && it.y == p.y }
-            }
-            
-            if (spawnableIndex != -1) {
-                val p = currentPreviews[spawnableIndex]
-                val hypotheticalGrid = currentState + HexagonCell("hypo", p.x, p.y, p.value)
-                if (isMovePossible(hypotheticalGrid)) {
-                    _isStuck.value = true
-                    return
-                }
-            }
+        // If player is currently choosing a level-up perk, defer the stuck/gameover state.
+        // Selecting a perk will trigger this check again.
+        if (_perkOptions.value.isNotEmpty()) {
+            _isStuck.value = false
+            _isGameOver.value = false
+            return
         }
 
-        _isGameOver.value = true
+        if (_collectedPerks.value.isNotEmpty()) {
+            _isStuck.value = true
+            _isGameOver.value = false
+        } else {
+            _isStuck.value = false
+            _isGameOver.value = true
+        }
     }
 
     private fun isMovePossible(grid: List<HexagonCell>): Boolean {
@@ -249,107 +309,46 @@ internal class GameViewModel : ViewModel() {
             for (x in 0 until columns) {
                 if (x to y !in occupied) {
                     val neighbors = getNeighbors(x, y)
-                    val neighborCells = grid.filter { cell ->
-                        neighbors.any { it.first == cell.x && it.second == cell.y }
-                    }
-                    if (neighborCells.groupBy { it.value }.any { it.value.size >= 2 }) {
-                        return true
-                    }
+                    val neighborCells = grid.filter { cell -> neighbors.any { it.first == cell.x && it.second == cell.y } }
+                    if (neighborCells.groupBy { it.value }.any { it.value.size >= 2 }) return true
                 }
             }
         }
         return false
     }
 
-    fun onAdvanceQueueClicked() {
-        if (_refreshCooldown.value > 0 || _pendingMerge.value != null) return
-
-        _isStuck.value = false
-        _refreshCooldown.value = 5 // Cooldown of 5 turns
-        spawnFromQueue(_gridState.value)
-        checkValidMoves()
-    }
-
-    fun onRestartClicked() {
-        _score.value = 0
-        _isGameOver.value = false
-        _isStuck.value = false
-        _refreshCooldown.value = 0
-        generateInitialGrid()
-        generateInitialPreview()
-        updateLevel()
-    }
-
     private fun spawnFromQueue(currentState: List<HexagonCell>) {
         val currentPreviews = _previewState.value
         if (currentPreviews.isEmpty()) return
 
-        // Find the first preview that can be spawned (its position is empty)
-        val spawnableIndex = currentPreviews.indexOfFirst { p ->
-            currentState.none { it.x == p.x && it.y == p.y }
-        }
+        val spawnableIndex = currentPreviews.indexOfFirst { p -> currentState.none { it.x == p.x && it.y == p.y } }
 
-        val (newState, consumedPreviewsCount) = if (spawnableIndex != -1) {
-            val previewToSpawn = currentPreviews[spawnableIndex]
-            val spawnedState = currentState + HexagonCell(
-                id = "cell_${idCounter++}",
-                x = previewToSpawn.x,
-                y = previewToSpawn.y,
-                value = previewToSpawn.value
-            )
-            spawnedState to (spawnableIndex + 1)
+        val (newState, consumedCount) = if (spawnableIndex != -1) {
+            val p = currentPreviews[spawnableIndex]
+            (currentState + HexagonCell("cell_${idCounter++}", p.x, p.y, p.value)) to (spawnableIndex + 1)
         } else {
-            // All 3 previews are blocked. Spawn a new random tile if possible.
             val occupied = currentState.map { it.x to it.y }.toSet()
-            val emptyPositions = mutableListOf<Pair<Int, Int>>()
-            for (y in 0 until rows) {
-                for (x in 0 until columns) {
-                    if (x to y !in occupied) emptyPositions.add(x to y)
-                }
-            }
-            
-            if (emptyPositions.isNotEmpty()) {
-                val (rx, ry) = emptyPositions.random()
-                val spawnPool = if (currentState.isEmpty()) listOf(1, 2) else currentState.map { it.value }.distinct()
-                val spawnedState = currentState + HexagonCell(
-                    id = "cell_${idCounter++}",
-                    x = rx,
-                    y = ry,
-                    value = spawnPool.random()
-                )
-                spawnedState to currentPreviews.size
-            } else {
-                currentState to 0 // Grid is full
-            }
+            val empty = mutableListOf<Pair<Int, Int>>()
+            for (y in 0 until rows) for (x in 0 until columns) if (x to y !in occupied) empty.add(x to y)
+            if (empty.isNotEmpty()) {
+                val (rx, ry) = empty.random()
+                val pool = if (currentState.isEmpty()) listOf(1, 2) else currentState.map { it.value }.distinct()
+                (currentState + HexagonCell("cell_${idCounter++}", rx, ry, pool.random())) to currentPreviews.size
+            } else currentState to 0
         }
 
-        // Calculate remaining previews and refill
-        val remainingPreviews = currentPreviews.drop(consumedPreviewsCount).filter { p ->
-            newState.none { it.x == p.x && it.y == p.y }
-        }
-
+        val remaining = currentPreviews.drop(consumedCount).filter { p -> newState.none { it.x == p.x && it.y == p.y } }
         _gridState.value = newState
-        _previewState.value = pickRandomPreviews(newState, remainingPreviews, 3)
+        _previewState.value = pickRandomPreviews(newState, remaining, 3)
         updateLevel()
     }
 
     private fun getNeighbors(x: Int, y: Int): List<Pair<Int, Int>> {
-        val potentialNeighbors = if (x % 2 == 0) {
-            listOf(
-                x to y - 1, x to y + 1,
-                x - 1 to y - 1, x - 1 to y,
-                x + 1 to y - 1, x + 1 to y,
-            )
+        val potential = if (x % 2 == 0) {
+            listOf(x to y-1, x to y+1, x-1 to y-1, x-1 to y, x+1 to y-1, x+1 to y)
         } else {
-            listOf(
-                x to y - 1, x to y + 1,
-                x - 1 to y, x - 1 to y + 1,
-                x + 1 to y, x + 1 to y + 1,
-            )
+            listOf(x to y-1, x to y+1, x-1 to y, x-1 to y+1, x+1 to y, x+1 to y+1)
         }
-
-        return potentialNeighbors.filter { (nx, ny) ->
-            nx in 0 until columns && ny in 0 until rows
-        }
+        return potential.filter { (nx, ny) -> nx in 0 until columns && ny in 0 until rows }
     }
 }
