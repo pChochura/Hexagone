@@ -1,9 +1,12 @@
 package com.pointlessgames.hexagone.game.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,6 +27,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -79,6 +84,17 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val activePerk by viewModel.activePerk.collectAsState()
     val selectedCellId by viewModel.selectedCellId.collectAsState()
     val density = LocalDensity.current
+
+    var delayedPerkOptions by remember { mutableStateOf<List<Perk>>(emptyList()) }
+
+    LaunchedEffect(perkOptions) {
+        if (perkOptions.isNotEmpty()) {
+            kotlinx.coroutines.delay(1500) // Delay before showing level up perks
+            delayedPerkOptions = perkOptions
+        } else {
+            delayedPerkOptions = emptyList()
+        }
+    }
 
     var finishedMergeCount by remember { mutableStateOf(0) }
     var particles by remember { mutableStateOf(emptyList<Particle>()) }
@@ -441,20 +457,32 @@ internal fun GameScreen(viewModel: GameViewModel) {
         Spacer(Modifier.height(16.dp))
     }
 
-    if (isStuck || isGameOver) {
-        StatusDialog(
-            isGameOver = isGameOver,
-            collectedPerks = collectedPerks,
-            onUsePerk = { viewModel.onUsePerkClicked(it) },
-            onRestart = { viewModel.onRestartClicked() },
-        )
-    }
+    Box(modifier = Modifier.fillMaxSize()) {
+        AnimatedVisibility(
+            visible = delayedPerkOptions.isNotEmpty(),
+            enter = slideInVertically(initialOffsetY = { it }),
+            exit = slideOutVertically(targetOffsetY = { it }),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            PerkSelectionDialog(
+                options = delayedPerkOptions,
+                onPerkSelected = { viewModel.onPerkSelected(it) }
+            )
+        }
 
-    if (perkOptions.isNotEmpty()) {
-        PerkSelectionDialog(
-            options = perkOptions,
-            onPerkSelected = { viewModel.onPerkSelected(it) }
-        )
+        AnimatedVisibility(
+            visible = (isStuck || isGameOver) && delayedPerkOptions.isEmpty(),
+            enter = slideInVertically(initialOffsetY = { it }),
+            exit = slideOutVertically(targetOffsetY = { it }),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            StatusDialog(
+                isGameOver = isGameOver,
+                collectedPerks = collectedPerks,
+                onUsePerk = { viewModel.onUsePerkClicked(it) },
+                onRestart = { viewModel.onRestartClicked() },
+            )
+        }
     }
 }
 
@@ -546,66 +574,75 @@ fun PerkSelectionDialog(
     options: List<Perk>,
     onPerkSelected: (Perk) -> Unit
 ) {
-    Dialog(
-        onDismissRequest = { },
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
+                )
+            )
+            .padding(top = 64.dp) // Give space to see board
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.85f)),
-            contentAlignment = Alignment.Center,
+                .padding(16.dp)
+                .fillMaxWidth()
+                .background(Color(0xFF1C1C24), RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(32.dp)
-                    .fillMaxWidth()
-                    .background(Color(0xFF1C1C24), RoundedCornerShape(24.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Text(
+                text = "LEVEL UP!",
+                color = Color(0xFFF06292),
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(Modifier.height(4.dp))
+
+            Text(
+                text = "Choose your perk",
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = "LEVEL UP!",
-                    color = Color(0xFFF06292),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp,
-                    textAlign = TextAlign.Center,
-                )
-
-                Spacer(Modifier.height(8.dp))
-
-                Text(
-                    text = "Choose your perk",
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 18.sp,
-                    textAlign = TextAlign.Center,
-                )
-
-                Spacer(Modifier.height(32.dp))
-
-                options.forEachIndexed { index, perk ->
+                options.forEach { perk ->
                     Button(
                         onClick = { onPerkSelected(perk) },
-                        modifier = Modifier.fillMaxWidth().height(80.dp),
+                        modifier = Modifier.weight(1f).height(100.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF2A2A36),
                             contentColor = Color.White,
                         ),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp)
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(perk.displayName, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Text(
+                                perk.displayName.split(" ").first(), 
+                                fontWeight = FontWeight.Bold, 
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(Modifier.height(4.dp))
                             Text(
                                 perk.description,
                                 color = Color.White.copy(alpha = 0.5f),
-                                fontSize = 12.sp,
-                                textAlign = TextAlign.Center
+                                fontSize = 9.sp,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 11.sp
                             )
                         }
-                    }
-                    if (index < options.size - 1) {
-                        Spacer(Modifier.height(12.dp))
                     }
                 }
             }
@@ -620,33 +657,37 @@ fun StatusDialog(
     onUsePerk: (Perk) -> Unit,
     onRestart: () -> Unit,
 ) {
-    Dialog(
-        onDismissRequest = { },
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
+                )
+            )
+            .padding(top = 64.dp)
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.85f)),
-            contentAlignment = Alignment.Center,
+                .padding(16.dp)
+                .fillMaxWidth()
+                .background(Color(0xFF1C1C24), RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(32.dp)
-                    .fillMaxWidth()
-                    .background(Color(0xFF1C1C24), RoundedCornerShape(24.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Canvas(
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(48.dp)
                         .border(1.dp, Color(0xFFF06292).copy(alpha = 0.3f), CircleShape)
-                        .padding(12.dp)
+                        .padding(8.dp)
                         .background(Color(0xFFF06292).copy(alpha = 0.1f), CircleShape),
                 ) {
-                    val strokeWidth = 3.dp.toPx()
+                    val strokeWidth = 2.dp.toPx()
                     drawCircle(
                         color = Color(0xFFF06292),
                         radius = size.minDimension / 2.5f,
@@ -662,60 +703,60 @@ fun StatusDialog(
                     )
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.width(16.dp))
 
-                Text(
-                    text = if (isGameOver) "GAME OVER" else "NO MORE MOVES",
-                    color = Color(0xFFD1C4E9),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp,
-                    textAlign = TextAlign.Center,
-                )
+                Column {
+                    Text(
+                        text = if (isGameOver) "GAME OVER" else "NO MORE MOVES",
+                        color = Color(0xFFD1C4E9),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                    )
+                    Text(
+                        text = if (isGameOver) "Better luck next time!" else "Try using a perk.",
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 14.sp,
+                    )
+                }
+            }
 
-                Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(24.dp))
 
-                Text(
-                    text = if (isGameOver)
-                        "No more moves left. Better luck next time!"
-                    else "The board is locked. You can use your collected perks to save the match or restart.",
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 16.sp,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 22.sp,
-                )
-
-                Spacer(Modifier.height(32.dp))
-
-                if (!isGameOver) {
+            if (!isGameOver) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     collectedPerks.distinct().forEach { perk ->
                         val count = collectedPerks.count { it == perk }
                         Button(
                             onClick = { onUsePerk(perk) },
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            modifier = Modifier.weight(1f).height(48.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFF4F6BFF),
                                 contentColor = Color.White,
                             ),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(4.dp)
                         ) {
-                            Text("${perk.displayName} ($count)", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Text("${perk.displayName.split(" ").first()} ($count)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
-                        Spacer(Modifier.height(12.dp))
                     }
                 }
+                Spacer(Modifier.height(12.dp))
+            }
 
-                OutlinedButton(
-                    onClick = onRestart,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp,
-                        Color.White.copy(alpha = 0.3f),
-                    ),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                ) {
-                    Text("RESTART GAME", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                }
+            OutlinedButton(
+                onClick = onRestart,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    Color.White.copy(alpha = 0.3f),
+                ),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+            ) {
+                Text("RESTART GAME", fontWeight = FontWeight.Bold, fontSize = 14.sp)
             }
         }
     }
