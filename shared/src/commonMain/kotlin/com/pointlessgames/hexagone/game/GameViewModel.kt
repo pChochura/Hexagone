@@ -122,11 +122,17 @@ internal class GameViewModel : ViewModel() {
         existingPreviews: List<PreviewCell>,
         count: Int
     ): List<PreviewCell> {
-        val spawnPool = if (currentGrid.isEmpty()) listOf(1, 2) else currentGrid.map { it.value }.distinct()
+        val boardPool = if (currentGrid.isEmpty()) listOf(1, 2) else currentGrid.map { it.value }.distinct().sorted()
+        // We prefer lower values for spawning to keep the board manageable
+        val spawnPool = boardPool.take((boardPool.size * 0.7f).toInt().coerceAtLeast(2))
+        
         val newPreviews = existingPreviews.toMutableList()
         val needed = count - newPreviews.size
         
         if (needed <= 0) return newPreviews.mapIndexed { index, p -> p.copy(rank = index) }
+
+        val occupancyThreshold = 0.7f
+        val currentOccupancy = currentGrid.size.toFloat() / (columns * rows)
 
         repeat(needed) {
             val currentOccupied = (currentGrid.map { it.x to it.y } + newPreviews.map { it.x to it.y }).toSet()
@@ -138,14 +144,31 @@ internal class GameViewModel : ViewModel() {
             }
 
             if (emptyPositions.isNotEmpty()) {
-                val value = spawnPool.random()
-                val matchingPositions = emptyPositions.filter { pos ->
-                    getNeighbors(pos.first, pos.second).any { (nx, ny) ->
-                        currentGrid.any { it.x == nx && it.y == ny && it.value == value }
+                // Determine if we need to force a "solver" tile
+                val isBoardFull = currentOccupancy > occupancyThreshold
+                val solvingPositions = mutableListOf<Pair<Pair<Int, Int>, Int>>()
+
+                // Scan for positions that would create a merge
+                for (pos in emptyPositions) {
+                    for (value in spawnPool) {
+                        val neighbors = getNeighbors(pos.first, pos.second)
+                        val matchingNeighbors = currentGrid.count { it.x to it.y in neighbors && it.value == value }
+                        if (matchingNeighbors >= 1) { // We have at least one match, so this + another same tile nearby makes a group of 2
+                            solvingPositions.add(pos to value)
+                        }
                     }
                 }
-                val finalPos = if (matchingPositions.isNotEmpty() && Random.nextFloat() < 0.6f) matchingPositions.random() else emptyPositions.random()
-                newPreviews.add(PreviewCell("preview_${previewIdCounter++}", finalPos.first, finalPos.second, value, newPreviews.size))
+
+                val (finalPos, finalValue) = if (solvingPositions.isNotEmpty() && (isBoardFull || Random.nextFloat() < 0.8f)) {
+                    // Pick a random solving spawn
+                    val (pos, value) = solvingPositions.random()
+                    pos to value
+                } else {
+                    // Fallback to random empty spot and value
+                    emptyPositions.random() to spawnPool.random()
+                }
+                
+                newPreviews.add(PreviewCell("preview_${previewIdCounter++}", finalPos.first, finalPos.second, finalValue, newPreviews.size))
             }
         }
         return newPreviews.mapIndexed { index, p -> p.copy(rank = index) }
