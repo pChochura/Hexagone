@@ -48,6 +48,7 @@ import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.model.Particle
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -60,6 +61,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val score by viewModel.score.collectAsState()
     val bestScore by viewModel.bestScore.collectAsState()
     val level by viewModel.level.collectAsState()
+    val highestValue by viewModel.highestValue.collectAsState()
     val density = LocalDensity.current
 
     var finishedMergeCount by remember { mutableStateOf(0) }
@@ -352,8 +354,16 @@ internal fun GameScreen(viewModel: GameViewModel) {
 
         Spacer(Modifier.height(8.dp))
 
+        val currentLevelThreshold = 50 * (2.0.pow(level - 1) - 1).toFloat()
+        val nextLevelThreshold = 50 * (2.0.pow(level) - 1).toFloat()
+        val progress =
+            ((score - currentLevelThreshold) / (nextLevelThreshold - currentLevelThreshold)).coerceIn(
+                0f,
+                1f,
+            )
+
         LinearProgressIndicator(
-            progress = { 0.6f },
+            progress = { progress },
             modifier = Modifier.fillMaxWidth().height(4.dp),
             color = Color(0xFFF06292),
             trackColor = Color.White.copy(alpha = 0.1f),

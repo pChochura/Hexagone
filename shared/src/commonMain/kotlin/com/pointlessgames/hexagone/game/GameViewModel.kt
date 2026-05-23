@@ -7,6 +7,7 @@ import com.pointlessgames.hexagone.game.model.PreviewCell
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.math.pow
 import kotlin.random.Random
 
 internal class GameViewModel : ViewModel() {
@@ -26,8 +27,11 @@ internal class GameViewModel : ViewModel() {
     private val _bestScore = MutableStateFlow(0)
     val bestScore: StateFlow<Int> = _bestScore.asStateFlow()
 
-    private val _level = MutableStateFlow(4)
+    private val _level = MutableStateFlow(1)
     val level: StateFlow<Int> = _level.asStateFlow()
+
+    private val _highestValue = MutableStateFlow(1)
+    val highestValue: StateFlow<Int> = _highestValue.asStateFlow()
 
     private val columns = 5
     private val rows = 4
@@ -36,6 +40,26 @@ internal class GameViewModel : ViewModel() {
     init {
         generateInitialGrid()
         generateInitialPreview()
+        updateLevel()
+    }
+
+    private fun updateLevel() {
+        val currentScore = _score.value
+        // Level threshold formula: 50 * (2^(level-1) - 1)
+        // Level 1: 0
+        // Level 2: 50
+        // Level 3: 150
+        // Level 4: 350
+        // Level 5: 750
+        
+        var lvl = 1
+        while (currentScore >= 50 * (2.0.pow(lvl) - 1)) {
+            lvl++
+        }
+        _level.value = lvl
+
+        val highest = _gridState.value.maxOfOrNull { it.value } ?: 1
+        _highestValue.value = highest
     }
 
     private fun generateInitialGrid() {
@@ -228,6 +252,7 @@ internal class GameViewModel : ViewModel() {
 
         _gridState.value = newState
         _previewState.value = pickRandomPreviews(newState, remainingPreviews, 3)
+        updateLevel()
     }
 
     private fun getNeighbors(x: Int, y: Int): List<Pair<Int, Int>> {
