@@ -22,6 +22,15 @@ internal class GameViewModel : ViewModel() {
     private val _pendingMerge = MutableStateFlow<MergeTransition?>(null)
     val pendingMerge: StateFlow<MergeTransition?> = _pendingMerge.asStateFlow()
 
+    private val _score = MutableStateFlow(4000)
+    val score: StateFlow<Int> = _score.asStateFlow()
+
+    private val _bestScore = MutableStateFlow(4850)
+    val bestScore: StateFlow<Int> = _bestScore.asStateFlow()
+
+    private val _level = MutableStateFlow(4)
+    val level: StateFlow<Int> = _level.asStateFlow()
+
     private val columns = 5
     private val rows = 4
     private var idCounter = 0

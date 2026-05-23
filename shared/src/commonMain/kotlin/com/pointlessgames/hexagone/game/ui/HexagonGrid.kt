@@ -20,20 +20,34 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 object HexagonGridDefaults {
-    private val palette = listOf(
-        Color(0xFFFF5722), Color(0xFF4CAF50), Color(0xFF2196F3), Color(0xFFFFC107),
-        Color(0xFF9C27B0), Color(0xFF00BCD4), Color(0xFFE91E63), Color(0xFFCDDC39),
-        Color(0xFF3F51B5), Color(0xFFFF9800), Color(0xFF009688), Color(0xFF795548),
-        Color(0xFF673AB7), Color(0xFF8BC34A), Color(0xFF03A9F4), Color(0xFFF44336)
-    )
-
     fun getColorForValue(value: Int): Color {
         if (value <= 0) return Color.Transparent
-        return palette[(value - 1) % palette.size]
+        
+        // Base signature colors from screenshot
+        val baseColors = mapOf(
+            1 to Color(0xFF3BA9F3),
+            2 to Color(0xFF9345C4),
+            4 to Color(0xFFD63F7B),
+            8 to Color(0xFFF98E33),
+            16 to Color(0xFF4BC2E1)
+        )
+        
+        baseColors[value]?.let { return it }
+
+        // Algorithmic color generation for infinite granularity
+        // Using golden ratio for hue distribution to keep colors distinct
+        val hue = (value * 137.508f) % 360f
+        val saturation = 0.6f + (value % 4) * 0.1f
+        val brightness = 0.7f + (value % 3) * 0.1f
+        
+        return Color.hsv(hue, saturation.coerceAtMost(1f), brightness.coerceAtMost(1f))
     }
 
     fun calculateOffset(
@@ -77,6 +91,7 @@ fun Hexagon(
     backgroundColor: Color = Color.Transparent,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    isOutline: Boolean = false
 ) {
     val baseModifier = modifier
         .clip(FlatTopHexagonShape())
@@ -90,15 +105,24 @@ fun Hexagon(
 
     Box(
         modifier = finalModifier
-            .border(
-                width = 1.dp,
-                color = Color.DarkGray,
-                shape = FlatTopHexagonShape(),
+            .then(
+                if (isOutline) {
+                    Modifier.border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.1f),
+                        shape = FlatTopHexagonShape(),
+                    )
+                } else Modifier
             ),
         contentAlignment = Alignment.Center,
     ) {
         if (value != null) {
-            Text(text = value)
+            Text(
+                text = value,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )
         }
     }
 }

@@ -5,15 +5,24 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,10 +35,15 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.model.Particle
 import kotlin.math.PI
@@ -43,6 +57,9 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val gridState by viewModel.gridState.collectAsState()
     val previewState by viewModel.previewState.collectAsState()
     val pendingMerge by viewModel.pendingMerge.collectAsState()
+    val score by viewModel.score.collectAsState()
+    val bestScore by viewModel.bestScore.collectAsState()
+    val level by viewModel.level.collectAsState()
     val density = LocalDensity.current
 
     var finishedMergeCount by remember { mutableStateOf(0) }
@@ -75,28 +92,68 @@ internal fun GameScreen(viewModel: GameViewModel) {
 
     val moveAnimationSpec = remember {
         spring(
-            dampingRatio = Spring.DampingRatioNoBouncy, // No overshoot during travel
+            dampingRatio = Spring.DampingRatioNoBouncy,
             stiffness = Spring.StiffnessMedium,
             visibilityThreshold = IntOffset(1, 1),
         )
     }
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF1C1C24), Color(0xFF0A0A0E)),
+                ),
+            )
+            .systemBarsPadding()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
     ) {
+        // Score section
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            ScoreCard(label = "SCORE", value = score.toString(), modifier = Modifier.weight(1f))
+            ScoreCard(
+                label = "BEST",
+                value = bestScore.toString(),
+                modifier = Modifier.weight(1f),
+                isBest = true,
+            )
+        }
+
+        Spacer(Modifier.height(32.dp))
+
+        // Next Piece section
+        Text(
+            text = "NEXT PIECE",
+            color = Color.White.copy(alpha = 0.5f),
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Box(modifier = Modifier.size(60.dp)) {
+            val nextValue = previewState.firstOrNull()?.value ?: 1
+            Hexagon(
+                value = nextValue.toString(),
+                backgroundColor = HexagonGridDefaults.getColorForValue(nextValue),
+                modifier = Modifier.fillMaxSize().aspectRatio(1 / 0.866f),
+            )
+        }
+
         Box(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.weight(1f).fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
             val columns = 5
             val rows = 4
             val itemGap = 4.dp
 
-            BoxWithConstraints(
-                modifier = Modifier.padding(16.dp),
-            ) {
+            BoxWithConstraints {
                 val gapPx = with(density) { itemGap.toPx() }
                 val cellWidth = constraints.maxWidth / (1f + (columns - 1) * 0.75f)
                 val cellHeight = cellWidth * (sqrt(3f) / 2f)
@@ -147,6 +204,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
                         Hexagon(
                             modifier = Modifier.fillMaxSize(),
                             onClick = { viewModel.onEmptySpaceClicked(col, row) },
+                            isOutline = true,
                         )
                     },
                 ) {
@@ -230,9 +288,9 @@ internal fun GameScreen(viewModel: GameViewModel) {
                             val alpha by animateFloatAsState(
                                 targetValue = 1f,
                                 animationSpec = spring(
-                                    stiffness = Spring.StiffnessMedium
+                                    stiffness = Spring.StiffnessMedium,
                                 ),
-                                label = "cell_alpha"
+                                label = "cell_alpha",
                             )
                             LaunchedEffect(Unit) {
                                 targetScale = 1f
@@ -269,5 +327,67 @@ internal fun GameScreen(viewModel: GameViewModel) {
                 }
             }
         }
+
+        Spacer(Modifier.height(16.dp))
+
+        // Bottom section
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "COMBO X2",
+                color = Color(0xFFF06292),
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = "LEVEL $level",
+                color = Color.White.copy(alpha = 0.5f),
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+            )
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        LinearProgressIndicator(
+            progress = { 0.6f },
+            modifier = Modifier.fillMaxWidth().height(4.dp),
+            color = Color(0xFFF06292),
+            trackColor = Color.White.copy(alpha = 0.1f),
+            strokeCap = StrokeCap.Round,
+        )
+
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+fun ScoreCard(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    isBest: Boolean = false,
+) {
+    Column(
+        modifier = modifier
+            .background(Color(0xFF1C1C24), RoundedCornerShape(12.dp))
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = label,
+            color = Color.White.copy(alpha = 0.5f),
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp,
+        )
+        Text(
+            text = value,
+            color = if (isBest) Color(0xFFF06292) else Color(0xFF9FA8DA),
+            fontWeight = FontWeight.Bold,
+            fontSize = 28.sp,
+        )
     }
 }
