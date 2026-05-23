@@ -33,6 +33,15 @@ internal class GameViewModel : ViewModel() {
     private val _highestValue = MutableStateFlow(1)
     val highestValue: StateFlow<Int> = _highestValue.asStateFlow()
 
+    private val _isStuck = MutableStateFlow(false)
+    val isStuck: StateFlow<Boolean> = _isStuck.asStateFlow()
+
+    private val _isGameOver = MutableStateFlow(false)
+    val isGameOver: StateFlow<Boolean> = _isGameOver.asStateFlow()
+
+    private val _refreshCooldown = MutableStateFlow(0)
+    val refreshCooldown: StateFlow<Int> = _refreshCooldown.asStateFlow()
+
     private val columns = 5
     private val rows = 4
     private var idCounter = 0
@@ -41,6 +50,7 @@ internal class GameViewModel : ViewModel() {
         generateInitialGrid()
         generateInitialPreview()
         updateLevel()
+        checkValidMoves()
     }
 
     private fun updateLevel() {
@@ -200,6 +210,72 @@ internal class GameViewModel : ViewModel() {
         }
 
         spawnFromQueue(stateAfterMerge)
+        
+        if (_refreshCooldown.value > 0) {
+            _refreshCooldown.value--
+        }
+        checkValidMoves()
+    }
+
+    private fun checkValidMoves() {
+        val currentState = _gridState.value
+        if (isMovePossible(currentState)) {
+            _isStuck.value = false
+            return
+        }
+
+        if (_refreshCooldown.value == 0) {
+            val currentPreviews = _previewState.value
+            val spawnableIndex = currentPreviews.indexOfFirst { p ->
+                currentState.none { it.x == p.x && it.y == p.y }
+            }
+            
+            if (spawnableIndex != -1) {
+                val p = currentPreviews[spawnableIndex]
+                val hypotheticalGrid = currentState + HexagonCell("hypo", p.x, p.y, p.value)
+                if (isMovePossible(hypotheticalGrid)) {
+                    _isStuck.value = true
+                    return
+                }
+            }
+        }
+
+        _isGameOver.value = true
+    }
+
+    private fun isMovePossible(grid: List<HexagonCell>): Boolean {
+        val occupied = grid.map { it.x to it.y }.toSet()
+        for (y in 0 until rows) {
+            for (x in 0 until columns) {
+                if (x to y !in occupied) {
+                    val neighbors = getNeighbors(x, y)
+                    val neighborCells = grid.filter { cell ->
+                        neighbors.any { it.first == cell.x && it.second == cell.y }
+                    }
+                    if (neighborCells.groupBy { it.value }.any { it.value.size >= 2 }) {
+                        return true
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    fun onAdvanceQueueClicked() {
+        _isStuck.value = false
+        _refreshCooldown.value = 5 // Cooldown of 5 turns
+        spawnFromQueue(_gridState.value)
+        checkValidMoves()
+    }
+
+    fun onRestartClicked() {
+        _score.value = 0
+        _isGameOver.value = false
+        _isStuck.value = false
+        _refreshCooldown.value = 0
+        generateInitialGrid()
+        generateInitialPreview()
+        updateLevel()
     }
 
     private fun spawnFromQueue(currentState: List<HexagonCell>) {

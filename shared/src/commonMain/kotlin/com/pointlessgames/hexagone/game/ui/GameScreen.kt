@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,6 +64,8 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val bestScore by viewModel.bestScore.collectAsState()
     val level by viewModel.level.collectAsState()
     val highestValue by viewModel.highestValue.collectAsState()
+    val isStuck by viewModel.isStuck.collectAsState()
+    val isGameOver by viewModel.isGameOver.collectAsState()
     val density = LocalDensity.current
 
     var finishedMergeCount by remember { mutableStateOf(0) }
@@ -371,6 +375,32 @@ internal fun GameScreen(viewModel: GameViewModel) {
         )
 
         Spacer(Modifier.height(16.dp))
+    }
+
+    if (isStuck) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("No Moves Left!") },
+            text = { Text("You can advance the spawn queue once to try and find a move.") },
+            confirmButton = {
+                Button(onClick = { viewModel.onAdvanceQueueClicked() }) {
+                    Text("Advance Queue")
+                }
+            }
+        )
+    }
+
+    if (isGameOver) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Game Over") },
+            text = { Text("No more moves and refresh is on cooldown. Final Score: $score") },
+            confirmButton = {
+                Button(onClick = { viewModel.onRestartClicked() }) {
+                    Text("Restart")
+                }
+            }
+        )
     }
 }
 
