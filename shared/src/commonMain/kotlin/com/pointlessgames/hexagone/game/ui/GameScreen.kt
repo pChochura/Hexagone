@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -20,11 +21,12 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,12 +43,16 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.model.Particle
 import kotlin.math.PI
@@ -64,7 +70,6 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val score by viewModel.score.collectAsState()
     val bestScore by viewModel.bestScore.collectAsState()
     val level by viewModel.level.collectAsState()
-    val highestValue by viewModel.highestValue.collectAsState()
     val isStuck by viewModel.isStuck.collectAsState()
     val isGameOver by viewModel.isGameOver.collectAsState()
     val refreshCooldown by viewModel.refreshCooldown.collectAsState()
@@ -146,7 +151,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Box(modifier = Modifier.size(60.dp)) {
                 val nextValue = previewState.firstOrNull()?.value ?: 1
@@ -163,12 +168,12 @@ internal fun GameScreen(viewModel: GameViewModel) {
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFF06292).copy(alpha = if (refreshCooldown == 0) 1f else 0.3f),
-                    contentColor = Color.White
-                )
+                    contentColor = Color.White,
+                ),
             ) {
                 Text(
                     text = if (refreshCooldown > 0) "$refreshCooldown" else "ADVANCE",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
@@ -399,30 +404,118 @@ internal fun GameScreen(viewModel: GameViewModel) {
         Spacer(Modifier.height(16.dp))
     }
 
-    if (isStuck) {
-        AlertDialog(
-            onDismissRequest = { },
-            title = { Text("No Moves Left!") },
-            text = { Text("You can advance the spawn queue once to try and find a move.") },
-            confirmButton = {
-                Button(onClick = { viewModel.onAdvanceQueueClicked() }) {
-                    Text("Advance Queue")
-                }
-            }
+    if (isStuck || isGameOver) {
+        StatusDialog(
+            isGameOver = isGameOver,
+            onUseQueue = { viewModel.onAdvanceQueueClicked() },
+            onRestart = { viewModel.onRestartClicked() },
         )
     }
+}
 
-    if (isGameOver) {
-        AlertDialog(
-            onDismissRequest = { },
-            title = { Text("Game Over") },
-            text = { Text("No more moves and refresh is on cooldown. Final Score: $score") },
-            confirmButton = {
-                Button(onClick = { viewModel.onRestartClicked() }) {
-                    Text("Restart")
+@Composable
+fun StatusDialog(
+    isGameOver: Boolean,
+    onUseQueue: () -> Unit,
+    onRestart: () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = { },
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.85f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(32.dp)
+                    .fillMaxWidth()
+                    .background(Color(0xFF1C1C24), RoundedCornerShape(24.dp))
+                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                // Icon replacement using Canvas since icons are not available
+                Canvas(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .border(1.dp, Color(0xFFF06292).copy(alpha = 0.3f), CircleShape)
+                        .padding(12.dp)
+                        .background(Color(0xFFF06292).copy(alpha = 0.1f), CircleShape),
+                ) {
+                    val strokeWidth = 3.dp.toPx()
+                    drawCircle(
+                        color = Color(0xFFF06292),
+                        radius = size.minDimension / 2.5f,
+                        style = Stroke(width = strokeWidth),
+                    )
+                    val radius = size.minDimension / 2.5f
+                    val angle = 45f * (PI.toFloat() / 180f)
+                    drawLine(
+                        color = Color(0xFFF06292),
+                        start = center + Offset(cos(angle) * radius, sin(angle) * radius),
+                        end = center - Offset(cos(angle) * radius, sin(angle) * radius),
+                        strokeWidth = strokeWidth,
+                    )
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                Text(
+                    text = if (isGameOver) "GAME OVER" else "NO MORE MOVES",
+                    color = Color(0xFFD1C4E9),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                    textAlign = TextAlign.Center,
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    text = if (isGameOver)
+                        "No more moves left. Better luck next time!"
+                    else "The board is locked. You can use your queue to force a spawn or restart the match to try again.",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 22.sp,
+                )
+
+                Spacer(Modifier.height(32.dp))
+
+                if (!isGameOver) {
+                    Button(
+                        onClick = onUseQueue,
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF4F6BFF),
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Text("USE QUEUE", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                }
+
+                OutlinedButton(
+                    onClick = onRestart,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        Color.White.copy(alpha = 0.3f),
+                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                ) {
+                    Text("RESTART GAME", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
-        )
+        }
     }
 }
 
