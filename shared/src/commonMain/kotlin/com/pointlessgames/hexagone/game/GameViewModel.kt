@@ -1,14 +1,12 @@
 package com.pointlessgames.hexagone.game
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.PreviewCell
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 internal class GameViewModel : ViewModel() {
@@ -22,10 +20,10 @@ internal class GameViewModel : ViewModel() {
     private val _pendingMerge = MutableStateFlow<MergeTransition?>(null)
     val pendingMerge: StateFlow<MergeTransition?> = _pendingMerge.asStateFlow()
 
-    private val _score = MutableStateFlow(4000)
+    private val _score = MutableStateFlow(0)
     val score: StateFlow<Int> = _score.asStateFlow()
 
-    private val _bestScore = MutableStateFlow(4850)
+    private val _bestScore = MutableStateFlow(0)
     val bestScore: StateFlow<Int> = _bestScore.asStateFlow()
 
     private val _level = MutableStateFlow(4)
@@ -42,13 +40,35 @@ internal class GameViewModel : ViewModel() {
 
     private fun generateInitialGrid() {
         val cells = mutableListOf<HexagonCell>()
-        for (y in 0 until rows) {
-            for (x in 0 until columns) {
-                if ((x + y) % 5 == 0) {
-                    cells.add(HexagonCell("cell_${idCounter++}", x, y, Random.nextInt(1, 3)))
+        
+        // 1. Guaranteed move: Pick two adjacent random cells and give them same value
+        val startX = Random.nextInt(columns)
+        val startY = Random.nextInt(rows)
+        val neighbors = getNeighbors(startX, startY)
+        
+        if (neighbors.isNotEmpty()) {
+            val (nx, ny) = neighbors.random()
+            val startValue = Random.nextInt(1, 3)
+            cells.add(HexagonCell("cell_${idCounter++}", startX, startY, startValue))
+            cells.add(HexagonCell("cell_${idCounter++}", nx, ny, startValue))
+        }
+
+        // 2. Add 3-5 more random tiles to the board
+        val count = Random.nextInt(2, 4)
+        repeat(count) {
+            val occupied = cells.map { it.x to it.y }.toSet()
+            val empty = mutableListOf<Pair<Int, Int>>()
+            for (y in 0 until rows) {
+                for (x in 0 until columns) {
+                    if (x to y !in occupied) empty.add(x to y)
                 }
             }
+            if (empty.isNotEmpty()) {
+                val (rx, ry) = empty.random()
+                cells.add(HexagonCell("cell_${idCounter++}", rx, ry, Random.nextInt(1, 3)))
+            }
         }
+        
         _gridState.value = cells
     }
 
@@ -63,23 +83,38 @@ internal class GameViewModel : ViewModel() {
         existingPreviews: List<PreviewCell>,
         count: Int
     ): List<PreviewCell> {
-        val occupied = (currentGrid.map { it.x to it.y } + existingPreviews.map { it.x to it.y }).toSet()
-        val emptyPositions = mutableListOf<Pair<Int, Int>>()
-        for (y in 0 until rows) {
-            for (x in 0 until columns) {
-                if (x to y !in occupied) {
-                    emptyPositions.add(x to y)
-                }
-            }
-        }
-
+        val spawnPool = if (currentGrid.isEmpty()) listOf(1, 2) else currentGrid.map { it.value }.distinct()
         val newPreviews = existingPreviews.toMutableList()
         val needed = count - newPreviews.size
         
-        if (needed > 0 && emptyPositions.isNotEmpty()) {
-            val selected = emptyPositions.shuffled().take(needed)
-            selected.forEach { (x, y) ->
-                newPreviews.add(PreviewCell("preview_${previewIdCounter++}", x, y, Random.nextInt(1, 3), newPreviews.size))
+        if (needed <= 0) return newPreviews.mapIndexed { index, p -> p.copy(rank = index) }
+
+        repeat(needed) {
+            val currentOccupied = (currentGrid.map { it.x to it.y } + newPreviews.map { it.x to it.y }).toSet()
+            val emptyPositions = mutableListOf<Pair<Int, Int>>()
+            for (y in 0 until rows) {
+                for (x in 0 until columns) {
+                    if (x to y !in currentOccupied) emptyPositions.add(x to y)
+                }
+            }
+
+            if (emptyPositions.isNotEmpty()) {
+                val value = spawnPool.random()
+                
+                // Smart positioning: Prefer spots near tiles with the same value
+                val matchingPositions = emptyPositions.filter { pos ->
+                    getNeighbors(pos.first, pos.second).any { (nx, ny) ->
+                        currentGrid.any { it.x == nx && it.y == ny && it.value == value }
+                    }
+                }
+                
+                val finalPos = if (matchingPositions.isNotEmpty() && Random.nextFloat() < 0.6f) {
+                    matchingPositions.random()
+                } else {
+                    emptyPositions.random()
+                }
+                
+                newPreviews.add(PreviewCell("preview_${previewIdCounter++}", finalPos.first, finalPos.second, value, newPreviews.size))
             }
         }
         
@@ -133,6 +168,13 @@ internal class GameViewModel : ViewModel() {
         } + HexagonCell("cell_${idCounter++}", merge.targetX, merge.targetY, merge.newValue)
 
         _gridState.value = stateAfterMerge
+        
+        // Playful score update
+        _score.value += merge.newValue * (merge.mergingCells.size)
+        if (_score.value > _bestScore.value) {
+            _bestScore.value = _score.value
+        }
+
         spawnFromQueue(stateAfterMerge)
     }
 
@@ -166,11 +208,12 @@ internal class GameViewModel : ViewModel() {
             
             if (emptyPositions.isNotEmpty()) {
                 val (rx, ry) = emptyPositions.random()
+                val spawnPool = if (currentState.isEmpty()) listOf(1, 2) else currentState.map { it.value }.distinct()
                 val spawnedState = currentState + HexagonCell(
                     id = "cell_${idCounter++}",
                     x = rx,
                     y = ry,
-                    value = Random.nextInt(1, 3)
+                    value = spawnPool.random()
                 )
                 spawnedState to currentPreviews.size
             } else {
