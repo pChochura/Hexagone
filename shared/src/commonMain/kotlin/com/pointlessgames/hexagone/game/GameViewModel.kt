@@ -123,7 +123,6 @@ internal class GameViewModel : ViewModel() {
         count: Int
     ): List<PreviewCell> {
         val boardPool = if (currentGrid.isEmpty()) listOf(1, 2) else currentGrid.map { it.value }.distinct().sorted()
-        // We prefer lower values for spawning to keep the board manageable
         val spawnPool = boardPool.take((boardPool.size * 0.7f).toInt().coerceAtLeast(2))
         
         val newPreviews = existingPreviews.toMutableList()
@@ -144,27 +143,22 @@ internal class GameViewModel : ViewModel() {
             }
 
             if (emptyPositions.isNotEmpty()) {
-                // Determine if we need to force a "solver" tile
                 val isBoardFull = currentOccupancy > occupancyThreshold
                 val solvingPositions = mutableListOf<Pair<Pair<Int, Int>, Int>>()
 
-                // Scan for positions that would create a merge
                 for (pos in emptyPositions) {
                     for (value in spawnPool) {
                         val neighbors = getNeighbors(pos.first, pos.second)
                         val matchingNeighbors = currentGrid.count { it.x to it.y in neighbors && it.value == value }
-                        if (matchingNeighbors >= 1) { // We have at least one match, so this + another same tile nearby makes a group of 2
+                        if (matchingNeighbors >= 1) {
                             solvingPositions.add(pos to value)
                         }
                     }
                 }
 
                 val (finalPos, finalValue) = if (solvingPositions.isNotEmpty() && (isBoardFull || Random.nextFloat() < 0.8f)) {
-                    // Pick a random solving spawn
-                    val (pos, value) = solvingPositions.random()
-                    pos to value
+                    solvingPositions.random()
                 } else {
-                    // Fallback to random empty spot and value
                     emptyPositions.random() to spawnPool.random()
                 }
                 
@@ -181,14 +175,29 @@ internal class GameViewModel : ViewModel() {
         val selectedId = _selectedCellId.value
 
         if (perk == Perk.MOVE_TILE && selectedId != null) {
-            _gridState.value = _gridState.value.map { 
-                if (it.id == selectedId) it.copy(x = x, y = y) else it
+            val cellToMove = _gridState.value.find { it.id == selectedId }
+            if (cellToMove != null) {
+                _gridState.value = _gridState.value.map { 
+                    if (it.id == selectedId) it.copy(x = x, y = y) else it
+                }
+                consumePerk(Perk.MOVE_TILE)
+                _activePerk.value = null
+                _selectedCellId.value = null
+                checkValidMoves()
+                return
             }
-            consumePerk(Perk.MOVE_TILE)
-            _activePerk.value = null
-            _selectedCellId.value = null
-            checkValidMoves()
-            return
+            
+            val previewToMove = _previewState.value.find { it.id == selectedId }
+            if (previewToMove != null) {
+                _previewState.value = _previewState.value.map {
+                    if (it.id == selectedId) it.copy(x = x, y = y) else it
+                }
+                consumePerk(Perk.MOVE_TILE)
+                _activePerk.value = null
+                _selectedCellId.value = null
+                checkValidMoves()
+                return
+            }
         }
 
         val currentState = _gridState.value
@@ -226,6 +235,24 @@ internal class GameViewModel : ViewModel() {
                 if (mergingCells.any { it.id == cell.id }) cell.copy(x = x, y = y) else cell
             }
             _pendingMerge.value = MergeTransition(x, y, mergingCells, newValue)
+        }
+    }
+
+    fun onPreviewClicked(preview: PreviewCell) {
+        if (_pendingMerge.value != null) return
+
+        when (_activePerk.value) {
+            Perk.MOVE_TILE -> {
+                _selectedCellId.value = preview.id
+            }
+            Perk.REMOVE_TILE -> {
+                val remaining = _previewState.value.filter { it.id != preview.id }
+                _previewState.value = pickRandomPreviews(_gridState.value, remaining, 3)
+                consumePerk(Perk.REMOVE_TILE)
+                _activePerk.value = null
+                checkValidMoves()
+            }
+            else -> {}
         }
     }
 
@@ -326,8 +353,6 @@ internal class GameViewModel : ViewModel() {
             return
         }
 
-        // If player is currently choosing a level-up perk, defer the stuck/gameover state.
-        // Selecting a perk will trigger this check again.
         if (_perkOptions.value.isNotEmpty()) {
             _isStuck.value = false
             _isGameOver.value = false
