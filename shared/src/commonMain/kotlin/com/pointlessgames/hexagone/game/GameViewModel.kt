@@ -262,6 +262,8 @@ internal class GameViewModel : ViewModel() {
     }
 
     fun onAdvanceQueueClicked() {
+        if (_refreshCooldown.value > 0 || _pendingMerge.value != null) return
+
         _isStuck.value = false
         _refreshCooldown.value = 5 // Cooldown of 5 turns
         spawnFromQueue(_gridState.value)

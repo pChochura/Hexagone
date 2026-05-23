@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -66,6 +67,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val highestValue by viewModel.highestValue.collectAsState()
     val isStuck by viewModel.isStuck.collectAsState()
     val isGameOver by viewModel.isGameOver.collectAsState()
+    val refreshCooldown by viewModel.refreshCooldown.collectAsState()
     val density = LocalDensity.current
 
     var finishedMergeCount by remember { mutableStateOf(0) }
@@ -142,13 +144,33 @@ internal fun GameScreen(viewModel: GameViewModel) {
 
         Spacer(Modifier.height(8.dp))
 
-        Box(modifier = Modifier.size(60.dp)) {
-            val nextValue = previewState.firstOrNull()?.value ?: 1
-            Hexagon(
-                value = nextValue.toString(),
-                backgroundColor = HexagonGridDefaults.getColorForValue(nextValue),
-                modifier = Modifier.fillMaxSize().aspectRatio(1 / 0.866f),
-            )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(modifier = Modifier.size(60.dp)) {
+                val nextValue = previewState.firstOrNull()?.value ?: 1
+                Hexagon(
+                    value = nextValue.toString(),
+                    backgroundColor = HexagonGridDefaults.getColorForValue(nextValue),
+                    modifier = Modifier.fillMaxSize().aspectRatio(1 / 0.866f),
+                )
+            }
+
+            Button(
+                onClick = { viewModel.onAdvanceQueueClicked() },
+                enabled = refreshCooldown == 0 && pendingMerge == null,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFF06292).copy(alpha = if (refreshCooldown == 0) 1f else 0.3f),
+                    contentColor = Color.White
+                )
+            ) {
+                Text(
+                    text = if (refreshCooldown > 0) "$refreshCooldown" else "ADVANCE",
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         Box(
