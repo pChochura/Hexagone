@@ -1,4 +1,4 @@
-package com.pointlessgames.hexagone.game.ui
+package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
