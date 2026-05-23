@@ -161,7 +161,8 @@ internal fun GameScreen(viewModel: GameViewModel) {
             Text(
                 text = if (activePerk == Perk.MOVE_TILE && selectedCellId == null) "Select a tile to move" 
                        else if (activePerk == Perk.MOVE_TILE) "Select empty spot"
-                       else "Select a tile to remove",
+                       else if (activePerk == Perk.REMOVE_TILE) "Select a tile to remove"
+                       else "Select an empty spot for fusion",
                 color = Color.White.copy(alpha = 0.6f),
                 fontSize = 14.sp
             )
@@ -504,6 +505,11 @@ fun PerkButton(
                         // Trash bin simple
                         drawRect(Color.White, Offset(size.width * 0.2f, size.height * 0.3f), size.copy(width = size.width * 0.6f, height = size.height * 0.6f), style = Stroke(width = strokeWidth))
                         drawLine(Color.White, Offset(size.width * 0.1f, size.height * 0.2f), Offset(size.width * 0.9f, size.height * 0.2f), strokeWidth)
+                    }
+                    Perk.FUSION -> {
+                        // Concentric circles/implosion
+                        drawCircle(Color.White, radius = size.minDimension * 0.4f, style = Stroke(width = strokeWidth))
+                        drawCircle(Color.White, radius = size.minDimension * 0.2f)
                     }
                 }
             }

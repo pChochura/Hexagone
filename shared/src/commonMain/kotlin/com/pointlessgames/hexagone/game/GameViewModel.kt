@@ -176,6 +176,20 @@ internal class GameViewModel : ViewModel() {
             neighborCoords.any { it.first == cell.x && it.second == cell.y }
         }
 
+        if (perk == Perk.FUSION && neighborCells.isNotEmpty()) {
+            val vMax = neighborCells.maxOf { it.value }
+            val n = neighborCells.size
+            val newValue = vMax + n - 1
+
+            _gridState.value = currentState.map { cell ->
+                if (neighborCells.any { it.id == cell.id }) cell.copy(x = x, y = y) else cell
+            }
+            _pendingMerge.value = MergeTransition(x, y, neighborCells, newValue)
+            consumePerk(Perk.FUSION)
+            _activePerk.value = null
+            return
+        }
+
         val valuesToMove = neighborCells.groupBy { it.value }.filter { it.value.size > 1 }.keys
 
         if (valuesToMove.isNotEmpty()) {
@@ -237,6 +251,9 @@ internal class GameViewModel : ViewModel() {
             }
             Perk.REMOVE_TILE -> {
                 _activePerk.value = Perk.REMOVE_TILE
+            }
+            Perk.FUSION -> {
+                _activePerk.value = Perk.FUSION
             }
         }
     }
