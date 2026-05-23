@@ -75,9 +75,9 @@ internal fun GameScreen(viewModel: GameViewModel) {
 
     val moveAnimationSpec = remember {
         spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMediumLow,
-            visibilityThreshold = IntOffset(10, 10),
+            dampingRatio = Spring.DampingRatioNoBouncy, // No overshoot during travel
+            stiffness = Spring.StiffnessMedium,
+            visibilityThreshold = IntOffset(1, 1),
         )
     }
 
@@ -173,8 +173,8 @@ internal fun GameScreen(viewModel: GameViewModel) {
                             val animatedScale by animateFloatAsState(
                                 targetValue = targetScale,
                                 animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMediumLow,
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = 1800f,
                                 ),
                                 label = "ghost_scale",
                             )
@@ -222,9 +222,17 @@ internal fun GameScreen(viewModel: GameViewModel) {
                                 targetValue = targetScale,
                                 animationSpec = spring(
                                     dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMediumLow,
+                                    stiffness = Spring.StiffnessMedium,
                                 ),
                                 label = "cell_scale",
+                            )
+
+                            val alpha by animateFloatAsState(
+                                targetValue = 1f,
+                                animationSpec = spring(
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                label = "cell_alpha"
                             )
                             LaunchedEffect(Unit) {
                                 targetScale = 1f
@@ -240,6 +248,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
                                     )
                                     .offset { animatedOffset }
                                     .graphicsLayer {
+                                        this.alpha = alpha
                                         scaleX = scale
                                         scaleY = scale
                                     },
