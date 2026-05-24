@@ -147,11 +147,7 @@ fun GameGridOverlay(
                         animationSpec = moveAnimationSpec,
                         label = "ghost_offset",
                     )
-                    val targetScale = when (preview.rank) {
-                        0 -> 0.8f
-                        1 -> 0.6f
-                        else -> 0.4f
-                    }
+                    val targetScale = 0.8f
                     val animatedScale by animateFloatAsState(
                         targetValue = targetScale,
                         animationSpec = spring(

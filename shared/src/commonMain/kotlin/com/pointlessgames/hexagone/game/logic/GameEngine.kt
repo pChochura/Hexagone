@@ -48,50 +48,41 @@ class GameEngine(
         existingPreviews: List<PreviewCell>,
         count: Int
     ): List<PreviewCell> {
+        if (existingPreviews.isNotEmpty()) return existingPreviews
+
         val boardPool = if (currentGrid.isEmpty()) listOf(1, 2) else currentGrid.map { it.value }.distinct().sorted()
         val spawnPool = boardPool.take((boardPool.size * 0.7f).toInt().coerceAtLeast(2))
 
-        val newPreviews = existingPreviews.toMutableList()
-        val needed = count - newPreviews.size
-
-        if (needed <= 0) return newPreviews.mapIndexed { index, p -> p.copy(rank = index) }
-
-        val occupancyThreshold = 0.7f
-        val currentOccupancy = currentGrid.size.toFloat() / (columns * rows)
-
-        repeat(needed) {
-            val currentOccupied = (currentGrid.map { it.x to it.y } + newPreviews.map { it.x to it.y }).toSet()
-            val emptyPositions = mutableListOf<Pair<Int, Int>>()
-            for (y in 0 until rows) {
-                for (x in 0 until columns) {
-                    if (x to y !in currentOccupied) emptyPositions.add(x to y)
-                }
-            }
-
-            if (emptyPositions.isNotEmpty()) {
-                val isBoardFull = currentOccupancy > occupancyThreshold
-                val solvingPositions = mutableListOf<Pair<Pair<Int, Int>, Int>>()
-
-                for (pos in emptyPositions) {
-                    for (value in spawnPool) {
-                        val neighbors = getNeighbors(pos.first, pos.second)
-                        val matchingNeighbors = currentGrid.count { it.x to it.y in neighbors && it.value == value }
-                        if (matchingNeighbors >= 1) {
-                            solvingPositions.add(pos to value)
-                        }
-                    }
-                }
-
-                val (finalPos, finalValue) = if (solvingPositions.isNotEmpty() && (isBoardFull || Random.nextFloat() < 0.8f)) {
-                    solvingPositions.random()
-                } else {
-                    emptyPositions.random() to spawnPool.random()
-                }
-
-                newPreviews.add(PreviewCell("preview_${previewIdCounter++}", finalPos.first, finalPos.second, finalValue, newPreviews.size))
+        val currentOccupied = currentGrid.map { it.x to it.y }.toSet()
+        val emptyPositions = mutableListOf<Pair<Int, Int>>()
+        for (y in 0 until rows) {
+            for (x in 0 until columns) {
+                if (x to y !in currentOccupied) emptyPositions.add(x to y)
             }
         }
-        return newPreviews.mapIndexed { index, p -> p.copy(rank = index) }
+
+        if (emptyPositions.isEmpty()) return emptyList()
+
+        val spawnValue = spawnPool.random()
+
+        // Pick a "central" empty tile that has at least 2 empty neighbors
+        val candidates = emptyPositions.filter { pos ->
+            val neighbors = getNeighbors(pos.first, pos.second)
+            neighbors.count { it !in currentOccupied } >= 2
+        }.shuffled()
+
+        val groupPositions = if (candidates.isNotEmpty()) {
+            val center = candidates.first()
+            val neighbors = getNeighbors(center.first, center.second).filter { it !in currentOccupied }
+            val groupSize = Random.nextInt(2, 4) // 2 or 3 tiles
+            neighbors.take(groupSize)
+        } else {
+            listOf(emptyPositions.random())
+        }
+
+        return groupPositions.map { (x, y) ->
+            PreviewCell("preview_${previewIdCounter++}", x, y, spawnValue, 0)
+        }
     }
 
     fun getNeighbors(x: Int, y: Int): List<Pair<Int, Int>> {
@@ -175,27 +166,14 @@ class GameEngine(
     ): Pair<List<HexagonCell>, List<PreviewCell>> {
         if (currentPreviews.isEmpty()) return currentState to currentPreviews
 
-        val spawnableIndex = currentPreviews.indexOfFirst { p -> currentState.none { it.x == p.x && it.y == p.y } }
-
-        val pair = if (spawnableIndex != -1) {
-            val p = currentPreviews[spawnableIndex]
-            (currentState + createCell(p.x, p.y, p.value)) to (spawnableIndex + 1)
-        } else {
-            val occupied = currentState.map { it.x to it.y }.toSet()
-            val empty = mutableListOf<Pair<Int, Int>>()
-            for (y in 0 until rows) for (x in 0 until columns) if (x to y !in occupied) empty.add(x to y)
-            if (empty.isNotEmpty()) {
-                val (rx, ry) = empty.random()
-                val pool = if (currentState.isEmpty()) listOf(1, 2) else currentState.map { it.value }.distinct()
-                (currentState + createCell(rx, ry, pool.random())) to currentPreviews.size
-            } else currentState to 0
+        var newState = currentState
+        currentPreviews.forEach { p ->
+            if (newState.none { it.x == p.x && it.y == p.y }) {
+                newState = newState + createCell(p.x, p.y, p.value)
+            }
         }
 
-        val newState = pair.first
-        val consumedCount = pair.second
-
-        val remaining = currentPreviews.drop(consumedCount).filter { p -> newState.none { it.x == p.x && it.y == p.y } }
-        val newPreviews = pickRandomPreviews(newState, remaining, 3)
-        return newState to newPreviews
+        val nextPreviews = pickRandomPreviews(newState, emptyList(), 3)
+        return newState to nextPreviews
     }
 }
