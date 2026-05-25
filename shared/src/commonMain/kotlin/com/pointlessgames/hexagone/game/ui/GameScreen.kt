@@ -25,7 +25,6 @@ import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
 import com.pointlessgames.hexagone.game.ui.components.LevelProgressSection
-import com.pointlessgames.hexagone.game.ui.components.NextPieceSection
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
 
@@ -56,12 +55,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
         ScoreSection(
             score = uiState.score,
             bestScore = uiState.bestScore,
-            combo = uiState.combo
-        )
-
-        Spacer(Modifier.weight(0.1f))
-
-        NextPieceSection(
+            combo = uiState.combo,
             previewState = uiState.preview,
             activePerk = uiState.activePerk,
             selectedCellId = uiState.selectedCellId
