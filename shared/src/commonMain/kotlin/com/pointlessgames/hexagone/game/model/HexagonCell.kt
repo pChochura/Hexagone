@@ -22,7 +22,8 @@ data class MergeTransition(
     val targetY: Int,
     val mergingCells: List<HexagonCell>,
     val newValue: Int,
-    val totalCells: Int
+    val totalCells: Int,
+    val uniqueGroups: Int
 )
 
 enum class Perk(

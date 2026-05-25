@@ -1,8 +1,13 @@
 package com.pointlessgames.hexagone.game.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.text.style.TextAlign
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.ScorePopup
@@ -78,17 +85,23 @@ internal fun GameScreen(viewModel: GameViewModel) {
     ) {
         ScoreSection(score = score, bestScore = bestScore)
 
-        if (combo > 1) {
-            Text(
-                text = "COMBO x$combo!",
-                color = Color(0xFFFFD700),
-                fontWeight = FontWeight.Black,
-                fontSize = 24.sp,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+        Box(modifier = Modifier.height(48.dp), contentAlignment = Alignment.Center) {
+            this@Column.AnimatedVisibility(
+                visible = combo > 0,
+                enter = fadeIn() + scaleIn(initialScale = 0.5f),
+                exit = fadeOut() + scaleOut(targetScale = 0.5f)
+            ) {
+                Text(
+                    text = "COMBO x${combo + 1}!",
+                    color = Color(0xFFFFD700),
+                    fontWeight = FontWeight.Black,
+                    fontSize = 32.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(16.dp))
 
         NextPieceSection(
             previewState = previewState,

@@ -228,7 +228,16 @@ internal class GameViewModel : ViewModel() {
             _pendingMerge.value = merge
             if (perk == Perk.FUSION) {
                 consumePerk(Perk.FUSION)
+            }
+        } else {
+            // ONLY reset combo if it's a natural turn placement with no merge
+            if (perk == null) {
+                _combo.value = 0
+            } else if (perk == Perk.CHAIN_MERGE) {
+                // If Chain Merge perk was used but didn't result in a merge, consume it anyway and break combo
+                consumePerk(Perk.CHAIN_MERGE)
                 _activePerk.value = null
+                _combo.value = 0
             }
         }
     }
@@ -421,6 +430,7 @@ internal class GameViewModel : ViewModel() {
     private fun restartGame() {
         stateHistory.clear()
         _score.value = 0
+        _combo.value = 0
         _isGameOver.value = false
         _isStuck.value = false
         _collectedPerks.value = emptyList()
@@ -441,12 +451,23 @@ internal class GameViewModel : ViewModel() {
             _isBusy.value = true
             _pendingMerge.value = null
 
+            // 1. Apply CURRENT combo multiplier to score
             val comboMultiplier = _combo.value + 1
-            _combo.value = comboMultiplier
-
             val addedScore = merge.newValue * merge.totalCells * comboMultiplier
             _score.value += addedScore
             if (_score.value > _bestScore.value) _bestScore.value = _score.value
+
+            // 2. Update combo for the NEXT merge
+            val isChainMergeActive = _activePerk.value == Perk.CHAIN_MERGE
+            val isFusionActive = _activePerk.value == Perk.FUSION
+            
+            if (merge.uniqueGroups > 1 || isChainMergeActive) {
+                // Multi-group merges and chain reactions grow the combo
+                _combo.value += (if (isChainMergeActive) 1 else 0) + (merge.uniqueGroups - 1)
+            } else if (!isFusionActive) {
+                // Only reset if it's a natural single-group merge (not Fusion/Chain)
+                _combo.value = 0
+            }
 
             val stateAfterMerge = _gridState.value.filter { cell ->
                 merge.mergingCells.none { it.id == cell.id } && (cell.x != merge.targetX || cell.y != merge.targetY)
@@ -469,9 +490,8 @@ internal class GameViewModel : ViewModel() {
             } else {
                 if (_activePerk.value == Perk.CHAIN_MERGE) {
                     consumePerk(Perk.CHAIN_MERGE)
-                    _activePerk.value = null
                 }
-                _combo.value = 0
+                _activePerk.value = null
                 spawnFromQueue(stateAfterMerge)
             }
         }

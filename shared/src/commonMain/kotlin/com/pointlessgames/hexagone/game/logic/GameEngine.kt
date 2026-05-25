@@ -125,7 +125,7 @@ class GameEngine(
             val n = mergingCells.size + (if (centerCell != null && centerCell.value in valuesToMerge) 1 else 0)
             val k = (mergingCells + listOfNotNull(centerCell).filter { it.value in valuesToMerge }).distinctBy { it.value }.size
             val newValue = vMax + n - k
-            return MergeTransition(x, y, mergingCells, newValue, n)
+            return MergeTransition(x, y, mergingCells, newValue, n, k)
         }
         return null
     }
@@ -145,7 +145,8 @@ class GameEngine(
             val vMax = allCells.maxOf { it.value }
             val n = allCells.size
             val newValue = vMax + n - 1
-            return MergeTransition(x, y, neighborCells, newValue, n)
+            // Fusion is always considered 1 unique group for combo logic
+            return MergeTransition(x, y, neighborCells, newValue, n, 1)
         }
         return null
     }
