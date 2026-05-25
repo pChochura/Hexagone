@@ -164,7 +164,7 @@ internal class GameViewModel : ViewModel() {
             var nextPerkOptions = state.perkOptions
             if (lvl > lastLevel) {
                 lastLevel = lvl
-                nextPerkOptions = List(3) { Perk.entries.random() }
+                nextPerkOptions = Perk.entries.shuffled().take(3)
             }
 
             val highest = state.grid.maxOfOrNull { it.value } ?: 1

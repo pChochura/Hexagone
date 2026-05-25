@@ -1,7 +1,6 @@
 package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,9 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -120,157 +117,11 @@ private fun PerkButton(
                     .clickable(onClick = onClick),
                 contentAlignment = Alignment.Center,
             ) {
-                Canvas(modifier = Modifier.size(24.dp)) {
-                    val strokeWidth = 2.dp.toPx()
-                    when (perk) {
-                        Perk.ADVANCE_QUEUE -> {
-                            val path = androidx.compose.ui.graphics.Path().apply {
-                                moveTo(0f, 0f)
-                                lineTo(size.width * 0.5f, size.height * 0.5f)
-                                lineTo(0f, size.height)
-                                moveTo(size.width * 0.5f, 0f)
-                                lineTo(size.width, size.height * 0.5f)
-                                lineTo(size.width * 0.5f, size.height)
-                            }
-                            drawPath(path, color = Color.White, style = Stroke(width = strokeWidth))
-                        }
-
-                        Perk.MOVE_TILE -> {
-                            drawLine(
-                                Color.White,
-                                Offset(size.width * 0.5f, 0f),
-                                Offset(size.width * 0.5f, size.height),
-                                strokeWidth,
-                            )
-                            drawLine(
-                                Color.White,
-                                Offset(0f, size.height * 0.5f),
-                                Offset(size.width, size.height * 0.5f),
-                                strokeWidth,
-                            )
-                        }
-
-                        Perk.REMOVE_TILE -> {
-                            drawRect(
-                                Color.White,
-                                Offset(size.width * 0.2f, size.height * 0.3f),
-                                size.copy(width = size.width * 0.6f, height = size.height * 0.6f),
-                                style = Stroke(width = strokeWidth),
-                            )
-                            drawLine(
-                                Color.White,
-                                Offset(size.width * 0.1f, size.height * 0.2f),
-                                Offset(size.width * 0.9f, size.height * 0.2f),
-                                strokeWidth,
-                            )
-                        }
-
-                        Perk.FUSION -> {
-                            drawCircle(
-                                Color.White,
-                                radius = size.minDimension * 0.4f,
-                                style = Stroke(width = strokeWidth),
-                            )
-                            drawCircle(Color.White, radius = size.minDimension * 0.2f)
-                        }
-
-                        Perk.SWAP_TILES -> {
-                            val arrowSize = size.width * 0.3f
-                            drawLine(
-                                Color.White,
-                                Offset(0f, size.height * 0.3f),
-                                Offset(size.width, size.height * 0.3f),
-                                strokeWidth,
-                            )
-                            drawLine(
-                                Color.White,
-                                Offset(size.width, size.height * 0.3f),
-                                Offset(size.width - arrowSize, size.height * 0.15f),
-                                strokeWidth,
-                            )
-                            drawLine(
-                                Color.White,
-                                Offset(size.width, size.height * 0.3f),
-                                Offset(size.width - arrowSize, size.height * 0.45f),
-                                strokeWidth,
-                            )
-
-                            drawLine(
-                                Color.White,
-                                Offset(0f, size.height * 0.7f),
-                                Offset(size.width, size.height * 0.7f),
-                                strokeWidth,
-                            )
-                            drawLine(
-                                Color.White,
-                                Offset(0f, size.height * 0.7f),
-                                Offset(arrowSize, size.height * 0.55f),
-                                strokeWidth,
-                            )
-                            drawLine(
-                                Color.White,
-                                Offset(0f, size.height * 0.7f),
-                                Offset(arrowSize, size.height * 0.85f),
-                                strokeWidth,
-                            )
-                        }
-
-                        Perk.CHAIN_MERGE -> {
-                            drawCircle(
-                                Color.White,
-                                radius = size.width * 0.15f,
-                                center = Offset(size.width * 0.25f, size.height * 0.25f),
-                                style = Stroke(width = strokeWidth),
-                            )
-                            drawLine(
-                                Color.White,
-                                Offset(size.width * 0.35f, size.height * 0.35f),
-                                Offset(size.width * 0.65f, size.height * 0.65f),
-                                strokeWidth,
-                            )
-                            drawCircle(
-                                Color.White,
-                                radius = size.width * 0.15f,
-                                center = Offset(size.width * 0.75f, size.height * 0.75f),
-                                style = Stroke(width = strokeWidth),
-                            )
-                        }
-
-                        Perk.UNDO -> {
-                            drawArc(
-                                color = Color.White,
-                                startAngle = 0f,
-                                sweepAngle = 270f,
-                                useCenter = false,
-                                topLeft = Offset(size.width * 0.1f, size.height * 0.1f),
-                                size = size.copy(
-                                    width = size.width * 0.8f,
-                                    height = size.height * 0.8f,
-                                ),
-                                style = Stroke(width = strokeWidth),
-                            )
-                            val arrowSize = size.width * 0.2f
-                            drawLine(
-                                Color.White,
-                                Offset(size.width * 0.1f, size.height * 0.5f),
-                                Offset(
-                                    size.width * 0.1f - arrowSize,
-                                    size.height * 0.5f - arrowSize,
-                                ),
-                                strokeWidth,
-                            )
-                            drawLine(
-                                Color.White,
-                                Offset(size.width * 0.1f, size.height * 0.5f),
-                                Offset(
-                                    size.width * 0.1f + arrowSize,
-                                    size.height * 0.5f - arrowSize,
-                                ),
-                                strokeWidth,
-                            )
-                        }
-                    }
-                }
+                PerkIcon(
+                    perk = perk,
+                    modifier = Modifier.size(24.dp),
+                    color = Color.White
+                )
             }
 
             // Badge counter - Moved outside the body and positioned absolutely to prevent clipping
