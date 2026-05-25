@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -98,17 +99,25 @@ private fun PerkSelectionDialog(
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
                 .fillMaxWidth()
-                .background(Color(0xFF1C1C24), RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                .background(Color(0xFF1C1C24), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .border(
                     1.dp,
-                    Color.White.copy(alpha = 0.1f),
-                    RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                    Color.White.copy(alpha = 0.08f),
+                    RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
                 )
-                .padding(24.dp),
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            // Drag Handle
+            Box(
+                modifier = Modifier
+                    .padding(bottom = 20.dp)
+                    .size(width = 40.dp, height = 4.dp)
+                    .background(Color.White.copy(alpha = 0.1f), CircleShape)
+            )
+
             Text(
                 text = "LEVEL UP!",
                 color = Color(0xFFF06292),
@@ -198,17 +207,25 @@ private fun StatusDialog(
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
                 .fillMaxWidth()
-                .background(Color(0xFF1C1C24), RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                .background(Color(0xFF1C1C24), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .border(
                     1.dp,
-                    Color.White.copy(alpha = 0.1f),
-                    RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                    Color.White.copy(alpha = 0.08f),
+                    RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
                 )
-                .padding(24.dp),
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            // Drag Handle
+            Box(
+                modifier = Modifier
+                    .padding(bottom = 20.dp)
+                    .size(width = 40.dp, height = 4.dp)
+                    .background(Color.White.copy(alpha = 0.1f), CircleShape)
+            )
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(),
