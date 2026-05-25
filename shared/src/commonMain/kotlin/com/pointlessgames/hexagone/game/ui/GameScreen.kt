@@ -9,9 +9,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,54 +44,58 @@ internal fun GameScreen(viewModel: GameViewModel) {
                     listOf(Color(0xFF1C1C24), Color(0xFF0A0A0E)),
                 ),
             )
-            .systemBarsPadding()
+            .statusBarsPadding()
             .graphicsLayer { alpha = gridAlpha }
-            .padding(16.dp)
             .animateContentSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        ScoreSection(
-            score = uiState.score,
-            bestScore = uiState.bestScore,
-            combo = uiState.combo,
-            level = uiState.level,
-            progress = viewModel.getLevelProgress(),
-            previewState = uiState.preview,
-            activePerk = uiState.activePerk,
-            selectedCellId = uiState.selectedCellId
-        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            ScoreSection(
+                score = uiState.score,
+                bestScore = uiState.bestScore,
+                combo = uiState.combo,
+                level = uiState.level,
+                progress = viewModel.getLevelProgress(),
+                previewState = uiState.preview,
+                activePerk = uiState.activePerk,
+                selectedCellId = uiState.selectedCellId,
+            )
 
-        Spacer(Modifier.weight(0.1f))
+            Spacer(Modifier.weight(0.1f))
 
-        GameGridOverlay(
-            gridState = uiState.grid,
-            previewState = uiState.preview,
-            pendingMerge = uiState.pendingMerge,
-            hoveredMerge = uiState.hoveredMerge,
-            activePerk = uiState.activePerk,
-            selectedCellId = uiState.selectedCellId,
-            particles = uiState.particles,
-            scorePopups = uiState.scorePopups,
-            combo = uiState.combo,
-            onEmptySpaceClick = viewModel::onEmptySpaceClicked,
-            onEmptySpaceTouchDown = viewModel::onEmptySpaceTouchDown,
-            onEmptySpaceTouchUp = viewModel::onEmptySpaceTouchUp,
-            onCellClick = viewModel::onCellClicked,
-            onMergeAnimationFinished = viewModel::onMergeAnimationFinished,
-            onAddParticles = viewModel::addParticles,
-            onAddScorePopup = viewModel::addScorePopup,
-            modifier = Modifier.weight(1f).fillMaxWidth()
-        )
+            GameGridOverlay(
+                gridState = uiState.grid,
+                previewState = uiState.preview,
+                pendingMerge = uiState.pendingMerge,
+                hoveredMerge = uiState.hoveredMerge,
+                activePerk = uiState.activePerk,
+                selectedCellId = uiState.selectedCellId,
+                particles = uiState.particles,
+                scorePopups = uiState.scorePopups,
+                combo = uiState.combo,
+                onEmptySpaceClick = viewModel::onEmptySpaceClicked,
+                onEmptySpaceTouchDown = viewModel::onEmptySpaceTouchDown,
+                onEmptySpaceTouchUp = viewModel::onEmptySpaceTouchUp,
+                onCellClick = viewModel::onCellClicked,
+                onMergeAnimationFinished = viewModel::onMergeAnimationFinished,
+                onAddParticles = viewModel::addParticles,
+                onAddScorePopup = viewModel::addScorePopup,
+                modifier = Modifier.weight(1f, fill = false).fillMaxWidth(),
+            )
 
-        Spacer(Modifier.weight(0.1f))
+            Spacer(Modifier.weight(0.1f))
+        }
 
         PerkBar(
             collectedPerks = uiState.collectedPerks,
             activePerk = uiState.activePerk,
-            onPerkClick = viewModel::onUsePerkClicked
+            onPerkClick = viewModel::onUsePerkClicked,
         )
-
-        Spacer(Modifier.height(16.dp))
     }
 
     GameOverlays(
@@ -102,6 +105,6 @@ internal fun GameScreen(viewModel: GameViewModel) {
         collectedPerks = uiState.collectedPerks,
         onPerkSelected = viewModel::onPerkSelected,
         onUsePerk = viewModel::onUsePerkClicked,
-        onRestart = viewModel::onRestartClicked
+        onRestart = viewModel::onRestartClicked,
     )
 }

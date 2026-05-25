@@ -11,18 +11,22 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
@@ -34,25 +38,50 @@ fun PerkBar(
     onPerkClick: (Perk) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        collectedPerks.distinct().forEach { perk ->
-            val count = collectedPerks.count { it == perk }
-            val isActive = activePerk == perk
-
-            PerkButton(
-                perk = perk,
-                count = count,
-                isActive = isActive,
-                onClick = { onPerkClick(perk) },
+            .height(100.dp)
+            .background(Color(0xFF1C1C24), RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+            .border(
+                1.dp,
+                Color.White.copy(alpha = 0.05f),
+                RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
             )
+            .padding(horizontal = 16.dp)
+            .navigationBarsPadding(),
+        contentAlignment = Alignment.Center
+    ) {
+        if (collectedPerks.isEmpty()) {
+            Text(
+                text = "Level up to collect perks and enhance your strategy!",
+                color = Color.White.copy(alpha = 0.3f),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                lineHeight = 18.sp,
+                modifier = Modifier.padding(horizontal = 32.dp)
+            )
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                collectedPerks.distinct().forEach { perk ->
+                    val count = collectedPerks.count { it == perk }
+                    val isActive = activePerk == perk
 
-            Spacer(Modifier.size(16.dp))
+                    PerkButton(
+                        perk = perk,
+                        count = count,
+                        isActive = isActive,
+                        onClick = { onPerkClick(perk) },
+                    )
+
+                    Spacer(Modifier.size(16.dp))
+                }
+            }
         }
     }
 }
@@ -77,6 +106,7 @@ private fun PerkButton(
                     color = if (isActive) Color(0xFFF06292) else Color.White.copy(alpha = 0.1f),
                     shape = CircleShape,
                 )
+                .clip(CircleShape)
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center,
         ) {
