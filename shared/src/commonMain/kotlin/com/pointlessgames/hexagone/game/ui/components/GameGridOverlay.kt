@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +36,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
@@ -76,135 +76,126 @@ fun GameGridOverlay(
     onEmptySpaceTouchUp: () -> Unit,
     onCellClick: (HexagonCell) -> Unit,
     onMergeAnimationFinished: () -> Unit,
-    onParticlesUpdate: (List<Particle>) -> Unit,
-    onPopupsUpdate: (List<ScorePopup>) -> Unit,
+    onAddParticles: (List<Particle>) -> Unit,
+    onAddScorePopup: (Float, Float, Int, Color) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
     var finishedMergeCount by remember { mutableStateOf(0) }
 
-    LaunchedEffect(pendingMerge) {
-        val merge = pendingMerge
-        if (merge != null) {
-            finishedMergeCount = 0
-            if (merge.mergingCells.isEmpty()) {
-                onMergeAnimationFinished()
-            } else {
-                snapshotFlow { finishedMergeCount }
-                    .filter { it >= merge.mergingCells.size }
-                    .first()
-                onMergeAnimationFinished()
-            }
-        }
-    }
-
-    val moveAnimationSpec = remember {
-        spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessMedium,
-            visibilityThreshold = IntOffset(1, 1),
-        )
-    }
-
-    val infiniteTransition = rememberInfiniteTransition(label = "infinite")
-    val wiggleRotation by infiniteTransition.animateFloat(
-        initialValue = -2f,
-        targetValue = 2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(500),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
-        ),
-        label = "wiggle",
-    )
-
-    val previewPulse by infiniteTransition.animateFloat(
-        initialValue = 0.9f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
-        ),
-        label = "pulse",
-    )
-
-    val previewFloat by infiniteTransition.animateFloat(
-        initialValue = -5f,
-        targetValue = 5f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
-        ),
-        label = "float",
-    )
-
-    val previewAlpha by animateFloatAsState(
-        targetValue = if (hoveredMerge != null) 1f else 0f,
-        animationSpec = tween(300),
-        label = "preview_alpha"
-    )
-
-    val previewScaleTarget by animateFloatAsState(
-        targetValue = if (hoveredMerge != null) 1f else 0.8f,
-        animationSpec = spring(stiffness = Spring.StiffnessLow),
-        label = "preview_scale"
-    )
+    val columns = 5
+    val rows = 4
+    val itemGap = 4.dp
+    val gapPx = with(density) { itemGap.toPx() }
 
     BoxWithConstraints(modifier = modifier) {
-        val columns = 5
-        val rows = 4
-        val itemGap = 4.dp
-        val gapPx = with(density) { itemGap.toPx() }
         val cellWidth = constraints.maxWidth / (1f + (columns - 1) * 0.75f)
         val cellHeight = cellWidth * (sqrt(3f) / 2f)
 
         val itemWidth = (cellWidth - gapPx).coerceAtLeast(0f)
         val itemHeight = (cellHeight - gapPx).coerceAtLeast(0f)
 
-        LaunchedEffect(finishedMergeCount, pendingMerge) {
+        LaunchedEffect(pendingMerge) {
             val merge = pendingMerge
-            if (merge != null && finishedMergeCount >= merge.mergingCells.size) {
-                val targetOffset = HexagonGridDefaults.calculateOffset(
-                    merge.targetX,
-                    merge.targetY,
-                    cellWidth,
-                    cellHeight,
-                    gapPx,
-                )
-                val center = Offset(
-                    targetOffset.x + itemWidth / 2,
-                    targetOffset.y + itemHeight / 2,
-                )
-                val color = HexagonGridDefaults.getColorForValue(merge.newValue)
+            if (merge != null) {
+                finishedMergeCount = 0
+                if (merge.mergingCells.isEmpty()) {
+                    onMergeAnimationFinished()
+                } else {
+                    snapshotFlow { finishedMergeCount }
+                        .filter { it >= merge.mergingCells.size }
+                        .first()
 
-                val newParticles = List(30) {
-                    val angle = Random.nextFloat() * 2 * PI.toFloat()
-                    val speed = Random.nextFloat() * 400f + 200f
-                    Particle(
-                        id = Random.nextLong(),
-                        x = center.x,
-                        y = center.y,
-                        vx = cos(angle) * speed,
-                        vy = sin(angle) * speed,
-                        color = color,
-                        life = 1f,
-                        size = Random.nextFloat() * 8f + 4f,
+                    val targetOffset = HexagonGridDefaults.calculateOffset(
+                        merge.targetX,
+                        merge.targetY,
+                        cellWidth,
+                        cellHeight,
+                        gapPx,
                     )
-                }
-                onParticlesUpdate(particles + newParticles)
+                    val center = Offset(
+                        targetOffset.x + itemWidth / 2,
+                        targetOffset.y + itemHeight / 2,
+                    )
+                    val color = HexagonGridDefaults.getColorForValue(merge.newValue)
 
-                val addedScore = merge.newValue * merge.totalCells
-                val newPopup = ScorePopup(
-                    id = Random.nextLong(),
-                    x = center.x,
-                    y = center.y,
-                    score = addedScore,
-                    life = 1f,
-                    color = color,
-                )
-                onPopupsUpdate(scorePopups + newPopup)
+                    // 1. Add Particles
+                    val newParticles = List(30) {
+                        val angle = Random.nextFloat() * 2 * PI.toFloat()
+                        val speed = Random.nextFloat() * 400f + 200f
+                        Particle(
+                            id = Random.nextLong(),
+                            x = center.x,
+                            y = center.y,
+                            vx = cos(angle) * speed,
+                            vy = sin(angle) * speed,
+                            color = color,
+                            life = 1f,
+                            size = Random.nextFloat() * 8f + 4f,
+                        )
+                    }
+                    onAddParticles(newParticles)
+
+                    // 2. Add Score Popup with correct value (including combo)
+                    val addedScore = merge.newValue * merge.totalCells * (combo + 1)
+                    onAddScorePopup(center.x, center.y, addedScore, color)
+
+                    onMergeAnimationFinished()
+                }
             }
         }
+
+        val moveAnimationSpec = remember {
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMedium,
+                visibilityThreshold = IntOffset(1, 1),
+            )
+        }
+
+        val infiniteTransition = rememberInfiniteTransition(label = "infinite")
+        val wiggleRotation by infiniteTransition.animateFloat(
+            initialValue = -2f,
+            targetValue = 2f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(500),
+                repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+            ),
+            label = "wiggle",
+        )
+
+        val previewPulse by infiniteTransition.animateFloat(
+            initialValue = 0.9f,
+            targetValue = 1.0f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(800),
+                repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+            ),
+            label = "pulse",
+        )
+
+        val previewFloat by infiniteTransition.animateFloat(
+            initialValue = -5f,
+            targetValue = 5f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1200),
+                repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+            ),
+            label = "float",
+        )
+
+        val previewAlpha by animateFloatAsState(
+            targetValue = if (hoveredMerge != null) 1f else 0f,
+            animationSpec = tween(300),
+            label = "preview_alpha",
+        )
+
+        val previewScaleTarget by animateFloatAsState(
+            targetValue = if (hoveredMerge != null) 1f else 0.8f,
+            animationSpec = spring(stiffness = Spring.StiffnessLow),
+            label = "preview_scale",
+        )
 
         HexagonGrid(
             columns = columns,
@@ -218,7 +209,7 @@ fun GameGridOverlay(
                             detectTapGestures(
                                 onPress = {
                                     val job = scope.launch {
-                                        delay(200.milliseconds) // Show preview only after 400ms (Long Press)
+                                        delay(200.milliseconds)
                                         onEmptySpaceTouchDown(col, row)
                                     }
                                     try {
@@ -268,6 +259,7 @@ fun GameGridOverlay(
                         ),
                         label = "ghost_scale",
                     )
+
                     val isSelected = selectedCellId == preview.id
                     val isSelectable =
                         activePerk == Perk.MOVE_TILE || activePerk == Perk.REMOVE_TILE || activePerk == Perk.SWAP_TILES
@@ -435,25 +427,37 @@ fun GameGridOverlay(
             key(popup.id) {
                 Box(
                     modifier = Modifier
-                        .offset {
-                            IntOffset(
-                                popup.x.toInt() - 40,
-                                popup.y.toInt() - 20,
-                            )
+                        .layout { measurable, constraints ->
+                            val placeable = measurable.measure(constraints)
+                            layout(placeable.width, placeable.height) {
+                                placeable.placeRelative(
+                                    (popup.x - placeable.width / 2).toInt(),
+                                    (popup.y - placeable.height / 2).toInt(),
+                                )
+                            }
                         }
-                        .alpha(popup.life),
+                        .zIndex(100f)
+                        .graphicsLayer {
+                            alpha = popup.life
+                            val s = 1f + (1f - popup.life) * 0.3f
+                            scaleX = s
+                            scaleY = s
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = "+${popup.score}",
-                        color = popup.color,
+                        color = Color.White,
                         fontWeight = FontWeight.Black,
-                        fontSize = (24 + (1f - popup.life) * 12).sp,
-                        modifier = Modifier.border(
-                            1.dp,
-                            Color.White.copy(alpha = 0.2f * popup.life),
-                            CircleShape,
-                        ).padding(horizontal = 8.dp, vertical = 2.dp),
+                        fontSize = 24.sp,
+                        modifier = Modifier
+                            .background(Color.Black.copy(alpha = 0.6f * popup.life), CircleShape)
+                            .border(
+                                1.dp,
+                                Color.White.copy(alpha = 0.4f * popup.life),
+                                CircleShape,
+                            )
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
                     )
                 }
             }
@@ -476,12 +480,16 @@ fun GameGridOverlay(
 
             Box(
                 modifier = Modifier
-                    .offset {
-                        IntOffset(
-                            center.x.toInt() - 40,
-                            (center.y.toInt() - 140 + previewFloat).toInt(),
-                        )
+                    .layout { measurable, constraints ->
+                        val placeable = measurable.measure(constraints)
+                        layout(placeable.width, placeable.height) {
+                            placeable.placeRelative(
+                                (center.x - placeable.width / 2).toInt(),
+                                (center.y - 140 + previewFloat - placeable.height / 2).toInt(),
+                            )
+                        }
                     }
+                    .zIndex(101f)
                     .graphicsLayer {
                         scaleX = previewPulse * previewScaleTarget
                         scaleY = previewPulse * previewScaleTarget

@@ -54,39 +54,8 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val selectedCellId by viewModel.selectedCellId.collectAsState()
     val hoveredMerge by viewModel.hoveredMerge.collectAsState()
     val combo by viewModel.combo.collectAsState()
-
-    var particles by remember { mutableStateOf(emptyList<Particle>()) }
-    var scorePopups by remember { mutableStateOf(emptyList<ScorePopup>()) }
-
-    LaunchedEffect(particles.isNotEmpty() || scorePopups.isNotEmpty()) {
-        if (particles.isEmpty() && scorePopups.isEmpty()) return@LaunchedEffect
-        var lastTime = withFrameNanos { it }
-        while (particles.isNotEmpty() || scorePopups.isNotEmpty()) {
-            val currentTime = withFrameNanos { it }
-            val dt = (currentTime - lastTime) / 1_000_000_000f
-            lastTime = currentTime
-
-            if (particles.isNotEmpty()) {
-                particles = particles.mapNotNull { p ->
-                    if (p.life <= 0) null
-                    else p.copy(
-                        x = p.x + p.vx * dt,
-                        y = p.y + p.vy * dt,
-                        life = p.life - dt * 2f,
-                    )
-                }
-            }
-            if (scorePopups.isNotEmpty()) {
-                scorePopups = scorePopups.mapNotNull { s ->
-                    if (s.life <= 0) null
-                    else s.copy(
-                        y = s.y - dt * 100f,
-                        life = s.life - dt * 1.2f
-                    )
-                }
-            }
-        }
-    }
+    val particles by viewModel.particles.collectAsState()
+    val scorePopups by viewModel.scorePopups.collectAsState()
 
     val gridAlpha by animateFloatAsState(
         targetValue = if (isGameOver) 0.1f else 1f,
@@ -144,8 +113,8 @@ internal fun GameScreen(viewModel: GameViewModel) {
             onEmptySpaceTouchUp = viewModel::onEmptySpaceTouchUp,
             onCellClick = viewModel::onCellClicked,
             onMergeAnimationFinished = viewModel::onMergeAnimationFinished,
-            onParticlesUpdate = { particles = it },
-            onPopupsUpdate = { scorePopups = it },
+            onAddParticles = viewModel::addParticles,
+            onAddScorePopup = viewModel::addScorePopup,
             modifier = Modifier.weight(1f).fillMaxWidth()
         )
 

@@ -6,7 +6,14 @@ import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PreviewCell
+import com.pointlessgames.hexagone.game.model.ScorePopup
+import com.pointlessgames.hexagone.game.model.Particle
+import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlin.random.Random
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -72,6 +79,58 @@ internal class GameViewModel : ViewModel() {
     private var lastLevel = 1
     private var stateHistory = mutableListOf<GameState>()
 
+    private val _particles = MutableStateFlow<List<Particle>>(emptyList())
+    val particles: StateFlow<List<Particle>> = _particles.asStateFlow()
+
+    private val _scorePopups = MutableStateFlow<List<ScorePopup>>(emptyList())
+    val scorePopups: StateFlow<List<ScorePopup>> = _scorePopups.asStateFlow()
+
+    private fun startAnimationLoop() {
+        viewModelScope.launch {
+            while (true) {
+                delay(16)
+                val dt = 0.016f
+
+                if (_particles.value.isNotEmpty()) {
+                    _particles.value = _particles.value.mapNotNull { p ->
+                        if (p.life <= 0) null
+                        else p.copy(
+                            x = p.x + p.vx * dt,
+                            y = p.y + p.vy * dt,
+                            life = p.life - dt * 2f,
+                        )
+                    }
+                }
+
+                if (_scorePopups.value.isNotEmpty()) {
+                    _scorePopups.value = _scorePopups.value.mapNotNull { s ->
+                        if (s.life <= 0) null
+                        else s.copy(
+                            y = s.y - dt * 100f,
+                            life = s.life - dt * 1.2f
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun addParticles(newParticles: List<Particle>) {
+        _particles.value = _particles.value + newParticles
+    }
+
+    fun addScorePopup(x: Float, y: Float, score: Int, color: Color) {
+        val newPopup = ScorePopup(
+            id = Random.nextLong(),
+            x = x,
+            y = y,
+            score = score,
+            life = 1f,
+            color = color
+        )
+        _scorePopups.value = _scorePopups.value + newPopup
+    }
+
     private fun saveState() {
         val currentState = GameState(
             grid = _gridState.value,
@@ -107,6 +166,7 @@ internal class GameViewModel : ViewModel() {
 
     init {
         restartGame()
+        startAnimationLoop()
     }
 
     private fun updateLevel() {
