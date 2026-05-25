@@ -3,6 +3,7 @@ package com.pointlessgames.hexagone.game
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.game.logic.GameEngine
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
@@ -49,7 +50,9 @@ internal data class GameState(
     val collectedPerks: List<Perk>
 )
 
-internal class GameViewModel : ViewModel() {
+internal class GameViewModel(
+    private val settingsRepository: SettingsRepository
+) : ViewModel() {
 
     private val engine = GameEngine()
 
@@ -60,6 +63,10 @@ internal class GameViewModel : ViewModel() {
     private var stateHistory = mutableListOf<GameState>()
 
     init {
+        viewModelScope.launch {
+            val best = settingsRepository.getBestScore()
+            _uiState.update { it.copy(bestScore = best) }
+        }
         restartGame()
         startAnimationLoop()
     }
@@ -228,7 +235,7 @@ internal class GameViewModel : ViewModel() {
                 _uiState.update { it.copy(combo = 0) }
             } else if (perk == Perk.CHAIN_MERGE) {
                 finishPerkAction(Perk.CHAIN_MERGE)
-                _uiState.update { it.copy(combo = 0) }
+                _uiState.update { it.copy(activePerk = null, combo = 0) }
             }
         }
     }
@@ -453,6 +460,9 @@ internal class GameViewModel : ViewModel() {
             val addedScore = merge.newValue * merge.totalCells * comboMultiplier
             
             val nextBestScore = if (currentState.score + addedScore > currentState.bestScore) currentState.score + addedScore else currentState.bestScore
+            if (nextBestScore > currentState.bestScore) {
+                settingsRepository.setBestScore(nextBestScore)
+            }
             
             val nextCombo = if (merge.uniqueGroups > 1 || currentState.activePerk == Perk.CHAIN_MERGE) {
                 currentState.combo + (if (currentState.activePerk == Perk.CHAIN_MERGE) 1 else 0) + (merge.uniqueGroups - 1)

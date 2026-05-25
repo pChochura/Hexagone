@@ -17,8 +17,21 @@ class SettingsRepository(
 ) {
     private val lastHintsUsedKey = stringSetPreferencesKey("last_hints_used")
     private val tutorialFinishedKey = booleanPreferencesKey("tutorial_finished")
+    private val bestScoreKey = androidx.datastore.preferences.core.intPreferencesKey("best_score")
     private val dailyChallengeLevelsFinishedKey =
         stringSetPreferencesKey("daily_challenge_levels_finished")
+
+    suspend fun getBestScore(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[bestScoreKey] ?: 0
+    }
+
+    suspend fun setBestScore(score: Int) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[bestScoreKey] = score
+            }
+        }
+    }
 
     suspend fun addDailyChallengeLevelFinished(id: Long) = withContext(Dispatchers.IO) {
         appSettings.updateData {
