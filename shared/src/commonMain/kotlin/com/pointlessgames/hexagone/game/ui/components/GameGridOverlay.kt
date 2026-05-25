@@ -1,5 +1,7 @@
 package com.pointlessgames.hexagone.game.ui.components
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -89,7 +91,7 @@ fun GameGridOverlay(
     val itemGap = 4.dp
     val gapPx = with(density) { itemGap.toPx() }
 
-    BoxWithConstraints(modifier = modifier) {
+    BoxWithConstraints(modifier = modifier.animateContentSize()) {
         val cellWidth = constraints.maxWidth / (1f + (columns - 1) * 0.75f)
         val cellHeight = cellWidth * (sqrt(3f) / 2f)
 

@@ -1,6 +1,7 @@
 package com.pointlessgames.hexagone.game.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -58,12 +60,15 @@ internal fun GameScreen(viewModel: GameViewModel) {
             )
             .systemBarsPadding()
             .graphicsLayer { alpha = gridAlpha }
-            .padding(16.dp),
+            .padding(16.dp)
+            .animateContentSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         ScoreSection(score = uiState.score, bestScore = uiState.bestScore)
 
-        Box(modifier = Modifier.height(48.dp), contentAlignment = Alignment.Center) {
+        Spacer(Modifier.weight(0.1f))
+
+        Box(modifier = Modifier.wrapContentHeight().fillMaxWidth(), contentAlignment = Alignment.Center) {
             this@Column.AnimatedVisibility(
                 visible = uiState.combo > 0,
                 enter = fadeIn() + scaleIn(initialScale = 0.5f),
@@ -79,7 +84,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.weight(0.1f))
 
         NextPieceSection(
             previewState = uiState.preview,
@@ -87,7 +92,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
             selectedCellId = uiState.selectedCellId
         )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.weight(0.1f))
 
         GameGridOverlay(
             gridState = uiState.grid,
@@ -109,7 +114,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
             modifier = Modifier.weight(1f).fillMaxWidth()
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.weight(0.1f))
 
         PerkBar(
             collectedPerks = uiState.collectedPerks,
@@ -123,8 +128,6 @@ internal fun GameScreen(viewModel: GameViewModel) {
             level = uiState.level,
             progress = viewModel.getLevelProgress()
         )
-
-        Spacer(Modifier.height(16.dp))
     }
 
     GameOverlays(

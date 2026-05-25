@@ -1,6 +1,10 @@
 package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,11 +35,15 @@ fun NextPieceSection(
 ) {
     AnimatedContent(
         targetState = activePerk,
-        modifier = modifier.height(110.dp).fillMaxWidth(),
+        modifier = modifier.wrapContentHeight().fillMaxWidth(),
         contentAlignment = Alignment.Center,
+        transitionSpec = {
+            (fadeIn() togetherWith fadeOut()).using(SizeTransform(clip = false))
+        },
+        label = "next_piece_perk"
     ) { activePerk ->
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth().wrapContentHeight(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -47,11 +56,9 @@ fun NextPieceSection(
                 )
                 Text(
                     text = when (activePerk) {
-                        Perk.MOVE_TILE if selectedCellId == null -> "Select a tile to move"
-                        Perk.MOVE_TILE -> "Select empty spot"
+                        Perk.MOVE_TILE -> if (selectedCellId == null) "Select a tile to move" else "Select empty spot"
                         Perk.REMOVE_TILE -> "Select a tile to remove"
-                        Perk.SWAP_TILES if selectedCellId == null -> "Select first tile to swap"
-                        Perk.SWAP_TILES -> "Select second tile to swap"
+                        Perk.SWAP_TILES -> if (selectedCellId == null) "Select first tile to swap" else "Select second tile to swap"
                         else -> "Select an empty spot for fusion"
                     },
                     color = Color.White.copy(alpha = 0.6f),
