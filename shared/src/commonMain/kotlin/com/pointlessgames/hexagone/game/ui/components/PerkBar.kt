@@ -147,6 +147,28 @@ private fun PerkButton(
                         drawLine(Color.White, Offset(0f, size.height * 0.7f), Offset(arrowSize, size.height * 0.55f), strokeWidth)
                         drawLine(Color.White, Offset(0f, size.height * 0.7f), Offset(arrowSize, size.height * 0.85f), strokeWidth)
                     }
+
+                    Perk.CHAIN_MERGE -> {
+                        // Drawing a chain link icon
+                        drawCircle(
+                            Color.White,
+                            radius = size.width * 0.15f,
+                            center = Offset(size.width * 0.25f, size.height * 0.25f),
+                            style = Stroke(width = strokeWidth)
+                        )
+                        drawLine(
+                            Color.White,
+                            Offset(size.width * 0.35f, size.height * 0.35f),
+                            Offset(size.width * 0.65f, size.height * 0.65f),
+                            strokeWidth
+                        )
+                        drawCircle(
+                            Color.White,
+                            radius = size.width * 0.15f,
+                            center = Offset(size.width * 0.75f, size.height * 0.75f),
+                            style = Stroke(width = strokeWidth)
+                        )
+                    }
                 }
             }
 

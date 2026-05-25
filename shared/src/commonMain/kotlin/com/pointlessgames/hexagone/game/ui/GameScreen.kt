@@ -25,8 +25,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Text
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.model.Particle
+import com.pointlessgames.hexagone.game.model.ScorePopup
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
 import com.pointlessgames.hexagone.game.ui.components.LevelProgressSection
@@ -48,24 +52,38 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val collectedPerks by viewModel.collectedPerks.collectAsState()
     val activePerk by viewModel.activePerk.collectAsState()
     val selectedCellId by viewModel.selectedCellId.collectAsState()
+    val hoveredMerge by viewModel.hoveredMerge.collectAsState()
+    val combo by viewModel.combo.collectAsState()
 
     var particles by remember { mutableStateOf(emptyList<Particle>()) }
+    var scorePopups by remember { mutableStateOf(emptyList<ScorePopup>()) }
 
-    LaunchedEffect(particles.isNotEmpty()) {
-        if (particles.isEmpty()) return@LaunchedEffect
+    LaunchedEffect(particles.isNotEmpty() || scorePopups.isNotEmpty()) {
+        if (particles.isEmpty() && scorePopups.isEmpty()) return@LaunchedEffect
         var lastTime = withFrameNanos { it }
-        while (particles.isNotEmpty()) {
+        while (particles.isNotEmpty() || scorePopups.isNotEmpty()) {
             val currentTime = withFrameNanos { it }
             val dt = (currentTime - lastTime) / 1_000_000_000f
             lastTime = currentTime
 
-            particles = particles.mapNotNull { p ->
-                if (p.life <= 0) null
-                else p.copy(
-                    x = p.x + p.vx * dt,
-                    y = p.y + p.vy * dt,
-                    life = p.life - dt * 2f,
-                )
+            if (particles.isNotEmpty()) {
+                particles = particles.mapNotNull { p ->
+                    if (p.life <= 0) null
+                    else p.copy(
+                        x = p.x + p.vx * dt,
+                        y = p.y + p.vy * dt,
+                        life = p.life - dt * 2f,
+                    )
+                }
+            }
+            if (scorePopups.isNotEmpty()) {
+                scorePopups = scorePopups.mapNotNull { s ->
+                    if (s.life <= 0) null
+                    else s.copy(
+                        y = s.y - dt * 100f,
+                        life = s.life - dt * 1.2f
+                    )
+                }
             }
         }
     }
@@ -91,6 +109,16 @@ internal fun GameScreen(viewModel: GameViewModel) {
     ) {
         ScoreSection(score = score, bestScore = bestScore)
 
+        if (combo > 1) {
+            Text(
+                text = "COMBO x$combo!",
+                color = Color(0xFFFFD700),
+                fontWeight = FontWeight.Black,
+                fontSize = 24.sp,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+
         Spacer(Modifier.height(24.dp))
 
         NextPieceSection(
@@ -105,14 +133,19 @@ internal fun GameScreen(viewModel: GameViewModel) {
             gridState = gridState,
             previewState = previewState,
             pendingMerge = pendingMerge,
+            hoveredMerge = hoveredMerge,
             activePerk = activePerk,
             selectedCellId = selectedCellId,
             particles = particles,
+            scorePopups = scorePopups,
+            combo = combo,
             onEmptySpaceClick = viewModel::onEmptySpaceClicked,
+            onEmptySpaceTouchDown = viewModel::onEmptySpaceTouchDown,
+            onEmptySpaceTouchUp = viewModel::onEmptySpaceTouchUp,
             onCellClick = viewModel::onCellClicked,
-            onPreviewClick = viewModel::onPreviewClicked,
             onMergeAnimationFinished = viewModel::onMergeAnimationFinished,
             onParticlesUpdate = { particles = it },
+            onPopupsUpdate = { scorePopups = it },
             modifier = Modifier.weight(1f).fillMaxWidth()
         )
 

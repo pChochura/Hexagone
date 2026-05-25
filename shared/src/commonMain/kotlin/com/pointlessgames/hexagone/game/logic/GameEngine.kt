@@ -99,16 +99,33 @@ class GameEngine(
         val neighborCells = grid.filter { cell ->
             neighborCoords.any { it.first == cell.x && it.second == cell.y }
         }
+        
+        val centerCell = grid.find { it.x == x && it.y == y }
+        
+        // Group neighbors by value
+        val groups = neighborCells.groupBy { it.value }.toMutableMap()
+        
+        // If there's a center cell, add it to the corresponding group
+        centerCell?.let { center ->
+            val group = groups[center.value] ?: emptyList()
+            groups[center.value] = group + center
+        }
 
-        val valuesToMove = neighborCells.groupBy { it.value }.filter { it.value.size > 1 }.keys
+        // A merge happens if any group has at least 2 cells (excluding center-only case)
+        // Actually, if there is a center cell, even 1 neighbor matching it should merge.
+        // So total size >= 2
+        val valuesToMerge = groups.filter { it.value.size >= 2 }.keys
 
-        if (valuesToMove.isNotEmpty()) {
-            val mergingCells = neighborCells.filter { it.value in valuesToMove }
-            val vMax = mergingCells.maxOf { it.value }
-            val n = mergingCells.size
-            val k = mergingCells.distinctBy { it.value }.size
+        if (valuesToMerge.isNotEmpty()) {
+            val mergingCells = neighborCells.filter { it.value in valuesToMerge }
+            // If center cell is part of the merge, it's already in the grid but will be "replaced"
+            // Wait, MergeTransition.mergingCells are the ones that ANIMATE to the center.
+            // If the center cell is already there, it doesn't need to animate.
+            val vMax = (mergingCells + listOfNotNull(centerCell).filter { it.value in valuesToMerge }).maxOf { it.value }
+            val n = mergingCells.size + (if (centerCell != null && centerCell.value in valuesToMerge) 1 else 0)
+            val k = (mergingCells + listOfNotNull(centerCell).filter { it.value in valuesToMerge }).distinctBy { it.value }.size
             val newValue = vMax + n - k
-            return MergeTransition(x, y, mergingCells, newValue)
+            return MergeTransition(x, y, mergingCells, newValue, n)
         }
         return null
     }
@@ -118,12 +135,17 @@ class GameEngine(
         val neighborCells = grid.filter { cell ->
             neighborCoords.any { it.first == cell.x && it.second == cell.y }
         }
+        
+        val centerCell = grid.find { it.x == x && it.y == y }
 
-        if (neighborCells.isNotEmpty()) {
-            val vMax = neighborCells.maxOf { it.value }
-            val n = neighborCells.size
+        if (neighborCells.isNotEmpty() || centerCell != null) {
+            val allCells = neighborCells + listOfNotNull(centerCell)
+            if (allCells.isEmpty()) return null
+            
+            val vMax = allCells.maxOf { it.value }
+            val n = allCells.size
             val newValue = vMax + n - 1
-            return MergeTransition(x, y, neighborCells, newValue)
+            return MergeTransition(x, y, neighborCells, newValue, n)
         }
         return null
     }

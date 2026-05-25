@@ -21,7 +21,8 @@ data class MergeTransition(
     val targetX: Int,
     val targetY: Int,
     val mergingCells: List<HexagonCell>,
-    val newValue: Int
+    val newValue: Int,
+    val totalCells: Int
 )
 
 enum class Perk(val displayName: String, val description: String) {
@@ -29,7 +30,8 @@ enum class Perk(val displayName: String, val description: String) {
     MOVE_TILE("MOVE TILE", "Select a tile and move it to any empty spot."),
     REMOVE_TILE("REMOVE TILE", "Select a tile and remove it from the board."),
     FUSION("FUSION", "Merge all surrounding tiles into a single superior tile."),
-    SWAP_TILES("SWAP TILES", "Select two tiles to swap their positions.")
+    SWAP_TILES("SWAP TILES", "Select two tiles to swap their positions."),
+    CHAIN_MERGE("CHAIN MERGE", "Your next move will trigger chain reactions.")
 }
 
 data class Particle(
@@ -41,4 +43,13 @@ data class Particle(
     val color: Color,
     val life: Float,
     val size: Float
+)
+
+data class ScorePopup(
+    val id: Long,
+    val x: Float,
+    val y: Float,
+    val score: Int,
+    val life: Float,
+    val color: Color
 )
