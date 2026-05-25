@@ -58,6 +58,9 @@ internal class GameViewModel : ViewModel() {
     private val _combo = MutableStateFlow(0)
     val combo: StateFlow<Int> = _combo.asStateFlow()
 
+    private val _isBusy = MutableStateFlow(false)
+    val isBusy: StateFlow<Boolean> = _isBusy.asStateFlow()
+
     private val _isStuck = MutableStateFlow(false)
     val isStuck: StateFlow<Boolean> = _isStuck.asStateFlow()
 
@@ -184,7 +187,7 @@ internal class GameViewModel : ViewModel() {
     }
 
     fun onEmptySpaceClicked(x: Int, y: Int) {
-        if (_pendingMerge.value != null || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
+        if (_pendingMerge.value != null || _isBusy.value || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
         
         saveState()
         _hoveredMerge.value = null
@@ -193,7 +196,7 @@ internal class GameViewModel : ViewModel() {
         val selectedId = _selectedCellId.value
         val previewAtPos = _previewState.value.find { it.x == x && it.y == y }
 
-        if (perk != null && perk != Perk.FUSION && previewAtPos != null) {
+        if (perk != null && perk != Perk.FUSION && perk != Perk.CHAIN_MERGE && previewAtPos != null) {
             if (selectedId == previewAtPos.id) {
                 _selectedCellId.value = null
                 return
@@ -231,7 +234,7 @@ internal class GameViewModel : ViewModel() {
     }
 
     fun onEmptySpaceTouchDown(x: Int, y: Int) {
-        if (_pendingMerge.value != null || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
+        if (_pendingMerge.value != null || _isBusy.value || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
         val perk = _activePerk.value
         if (perk != null && perk != Perk.CHAIN_MERGE && perk != Perk.FUSION) return
 
@@ -277,7 +280,7 @@ internal class GameViewModel : ViewModel() {
     }
 
     fun onPreviewClicked(preview: PreviewCell) {
-        if (_pendingMerge.value != null || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
+        if (_pendingMerge.value != null || _isBusy.value || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
 
         when (val perk = _activePerk.value) {
             Perk.REMOVE_TILE -> {
@@ -299,7 +302,7 @@ internal class GameViewModel : ViewModel() {
     }
 
     fun onCellClicked(cell: HexagonCell) {
-        if (_pendingMerge.value != null || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
+        if (_pendingMerge.value != null || _isBusy.value || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
 
         when (val perk = _activePerk.value) {
             Perk.MOVE_TILE -> {
@@ -433,40 +436,44 @@ internal class GameViewModel : ViewModel() {
 
     fun onMergeAnimationFinished() {
         val merge = _pendingMerge.value ?: return
-        _pendingMerge.value = null
 
-        val comboMultiplier = _combo.value + 1
-        _combo.value = comboMultiplier
-        
-        val addedScore = merge.newValue * merge.totalCells * comboMultiplier
-        _score.value += addedScore
-        if (_score.value > _bestScore.value) _bestScore.value = _score.value
+        viewModelScope.launch {
+            _isBusy.value = true
+            _pendingMerge.value = null
 
-        val stateAfterMerge = _gridState.value.filter { cell ->
-            merge.mergingCells.none { it.id == cell.id } && (cell.x != merge.targetX || cell.y != merge.targetY)
-        } + engine.createCell(merge.targetX, merge.targetY, merge.newValue)
+            val comboMultiplier = _combo.value + 1
+            _combo.value = comboMultiplier
 
-        _gridState.value = stateAfterMerge
-        
-        // Check for chain merge ONLY if the CHAIN_MERGE perk is active
-        val chainMerge = if (_activePerk.value == Perk.CHAIN_MERGE) {
-            engine.calculateMerge(merge.targetX, merge.targetY, stateAfterMerge)
-        } else null
+            val addedScore = merge.newValue * merge.totalCells * comboMultiplier
+            _score.value += addedScore
+            if (_score.value > _bestScore.value) _bestScore.value = _score.value
 
-        if (chainMerge != null) {
-            // Update gridState to move neighbors of the chain merge to the target position
-            _gridState.value = stateAfterMerge.map { cell ->
-                if (chainMerge.mergingCells.any { it.id == cell.id }) cell.copy(x = merge.targetX, y = merge.targetY) else cell
+            val stateAfterMerge = _gridState.value.filter { cell ->
+                merge.mergingCells.none { it.id == cell.id } && (cell.x != merge.targetX || cell.y != merge.targetY)
+            } + engine.createCell(merge.targetX, merge.targetY, merge.newValue)
+
+            _gridState.value = stateAfterMerge
+
+            // Check for chain merge ONLY if the CHAIN_MERGE perk is active
+            val chainMerge = if (_activePerk.value == Perk.CHAIN_MERGE) {
+                engine.calculateMerge(merge.targetX, merge.targetY, stateAfterMerge)
+            } else null
+
+            if (chainMerge != null) {
+                delay(600) // Increased delay to let the user follow the chain
+                // Update gridState to move neighbors of the chain merge to the target position
+                _gridState.value = stateAfterMerge.map { cell ->
+                    if (chainMerge.mergingCells.any { it.id == cell.id }) cell.copy(x = merge.targetX, y = merge.targetY) else cell
+                }
+                _pendingMerge.value = chainMerge
+            } else {
+                if (_activePerk.value == Perk.CHAIN_MERGE) {
+                    consumePerk(Perk.CHAIN_MERGE)
+                    _activePerk.value = null
+                }
+                _combo.value = 0
+                spawnFromQueue(stateAfterMerge)
             }
-            _pendingMerge.value = chainMerge
-        } else {
-            if (_activePerk.value == Perk.CHAIN_MERGE) {
-                consumePerk(Perk.CHAIN_MERGE)
-                _activePerk.value = null
-            }
-            _combo.value = 0
-            spawnFromQueue(stateAfterMerge)
-            checkValidMoves()
         }
     }
 
@@ -495,10 +502,16 @@ internal class GameViewModel : ViewModel() {
     }
 
     private fun spawnFromQueue(currentState: List<HexagonCell>) {
-        val (newState, newPreviews) = engine.spawnFromQueue(currentState, _previewState.value)
-        _gridState.value = newState
-        _previewState.value = newPreviews
-        updateLevel()
+        viewModelScope.launch {
+            _isBusy.value = true
+            if (_combo.value == 0) delay(200) // Delay spawning slightly after a merge ends
+            val (newState, newPreviews) = engine.spawnFromQueue(currentState, _previewState.value)
+            _gridState.value = newState
+            _previewState.value = newPreviews
+            updateLevel()
+            checkValidMoves()
+            _isBusy.value = false
+        }
     }
 
     fun getLevelProgress(): Float {
