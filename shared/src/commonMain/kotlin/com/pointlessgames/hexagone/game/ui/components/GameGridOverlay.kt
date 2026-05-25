@@ -262,6 +262,7 @@ fun GameGridOverlay(
                             animationSpec = moveAnimationSpec,
                             label = "ghost_offset",
                         )
+                        val isMoving = animatedOffset != targetOffset
                         val targetScale = 0.8f
                         val animatedScale by animateFloatAsState(
                             targetValue = targetScale,
@@ -289,7 +290,7 @@ fun GameGridOverlay(
                                     height = with(density) { itemHeight.toDp() },
                                 )
                                 .offset { animatedOffset }
-                                .zIndex(if (isSelected) 2f else 1f)
+                                .zIndex(if (isSelected || isMoving) 5f else 1f)
                                 .graphicsLayer {
                                     scaleX = animatedScale
                                     scaleY = animatedScale
@@ -328,6 +329,7 @@ fun GameGridOverlay(
                                 }
                             },
                         )
+                        val isMoving = animatedOffset != targetOffset
 
                         var targetScale by remember { mutableStateOf(0f) }
                         val scale by animateFloatAsState(
@@ -365,7 +367,7 @@ fun GameGridOverlay(
                                     height = with(density) { itemHeight.toDp() },
                                 )
                                 .offset { animatedOffset }
-                                .zIndex(if (isSelected || isHovered || isMerging) 2f else 1f)
+                                .zIndex(if (isSelected || isHovered || isMerging || isMoving) 5f else 1f)
                                 .graphicsLayer {
                                     this.alpha = alpha
                                     scaleX =
