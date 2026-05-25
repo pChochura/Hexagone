@@ -265,6 +265,9 @@ fun GameGridOverlay(
                     val isSelected = selectedCellId == preview.id
                     val isSelectable =
                         activePerk == Perk.MOVE_TILE || activePerk == Perk.REMOVE_TILE || activePerk == Perk.SWAP_TILES
+                    val isOverlappedByHover = hoveredMerge != null && 
+                            hoveredMerge.targetX == preview.x && 
+                            hoveredMerge.targetY == preview.y
 
                     Hexagon(
                         value = preview.value.toString(),
@@ -281,6 +284,7 @@ fun GameGridOverlay(
                                 scaleX = animatedScale
                                 scaleY = animatedScale
                                 rotationZ = if (isSelectable && !isSelected) wiggleRotation else 0f
+                                alpha = if (isOverlappedByHover) 0f else 1f
                             }
                             .then(
                                 if (isSelected) Modifier.border(
