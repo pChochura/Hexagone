@@ -1,16 +1,10 @@
 package com.pointlessgames.hexagone.game.ui
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -28,10 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
@@ -64,25 +53,11 @@ internal fun GameScreen(viewModel: GameViewModel) {
             .animateContentSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        ScoreSection(score = uiState.score, bestScore = uiState.bestScore)
-
-        Spacer(Modifier.weight(0.1f))
-
-        Box(modifier = Modifier.wrapContentHeight().fillMaxWidth(), contentAlignment = Alignment.Center) {
-            this@Column.AnimatedVisibility(
-                visible = uiState.combo > 0,
-                enter = fadeIn() + scaleIn(initialScale = 0.5f),
-                exit = fadeOut() + scaleOut(targetScale = 0.5f)
-            ) {
-                Text(
-                    text = "COMBO x${uiState.combo + 1}!",
-                    color = Color(0xFFFFD700),
-                    fontWeight = FontWeight.Black,
-                    fontSize = 32.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        ScoreSection(
+            score = uiState.score,
+            bestScore = uiState.bestScore,
+            combo = uiState.combo
+        )
 
         Spacer(Modifier.weight(0.1f))
 
