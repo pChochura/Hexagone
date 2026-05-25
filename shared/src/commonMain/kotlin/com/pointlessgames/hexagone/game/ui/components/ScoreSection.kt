@@ -3,6 +3,9 @@ package com.pointlessgames.hexagone.game.ui.components
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -14,9 +17,11 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -27,10 +32,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -48,11 +56,19 @@ fun ScoreSection(
     score: Int,
     bestScore: Int,
     combo: Int,
+    level: Int,
+    progress: Float,
     previewState: List<PreviewCell>,
     activePerk: Perk?,
     selectedCellId: String?,
     modifier: Modifier = Modifier
 ) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = spring(stiffness = Spring.StiffnessLow),
+        label = "progress_animation"
+    )
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -126,26 +142,61 @@ fun ScoreSection(
 
         Spacer(Modifier.height(16.dp))
 
-        // Unified Score Section with Next Piece Integrated
+        // Unified Score Section with Progress and Next Piece Integrated
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(IntrinsicSize.Min)
                 .background(Color(0xFF1C1C24), RoundedCornerShape(24.dp))
                 .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(24.dp))
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .clip(RoundedCornerShape(24.dp)),
         ) {
+            // Background Progress Bar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(animatedProgress)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                Color(0xFF00E5FF).copy(alpha = 0.08f),
+                                Color(0xFF7C4DFF).copy(alpha = 0.08f),
+                                Color(0xFFF06292).copy(alpha = 0.08f)
+                            )
+                        )
+                    )
+            )
+
             Column(
-                modifier = Modifier.align(Alignment.Center),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = "SCORE",
-                    color = Color.White.copy(alpha = 0.4f),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    letterSpacing = 1.sp
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "SCORE",
+                        color = Color.White.copy(alpha = 0.4f),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "•",
+                        color = Color.White.copy(alpha = 0.2f),
+                        fontSize = 14.sp
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "LVL $level",
+                        color = Color(0xFFF06292).copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        letterSpacing = 1.sp
+                    )
+                }
 
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.wrapContentHeight()) {
                     Text(
@@ -186,17 +237,18 @@ fun ScoreSection(
                     )
                     Text(
                         text = bestScore.toString(),
-                        color = Color(0xFFF06292),
+                        color = Color(0xFFF06292).copy(alpha = 0.8f),
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 16.sp,
                     )
                 }
             }
 
-            // Integrated Next Piece Section (Positioned at the end and smaller)
+            // Integrated Next Piece Section
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
+                    .padding(end = 24.dp)
                     .width(60.dp),
                 contentAlignment = Alignment.Center
             ) {

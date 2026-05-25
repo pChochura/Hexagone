@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
-import com.pointlessgames.hexagone.game.ui.components.LevelProgressSection
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
 
@@ -56,6 +55,8 @@ internal fun GameScreen(viewModel: GameViewModel) {
             score = uiState.score,
             bestScore = uiState.bestScore,
             combo = uiState.combo,
+            level = uiState.level,
+            progress = viewModel.getLevelProgress(),
             previewState = uiState.preview,
             activePerk = uiState.activePerk,
             selectedCellId = uiState.selectedCellId
@@ -92,11 +93,6 @@ internal fun GameScreen(viewModel: GameViewModel) {
         )
 
         Spacer(Modifier.height(16.dp))
-
-        LevelProgressSection(
-            level = uiState.level,
-            progress = viewModel.getLevelProgress()
-        )
     }
 
     GameOverlays(
