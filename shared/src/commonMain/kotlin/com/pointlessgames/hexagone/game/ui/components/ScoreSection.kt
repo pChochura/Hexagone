@@ -3,7 +3,6 @@ package com.pointlessgames.hexagone.game.ui.components
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
@@ -46,7 +45,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
-import com.pointlessgames.hexagone.game.model.PreviewCell
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -58,14 +56,14 @@ fun ScoreSection(
     combo: Int,
     level: Int,
     progress: Float,
-    previewState: List<PreviewCell>,
+    highestValue: Int,
     activePerk: Perk?,
     selectedCellId: String?,
     modifier: Modifier = Modifier
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
-        animationSpec = spring(stiffness = Spring.StiffnessLow),
+        animationSpec = spring(stiffness = androidx.compose.animation.core.Spring.StiffnessLow),
         label = "progress_animation"
     )
 
@@ -142,7 +140,7 @@ fun ScoreSection(
 
         Spacer(Modifier.height(16.dp))
 
-        // Unified Score Section with Progress and Next Piece Integrated
+        // Unified Score Section with Progress and Max/Perk Integrated
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -244,7 +242,7 @@ fun ScoreSection(
                 }
             }
 
-            // Integrated Next Piece Section
+            // Integrated Max Value / Perk Section
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
@@ -257,7 +255,7 @@ fun ScoreSection(
                     transitionSpec = {
                         (fadeIn() togetherWith fadeOut()).using(SizeTransform(clip = false))
                     },
-                    label = "integrated_next_piece"
+                    label = "integrated_max_value"
                 ) { perk ->
                     if (perk != null) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -283,16 +281,16 @@ fun ScoreSection(
                     } else {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "NEXT",
+                                text = "MAX",
                                 color = Color.White.copy(alpha = 0.3f),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 10.sp,
                             )
                             Spacer(Modifier.height(4.dp))
-                            val nextValue = previewState.firstOrNull()?.value ?: 1
                             Hexagon(
-                                value = nextValue.toString(),
-                                backgroundColor = HexagonGridDefaults.getColorForValue(nextValue),
+                                value = highestValue.toString(),
+                                backgroundColor = HexagonGridDefaults.getColorForValue(highestValue).copy(alpha = 0.2f),
+                                isOutline = true,
                                 modifier = Modifier.size(28.dp).aspectRatio(1 / 0.866f),
                             )
                         }

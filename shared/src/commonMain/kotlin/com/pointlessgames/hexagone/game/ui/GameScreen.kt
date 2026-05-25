@@ -61,7 +61,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
                 combo = uiState.combo,
                 level = uiState.level,
                 progress = viewModel.getLevelProgress(),
-                previewState = uiState.preview,
+                highestValue = uiState.highestValue,
                 activePerk = uiState.activePerk,
                 selectedCellId = uiState.selectedCellId,
             )
