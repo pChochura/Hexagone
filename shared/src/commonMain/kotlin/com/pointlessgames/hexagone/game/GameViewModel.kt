@@ -10,6 +10,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+internal data class GameState(
+    val grid: List<HexagonCell>,
+    val preview: List<PreviewCell>,
+    val score: Int,
+    val level: Int,
+    val highestValue: Int,
+    val combo: Int,
+    val collectedPerks: List<Perk>
+)
+
 internal class GameViewModel : ViewModel() {
 
     private val engine = GameEngine()
@@ -60,6 +70,40 @@ internal class GameViewModel : ViewModel() {
     val selectedCellId: StateFlow<String?> = _selectedCellId.asStateFlow()
 
     private var lastLevel = 1
+    private var stateHistory = mutableListOf<GameState>()
+
+    private fun saveState() {
+        val currentState = GameState(
+            grid = _gridState.value,
+            preview = _previewState.value,
+            score = _score.value,
+            level = _level.value,
+            highestValue = _highestValue.value,
+            combo = _combo.value,
+            collectedPerks = _collectedPerks.value
+        )
+        stateHistory.add(currentState)
+        if (stateHistory.size > 10) stateHistory.removeAt(0)
+    }
+
+    private fun undoLastMove(): Boolean {
+        if (stateHistory.isEmpty()) return false
+        val previousState = stateHistory.removeAt(stateHistory.size - 1)
+        _gridState.value = previousState.grid
+        _previewState.value = previousState.preview
+        _score.value = previousState.score
+        _level.value = previousState.level
+        _highestValue.value = previousState.highestValue
+        _combo.value = previousState.combo
+        _collectedPerks.value = previousState.collectedPerks
+        
+        lastLevel = previousState.level
+        _pendingMerge.value = null
+        _activePerk.value = null
+        _selectedCellId.value = null
+        checkValidMoves()
+        return true
+    }
 
     init {
         restartGame()
@@ -81,6 +125,8 @@ internal class GameViewModel : ViewModel() {
 
     fun onEmptySpaceClicked(x: Int, y: Int) {
         if (_pendingMerge.value != null || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
+        
+        saveState()
         _hoveredMerge.value = null
 
         val perk = _activePerk.value
@@ -144,6 +190,7 @@ internal class GameViewModel : ViewModel() {
     }
 
     private fun moveTile(selectedId: String, x: Int, y: Int) {
+        saveState()
         val cellToMove = _gridState.value.find { it.id == selectedId }
         if (cellToMove != null) {
             _gridState.value = _gridState.value.map {
@@ -172,11 +219,9 @@ internal class GameViewModel : ViewModel() {
     fun onPreviewClicked(preview: PreviewCell) {
         if (_pendingMerge.value != null || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
 
-        when (_activePerk.value) {
-            Perk.MOVE_TILE -> {
-                _selectedCellId.value = preview.id
-            }
+        when (val perk = _activePerk.value) {
             Perk.REMOVE_TILE -> {
+                saveState()
                 val remaining = _previewState.value.filter { it.id != preview.id }
                 _previewState.value = engine.pickRandomPreviews(_gridState.value, remaining, 3)
                 finishPerkAction(Perk.REMOVE_TILE)
@@ -205,6 +250,7 @@ internal class GameViewModel : ViewModel() {
                 }
             }
             Perk.REMOVE_TILE -> {
+                saveState()
                 _gridState.value = _gridState.value.filter { it.id != cell.id }
                 finishPerkAction(Perk.REMOVE_TILE)
             }
@@ -215,6 +261,7 @@ internal class GameViewModel : ViewModel() {
                 } else if (selectedId == cell.id) {
                     _selectedCellId.value = null
                 } else {
+                    saveState()
                     swapTiles(selectedId, cell.id)
                 }
             }
@@ -277,11 +324,18 @@ internal class GameViewModel : ViewModel() {
         }
 
         _isStuck.value = false
+        _isGameOver.value = false
         when (perk) {
             Perk.ADVANCE_QUEUE -> {
+                saveState()
                 consumePerk(Perk.ADVANCE_QUEUE)
                 spawnFromQueue(_gridState.value)
                 checkValidMoves()
+            }
+            Perk.UNDO -> {
+                if (undoLastMove()) {
+                    consumePerk(Perk.UNDO)
+                }
             }
             Perk.MOVE_TILE -> _activePerk.value = Perk.MOVE_TILE
             Perk.REMOVE_TILE -> _activePerk.value = Perk.REMOVE_TILE
@@ -302,6 +356,7 @@ internal class GameViewModel : ViewModel() {
     }
 
     private fun restartGame() {
+        stateHistory.clear()
         _score.value = 0
         _isGameOver.value = false
         _isStuck.value = false

@@ -35,7 +35,8 @@ enum class Perk(
     REMOVE_TILE("REMOVE TILE", "Select a tile and remove it from the board."),
     FUSION("FUSION", "Merge all surrounding tiles into a single superior tile."),
     SWAP_TILES("SWAP TILES", "Select two tiles to swap their positions."),
-    CHAIN_MERGE("CHAIN MERGE", "Your next move will trigger chain reactions.", canSaveFromStuck = false)
+    CHAIN_MERGE("CHAIN MERGE", "Your next move will trigger chain reactions.", canSaveFromStuck = false),
+    UNDO("UNDO", "Undo your last move.")
 }
 
 data class Particle(

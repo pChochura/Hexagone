@@ -169,6 +169,32 @@ private fun PerkButton(
                             style = Stroke(width = strokeWidth)
                         )
                     }
+
+                    Perk.UNDO -> {
+                        // Anti-clockwise arrow
+                        drawArc(
+                            color = Color.White,
+                            startAngle = 0f,
+                            sweepAngle = 270f,
+                            useCenter = false,
+                            topLeft = Offset(size.width * 0.1f, size.height * 0.1f),
+                            size = size.copy(width = size.width * 0.8f, height = size.height * 0.8f),
+                            style = Stroke(width = strokeWidth)
+                        )
+                        val arrowSize = size.width * 0.2f
+                        drawLine(
+                            Color.White,
+                            Offset(size.width * 0.1f, size.height * 0.5f),
+                            Offset(size.width * 0.1f - arrowSize, size.height * 0.5f - arrowSize),
+                            strokeWidth
+                        )
+                        drawLine(
+                            Color.White,
+                            Offset(size.width * 0.1f, size.height * 0.5f),
+                            Offset(size.width * 0.1f + arrowSize, size.height * 0.5f - arrowSize),
+                            strokeWidth
+                        )
+                    }
                 }
             }
 

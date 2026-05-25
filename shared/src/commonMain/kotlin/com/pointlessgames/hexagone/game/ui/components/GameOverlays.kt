@@ -240,13 +240,14 @@ private fun StatusDialog(
 
             Spacer(Modifier.height(24.dp))
 
-            if (!isGameOver) {
+            val displayPerks = collectedPerks.distinct().filter { it.canSaveFromStuck }
+
+            if (displayPerks.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    val actionablePerks = collectedPerks.distinct().filter { it.canSaveFromStuck }
-                    actionablePerks.forEach { perk ->
+                    displayPerks.forEach { perk ->
                         val count = collectedPerks.count { it == perk }
                         Button(
                             onClick = { onUsePerk(perk) },
