@@ -227,8 +227,8 @@ internal class GameViewModel : ViewModel() {
             if (perk == null) {
                 _uiState.update { it.copy(combo = 0) }
             } else if (perk == Perk.CHAIN_MERGE) {
-                consumePerk(Perk.CHAIN_MERGE)
-                _uiState.update { it.copy(activePerk = null, combo = 0) }
+                finishPerkAction(Perk.CHAIN_MERGE)
+                _uiState.update { it.copy(combo = 0) }
             }
         }
     }
@@ -260,23 +260,42 @@ internal class GameViewModel : ViewModel() {
             val cellToMove = state.grid.find { it.id == selectedId }
             if (cellToMove != null) {
                 state.copy(
-                    grid = state.grid.map { if (it.id == selectedId) it.copy(x = x, y = y) else it }
-                ).also { finishPerkAction(Perk.MOVE_TILE) }
+                    grid = state.grid.map { if (it.id == selectedId) it.copy(x = x, y = y) else it },
+                    isBusy = true
+                )
             } else {
                 val previewToMove = state.preview.find { it.id == selectedId }
                 if (previewToMove != null) {
                     state.copy(
-                        preview = state.preview.map { if (it.id == selectedId) it.copy(x = x, y = y) else it }
-                    ).also { finishPerkAction(Perk.MOVE_TILE) }
+                        preview = state.preview.map { if (it.id == selectedId) it.copy(x = x, y = y) else it },
+                        isBusy = true
+                    )
                 } else state
+            }
+        }
+
+        viewModelScope.launch {
+            delay(500) // Wait for slide animation
+            val state = _uiState.value
+            val movedCell = state.grid.find { it.id == selectedId }
+            val merge = movedCell?.let { engine.calculateMerge(it.x, it.y, state.grid) }
+
+            if (merge != null) {
+                _uiState.update { it.copy(pendingMerge = merge, selectedCellId = null) }
+            } else {
+                finishPerkAction(Perk.MOVE_TILE)
             }
         }
     }
 
     private fun finishPerkAction(perk: Perk) {
         consumePerk(perk)
-        _uiState.update { it.copy(activePerk = null, selectedCellId = null) }
-        checkValidMoves()
+        _uiState.update { it.copy(activePerk = null, selectedCellId = null, isBusy = true) }
+        viewModelScope.launch {
+            delay(500)
+            checkValidMoves()
+            _uiState.update { it.copy(isBusy = false) }
+        }
     }
 
     fun onPreviewClicked(preview: PreviewCell) {
@@ -360,7 +379,8 @@ internal class GameViewModel : ViewModel() {
                         id2 -> it.copy(x = x1, y = y1)
                         else -> it
                     }
-                }
+                },
+                isBusy = true
             )
         }
         finishPerkAction(Perk.SWAP_TILES)
@@ -462,8 +482,9 @@ internal class GameViewModel : ViewModel() {
                     pendingMerge = chainMerge
                 ) }
             } else {
-                if (_uiState.value.activePerk == Perk.CHAIN_MERGE) {
-                    consumePerk(Perk.CHAIN_MERGE)
+                val activePerk = _uiState.value.activePerk
+                if (activePerk != null && activePerk != Perk.FUSION) {
+                    consumePerk(activePerk)
                 }
                 _uiState.update { it.copy(activePerk = null) }
                 spawnFromQueue(stateAfterMerge)
