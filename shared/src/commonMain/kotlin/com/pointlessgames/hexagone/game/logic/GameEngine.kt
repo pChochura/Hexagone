@@ -148,15 +148,21 @@ class GameEngine(
 
     fun calculateLevel(score: Int): Int {
         var lvl = 1
-        while (score >= 20 * (2.0.pow(lvl) - 1)) {
+        // Quadratic threshold: 50 * (level-1)^2
+        // Level 1: 0
+        // Level 2: 50
+        // Level 3: 200
+        // Level 4: 450
+        // Level 5: 800
+        while (score >= 50 * lvl.toDouble().pow(2)) {
             lvl++
         }
         return lvl
     }
 
     fun getLevelProgress(score: Int, level: Int): Float {
-        val currentLevelThreshold = 20 * (2.0.pow(level - 1) - 1).toFloat()
-        val nextLevelThreshold = 20 * (2.0.pow(level) - 1).toFloat()
+        val currentLevelThreshold = 50 * (level - 1).toDouble().pow(2).toFloat()
+        val nextLevelThreshold = 50 * level.toDouble().pow(2).toFloat()
         return ((score - currentLevelThreshold) / (nextLevelThreshold - currentLevelThreshold)).coerceIn(0f, 1f)
     }
 
