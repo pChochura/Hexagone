@@ -80,14 +80,14 @@ internal class GameViewModel : ViewModel() {
     }
 
     fun onEmptySpaceClicked(x: Int, y: Int) {
-        if (_pendingMerge.value != null) return
+        if (_pendingMerge.value != null || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
         _hoveredMerge.value = null
 
         val perk = _activePerk.value
         val selectedId = _selectedCellId.value
         val previewAtPos = _previewState.value.find { it.x == x && it.y == y }
 
-        if (perk != null && previewAtPos != null) {
+        if (perk != null && perk != Perk.FUSION && previewAtPos != null) {
             if (selectedId == previewAtPos.id) {
                 _selectedCellId.value = null
                 return
@@ -125,7 +125,7 @@ internal class GameViewModel : ViewModel() {
     }
 
     fun onEmptySpaceTouchDown(x: Int, y: Int) {
-        if (_pendingMerge.value != null) return
+        if (_pendingMerge.value != null || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
         val perk = _activePerk.value
         if (perk != null && perk != Perk.CHAIN_MERGE && perk != Perk.FUSION) return
 
@@ -170,7 +170,7 @@ internal class GameViewModel : ViewModel() {
     }
 
     fun onPreviewClicked(preview: PreviewCell) {
-        if (_pendingMerge.value != null) return
+        if (_pendingMerge.value != null || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
 
         when (_activePerk.value) {
             Perk.MOVE_TILE -> {
@@ -194,7 +194,7 @@ internal class GameViewModel : ViewModel() {
     }
 
     fun onCellClicked(cell: HexagonCell) {
-        if (_pendingMerge.value != null) return
+        if (_pendingMerge.value != null || _isGameOver.value || _isStuck.value || _perkOptions.value.isNotEmpty()) return
 
         when (val perk = _activePerk.value) {
             Perk.MOVE_TILE -> {
@@ -369,7 +369,8 @@ internal class GameViewModel : ViewModel() {
             return
         }
 
-        if (_collectedPerks.value.isNotEmpty()) {
+        val actionablePerks = _collectedPerks.value.filter { it.canSaveFromStuck }
+        if (actionablePerks.isNotEmpty()) {
             _isStuck.value = true
             _isGameOver.value = false
         } else {

@@ -25,13 +25,17 @@ data class MergeTransition(
     val totalCells: Int
 )
 
-enum class Perk(val displayName: String, val description: String) {
+enum class Perk(
+    val displayName: String,
+    val description: String,
+    val canSaveFromStuck: Boolean = true
+) {
     ADVANCE_QUEUE("ADVANCE QUEUE", "Instantly spawn the next piece from your queue."),
     MOVE_TILE("MOVE TILE", "Select a tile and move it to any empty spot."),
     REMOVE_TILE("REMOVE TILE", "Select a tile and remove it from the board."),
     FUSION("FUSION", "Merge all surrounding tiles into a single superior tile."),
     SWAP_TILES("SWAP TILES", "Select two tiles to swap their positions."),
-    CHAIN_MERGE("CHAIN MERGE", "Your next move will trigger chain reactions.")
+    CHAIN_MERGE("CHAIN MERGE", "Your next move will trigger chain reactions.", canSaveFromStuck = false)
 }
 
 data class Particle(

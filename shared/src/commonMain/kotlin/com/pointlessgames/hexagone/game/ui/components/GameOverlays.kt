@@ -245,7 +245,8 @@ private fun StatusDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    collectedPerks.distinct().forEach { perk ->
+                    val actionablePerks = collectedPerks.distinct().filter { it.canSaveFromStuck }
+                    actionablePerks.forEach { perk ->
                         val count = collectedPerks.count { it == perk }
                         Button(
                             onClick = { onUsePerk(perk) },
