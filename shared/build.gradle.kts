@@ -24,10 +24,18 @@ kotlin {
         }
     }
 
-    listOf(
+    val iosTargets = listOf(
         iosArm64(),
         iosSimulatorArm64(),
     )
+
+    iosTargets.forEach {
+        it.binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+            freeCompilerArgs += "-Xbinary=bundleId=com.pointlessgames.hexagone.shared"
+        }
+    }
 
     jvm()
 
