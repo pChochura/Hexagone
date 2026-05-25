@@ -1,5 +1,6 @@
 package com.pointlessgames.hexagone.game.ui.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,12 +10,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -36,21 +39,21 @@ fun PerkBar(
     collectedPerks: List<Perk>,
     activePerk: Perk?,
     onPerkClick: (Perk) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(100.dp)
-            .background(Color(0xFF1C1C24), RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+            .animateContentSize()
+            .background(Color(0xFF1C1C24), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
             .border(
                 1.dp,
-                Color.White.copy(alpha = 0.05f),
-                RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+                Color.White.copy(alpha = 0.08f),
+                RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
             )
-            .padding(horizontal = 16.dp)
-            .navigationBarsPadding(),
-        contentAlignment = Alignment.Center
+            .navigationBarsPadding()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center,
     ) {
         if (collectedPerks.isEmpty()) {
             Text(
@@ -60,7 +63,7 @@ fun PerkBar(
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
                 lineHeight = 18.sp,
-                modifier = Modifier.padding(horizontal = 32.dp)
+                modifier = Modifier.padding(16.dp),
             )
         } else {
             Row(
@@ -79,7 +82,7 @@ fun PerkBar(
                         onClick = { onPerkClick(perk) },
                     )
 
-                    Spacer(Modifier.size(16.dp))
+                    Spacer(Modifier.size(12.dp))
                 }
             }
         }
@@ -93,163 +96,212 @@ private fun PerkButton(
     isActive: Boolean,
     onClick: () -> Unit,
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 2.dp),
+    ) {
         Box(
-            modifier = Modifier
-                .size(56.dp)
-                .background(
-                    if (isActive) Color(0xFFF06292).copy(alpha = 0.2f) else Color(0xFF2A2A36),
-                    CircleShape,
-                )
-                .border(
-                    width = if (isActive) 2.dp else 1.dp,
-                    color = if (isActive) Color(0xFFF06292) else Color.White.copy(alpha = 0.1f),
-                    shape = CircleShape,
-                )
-                .clip(CircleShape)
-                .clickable(onClick = onClick),
+            modifier = Modifier.size(width = 54.dp, height = (54 * 0.866f).dp),
             contentAlignment = Alignment.Center,
         ) {
-            Canvas(modifier = Modifier.size(24.dp)) {
-                val strokeWidth = 2.dp.toPx()
-                when (perk) {
-                    Perk.ADVANCE_QUEUE -> {
-                        val path = androidx.compose.ui.graphics.Path().apply {
-                            moveTo(0f, 0f)
-                            lineTo(size.width * 0.5f, size.height * 0.5f)
-                            lineTo(0f, size.height)
-                            moveTo(size.width * 0.5f, 0f)
-                            lineTo(size.width, size.height * 0.5f)
-                            lineTo(size.width * 0.5f, size.height)
+            // Main Hexagon Body
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(FlatTopHexagonShape())
+                    .background(
+                        if (isActive) Color(0xFFF06292).copy(alpha = 0.3f) else Color(0xFF2A2A36),
+                    )
+                    .border(
+                        width = if (isActive) 2.dp else 1.dp,
+                        color = if (isActive) Color(0xFFF06292) else Color.White.copy(alpha = 0.1f),
+                        shape = FlatTopHexagonShape(),
+                    )
+                    .clickable(onClick = onClick),
+                contentAlignment = Alignment.Center,
+            ) {
+                Canvas(modifier = Modifier.size(24.dp)) {
+                    val strokeWidth = 2.dp.toPx()
+                    when (perk) {
+                        Perk.ADVANCE_QUEUE -> {
+                            val path = androidx.compose.ui.graphics.Path().apply {
+                                moveTo(0f, 0f)
+                                lineTo(size.width * 0.5f, size.height * 0.5f)
+                                lineTo(0f, size.height)
+                                moveTo(size.width * 0.5f, 0f)
+                                lineTo(size.width, size.height * 0.5f)
+                                lineTo(size.width * 0.5f, size.height)
+                            }
+                            drawPath(path, color = Color.White, style = Stroke(width = strokeWidth))
                         }
-                        drawPath(path, color = Color.White, style = Stroke(width = strokeWidth))
-                    }
 
-                    Perk.MOVE_TILE -> {
-                        drawLine(
-                            Color.White,
-                            Offset(size.width * 0.5f, 0f),
-                            Offset(size.width * 0.5f, size.height),
-                            strokeWidth,
-                        )
-                        drawLine(
-                            Color.White,
-                            Offset(0f, size.height * 0.5f),
-                            Offset(size.width, size.height * 0.5f),
-                            strokeWidth,
-                        )
-                    }
+                        Perk.MOVE_TILE -> {
+                            drawLine(
+                                Color.White,
+                                Offset(size.width * 0.5f, 0f),
+                                Offset(size.width * 0.5f, size.height),
+                                strokeWidth,
+                            )
+                            drawLine(
+                                Color.White,
+                                Offset(0f, size.height * 0.5f),
+                                Offset(size.width, size.height * 0.5f),
+                                strokeWidth,
+                            )
+                        }
 
-                    Perk.REMOVE_TILE -> {
-                        drawRect(
-                            Color.White,
-                            Offset(size.width * 0.2f, size.height * 0.3f),
-                            size.copy(width = size.width * 0.6f, height = size.height * 0.6f),
-                            style = Stroke(width = strokeWidth),
-                        )
-                        drawLine(
-                            Color.White,
-                            Offset(size.width * 0.1f, size.height * 0.2f),
-                            Offset(size.width * 0.9f, size.height * 0.2f),
-                            strokeWidth,
-                        )
-                    }
+                        Perk.REMOVE_TILE -> {
+                            drawRect(
+                                Color.White,
+                                Offset(size.width * 0.2f, size.height * 0.3f),
+                                size.copy(width = size.width * 0.6f, height = size.height * 0.6f),
+                                style = Stroke(width = strokeWidth),
+                            )
+                            drawLine(
+                                Color.White,
+                                Offset(size.width * 0.1f, size.height * 0.2f),
+                                Offset(size.width * 0.9f, size.height * 0.2f),
+                                strokeWidth,
+                            )
+                        }
 
-                    Perk.FUSION -> {
-                        drawCircle(
-                            Color.White,
-                            radius = size.minDimension * 0.4f,
-                            style = Stroke(width = strokeWidth),
-                        )
-                        drawCircle(Color.White, radius = size.minDimension * 0.2f)
-                    }
+                        Perk.FUSION -> {
+                            drawCircle(
+                                Color.White,
+                                radius = size.minDimension * 0.4f,
+                                style = Stroke(width = strokeWidth),
+                            )
+                            drawCircle(Color.White, radius = size.minDimension * 0.2f)
+                        }
 
-                    Perk.SWAP_TILES -> {
-                        // Two horizontal arrows in opposite directions
-                        val arrowSize = size.width * 0.3f
-                        // Top arrow (right)
-                        drawLine(Color.White, Offset(0f, size.height * 0.3f), Offset(size.width, size.height * 0.3f), strokeWidth)
-                        drawLine(Color.White, Offset(size.width, size.height * 0.3f), Offset(size.width - arrowSize, size.height * 0.15f), strokeWidth)
-                        drawLine(Color.White, Offset(size.width, size.height * 0.3f), Offset(size.width - arrowSize, size.height * 0.45f), strokeWidth)
-                        
-                        // Bottom arrow (left)
-                        drawLine(Color.White, Offset(0f, size.height * 0.7f), Offset(size.width, size.height * 0.7f), strokeWidth)
-                        drawLine(Color.White, Offset(0f, size.height * 0.7f), Offset(arrowSize, size.height * 0.55f), strokeWidth)
-                        drawLine(Color.White, Offset(0f, size.height * 0.7f), Offset(arrowSize, size.height * 0.85f), strokeWidth)
-                    }
+                        Perk.SWAP_TILES -> {
+                            val arrowSize = size.width * 0.3f
+                            drawLine(
+                                Color.White,
+                                Offset(0f, size.height * 0.3f),
+                                Offset(size.width, size.height * 0.3f),
+                                strokeWidth,
+                            )
+                            drawLine(
+                                Color.White,
+                                Offset(size.width, size.height * 0.3f),
+                                Offset(size.width - arrowSize, size.height * 0.15f),
+                                strokeWidth,
+                            )
+                            drawLine(
+                                Color.White,
+                                Offset(size.width, size.height * 0.3f),
+                                Offset(size.width - arrowSize, size.height * 0.45f),
+                                strokeWidth,
+                            )
 
-                    Perk.CHAIN_MERGE -> {
-                        // Drawing a chain link icon
-                        drawCircle(
-                            Color.White,
-                            radius = size.width * 0.15f,
-                            center = Offset(size.width * 0.25f, size.height * 0.25f),
-                            style = Stroke(width = strokeWidth)
-                        )
-                        drawLine(
-                            Color.White,
-                            Offset(size.width * 0.35f, size.height * 0.35f),
-                            Offset(size.width * 0.65f, size.height * 0.65f),
-                            strokeWidth
-                        )
-                        drawCircle(
-                            Color.White,
-                            radius = size.width * 0.15f,
-                            center = Offset(size.width * 0.75f, size.height * 0.75f),
-                            style = Stroke(width = strokeWidth)
-                        )
-                    }
+                            drawLine(
+                                Color.White,
+                                Offset(0f, size.height * 0.7f),
+                                Offset(size.width, size.height * 0.7f),
+                                strokeWidth,
+                            )
+                            drawLine(
+                                Color.White,
+                                Offset(0f, size.height * 0.7f),
+                                Offset(arrowSize, size.height * 0.55f),
+                                strokeWidth,
+                            )
+                            drawLine(
+                                Color.White,
+                                Offset(0f, size.height * 0.7f),
+                                Offset(arrowSize, size.height * 0.85f),
+                                strokeWidth,
+                            )
+                        }
 
-                    Perk.UNDO -> {
-                        // Anti-clockwise arrow
-                        drawArc(
-                            color = Color.White,
-                            startAngle = 0f,
-                            sweepAngle = 270f,
-                            useCenter = false,
-                            topLeft = Offset(size.width * 0.1f, size.height * 0.1f),
-                            size = size.copy(width = size.width * 0.8f, height = size.height * 0.8f),
-                            style = Stroke(width = strokeWidth)
-                        )
-                        val arrowSize = size.width * 0.2f
-                        drawLine(
-                            Color.White,
-                            Offset(size.width * 0.1f, size.height * 0.5f),
-                            Offset(size.width * 0.1f - arrowSize, size.height * 0.5f - arrowSize),
-                            strokeWidth
-                        )
-                        drawLine(
-                            Color.White,
-                            Offset(size.width * 0.1f, size.height * 0.5f),
-                            Offset(size.width * 0.1f + arrowSize, size.height * 0.5f - arrowSize),
-                            strokeWidth
-                        )
+                        Perk.CHAIN_MERGE -> {
+                            drawCircle(
+                                Color.White,
+                                radius = size.width * 0.15f,
+                                center = Offset(size.width * 0.25f, size.height * 0.25f),
+                                style = Stroke(width = strokeWidth),
+                            )
+                            drawLine(
+                                Color.White,
+                                Offset(size.width * 0.35f, size.height * 0.35f),
+                                Offset(size.width * 0.65f, size.height * 0.65f),
+                                strokeWidth,
+                            )
+                            drawCircle(
+                                Color.White,
+                                radius = size.width * 0.15f,
+                                center = Offset(size.width * 0.75f, size.height * 0.75f),
+                                style = Stroke(width = strokeWidth),
+                            )
+                        }
+
+                        Perk.UNDO -> {
+                            drawArc(
+                                color = Color.White,
+                                startAngle = 0f,
+                                sweepAngle = 270f,
+                                useCenter = false,
+                                topLeft = Offset(size.width * 0.1f, size.height * 0.1f),
+                                size = size.copy(
+                                    width = size.width * 0.8f,
+                                    height = size.height * 0.8f,
+                                ),
+                                style = Stroke(width = strokeWidth),
+                            )
+                            val arrowSize = size.width * 0.2f
+                            drawLine(
+                                Color.White,
+                                Offset(size.width * 0.1f, size.height * 0.5f),
+                                Offset(
+                                    size.width * 0.1f - arrowSize,
+                                    size.height * 0.5f - arrowSize,
+                                ),
+                                strokeWidth,
+                            )
+                            drawLine(
+                                Color.White,
+                                Offset(size.width * 0.1f, size.height * 0.5f),
+                                Offset(
+                                    size.width * 0.1f + arrowSize,
+                                    size.height * 0.5f - arrowSize,
+                                ),
+                                strokeWidth,
+                            )
+                        }
                     }
                 }
             }
 
+            // Badge counter - Moved outside the body and positioned absolutely to prevent clipping
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .offset(x = 4.dp, y = (-4).dp)
+                    .offset(x = 6.dp, y = (-2).dp)
+                    .size(20.dp)
                     .background(Color(0xFFF06292), CircleShape)
-                    .size(20.dp),
+                    .border(1.dp, Color(0xFF1C1C24), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = count.toString(),
                     color = Color.White,
                     fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Black,
                 )
             }
         }
+
         Spacer(Modifier.height(4.dp))
+
         Text(
-            perk.displayName.split(" ").first(),
-            color = Color.White.copy(alpha = 0.5f),
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
+            text = perk.displayName,
+            color = if (isActive) Color(0xFFF06292) else Color.White.copy(alpha = 0.6f),
+            fontSize = 8.sp,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center,
+            lineHeight = 10.sp,
+            modifier = Modifier.width(60.dp),
         )
     }
 }
