@@ -40,6 +40,7 @@ internal data class GameUiState(
     val perkOptions: List<Perk> = emptyList(),
     val activePerk: Perk? = null,
     val selectedCellId: String? = null,
+    val mergeHintsEnabled: Boolean = true,
     val particles: List<Particle> = emptyList(),
     val scorePopups: List<ScorePopup> = emptyList()
 )
@@ -69,7 +70,10 @@ internal class GameViewModel(
     init {
         viewModelScope.launch {
             val best = settingsRepository.getBestScore()
-            _uiState.update { it.copy(bestScore = best) }
+            val hintsEnabled = settingsRepository.getMergeHintsEnabled()
+            _uiState.update { it.copy(bestScore = best, mergeHintsEnabled = hintsEnabled) }
+            // Re-calculate hints once we know if they are enabled
+            _uiState.update { it.copy(mergeHints = if (hintsEnabled) engine.findMergeHints(it.grid, it.preview, it.combo) else emptyList()) }
         }
         restartGame()
         startAnimationLoop()
@@ -434,7 +438,8 @@ internal class GameViewModel(
         val initialPreviews = engine.pickRandomPreviews(initialGrid, emptyList(), 3)
         _uiState.value = GameUiState(
             grid = initialGrid,
-            mergeHints = engine.findMergeHints(initialGrid, initialPreviews, 0),
+            mergeHints = if (_uiState.value.mergeHintsEnabled) engine.findMergeHints(initialGrid, initialPreviews, 0) else emptyList(),
+            mergeHintsEnabled = _uiState.value.mergeHintsEnabled,
             preview = initialPreviews,
             bestScore = _uiState.value.bestScore
         )
@@ -479,7 +484,7 @@ internal class GameViewModel(
                     bestScore = nextBestScore,
                     combo = finalCombo,
                     grid = stateAfterStep,
-                    mergeHints = engine.findMergeHints(stateAfterStep, it.preview, finalCombo),
+                    mergeHints = if (it.mergeHintsEnabled) engine.findMergeHints(stateAfterStep, it.preview, finalCombo) else emptyList(),
                     pendingMerge = null,
                     activeMergeStepIndex = 0,
                     pendingMergeScore = 0,
@@ -539,7 +544,7 @@ internal class GameViewModel(
             } else {
                 it.copy(isStuck = false, isGameOver = true)
             }
-            nextState.copy(mergeHints = engine.findMergeHints(nextState.grid, nextState.preview, nextState.combo))
+            nextState.copy(mergeHints = if (nextState.mergeHintsEnabled) engine.findMergeHints(nextState.grid, nextState.preview, nextState.combo) else emptyList())
         }
     }
 
@@ -549,7 +554,7 @@ internal class GameViewModel(
             val (newState, newPreviews) = engine.spawnFromQueue(currentState, _uiState.value.preview)
             _uiState.update { it.copy(
                 grid = newState,
-                mergeHints = engine.findMergeHints(newState, newPreviews, it.combo),
+                mergeHints = if (it.mergeHintsEnabled) engine.findMergeHints(newState, newPreviews, it.combo) else emptyList(),
                 preview = newPreviews
             ) }
             updateLevel()
