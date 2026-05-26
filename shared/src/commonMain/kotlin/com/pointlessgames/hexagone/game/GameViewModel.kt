@@ -23,6 +23,8 @@ internal data class GameUiState(
     val grid: List<HexagonCell> = emptyList(),
     val preview: List<PreviewCell> = emptyList(),
     val pendingMerge: MergeTransition? = null,
+    val activeMergeStepIndex: Int = 0,
+    val pendingMergeScore: Int = 0,
     val hoveredMerge: MergeTransition? = null,
     val score: Int = 0,
     val bestScore: Int = 0,
@@ -219,12 +221,18 @@ internal class GameViewModel(
         }
 
         if (merge != null) {
+            val comboMultiplier = state.combo + 1
+            val totalAddedScore = merge.finalValue * merge.totalCells * comboMultiplier
+            
             _uiState.update { currentState ->
+                val firstStep = merge.steps.first()
                 currentState.copy(
                     grid = currentState.grid.map { cell ->
-                        if (merge.mergingCells.any { it.id == cell.id }) cell.copy(x = x, y = y) else cell
+                        if (firstStep.mergingCells.any { it.id == cell.id }) cell.copy(x = x, y = y) else cell
                     },
                     pendingMerge = merge,
+                    activeMergeStepIndex = 0,
+                    pendingMergeScore = totalAddedScore,
                     isBusy = true
                 )
             }
@@ -432,53 +440,82 @@ internal class GameViewModel(
 
     fun onMergeAnimationFinished() {
         val merge = _uiState.value.pendingMerge ?: return
+        val stepIndex = _uiState.value.activeMergeStepIndex
+        val currentStep = merge.steps[stepIndex]
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isBusy = true, pendingMerge = null) }
+            _uiState.update { it.copy(isBusy = true) }
 
             val currentState = _uiState.value
-            val comboMultiplier = currentState.combo + 1
-            val addedScore = merge.newValue * merge.totalCells * comboMultiplier
             
-            val nextBestScore = if (currentState.score + addedScore > currentState.bestScore) currentState.score + addedScore else currentState.bestScore
-            if (nextBestScore > currentState.bestScore) {
-                settingsRepository.setBestScore(nextBestScore)
-            }
-            
-            val nextCombo = if (merge.uniqueGroups > 1 || currentState.activePerk == Perk.CHAIN_MERGE) {
-                currentState.combo + (if (currentState.activePerk == Perk.CHAIN_MERGE) 1 else 0) + (merge.uniqueGroups - 1)
-            } else if (currentState.activePerk != Perk.FUSION) 0 else currentState.combo
+            val stateAfterStep = currentState.grid.filter { cell ->
+                currentStep.mergingCells.none { it.id == cell.id } && (cell.x != merge.targetX || cell.y != merge.targetY)
+            } + engine.createCell(merge.targetX, merge.targetY, currentStep.resultValue, merge.resultId)
 
-            val stateAfterMerge = currentState.grid.filter { cell ->
-                merge.mergingCells.none { it.id == cell.id } && (cell.x != merge.targetX || cell.y != merge.targetY)
-            } + engine.createCell(merge.targetX, merge.targetY, merge.newValue)
+            val isLastStep = stepIndex >= merge.steps.lastIndex
 
-            _uiState.update { it.copy(
-                score = it.score + addedScore,
-                bestScore = nextBestScore,
-                combo = nextCombo,
-                grid = stateAfterMerge
-            ) }
-
-            val chainMerge = if (_uiState.value.activePerk == Perk.CHAIN_MERGE) {
-                engine.calculateMerge(merge.targetX, merge.targetY, stateAfterMerge)
-            } else null
-
-            if (chainMerge != null) {
-                // Update gridState to move neighbors of the chain merge to the target position
-                _uiState.update { it.copy(
-                    grid = stateAfterMerge.map { cell ->
-                        if (chainMerge.mergingCells.any { it.id == cell.id }) cell.copy(x = merge.targetX, y = merge.targetY) else cell
-                    },
-                    pendingMerge = chainMerge
-                ) }
-            } else {
-                val activePerk = _uiState.value.activePerk
-                if (activePerk != null && activePerk != Perk.FUSION) {
-                    consumePerk(activePerk)
+            if (isLastStep) {
+                val totalAddedScore = currentState.pendingMergeScore
+                
+                val finalCombo = if (merge.uniqueGroups > 1 || currentState.activePerk == Perk.CHAIN_MERGE) {
+                    currentState.combo + (if (currentState.activePerk == Perk.CHAIN_MERGE) 1 else 0) + (merge.uniqueGroups - 1)
+                } else if (currentState.activePerk == Perk.FUSION) {
+                    currentState.combo
+                } else {
+                    0
                 }
-                _uiState.update { it.copy(activePerk = null) }
-                spawnFromQueue(stateAfterMerge)
+
+                val nextBestScore = if (currentState.score + totalAddedScore > currentState.bestScore) currentState.score + totalAddedScore else currentState.bestScore
+                if (nextBestScore > currentState.bestScore) {
+                    settingsRepository.setBestScore(nextBestScore)
+                }
+
+                _uiState.update { it.copy(
+                    score = it.score + totalAddedScore,
+                    bestScore = nextBestScore,
+                    combo = finalCombo,
+                    grid = stateAfterStep,
+                    pendingMerge = null,
+                    activeMergeStepIndex = 0,
+                    pendingMergeScore = 0,
+                    isBusy = true
+                ) }
+
+                val chainMerge = if (_uiState.value.activePerk == Perk.CHAIN_MERGE) {
+                    engine.calculateMerge(merge.targetX, merge.targetY, stateAfterStep)
+                } else null
+
+                if (chainMerge != null) {
+                    delay(150) // Artificial delay for chain merge impact
+                    val chainComboMultiplier = finalCombo + 1
+                    val chainScore = chainMerge.finalValue * chainMerge.totalCells * chainComboMultiplier
+                    
+                    _uiState.update { it.copy(
+                        grid = stateAfterStep.map { cell ->
+                            if (chainMerge.steps.first().mergingCells.any { it.id == cell.id }) cell.copy(x = merge.targetX, y = merge.targetY) else cell
+                        },
+                        pendingMerge = chainMerge,
+                        activeMergeStepIndex = 0,
+                        pendingMergeScore = chainScore
+                    ) }
+                } else {
+                    val activePerk = _uiState.value.activePerk
+                    if (activePerk != null && activePerk != Perk.FUSION) {
+                        consumePerk(activePerk)
+                    }
+                    _uiState.update { it.copy(activePerk = null) }
+                    spawnFromQueue(stateAfterStep)
+                }
+            } else {
+                delay(100) // Artificial delay between sequential group merges
+                val nextStep = merge.steps[stepIndex + 1]
+                _uiState.update { it.copy(
+                    combo = it.combo + 1,
+                    grid = stateAfterStep.map { cell ->
+                        if (nextStep.mergingCells.any { it.id == cell.id }) cell.copy(x = merge.targetX, y = merge.targetY) else cell
+                    },
+                    activeMergeStepIndex = stepIndex + 1
+                ) }
             }
         }
     }

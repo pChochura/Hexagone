@@ -20,10 +20,16 @@ data class PreviewCell(
 data class MergeTransition(
     val targetX: Int,
     val targetY: Int,
-    val mergingCells: List<HexagonCell>,
-    val newValue: Int,
+    val steps: List<MergeStep>,
+    val finalValue: Int,
     val totalCells: Int,
-    val uniqueGroups: Int
+    val uniqueGroups: Int,
+    val resultId: String
+)
+
+data class MergeStep(
+    val mergingCells: List<HexagonCell>,
+    val resultValue: Int
 )
 
 enum class Perk(

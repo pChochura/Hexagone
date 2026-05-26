@@ -75,6 +75,8 @@ internal fun GameScreen(viewModel: GameViewModel) {
                 hoveredMerge = uiState.hoveredMerge,
                 activePerk = uiState.activePerk,
                 selectedCellId = uiState.selectedCellId,
+                activeMergeStepIndex = uiState.activeMergeStepIndex,
+                pendingMergeScore = uiState.pendingMergeScore,
                 particles = uiState.particles,
                 scorePopups = uiState.scorePopups,
                 combo = uiState.combo,

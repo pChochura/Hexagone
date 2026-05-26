@@ -68,6 +68,8 @@ fun GameGridOverlay(
     hoveredMerge: MergeTransition?,
     activePerk: Perk?,
     selectedCellId: String?,
+    activeMergeStepIndex: Int,
+    pendingMergeScore: Int,
     particles: List<Particle>,
     scorePopups: List<ScorePopup>,
     combo: Int,
@@ -153,20 +155,23 @@ fun GameGridOverlay(
         val totalWidth = (cellWidth * (1f + (columns - 1) * 0.75f))
         val totalHeight = (cellHeight * (rows + 0.5f))
 
-        LaunchedEffect(pendingMerge) {
-            val merge = pendingMerge
-            if (merge != null) {
+        val currentStep = pendingMerge?.steps?.getOrNull(activeMergeStepIndex)
+        val mergingCells = currentStep?.mergingCells ?: emptyList()
+
+        LaunchedEffect(pendingMerge, activeMergeStepIndex) {
+            val step = currentStep
+            if (step != null && pendingMerge != null) {
                 finishedMergeCount = 0
-                if (merge.mergingCells.isEmpty()) {
+                if (step.mergingCells.isEmpty()) {
                     onMergeAnimationFinished()
                 } else {
                     snapshotFlow { finishedMergeCount }
-                        .filter { it >= merge.mergingCells.size }
+                        .filter { it >= step.mergingCells.size }
                         .first()
 
                     val targetOffset = HexagonGridDefaults.calculateOffset(
-                        merge.targetX,
-                        merge.targetY,
+                        pendingMerge.targetX,
+                        pendingMerge.targetY,
                         cellWidth,
                         cellHeight,
                         gapPx,
@@ -175,7 +180,7 @@ fun GameGridOverlay(
                         targetOffset.x + itemWidth / 2,
                         targetOffset.y + itemHeight / 2,
                     )
-                    val color = HexagonGridDefaults.getColorForValue(merge.newValue)
+                    val color = HexagonGridDefaults.getColorForValue(step.resultValue)
 
                     // 1. Add Particles
                     val newParticles = List(30) {
@@ -195,8 +200,11 @@ fun GameGridOverlay(
                     onAddParticles(newParticles)
 
                     // 2. Add Score Popup with correct value (including combo)
-                    val addedScore = merge.newValue * merge.totalCells * (combo + 1)
-                    onAddScorePopup(center.x, center.y, addedScore, color)
+                    // Only on the last step to avoid intermediate score discrepancies
+                    val isLastStep = activeMergeStepIndex >= pendingMerge.steps.lastIndex
+                    if (isLastStep) {
+                        onAddScorePopup(center.x, center.y, pendingMergeScore, color)
+                    }
 
                     onMergeAnimationFinished()
                 }
@@ -325,7 +333,7 @@ fun GameGridOverlay(
                             animationSpec = moveAnimationSpec,
                             label = "cell_offset",
                             finishedListener = {
-                                if (pendingMerge?.mergingCells?.any { it.id == cell.id } == true) {
+                                if (mergingCells.any { it.id == cell.id }) {
                                     finishedMergeCount++
                                 }
                             },
@@ -354,8 +362,8 @@ fun GameGridOverlay(
                         }
 
                         val isSelected = selectedCellId == cell.id
-                        val isHovered = hoveredMerge?.mergingCells?.any { it.id == cell.id } == true
-                        val isMerging = pendingMerge?.mergingCells?.any { it.id == cell.id } == true
+                        val isHovered = hoveredMerge?.steps?.any { step -> step.mergingCells.any { it.id == cell.id } } == true
+                        val isMerging = mergingCells.any { it.id == cell.id } == true
                         val isSelectable =
                             activePerk == Perk.MOVE_TILE || activePerk == Perk.REMOVE_TILE || activePerk == Perk.SWAP_TILES
 
@@ -406,8 +414,8 @@ fun GameGridOverlay(
                     )
 
                     Hexagon(
-                        value = merge.newValue.toString(),
-                        backgroundColor = HexagonGridDefaults.getColorForValue(merge.newValue)
+                        value = merge.finalValue.toString(),
+                        backgroundColor = HexagonGridDefaults.getColorForValue(merge.finalValue)
                             .copy(alpha = 0.5f),
                         modifier = Modifier
                             .size(
@@ -496,7 +504,7 @@ fun GameGridOverlay(
                     targetOffset.x + itemWidth / 2,
                     targetOffset.y + itemHeight / 2,
                 )
-                val predictedScore = merge.newValue * merge.totalCells * (combo + 1)
+                val predictedScore = merge.finalValue * merge.totalCells * (combo + 1)
 
                 Box(
                     modifier = Modifier
