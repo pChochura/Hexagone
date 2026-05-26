@@ -150,7 +150,7 @@ fun GameGridOverlay(
     )
 
     BoxWithConstraints(
-        modifier = modifier.animateContentSize(),
+        modifier = modifier.graphicsLayer { clip = false },
         contentAlignment = Alignment.Center,
     ) {
         val cellWidth = constraints.maxWidth / (1f + (columns - 1) * 0.75f)
@@ -240,6 +240,7 @@ fun GameGridOverlay(
                     width = with(density) { totalWidth.toDp() },
                     height = with(density) { totalHeight.toDp() }
                 )
+                .graphicsLayer { clip = false }
                 .pointerInput(cellWidth, cellHeight, gapPx) {
                     coroutineScope {
                         awaitEachGesture {

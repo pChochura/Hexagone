@@ -72,6 +72,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .graphicsLayer { clip = false }
             .background(
                 Brush.verticalGradient(
                     listOf(Color(0xFF1C1C24), Color(0xFF0A0A0E)),
@@ -158,6 +159,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer { clip = false }
                 .statusBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Bottom
@@ -187,7 +189,9 @@ internal fun GameScreen(viewModel: GameViewModel) {
                 activePerk = uiState.activePerk,
                 isStuck = uiState.isStuck,
                 onPerkClick = viewModel::onUsePerkClicked,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer { clip = false }
             )
         }
     }
