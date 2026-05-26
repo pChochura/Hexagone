@@ -3,8 +3,15 @@ package com.pointlessgames.hexagone.game.ui.components
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -31,7 +38,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +51,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -66,6 +79,27 @@ fun ScoreSection(
         animationSpec = spring(stiffness = androidx.compose.animation.core.Spring.StiffnessLow),
         label = "progress_animation"
     )
+
+    val waveIntensity = remember { Animatable(0f) }
+    LaunchedEffect(score) {
+        if (score > 0) {
+            waveIntensity.snapTo(1f)
+            waveIntensity.animateTo(0f, tween(1000))
+        }
+    }
+
+    var manualWaveOffset by remember { mutableStateOf(0f) }
+    LaunchedEffect(Unit) {
+        var lastTimeNanos = withFrameNanos { it }
+        while (true) {
+            val currentTimeNanos = withFrameNanos { it }
+            val dt = (currentTimeNanos - lastTimeNanos) / 1_000_000_000f
+            lastTimeNanos = currentTimeNanos
+            val baseSpeed = PI.toFloat() / 2f
+            val speed = baseSpeed * (1f + waveIntensity.value * 4f)
+            manualWaveOffset += dt * speed
+        }
+    }
 
     Column(
         modifier = modifier
@@ -149,21 +183,71 @@ fun ScoreSection(
                 .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(24.dp))
                 .clip(RoundedCornerShape(24.dp)),
         ) {
-            // Background Progress Bar
-            Box(
+            // Background Progress Bar with Wavy Edge
+            Canvas(
                 modifier = Modifier
-                    .fillMaxWidth(animatedProgress)
+                    .fillMaxWidth()
                     .fillMaxHeight()
-                    .background(
-                        Brush.horizontalGradient(
+            ) {
+                val width = size.width * animatedProgress
+                val height = size.height
+                
+                if (width > 0) {
+                    val path = Path().apply {
+                        moveTo(0f, 0f)
+                        lineTo(width, 0f)
+                        
+                        // Wavy edge at the progress boundary
+                        val waveAmplitude = (3.dp + 10.dp * waveIntensity.value).toPx()
+                        val wavePeriod = height * 0.8f
+                        
+                        val steps = 30
+                        for (i in 0..steps) {
+                            val y = (i / steps.toFloat()) * height
+                            val dx = sin(y / wavePeriod * 2 * PI.toFloat() + manualWaveOffset) * waveAmplitude
+                            lineTo(width + dx, y)
+                        }
+                        
+                        lineTo(width, height)
+                        lineTo(0f, height)
+                        close()
+                    }
+                    
+                    drawPath(
+                        path = path,
+                        brush = Brush.horizontalGradient(
                             listOf(
-                                Color(0xFF00E5FF).copy(alpha = 0.08f),
-                                Color(0xFF7C4DFF).copy(alpha = 0.08f),
-                                Color(0xFFF06292).copy(alpha = 0.08f)
+                                Color(0xFF00E5FF).copy(alpha = 0.1f + 0.1f * waveIntensity.value),
+                                Color(0xFF7C4DFF).copy(alpha = 0.1f + 0.1f * waveIntensity.value),
+                                Color(0xFFF06292).copy(alpha = 0.1f + 0.1f * waveIntensity.value)
                             )
                         )
                     )
-            )
+
+                    // Add a subtle highlight at the very edge
+                    val edgePath = Path().apply {
+                        val waveAmplitude = (3.dp + 10.dp * waveIntensity.value).toPx()
+                        val wavePeriod = height * 0.8f
+                        
+                        val firstY = 0f
+                        val firstDx = sin(firstY / wavePeriod * 2 * PI.toFloat() + manualWaveOffset) * waveAmplitude
+                        moveTo(width + firstDx, firstY)
+                        
+                        val steps = 30
+                        for (i in 1..steps) {
+                            val y = (i / steps.toFloat()) * height
+                            val dx = sin(y / wavePeriod * 2 * PI.toFloat() + manualWaveOffset) * waveAmplitude
+                            lineTo(width + dx, y)
+                        }
+                    }
+                    
+                    drawPath(
+                        path = edgePath,
+                        color = Color.White.copy(alpha = 0.1f + 0.2f * waveIntensity.value),
+                        style = Stroke(width = (1.5.dp + 1.dp * waveIntensity.value).toPx())
+                    )
+                }
+            }
 
             Column(
                 modifier = Modifier
