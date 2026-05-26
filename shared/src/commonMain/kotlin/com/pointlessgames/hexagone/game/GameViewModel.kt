@@ -8,6 +8,7 @@ import com.pointlessgames.hexagone.game.logic.GameEngine
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeHint
 import com.pointlessgames.hexagone.game.model.MergeTransition
+import com.pointlessgames.hexagone.game.model.OnBoardPerk
 import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PreviewCell
@@ -23,6 +24,7 @@ import kotlin.random.Random
 internal data class GameUiState(
     val grid: List<HexagonCell> = emptyList(),
     val mergeHints: List<MergeHint> = emptyList(),
+    val onBoardPerks: List<OnBoardPerk> = emptyList(),
     val preview: List<PreviewCell> = emptyList(),
     val pendingMerge: MergeTransition? = null,
     val activeMergeStepIndex: Int = 0,
@@ -58,6 +60,7 @@ internal data class GameState(
     val collectedPerks: List<Perk>,
     val maxCombo: Int,
     val totalMerges: Int,
+    val onBoardPerks: List<OnBoardPerk>
 )
 
 internal class GameViewModel(
@@ -158,6 +161,7 @@ internal class GameViewModel(
             collectedPerks = state.collectedPerks,
             maxCombo = state.maxCombo,
             totalMerges = state.totalMerges,
+            onBoardPerks = state.onBoardPerks
         )
         stateHistory.add(currentState)
         if (stateHistory.size > 10) stateHistory.removeAt(0)
@@ -178,6 +182,7 @@ internal class GameViewModel(
                 collectedPerks = previousState.collectedPerks,
                 maxCombo = previousState.maxCombo,
                 totalMerges = previousState.totalMerges,
+                onBoardPerks = previousState.onBoardPerks,
                 pendingMerge = null,
                 activePerk = null,
                 selectedCellId = null,
@@ -197,7 +202,7 @@ internal class GameViewModel(
             var nextPerkOptions = state.perkOptions
             if (lvl > lastLevel) {
                 lastLevel = lvl
-                nextPerkOptions = Perk.entries.shuffled().take(3)
+                nextPerkOptions = engine.pickWeightedPerks(3)
             }
 
             val highest = state.grid.maxOfOrNull { it.value } ?: 1
@@ -515,6 +520,7 @@ internal class GameViewModel(
             preview = initialPreviews,
             bestScore = _uiState.value.bestScore,
             collectedPerks = listOf(),
+            onBoardPerks = emptyList()
         )
         updateLevel()
         checkValidMoves()
@@ -544,6 +550,9 @@ internal class GameViewModel(
             if (isLastStep) {
                 val totalAddedScore = currentState.pendingMergeScore
 
+                val collectedOnBoard = currentState.onBoardPerks.find { it.x == merge.targetX && it.y == merge.targetY }?.perk
+                val remainingOnBoard = currentState.onBoardPerks.filterNot { it.x == merge.targetX && it.y == merge.targetY }
+
                 val finalCombo =
                     if (merge.uniqueGroups > 1 || currentState.activePerk == Perk.CHAIN_MERGE) {
                         currentState.combo + (if (currentState.activePerk == Perk.CHAIN_MERGE) 1 else 0) + (merge.uniqueGroups - 1)
@@ -565,6 +574,8 @@ internal class GameViewModel(
                         bestScore = nextBestScore,
                         combo = finalCombo,
                         grid = stateAfterStep,
+                        collectedPerks = it.collectedPerks + listOfNotNull(collectedOnBoard),
+                        onBoardPerks = remainingOnBoard,
                         mergeHints = if (it.mergeHintsEnabled) engine.findMergeHints(
                             stateAfterStep,
                             it.preview,
@@ -597,6 +608,8 @@ internal class GameViewModel(
                                     y = merge.targetY,
                                 ) else cell
                             },
+                            collectedPerks = it.collectedPerks + listOfNotNull(collectedOnBoard),
+                            onBoardPerks = remainingOnBoard,
                             pendingMerge = chainMerge,
                             activeMergeStepIndex = 0,
                             pendingMergeScore = chainScore,
@@ -607,7 +620,13 @@ internal class GameViewModel(
                     if (activePerk != null && activePerk != Perk.FUSION) {
                         consumePerk(activePerk)
                     }
-                    _uiState.update { it.copy(activePerk = null) }
+                    _uiState.update {
+                        it.copy(
+                            activePerk = null,
+                            collectedPerks = it.collectedPerks + listOfNotNull(collectedOnBoard),
+                            onBoardPerks = remainingOnBoard
+                        )
+                    }
                     spawnFromQueue(stateAfterStep)
                 }
             } else {
@@ -661,10 +680,14 @@ internal class GameViewModel(
                 currentState,
                 _uiState.value.preview,
             )
+            val updatedPerks = engine.updateOnBoardPerks(_uiState.value.onBoardPerks)
+            val nextPerks = engine.trySpawnPerkOnBoard(newState, updatedPerks)
+            
             _uiState.update {
                 it.copy(
                     grid = newState,
                     preview = newPreviews,
+                    onBoardPerks = nextPerks
                 )
             }
             updateLevel()

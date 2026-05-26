@@ -236,6 +236,7 @@ private fun PerkSelectionDialog(
                         onClick = { onPerkSelected(perk) },
                         modifier = Modifier.weight(1f),
                         showDescription = true,
+                        showDropRate = true,
                         buttonSize = 64.dp
                     )
                 }

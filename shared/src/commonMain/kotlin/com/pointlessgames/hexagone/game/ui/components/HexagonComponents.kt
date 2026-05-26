@@ -20,9 +20,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -123,6 +124,7 @@ class FlatTopHexagonShape : Shape {
 fun Hexagon(
     value: String? = null,
     backgroundColor: Color = Color.Transparent,
+    perk: Perk? = null,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     isOutline: Boolean = false,
@@ -201,6 +203,17 @@ fun Hexagon(
                 autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 24.sp)
             )
         }
+
+        if (perk != null) {
+            PerkIcon(
+                perk = perk,
+                modifier = Modifier
+                    .size(16.dp)
+                    .align(Alignment.BottomCenter)
+                    .offset(y = (-6).dp),
+                color = Color.White.copy(alpha = 0.6f)
+            )
+        }
     }
 }
 
@@ -213,9 +226,11 @@ fun PerkButton(
     isActive: Boolean = false,
     isEnabled: Boolean = true,
     showDescription: Boolean = false,
+    showDropRate: Boolean = false,
     buttonSize: Dp = 54.dp
 ) {
     val perkColor = if (isEnabled) HexagonGridDefaults.getColorForPerk(perk) else Color.Gray
+    val isLegendary = perk.isLegendary
     val heightScale = 0.866f // Flat-top hexagon height/width ratio
     
     Column(
@@ -228,6 +243,27 @@ fun PerkButton(
             modifier = Modifier.size(width = buttonSize, height = buttonSize * heightScale),
             contentAlignment = Alignment.Center
         ) {
+            // Legendary Glow
+            if (isLegendary && isEnabled) {
+                val infiniteTransition = rememberInfiniteTransition(label = "legendary_glow")
+                val glowAlpha by infiniteTransition.animateFloat(
+                    initialValue = 0.3f,
+                    targetValue = 0.8f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1000),
+                        repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+                    ),
+                    label = "glow"
+                )
+                
+                Box(
+                    modifier = Modifier
+                        .size(width = buttonSize + 8.dp, height = (buttonSize + 8.dp) * heightScale)
+                        .clip(FlatTopHexagonShape())
+                        .background(perkColor.copy(alpha = glowAlpha * 0.4f))
+                )
+            }
+
             // Main Hexagon Body
             Box(
                 modifier = Modifier
@@ -243,8 +279,8 @@ fun PerkButton(
                         )
                     )
                     .border(
-                        width = if (isActive) 2.dp else 1.dp,
-                        color = if (isActive) Color.White.copy(alpha = 0.5f) else perkColor.copy(alpha = 0.3f),
+                        width = if (isActive) 2.dp else if (isLegendary) 2.dp else 1.dp,
+                        color = if (isActive) Color.White.copy(alpha = 0.5f) else if (isLegendary) perkColor else perkColor.copy(alpha = 0.3f),
                         shape = FlatTopHexagonShape(),
                     )
                     .clickable(enabled = isEnabled, onClick = onClick),
@@ -284,11 +320,22 @@ fun PerkButton(
             text = perk.displayName,
             color = if (isActive) perkColor else Color.White.copy(alpha = 0.8f),
             fontSize = if (showDescription) 12.sp else 8.sp,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center,
             lineHeight = 10.sp,
             modifier = Modifier.width(buttonSize + 10.dp)
         )
+
+        if (showDropRate) {
+            val dropRate = (perk.baseWeight.toFloat() / Perk.entries.sumOf { it.baseWeight } * 100).toInt()
+            Text(
+                text = "$dropRate%",
+                color = if (isLegendary) perkColor else Color.White.copy(alpha = 0.4f),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        }
 
         if (showDescription) {
             Spacer(Modifier.height(4.dp))

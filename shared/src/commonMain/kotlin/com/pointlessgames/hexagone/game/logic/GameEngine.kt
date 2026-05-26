@@ -4,6 +4,7 @@ import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeHint
 import com.pointlessgames.hexagone.game.model.MergeStep
 import com.pointlessgames.hexagone.game.model.MergeTransition
+import com.pointlessgames.hexagone.game.model.OnBoardPerk
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PreviewCell
 import kotlin.math.pow
@@ -281,6 +282,33 @@ class GameEngine(
         }
     }
 
+    fun pickWeightedPerks(count: Int): List<Perk> {
+        val pool = Perk.entries.toMutableList()
+        val result = mutableListOf<Perk>()
+        
+        repeat(count) {
+            if (pool.isEmpty()) return@repeat
+            val totalWeight = pool.sumOf { it.baseWeight }
+            var random = Random.nextInt(totalWeight)
+            
+            for (perk in pool) {
+                random -= perk.baseWeight
+                if (random < 0) {
+                    result.add(perk)
+                    pool.remove(perk)
+                    break
+                }
+            }
+        }
+        
+        return result
+    }
+
+    fun getPerkDropRate(perk: Perk): Int {
+        val totalWeight = Perk.entries.sumOf { it.baseWeight }
+        return (perk.baseWeight.toFloat() / totalWeight * 100).toInt()
+    }
+
     fun isMovePossible(grid: List<HexagonCell>): Boolean {
         val occupied = grid.map { it.x to it.y }.toSet()
         for (y in 0 until rows) {
@@ -317,6 +345,38 @@ class GameEngine(
         val currentLevelThreshold = 50 * (level - 1).toDouble().pow(2).toFloat()
         val nextLevelThreshold = 50 * level.toDouble().pow(2).toFloat()
         return ((score - currentLevelThreshold) / (nextLevelThreshold - currentLevelThreshold)).coerceIn(0f, 1f)
+    }
+
+
+    fun trySpawnPerkOnBoard(
+        grid: List<HexagonCell>,
+        existingPerks: List<OnBoardPerk>
+    ): List<OnBoardPerk> {
+        // 10% chance to spawn a perk on an empty space
+        if (Random.nextFloat() > 0.1f) return existingPerks
+        
+        val occupied = grid.map { it.x to it.y }.toSet()
+        val perkPositions = existingPerks.map { it.x to it.y }.toSet()
+        
+        val emptyPositions = mutableListOf<Pair<Int, Int>>()
+        for (y in 0 until rows) {
+            for (x in 0 until columns) {
+                if (x to y !in occupied && x to y !in perkPositions) {
+                    emptyPositions.add(x to y)
+                }
+            }
+        }
+        
+        if (emptyPositions.isEmpty()) return existingPerks
+        
+        val pos = emptyPositions.random()
+        val perk = pickWeightedPerks(1).first()
+        
+        return existingPerks + OnBoardPerk(pos.first, pos.second, perk, 3)
+    }
+
+    fun updateOnBoardPerks(perks: List<OnBoardPerk>): List<OnBoardPerk> {
+        return perks.map { it.copy(lifespan = it.lifespan - 1) }.filter { it.lifespan > 0 }
     }
 
     fun spawnFromQueue(

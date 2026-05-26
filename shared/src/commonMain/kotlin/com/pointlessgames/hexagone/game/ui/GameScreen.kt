@@ -112,6 +112,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
 
                 GameGridOverlay(
                     gridState = uiState.grid,
+                    onBoardPerks = uiState.onBoardPerks,
                     mergeHints = uiState.mergeHints,
                     previewState = uiState.preview,
                     pendingMerge = uiState.pendingMerge,

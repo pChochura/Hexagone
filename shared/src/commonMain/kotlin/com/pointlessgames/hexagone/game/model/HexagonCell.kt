@@ -9,6 +9,13 @@ data class HexagonCell(
     val value: Int
 )
 
+data class OnBoardPerk(
+    val x: Int,
+    val y: Int,
+    val perk: Perk,
+    val lifespan: Int
+)
+
 data class PreviewCell(
     val id: String,
     val x: Int,
@@ -36,15 +43,18 @@ data class MergeStep(
 enum class Perk(
     val displayName: String,
     val description: String,
+    val baseWeight: Int,
     val canSaveFromStuck: Boolean = true
 ) {
-    ADVANCE_QUEUE("ADVANCE QUEUE", "Instantly spawn the next piece from your queue."),
-    MOVE_TILE("MOVE TILE", "Select a tile and move it to any empty spot."),
-    REMOVE_TILE("REMOVE TILE", "Select a tile and remove it from the board."),
-    FUSION("FUSION", "Merge all surrounding tiles into a single superior tile."),
-    SWAP_TILES("SWAP TILES", "Select two tiles to swap their positions."),
-    CHAIN_MERGE("CHAIN MERGE", "Your next move will trigger chain reactions.", canSaveFromStuck = false),
-    UNDO("UNDO", "Undo your last move.")
+    UNDO("UNDO", "Undo your last move.", baseWeight = 100),
+    MOVE_TILE("MOVE TILE", "Select a tile and move it to any empty spot.", baseWeight = 80),
+    REMOVE_TILE("REMOVE TILE", "Select a tile and remove it from the board.", baseWeight = 80),
+    ADVANCE_QUEUE("ADVANCE QUEUE", "Instantly spawn the next piece from your queue.", baseWeight = 50),
+    SWAP_TILES("SWAP TILES", "Select two tiles to swap their positions.", baseWeight = 50),
+    FUSION("FUSION", "Merge all surrounding tiles into a single superior tile.", baseWeight = 20),
+    CHAIN_MERGE("CHAIN MERGE", "Your next move will trigger chain reactions.", baseWeight = 20, canSaveFromStuck = false);
+
+    val isLegendary: Boolean get() = baseWeight <= 20
 }
 
 data class MergeHint(

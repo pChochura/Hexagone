@@ -15,8 +15,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -50,6 +52,7 @@ import androidx.compose.ui.zIndex
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeHint
 import com.pointlessgames.hexagone.game.model.MergeTransition
+import com.pointlessgames.hexagone.game.model.OnBoardPerk
 import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PreviewCell
@@ -70,6 +73,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun GameGridOverlay(
     gridState: List<HexagonCell>,
+    onBoardPerks: List<OnBoardPerk>,
     mergeHints: List<MergeHint>,
     previewState: List<PreviewCell>,
     pendingMerge: MergeTransition?,
@@ -285,6 +289,8 @@ fun GameGridOverlay(
                 itemGap = itemGap,
                 outlineContent = { col, row ->
                     val hint = mergeHints.find { it.x == col && it.y == row }
+                    val onBoardPerk = onBoardPerks.find { it.x == col && it.y == row }
+                    
                     Box(contentAlignment = Alignment.Center) {
                         Hexagon(
                             modifier = Modifier
@@ -300,6 +306,28 @@ fun GameGridOverlay(
                                 ),
                             isOutline = true,
                         )
+                        
+                        if (onBoardPerk != null) {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                PerkIcon(
+                                    perk = onBoardPerk.perk,
+                                    modifier = Modifier.size(16.dp),
+                                    color = HexagonGridDefaults.getColorForPerk(onBoardPerk.perk).copy(alpha = 0.6f)
+                                )
+                                Text(
+                                    text = onBoardPerk.lifespan.toString(),
+                                    color = Color.White.copy(alpha = 0.5f),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    lineHeight = 9.sp
+                                )
+                            }
+                        }
+
                         if (hint != null) {
                             val dotSize = (4 + hint.weight * 6).dp
                             Box(
