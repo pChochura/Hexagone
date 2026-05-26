@@ -1,6 +1,11 @@
 package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,10 +26,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,6 +49,17 @@ fun PerkBar(
     onPerkClick: (Perk) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "perk_glow")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.05f,
+        targetValue = 0.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2500),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow_alpha"
+    )
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -48,6 +70,51 @@ fun PerkBar(
                 Color.White.copy(alpha = 0.08f),
                 RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
             )
+            .then(
+                if (collectedPerks.isNotEmpty()) {
+                    Modifier.drawBehind {
+                        val baseColor = Color(0xFFF06292)
+                        val cornerRadius = 32.dp.toPx()
+                        
+                        val path = Path().apply {
+                            moveTo(0f, size.height)
+                            lineTo(0f, cornerRadius)
+                            arcTo(
+                                rect = Rect(0f, 0f, cornerRadius * 2, cornerRadius * 2),
+                                startAngleDegrees = 180f,
+                                sweepAngleDegrees = 90f,
+                                forceMoveTo = false
+                            )
+                            lineTo(size.width - cornerRadius, 0f)
+                            arcTo(
+                                rect = Rect(size.width - cornerRadius * 2, 0f, size.width, cornerRadius * 2),
+                                startAngleDegrees = 270f,
+                                sweepAngleDegrees = 90f,
+                                forceMoveTo = false
+                            )
+                            lineTo(size.width, size.height)
+                        }
+
+                        // Layered strokes to create a very subtle soft glow effect
+                        for (i in 1..3) {
+                            val alpha = (glowAlpha / (i * 3f))
+                            drawPath(
+                                path = path,
+                                color = baseColor.copy(alpha = alpha),
+                                style = Stroke(width = (i * 3).dp.toPx())
+                            )
+                        }
+                        
+                        // Subtle inner edge
+                        drawPath(
+                            path = path,
+                            color = baseColor.copy(alpha = glowAlpha * 0.5f),
+                            style = Stroke(width = 1.dp.toPx())
+                        )
+                    }
+                } else Modifier
+            )
+            .graphicsLayer { clip = false }
             .navigationBarsPadding()
             .padding(16.dp),
         contentAlignment = Alignment.Center,

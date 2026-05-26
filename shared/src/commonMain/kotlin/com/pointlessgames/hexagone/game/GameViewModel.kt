@@ -455,7 +455,8 @@ internal class GameViewModel(
             mergeHints = if (_uiState.value.mergeHintsEnabled) engine.findMergeHints(initialGrid, initialPreviews, 0, null) else emptyList(),
             mergeHintsEnabled = _uiState.value.mergeHintsEnabled,
             preview = initialPreviews,
-            bestScore = _uiState.value.bestScore
+            bestScore = _uiState.value.bestScore,
+            collectedPerks = listOf(Perk.UNDO, Perk.MOVE_TILE, Perk.REMOVE_TILE)
         )
         updateLevel()
         checkValidMoves()
