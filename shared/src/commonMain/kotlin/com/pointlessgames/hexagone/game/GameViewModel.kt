@@ -42,7 +42,10 @@ internal data class GameUiState(
     val selectedCellId: String? = null,
     val mergeHintsEnabled: Boolean = true,
     val particles: List<Particle> = emptyList(),
-    val scorePopups: List<ScorePopup> = emptyList()
+    val scorePopups: List<ScorePopup> = emptyList(),
+    val maxCombo: Int = 0,
+    val totalMerges: Int = 0,
+    val showGameOverBoard: Boolean = false
 )
 
 internal data class GameState(
@@ -52,7 +55,9 @@ internal data class GameState(
     val level: Int,
     val highestValue: Int,
     val combo: Int,
-    val collectedPerks: List<Perk>
+    val collectedPerks: List<Perk>,
+    val maxCombo: Int,
+    val totalMerges: Int
 )
 
 internal class GameViewModel(
@@ -141,7 +146,9 @@ internal class GameViewModel(
             level = state.level,
             highestValue = state.highestValue,
             combo = state.combo,
-            collectedPerks = state.collectedPerks
+            collectedPerks = state.collectedPerks,
+            maxCombo = state.maxCombo,
+            totalMerges = state.totalMerges
         )
         stateHistory.add(currentState)
         if (stateHistory.size > 10) stateHistory.removeAt(0)
@@ -160,6 +167,8 @@ internal class GameViewModel(
                 highestValue = previousState.highestValue,
                 combo = previousState.combo,
                 collectedPerks = previousState.collectedPerks,
+                maxCombo = previousState.maxCombo,
+                totalMerges = previousState.totalMerges,
                 pendingMerge = null,
                 activePerk = null,
                 selectedCellId = null
@@ -504,7 +513,9 @@ internal class GameViewModel(
                     pendingMerge = null,
                     activeMergeStepIndex = 0,
                     pendingMergeScore = 0,
-                    isBusy = true
+                    isBusy = true,
+                    maxCombo = maxOf(it.maxCombo, finalCombo),
+                    totalMerges = it.totalMerges + 1
                 ) }
 
                 val chainMerge = if (_uiState.value.activePerk == Perk.CHAIN_MERGE) {
@@ -558,7 +569,14 @@ internal class GameViewModel(
             } else if (actionablePerks.isNotEmpty()) {
                 it.copy(isStuck = true, isGameOver = false)
             } else {
-                it.copy(isStuck = false, isGameOver = true)
+                it.copy(isStuck = false)
+            }
+        }
+
+        if (!isPossible && hasPerkOptions.not() && actionablePerks.isEmpty()) {
+            viewModelScope.launch {
+                delay(1000)
+                _uiState.update { it.copy(isGameOver = true) }
             }
         }
         recalculateHints()
@@ -581,5 +599,9 @@ internal class GameViewModel(
     fun getLevelProgress(): Float {
         val state = _uiState.value
         return engine.getLevelProgress(state.score, state.level)
+    }
+
+    fun onViewBoardToggled() {
+        _uiState.update { it.copy(showGameOverBoard = !it.showGameOverBoard) }
     }
 }

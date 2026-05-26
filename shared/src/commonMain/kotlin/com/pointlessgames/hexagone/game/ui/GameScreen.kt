@@ -47,7 +47,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val uiState by viewModel.uiState.collectAsState()
 
     val gridAlpha by animateFloatAsState(
-        targetValue = if (uiState.isGameOver) 0.1f else 1f,
+        targetValue = if (uiState.isGameOver && !uiState.showGameOverBoard) 0.1f else 1f,
         animationSpec = spring(stiffness = Spring.StiffnessLow),
         label = "grid_alpha",
     )
@@ -198,10 +198,20 @@ internal fun GameScreen(viewModel: GameViewModel) {
 
     GameOverlays(
         isGameOver = uiState.isGameOver,
+        score = uiState.score,
+        bestScore = uiState.bestScore,
+        level = uiState.level,
+        maxCombo = uiState.maxCombo,
+        totalMerges = uiState.totalMerges,
+        highestValue = uiState.highestValue,
+        showBoard = uiState.showGameOverBoard,
         perkOptions = uiState.perkOptions,
         collectedPerks = uiState.collectedPerks,
         onPerkSelected = viewModel::onPerkSelected,
         onUsePerk = viewModel::onUsePerkClicked,
         onRestart = viewModel::onRestartClicked,
+        onViewBoardToggle = viewModel::onViewBoardToggled,
+        onShare = { /* TODO: Implement snapshot and share */ },
+        onLeaderboard = { /* TODO: Implement leaderboard */ }
     )
 }
