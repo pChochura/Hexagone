@@ -192,46 +192,13 @@ private fun PerkSelectionDialog(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 options.forEach { perk ->
-                    Column(
+                    PerkButton(
+                        perk = perk,
+                        onClick = { onPerkSelected(perk) },
                         modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(width = 64.dp, height = (64 * 0.866f).dp)
-                                .clip(FlatTopHexagonShape())
-                                .background(Color(0xFF2A2A36))
-                                .border(1.dp, Color.White.copy(alpha = 0.1f), FlatTopHexagonShape())
-                                .clickable { onPerkSelected(perk) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            PerkIcon(
-                                perk = perk,
-                                modifier = Modifier.size(28.dp),
-                                color = Color.White
-                            )
-                        }
-
-                        Spacer(Modifier.height(12.dp))
-
-                        Text(
-                            text = perk.displayName,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center,
-                        )
-                        
-                        Spacer(Modifier.height(4.dp))
-                        
-                        Text(
-                            text = perk.description,
-                            color = Color.White.copy(alpha = 0.5f),
-                            fontSize = 9.sp,
-                            textAlign = TextAlign.Center,
-                            lineHeight = 11.sp,
-                        )
-                    }
+                        showDescription = true,
+                        buttonSize = 64.dp
+                    )
                 }
             }
         }
@@ -327,26 +294,17 @@ private fun StatusDialog(
             if (displayPerks.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.Center,
                 ) {
                     displayPerks.forEach { perk ->
                         val count = collectedPerks.count { it == perk }
-                        Button(
+                        PerkButton(
+                            perk = perk,
                             onClick = { onUsePerk(perk) },
-                            modifier = Modifier.weight(1f).height(48.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF4F6BFF),
-                                contentColor = Color.White,
-                            ),
-                            contentPadding = PaddingValues(4.dp),
-                        ) {
-                            Text(
-                                "${perk.displayName.split(" ").first()} ($count)",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                            )
-                        }
+                            count = count,
+                            buttonSize = 54.dp
+                        )
+                        Spacer(Modifier.width(12.dp))
                     }
                 }
                 Spacer(Modifier.height(12.dp))

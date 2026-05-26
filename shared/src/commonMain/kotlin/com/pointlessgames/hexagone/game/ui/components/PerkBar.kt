@@ -8,10 +8,11 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -32,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -131,11 +134,14 @@ fun PerkBar(
             )
         } else {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                collectedPerks.distinct().forEach { perk ->
+                val distinctPerks = collectedPerks.distinct()
+                distinctPerks.forEachIndexed { index, perk ->
                     val count = collectedPerks.count { it == perk }
                     val isActive = activePerk == perk
 
@@ -144,82 +150,13 @@ fun PerkBar(
                         count = count,
                         isActive = isActive,
                         onClick = { onPerkClick(perk) },
+                        modifier = Modifier.padding(
+                            start = if (index == 0) 16.dp else 6.dp,
+                            end = if (index == distinctPerks.lastIndex) 16.dp else 6.dp
+                        )
                     )
-
-                    Spacer(Modifier.size(12.dp))
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun PerkButton(
-    perk: Perk,
-    count: Int,
-    isActive: Boolean,
-    onClick: () -> Unit,
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(horizontal = 2.dp),
-    ) {
-        Box(
-            modifier = Modifier.size(width = 54.dp, height = (54 * 0.866f).dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            // Main Hexagon Body
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(FlatTopHexagonShape())
-                    .background(
-                        if (isActive) Color(0xFFF06292).copy(alpha = 0.3f) else Color(0xFF2A2A36),
-                    )
-                    .border(
-                        width = if (isActive) 2.dp else 1.dp,
-                        color = if (isActive) Color(0xFFF06292) else Color.White.copy(alpha = 0.1f),
-                        shape = FlatTopHexagonShape(),
-                    )
-                    .clickable(onClick = onClick),
-                contentAlignment = Alignment.Center,
-            ) {
-                PerkIcon(
-                    perk = perk,
-                    modifier = Modifier.size(24.dp),
-                    color = Color.White
-                )
-            }
-
-            // Badge counter - Moved outside the body and positioned absolutely to prevent clipping
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = 6.dp, y = (-2).dp)
-                    .size(20.dp)
-                    .background(Color(0xFFF06292), CircleShape)
-                    .border(1.dp, Color(0xFF1C1C24), CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = count.toString(),
-                    color = Color.White,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Black,
-                )
-            }
-        }
-
-        Spacer(Modifier.height(4.dp))
-
-        Text(
-            text = perk.displayName,
-            color = if (isActive) Color(0xFFF06292) else Color.White.copy(alpha = 0.6f),
-            fontSize = 8.sp,
-            fontWeight = FontWeight.ExtraBold,
-            textAlign = TextAlign.Center,
-            lineHeight = 10.sp,
-            modifier = Modifier.width(60.dp),
-        )
     }
 }

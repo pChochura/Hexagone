@@ -10,6 +10,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
@@ -26,6 +36,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -58,6 +69,18 @@ object HexagonGridDefaults {
         val brightness = 0.7f + (value % 3) * 0.1f
         
         return Color.hsv(hue, saturation.coerceAtMost(1f), brightness.coerceAtMost(1f))
+    }
+
+    fun getColorForPerk(perk: Perk): Color {
+        return when (perk) {
+            Perk.UNDO -> Color(0xFF90A4AE)
+            Perk.MOVE_TILE -> Color(0xFF9575CD)
+            Perk.REMOVE_TILE -> Color(0xFFE57373)
+            Perk.FUSION -> Color(0xFFFFB74D)
+            Perk.SWAP_TILES -> Color(0xFF4FC3F7)
+            Perk.CHAIN_MERGE -> Color(0xFF81C784)
+            Perk.ADVANCE_QUEUE -> Color(0xFF4DB6AC)
+        }
     }
 
     fun calculateOffset(
@@ -175,6 +198,103 @@ fun Hexagon(
                 fontSize = 24.sp,
                 maxLines = 1,
                 autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 24.sp)
+            )
+        }
+    }
+}
+
+@Composable
+fun PerkButton(
+    perk: Perk,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    count: Int? = null,
+    isActive: Boolean = false,
+    showDescription: Boolean = false,
+    buttonSize: Dp = 54.dp
+) {
+    val perkColor = HexagonGridDefaults.getColorForPerk(perk)
+    val heightScale = 0.866f // Flat-top hexagon height/width ratio
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.padding(horizontal = 2.dp)
+    ) {
+        Box(
+            modifier = Modifier.size(width = buttonSize, height = buttonSize * heightScale),
+            contentAlignment = Alignment.Center
+        ) {
+            // Main Hexagon Body
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(FlatTopHexagonShape())
+                    .background(
+                        Brush.verticalGradient(
+                            if (isActive) {
+                                listOf(perkColor, perkColor.copy(alpha = 0.7f))
+                            } else {
+                                listOf(perkColor.copy(alpha = 0.2f), perkColor.copy(alpha = 0.05f))
+                            }
+                        )
+                    )
+                    .border(
+                        width = if (isActive) 2.dp else 1.dp,
+                        color = if (isActive) Color.White.copy(alpha = 0.5f) else perkColor.copy(alpha = 0.3f),
+                        shape = FlatTopHexagonShape(),
+                    )
+                    .clickable(onClick = onClick),
+                contentAlignment = Alignment.Center
+            ) {
+                PerkIcon(
+                    perk = perk,
+                    modifier = Modifier.size(buttonSize * 0.45f),
+                    color = Color.White.copy(alpha = if (isActive) 1f else 0.7f)
+                )
+            }
+
+            // Badge counter
+            if (count != null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 6.dp, y = (-2).dp)
+                        .size(20.dp)
+                        .background(perkColor, CircleShape)
+                        .border(1.dp, Color(0xFF1C1C24), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = count.toString(),
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        Text(
+            text = perk.displayName,
+            color = if (isActive) perkColor else Color.White.copy(alpha = 0.8f),
+            fontSize = if (showDescription) 12.sp else 8.sp,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center,
+            lineHeight = 10.sp,
+            modifier = Modifier.width(buttonSize + 10.dp)
+        )
+
+        if (showDescription) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = perk.description,
+                color = Color.White.copy(alpha = 0.5f),
+                fontSize = 9.sp,
+                textAlign = TextAlign.Center,
+                lineHeight = 11.sp,
+                modifier = Modifier.width(buttonSize + 20.dp)
             )
         }
     }
@@ -305,35 +425,21 @@ fun PerkIcon(
             Perk.UNDO -> {
                 drawArc(
                     color = color,
-                    startAngle = 0f,
+                    startAngle = 180f,
                     sweepAngle = 270f,
                     useCenter = false,
-                    topLeft = Offset(size.width * 0.1f, size.height * 0.1f),
-                    size = Size(
-                        size.width * 0.8f,
-                        size.height * 0.8f,
-                    ),
-                    style = Stroke(width = strokeWidth),
+                    topLeft = Offset(size.width * 0.15f, size.height * 0.15f),
+                    size = Size(size.width * 0.7f, size.height * 0.7f),
+                    style = Stroke(width = strokeWidth, cap = androidx.compose.ui.graphics.StrokeCap.Round),
                 )
                 val arrowSize = size.width * 0.2f
-                drawLine(
-                    color,
-                    Offset(size.width * 0.1f, size.height * 0.5f),
-                    Offset(
-                        size.width * 0.1f - arrowSize,
-                        size.height * 0.5f - arrowSize,
-                    ),
-                    strokeWidth,
-                )
-                drawLine(
-                    color,
-                    Offset(size.width * 0.1f, size.height * 0.5f),
-                    Offset(
-                        size.width * 0.1f + arrowSize,
-                        size.height * 0.5f - arrowSize,
-                    ),
-                    strokeWidth,
-                )
+                val arrowPath = Path().apply {
+                    moveTo(size.width * 0.15f, size.height * 0.5f - arrowSize * 0.5f)
+                    lineTo(size.width * 0.15f, size.height * 0.5f + arrowSize * 0.5f)
+                    lineTo(size.width * 0.15f - arrowSize * 0.8f, size.height * 0.5f)
+                    close()
+                }
+                drawPath(arrowPath, color = color)
             }
         }
     }
