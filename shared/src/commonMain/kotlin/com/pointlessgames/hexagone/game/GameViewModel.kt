@@ -224,18 +224,17 @@ internal class GameViewModel(
                     grid = currentState.grid.map { cell ->
                         if (merge.mergingCells.any { it.id == cell.id }) cell.copy(x = x, y = y) else cell
                     },
-                    pendingMerge = merge
+                    pendingMerge = merge,
+                    isBusy = true
                 )
             }
             if (perk == Perk.FUSION) {
                 consumePerk(Perk.FUSION)
             }
         } else {
-            if (perk == null) {
-                _uiState.update { it.copy(combo = 0) }
-            } else if (perk == Perk.CHAIN_MERGE) {
+            if (perk == Perk.CHAIN_MERGE) {
                 finishPerkAction(Perk.CHAIN_MERGE)
-                _uiState.update { it.copy(activePerk = null, combo = 0) }
+                _uiState.update { it.copy(activePerk = null) }
             }
         }
     }
@@ -263,46 +262,39 @@ internal class GameViewModel(
 
     private fun moveTile(selectedId: String, x: Int, y: Int) {
         saveState()
+        var movedCell: HexagonCell? = null
         _uiState.update { state ->
             val cellToMove = state.grid.find { it.id == selectedId }
             if (cellToMove != null) {
+                val newCell = cellToMove.copy(x = x, y = y)
+                movedCell = newCell
                 state.copy(
-                    grid = state.grid.map { if (it.id == selectedId) it.copy(x = x, y = y) else it },
-                    isBusy = true
+                    grid = state.grid.map { if (it.id == selectedId) newCell else it }
                 )
             } else {
                 val previewToMove = state.preview.find { it.id == selectedId }
                 if (previewToMove != null) {
                     state.copy(
-                        preview = state.preview.map { if (it.id == selectedId) it.copy(x = x, y = y) else it },
-                        isBusy = true
+                        preview = state.preview.map { if (it.id == selectedId) it.copy(x = x, y = y) else it }
                     )
                 } else state
             }
         }
 
-        viewModelScope.launch {
-            delay(500) // Wait for slide animation
-            val state = _uiState.value
-            val movedCell = state.grid.find { it.id == selectedId }
-            val merge = movedCell?.let { engine.calculateMerge(it.x, it.y, state.grid) }
+        val state = _uiState.value
+        val merge = movedCell?.let { engine.calculateMerge(it.x, it.y, state.grid) }
 
-            if (merge != null) {
-                _uiState.update { it.copy(pendingMerge = merge, selectedCellId = null) }
-            } else {
-                finishPerkAction(Perk.MOVE_TILE)
-            }
+        if (merge != null) {
+            _uiState.update { it.copy(pendingMerge = merge, selectedCellId = null, isBusy = true) }
+        } else {
+            finishPerkAction(Perk.MOVE_TILE)
         }
     }
 
     private fun finishPerkAction(perk: Perk) {
         consumePerk(perk)
-        _uiState.update { it.copy(activePerk = null, selectedCellId = null, isBusy = true) }
-        viewModelScope.launch {
-            delay(500)
-            checkValidMoves()
-            _uiState.update { it.copy(isBusy = false) }
-        }
+        _uiState.update { it.copy(activePerk = null, selectedCellId = null) }
+        checkValidMoves()
     }
 
     fun onPreviewClicked(preview: PreviewCell) {
@@ -386,8 +378,7 @@ internal class GameViewModel(
                         id2 -> it.copy(x = x1, y = y1)
                         else -> it
                     }
-                },
-                isBusy = true
+                }
             )
         }
         finishPerkAction(Perk.SWAP_TILES)
@@ -484,7 +475,7 @@ internal class GameViewModel(
             } else null
 
             if (chainMerge != null) {
-                delay(600)
+                // Update gridState to move neighbors of the chain merge to the target position
                 _uiState.update { it.copy(
                     grid = stateAfterMerge.map { cell ->
                         if (chainMerge.mergingCells.any { it.id == cell.id }) cell.copy(x = merge.targetX, y = merge.targetY) else cell
@@ -522,7 +513,6 @@ internal class GameViewModel(
     private fun spawnFromQueue(currentState: List<HexagonCell>) {
         viewModelScope.launch {
             _uiState.update { it.copy(isBusy = true) }
-            if (_uiState.value.combo == 0) delay(200)
             val (newState, newPreviews) = engine.spawnFromQueue(currentState, _uiState.value.preview)
             _uiState.update { it.copy(grid = newState, preview = newPreviews) }
             updateLevel()
