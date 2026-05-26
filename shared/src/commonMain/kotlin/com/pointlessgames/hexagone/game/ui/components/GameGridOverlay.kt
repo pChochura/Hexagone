@@ -305,6 +305,7 @@ fun GameGridOverlay(
                                     ) else Modifier,
                                 ),
                             onClick = null,
+                            isGhost = true,
                         )
                     }
                 }
@@ -426,6 +427,7 @@ fun GameGridOverlay(
                                 shape = FlatTopHexagonShape(),
                             ),
                         isOutline = false,
+                        isGhost = true,
                     )
                 }
             }

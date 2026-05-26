@@ -1,17 +1,22 @@
 package com.pointlessgames.hexagone.game.ui.components
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -96,11 +101,52 @@ fun Hexagon(
     backgroundColor: Color = Color.Transparent,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    isOutline: Boolean = false
+    isOutline: Boolean = false,
+    isGhost: Boolean = false
 ) {
+    val stripeOffset = if (isGhost) {
+        val infiniteTransition = rememberInfiniteTransition(label = "stripe_transition")
+        infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 11.5f, // step = stripeWidth(1.5) + gap(10)
+            animationSpec = infiniteRepeatable(
+                animation = tween(3000, easing = LinearEasing),
+                repeatMode = androidx.compose.animation.core.RepeatMode.Restart
+            ),
+            label = "stripe_offset"
+        )
+    } else null
+
+    val ghostModifier = if (isGhost) {
+        Modifier.drawWithContent {
+            drawContent()
+            val stripeWidth = 1.5.dp.toPx()
+            val gap = 10.dp.toPx()
+            val color = Color.White.copy(alpha = 0.15f)
+            val step = stripeWidth + gap
+            val offsetPx = (stripeOffset?.value ?: 0f).dp.toPx()
+            
+            // 60 degree slope: tan(60) = sqrt(3) ~= 1.732
+            // dx = dy / tan(60)
+            val dx = size.height / 1.732f
+            
+            val iterations = ((size.width + dx) / step).toInt() + 2
+            for (i in -iterations..iterations) {
+                val xStart = i * step + offsetPx
+                drawLine(
+                    color = color,
+                    start = Offset(xStart, 0f),
+                    end = Offset(xStart + dx, size.height),
+                    strokeWidth = stripeWidth
+                )
+            }
+        }
+    } else Modifier
+
     val baseModifier = modifier
         .clip(FlatTopHexagonShape())
         .background(backgroundColor)
+        .then(ghostModifier)
     
     val finalModifier = if (onClick != null) {
         baseModifier.clickable(onClick = onClick)
