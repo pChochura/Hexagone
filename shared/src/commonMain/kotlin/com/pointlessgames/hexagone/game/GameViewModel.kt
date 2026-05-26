@@ -73,7 +73,7 @@ internal class GameViewModel(
             val hintsEnabled = settingsRepository.getMergeHintsEnabled()
             _uiState.update { it.copy(bestScore = best, mergeHintsEnabled = hintsEnabled) }
             // Re-calculate hints once we know if they are enabled
-            _uiState.update { it.copy(mergeHints = if (hintsEnabled) engine.findMergeHints(it.grid, it.preview, it.combo) else emptyList()) }
+            _uiState.update { it.copy(mergeHints = if (hintsEnabled) engine.findMergeHints(it.grid, it.preview, it.combo, it.activePerk) else emptyList()) }
         }
         restartGame()
         startAnimationLoop()
@@ -403,6 +403,7 @@ internal class GameViewModel(
         val state = _uiState.value
         if (state.activePerk == perk) {
             _uiState.update { it.copy(activePerk = null, selectedCellId = null) }
+            recalculateHints()
             return
         }
 
@@ -418,7 +419,20 @@ internal class GameViewModel(
                     consumePerk(Perk.UNDO)
                 }
             }
-            else -> _uiState.update { it.copy(activePerk = perk) }
+            else -> {
+                _uiState.update { it.copy(activePerk = perk) }
+            }
+        }
+        recalculateHints()
+    }
+
+    private fun recalculateHints() {
+        _uiState.update { state ->
+            state.copy(
+                mergeHints = if (state.mergeHintsEnabled) {
+                    engine.findMergeHints(state.grid, state.preview, state.combo, state.activePerk)
+                } else emptyList()
+            )
         }
     }
 
@@ -438,7 +452,7 @@ internal class GameViewModel(
         val initialPreviews = engine.pickRandomPreviews(initialGrid, emptyList(), 3)
         _uiState.value = GameUiState(
             grid = initialGrid,
-            mergeHints = if (_uiState.value.mergeHintsEnabled) engine.findMergeHints(initialGrid, initialPreviews, 0) else emptyList(),
+            mergeHints = if (_uiState.value.mergeHintsEnabled) engine.findMergeHints(initialGrid, initialPreviews, 0, null) else emptyList(),
             mergeHintsEnabled = _uiState.value.mergeHintsEnabled,
             preview = initialPreviews,
             bestScore = _uiState.value.bestScore
@@ -484,7 +498,7 @@ internal class GameViewModel(
                     bestScore = nextBestScore,
                     combo = finalCombo,
                     grid = stateAfterStep,
-                    mergeHints = if (it.mergeHintsEnabled) engine.findMergeHints(stateAfterStep, it.preview, finalCombo) else emptyList(),
+                    mergeHints = if (it.mergeHintsEnabled) engine.findMergeHints(stateAfterStep, it.preview, finalCombo, it.activePerk) else emptyList(),
                     pendingMerge = null,
                     activeMergeStepIndex = 0,
                     pendingMergeScore = 0,
@@ -537,15 +551,15 @@ internal class GameViewModel(
         val actionablePerks = state.collectedPerks.filter { it.canSaveFromStuck }
 
         _uiState.update { 
-            val nextState = if (isPossible || hasPerkOptions) {
+            if (isPossible || hasPerkOptions) {
                 it.copy(isStuck = false, isGameOver = false)
             } else if (actionablePerks.isNotEmpty()) {
                 it.copy(isStuck = true, isGameOver = false)
             } else {
                 it.copy(isStuck = false, isGameOver = true)
             }
-            nextState.copy(mergeHints = if (nextState.mergeHintsEnabled) engine.findMergeHints(nextState.grid, nextState.preview, nextState.combo) else emptyList())
         }
+        recalculateHints()
     }
 
     private fun spawnFromQueue(currentState: List<HexagonCell>) {
@@ -554,7 +568,6 @@ internal class GameViewModel(
             val (newState, newPreviews) = engine.spawnFromQueue(currentState, _uiState.value.preview)
             _uiState.update { it.copy(
                 grid = newState,
-                mergeHints = if (it.mergeHintsEnabled) engine.findMergeHints(newState, newPreviews, it.combo) else emptyList(),
                 preview = newPreviews
             ) }
             updateLevel()
