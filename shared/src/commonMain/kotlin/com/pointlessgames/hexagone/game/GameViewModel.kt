@@ -304,7 +304,7 @@ internal class GameViewModel(
                     grid = state.grid.map {
                         if (it.id == selectedId) it.copy(
                             x = x,
-                            y = y
+                            y = y,
                         ) else it
                     },
                 )
@@ -514,7 +514,7 @@ internal class GameViewModel(
             mergeHintsEnabled = _uiState.value.mergeHintsEnabled,
             preview = initialPreviews,
             bestScore = _uiState.value.bestScore,
-            collectedPerks = listOf(Perk.MOVE_TILE, Perk.REMOVE_TILE),
+            collectedPerks = listOf(),
         )
         updateLevel()
         checkValidMoves()
