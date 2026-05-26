@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.game.logic.GameEngine
 import com.pointlessgames.hexagone.game.model.HexagonCell
+import com.pointlessgames.hexagone.game.model.MergeHint
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
@@ -21,6 +22,7 @@ import kotlin.random.Random
 
 internal data class GameUiState(
     val grid: List<HexagonCell> = emptyList(),
+    val mergeHints: List<MergeHint> = emptyList(),
     val preview: List<PreviewCell> = emptyList(),
     val pendingMerge: MergeTransition? = null,
     val activeMergeStepIndex: Int = 0,
@@ -429,9 +431,11 @@ internal class GameViewModel(
         stateHistory.clear()
         lastLevel = 1
         val initialGrid = engine.generateInitialGrid()
+        val initialPreviews = engine.pickRandomPreviews(initialGrid, emptyList(), 3)
         _uiState.value = GameUiState(
             grid = initialGrid,
-            preview = engine.pickRandomPreviews(initialGrid, emptyList(), 3),
+            mergeHints = engine.findMergeHints(initialGrid, initialPreviews, 0),
+            preview = initialPreviews,
             bestScore = _uiState.value.bestScore
         )
         updateLevel()
@@ -475,6 +479,7 @@ internal class GameViewModel(
                     bestScore = nextBestScore,
                     combo = finalCombo,
                     grid = stateAfterStep,
+                    mergeHints = engine.findMergeHints(stateAfterStep, it.preview, finalCombo),
                     pendingMerge = null,
                     activeMergeStepIndex = 0,
                     pendingMergeScore = 0,
@@ -527,13 +532,14 @@ internal class GameViewModel(
         val actionablePerks = state.collectedPerks.filter { it.canSaveFromStuck }
 
         _uiState.update { 
-            if (isPossible || hasPerkOptions) {
+            val nextState = if (isPossible || hasPerkOptions) {
                 it.copy(isStuck = false, isGameOver = false)
             } else if (actionablePerks.isNotEmpty()) {
                 it.copy(isStuck = true, isGameOver = false)
             } else {
                 it.copy(isStuck = false, isGameOver = true)
             }
+            nextState.copy(mergeHints = engine.findMergeHints(nextState.grid, nextState.preview, nextState.combo))
         }
     }
 
@@ -541,7 +547,11 @@ internal class GameViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isBusy = true) }
             val (newState, newPreviews) = engine.spawnFromQueue(currentState, _uiState.value.preview)
-            _uiState.update { it.copy(grid = newState, preview = newPreviews) }
+            _uiState.update { it.copy(
+                grid = newState,
+                mergeHints = engine.findMergeHints(newState, newPreviews, it.combo),
+                preview = newPreviews
+            ) }
             updateLevel()
             checkValidMoves()
             _uiState.update { it.copy(isBusy = false) }

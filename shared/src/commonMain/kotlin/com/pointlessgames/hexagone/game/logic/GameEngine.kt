@@ -1,6 +1,7 @@
 package com.pointlessgames.hexagone.game.logic
 
 import com.pointlessgames.hexagone.game.model.HexagonCell
+import com.pointlessgames.hexagone.game.model.MergeHint
 import com.pointlessgames.hexagone.game.model.MergeStep
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.PreviewCell
@@ -175,6 +176,75 @@ class GameEngine(
             )
         }
         return null
+    }
+
+    fun findMergeHints(
+        grid: List<HexagonCell>,
+        previews: List<PreviewCell>,
+        currentCombo: Int
+    ): List<MergeHint> {
+        val occupied = grid.map { it.x to it.y }.toSet()
+        val potentials = mutableListOf<Triple<Int, Int, Double>>() // x, y, evaluation
+
+        for (y in 0 until rows) {
+            for (x in 0 until columns) {
+                if (x to y !in occupied) {
+                    val merge = calculateMerge(x, y, grid)
+                    if (merge != null) {
+                        // 1. Immediate Score
+                        val comboMultiplier = currentCombo + 1
+                        val immediateScore = merge.finalValue * merge.totalCells * comboMultiplier
+
+                        // 2. Next Combo
+                        val nextCombo = if (merge.uniqueGroups > 1) currentCombo + (merge.uniqueGroups - 1) else 0
+
+                        // 3. Grid after merge
+                        val gridAfterMerge = grid.filter { cell ->
+                            merge.steps.none { step -> step.mergingCells.any { it.id == cell.id } } &&
+                                    (cell.x != x || cell.y != y)
+                        } + createCell(x, y, merge.finalValue)
+
+                        // 4. Future Potential (Queue landing)
+                        var futureScore = 0
+                        // Simulate queue landing
+                        val gridAfterQueue = gridAfterMerge.toMutableList()
+                        previews.forEach { p ->
+                            if (gridAfterQueue.none { it.x == p.x && it.y == p.y }) {
+                                gridAfterQueue.add(createCell(p.x, p.y, p.value))
+                            }
+                        }
+
+                        // Check if previews trigger any new merges on the new board
+                        previews.forEach { p ->
+                            val pMerge = calculateMerge(p.x, p.y, gridAfterQueue)
+                            if (pMerge != null) {
+                                // Assume they merge with the next combo
+                                futureScore += pMerge.finalValue * pMerge.totalCells * (nextCombo + 1)
+                            }
+                        }
+
+                        // Total evaluation: immediate score + weighted future potential
+                        // Higher unique groups also prioritized for combo building
+                        val totalEval = immediateScore.toDouble() +
+                                futureScore.toDouble() * 0.7 +
+                                (merge.uniqueGroups - 1) * 100.0
+
+                        potentials.add(Triple(x, y, totalEval))
+                    }
+                }
+            }
+        }
+
+        if (potentials.isEmpty()) return emptyList()
+
+        val minEval = potentials.minOf { it.third }
+        val maxEval = potentials.maxOf { it.third }
+        val range = (maxEval - minEval).coerceAtLeast(1.0)
+
+        return potentials.map { (x, y, eval) ->
+            val weight = ((eval - minEval) / range).toFloat()
+            MergeHint(x, y, weight)
+        }
     }
 
     fun isMovePossible(grid: List<HexagonCell>): Boolean {

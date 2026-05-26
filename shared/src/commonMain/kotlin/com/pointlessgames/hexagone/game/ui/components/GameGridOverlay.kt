@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.pointlessgames.hexagone.game.model.HexagonCell
+import com.pointlessgames.hexagone.game.model.MergeHint
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
@@ -69,6 +70,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun GameGridOverlay(
     gridState: List<HexagonCell>,
+    mergeHints: List<MergeHint>,
     previewState: List<PreviewCell>,
     pendingMerge: MergeTransition?,
     hoveredMerge: MergeTransition?,
@@ -280,21 +282,32 @@ fun GameGridOverlay(
                 columns = columns,
                 rows = rows,
                 itemGap = itemGap,
-                outlineContent = { _, _ ->
-                    Hexagon(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .then(
-                                if (activePerk == Perk.MOVE_TILE && selectedCellId != null) {
-                                    Modifier.border(
-                                        width = 1.dp,
-                                        color = Color.White.copy(alpha = 0.4f),
-                                        shape = FlatTopHexagonShape(),
-                                    )
-                                } else Modifier,
-                            ),
-                        isOutline = true,
-                    )
+                outlineContent = { col, row ->
+                    val hint = mergeHints.find { it.x == col && it.y == row }
+                    Box(contentAlignment = Alignment.Center) {
+                        Hexagon(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .then(
+                                    if (activePerk == Perk.MOVE_TILE && selectedCellId != null) {
+                                        Modifier.border(
+                                            width = 1.dp,
+                                            color = Color.White.copy(alpha = 0.4f),
+                                            shape = FlatTopHexagonShape(),
+                                        )
+                                    } else Modifier,
+                                ),
+                            isOutline = true,
+                        )
+                        if (hint != null) {
+                            val dotSize = (4 + hint.weight * 6).dp
+                            Box(
+                                modifier = Modifier
+                                    .size(dotSize)
+                                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                            )
+                        }
+                    }
                 },
             ) {
                 // Draw preview hexagons (ghosts)

@@ -46,6 +46,12 @@ enum class Perk(
     UNDO("UNDO", "Undo your last move.")
 }
 
+data class MergeHint(
+    val x: Int,
+    val y: Int,
+    val weight: Float // 0.0 to 1.0
+)
+
 data class Particle(
     val id: Long,
     val x: Float,

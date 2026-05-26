@@ -70,6 +70,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
 
             GameGridOverlay(
                 gridState = uiState.grid,
+                mergeHints = uiState.mergeHints,
                 previewState = uiState.preview,
                 pendingMerge = uiState.pendingMerge,
                 hoveredMerge = uiState.hoveredMerge,
