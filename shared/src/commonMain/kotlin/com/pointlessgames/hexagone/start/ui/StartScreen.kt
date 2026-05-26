@@ -74,11 +74,7 @@ internal fun StartScreen(
                 defaultBackgroundColor = MaterialTheme.colorScheme.primary,
                 pressedBackgroundColor = MaterialTheme.colorScheme.secondary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                onClick = if (uiState.isTutorialFinished) {
-                    {}
-                } else {
-                    {}
-                },
+                onClick = {},
             )
 
             Text(
