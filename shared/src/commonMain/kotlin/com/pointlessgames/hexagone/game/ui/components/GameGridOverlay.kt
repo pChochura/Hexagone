@@ -12,6 +12,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -35,6 +37,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
@@ -49,6 +53,8 @@ import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PreviewCell
 import com.pointlessgames.hexagone.game.model.ScorePopup
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -83,7 +89,6 @@ fun GameGridOverlay(
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
-    val scope = rememberCoroutineScope()
     var finishedMergeCount by remember { mutableStateOf(0) }
 
     val columns = 5
@@ -211,37 +216,74 @@ fun GameGridOverlay(
             }
         }
 
+        fun getCellAt(x: Float, y: Float): Pair<Int, Int>? {
+            for (col in 0 until columns) {
+                val xOffset = col * 0.75f * cellWidth + gapPx / 2
+                val yOffset = (if (col % 2 == 1) cellHeight / 2 else 0f) + gapPx / 2
+                for (row in 0 until rows) {
+                    val yStart = row * cellHeight + yOffset
+                    if (x >= xOffset && x <= xOffset + cellWidth - gapPx &&
+                        y >= yStart && y <= yStart + cellHeight - gapPx
+                    ) {
+                        return col to row
+                    }
+                }
+            }
+            return null
+        }
+
         Box(
-            modifier = Modifier.size(
-                width = with(density) { totalWidth.toDp() },
-                height = with(density) { totalHeight.toDp() }
-            )
+            modifier = Modifier
+                .size(
+                    width = with(density) { totalWidth.toDp() },
+                    height = with(density) { totalHeight.toDp() }
+                )
+                .pointerInput(cellWidth, cellHeight, gapPx) {
+                    coroutineScope {
+                        awaitEachGesture {
+                            val down = awaitFirstDown()
+                            val initialCell = getCellAt(down.position.x, down.position.y)
+
+                            val job = launch {
+                                delay(200)
+                                initialCell?.let { (x, y) ->
+                                    onEmptySpaceTouchDown(x, y)
+                                }
+                            }
+
+                            try {
+                                while (true) {
+                                    val event = awaitPointerEvent(PointerEventPass.Main)
+                                    val change = event.changes.first()
+                                    if (change.changedToUp()) {
+                                        job.cancel()
+                                        val upCell = getCellAt(change.position.x, change.position.y)
+                                        // Only activate if release is on the same cell we started/locked on
+                                        if (upCell != null && upCell == initialCell) {
+                                            onEmptySpaceClick(upCell.first, upCell.second)
+                                        }
+                                        onEmptySpaceTouchUp()
+                                        break
+                                    } else if (!change.pressed) {
+                                        break
+                                    }
+                                }
+                            } finally {
+                                job.cancel()
+                                onEmptySpaceTouchUp()
+                            }
+                        }
+                    }
+                }
         ) {
             HexagonGrid(
                 columns = columns,
                 rows = rows,
                 itemGap = itemGap,
-                outlineContent = { col, row ->
+                outlineContent = { _, _ ->
                     Hexagon(
                         modifier = Modifier
                             .fillMaxSize()
-                            .pointerInput(col, row) {
-                                detectTapGestures(
-                                    onPress = {
-                                        val job = scope.launch {
-                                            delay(200.milliseconds)
-                                            onEmptySpaceTouchDown(col, row)
-                                        }
-                                        try {
-                                            awaitRelease()
-                                        } finally {
-                                            job.cancel()
-                                            onEmptySpaceTouchUp()
-                                        }
-                                    },
-                                    onTap = { onEmptySpaceClick(col, row) },
-                                )
-                            }
                             .then(
                                 if (activePerk == Perk.MOVE_TILE && selectedCellId != null) {
                                     Modifier.border(
