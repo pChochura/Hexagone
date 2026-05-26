@@ -560,7 +560,7 @@ fun GameGridOverlay(
                     targetOffset.x + itemWidth / 2,
                     targetOffset.y + itemHeight / 2,
                 )
-                val predictedScore = merge.finalValue * merge.totalCells * (combo + 1)
+                val predictedScore = merge.baseScore * (combo + 1)
 
                 Box(
                     modifier = Modifier

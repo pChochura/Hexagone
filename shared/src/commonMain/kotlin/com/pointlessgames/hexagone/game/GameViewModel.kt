@@ -587,8 +587,7 @@ internal class GameViewModel(
                 if (chainMerge != null) {
                     delay(150) // Artificial delay for chain merge impact
                     val chainComboMultiplier = finalCombo + 1
-                    val chainScore =
-                        chainMerge.finalValue * chainMerge.totalCells * chainComboMultiplier
+                    val chainScore = chainMerge.baseScore * chainComboMultiplier
 
                     _uiState.update {
                         it.copy(

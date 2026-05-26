@@ -97,6 +97,11 @@ class GameEngine(
         return potential.filter { (nx, ny) -> nx in 0 until columns && ny in 0 until rows }
     }
 
+    fun calculateBaseScore(cells: List<HexagonCell>): Int {
+        val n = cells.size
+        return cells.sumOf { it.value } + n * n - n
+    }
+
     fun calculateMerge(x: Int, y: Int, grid: List<HexagonCell>): MergeTransition? {
         val neighborCoords = getNeighbors(x, y)
         val neighborCells = grid.filter { cell ->
@@ -139,10 +144,8 @@ class GameEngine(
                 }
             }
 
-            val vMax = valuesToMerge.maxOf { it }
-            val n = totalCells
-            val k = valuesToMerge.size
-            val baseScore = (neighborCells.filter { it.value in valuesToMerge } + listOfNotNull(centerCell).filter { it.value in valuesToMerge }).sumOf { it.value } + n * n - n
+            val mergingCells = neighborCells.filter { it.value in valuesToMerge } + listOfNotNull(centerCell).filter { it.value in valuesToMerge }
+            val baseScore = calculateBaseScore(mergingCells)
 
             return MergeTransition(
                 targetX = x,
@@ -172,7 +175,7 @@ class GameEngine(
             val n = allCells.size
             val k = allCells.distinctBy { it.value }.size
             val newValue = vMax + n - 1
-            val baseScore = allCells.sumOf { it.value } + n * n - n
+            val baseScore = calculateBaseScore(allCells)
 
             return MergeTransition(
                 targetX = x,
@@ -209,7 +212,7 @@ class GameEngine(
                     if (merge != null) {
                         // 1. Immediate Score
                         val comboMultiplier = currentCombo + 1
-                        var immediateScore = merge.finalValue * merge.totalCells * comboMultiplier
+                        var immediateScore = merge.baseScore * comboMultiplier
                         var totalUniqueGroups = merge.uniqueGroups
                         var finalValue = merge.finalValue
 
@@ -223,7 +226,7 @@ class GameEngine(
                             var chainCount = 0
                             while (chainCount < 10) { // Safety break
                                 val chain = calculateMerge(x, y, currentGrid) ?: break
-                                immediateScore += chain.finalValue * chain.totalCells * (comboMultiplier + chainCount + 1)
+                                immediateScore += chain.baseScore * (comboMultiplier + chainCount + 1)
                                 totalUniqueGroups += chain.uniqueGroups
                                 finalValue = chain.finalValue
                                 currentGrid = currentGrid.filter { cell ->
@@ -252,7 +255,7 @@ class GameEngine(
                         previews.forEach { p ->
                             val pMerge = calculateMerge(p.x, p.y, gridAfterQueue)
                             if (pMerge != null) {
-                                futureScore += pMerge.finalValue * pMerge.totalCells * (currentCombo + totalUniqueGroups)
+                                futureScore += pMerge.baseScore * (currentCombo + totalUniqueGroups)
                             }
                         }
 
