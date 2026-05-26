@@ -81,11 +81,18 @@ fun ScoreSection(
     )
 
     val waveIntensity = remember { Animatable(0f) }
+    var previousScore by remember { mutableStateOf(score) }
     LaunchedEffect(score) {
-        if (score > 0) {
-            waveIntensity.snapTo(1f)
+        val addedScore = score - previousScore
+        if (addedScore > 0) {
+            // Intensity scales from 0.3 to 1.0 based on the amount scored
+            // 200 points is considered a "major" move at higher levels
+            val threshold = 100f + 25f * level
+            val intensity = (addedScore / threshold).coerceIn(0.3f, 1.0f)
+            waveIntensity.snapTo(intensity)
             waveIntensity.animateTo(0f, tween(1000))
         }
+        previousScore = score
     }
 
     var manualWaveOffset by remember { mutableStateOf(0f) }
