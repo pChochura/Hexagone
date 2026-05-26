@@ -60,14 +60,13 @@ import kotlin.math.sin
 @Composable
 fun GameOverlays(
     isGameOver: Boolean,
-    isStuck: Boolean,
     perkOptions: List<Perk>,
     collectedPerks: List<Perk>,
     onPerkSelected: (Perk) -> Unit,
     onUsePerk: (Perk) -> Unit,
     onRestart: () -> Unit,
 ) {
-    val isAnyOverlayVisible = perkOptions.isNotEmpty() || (isStuck || isGameOver)
+    val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver
     val dimAlpha by animateFloatAsState(
         targetValue = if (isAnyOverlayVisible) 0.7f else 0f,
         animationSpec = tween(500),
@@ -101,7 +100,7 @@ fun GameOverlays(
         }
 
         AnimatedVisibility(
-            visible = (isStuck || isGameOver) && perkOptions.isEmpty(),
+            visible = isGameOver && perkOptions.isEmpty(),
             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
             exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
             modifier = Modifier.align(Alignment.BottomCenter),

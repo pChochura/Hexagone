@@ -404,6 +404,7 @@ internal class GameViewModel(
         if (state.activePerk == perk) {
             _uiState.update { it.copy(activePerk = null, selectedCellId = null) }
             recalculateHints()
+            checkValidMoves()
             return
         }
 

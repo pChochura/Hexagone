@@ -49,15 +49,16 @@ import com.pointlessgames.hexagone.game.model.Perk
 fun PerkBar(
     collectedPerks: List<Perk>,
     activePerk: Perk?,
+    isStuck: Boolean,
     onPerkClick: (Perk) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "perk_glow")
     val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.05f,
-        targetValue = 0.2f,
+        initialValue = if (isStuck) 0.4f else 0.05f,
+        targetValue = if (isStuck) 1.0f else 0.2f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2500),
+            animation = tween(if (isStuck) 600 else 2500),
             repeatMode = RepeatMode.Reverse
         ),
         label = "glow_alpha"
@@ -76,7 +77,7 @@ fun PerkBar(
             .then(
                 if (collectedPerks.isNotEmpty()) {
                     Modifier.drawBehind {
-                        val baseColor = Color(0xFFF06292)
+                        val baseColor = if (isStuck) Color(0xFFF06292) else Color(0xFFF06292) // Maybe orange?
                         val cornerRadius = 32.dp.toPx()
                         
                         val path = Path().apply {
@@ -144,11 +145,13 @@ fun PerkBar(
                 distinctPerks.forEachIndexed { index, perk ->
                     val count = collectedPerks.count { it == perk }
                     val isActive = activePerk == perk
+                    val isEnabled = !isStuck || perk.canSaveFromStuck
 
                     PerkButton(
                         perk = perk,
                         count = count,
                         isActive = isActive,
+                        isEnabled = isEnabled,
                         onClick = { onPerkClick(perk) },
                         modifier = Modifier.padding(
                             start = if (index == 0) 16.dp else 6.dp,

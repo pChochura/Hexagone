@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -210,15 +211,18 @@ fun PerkButton(
     modifier: Modifier = Modifier,
     count: Int? = null,
     isActive: Boolean = false,
+    isEnabled: Boolean = true,
     showDescription: Boolean = false,
     buttonSize: Dp = 54.dp
 ) {
-    val perkColor = HexagonGridDefaults.getColorForPerk(perk)
+    val perkColor = if (isEnabled) HexagonGridDefaults.getColorForPerk(perk) else Color.Gray
     val heightScale = 0.866f // Flat-top hexagon height/width ratio
     
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.padding(horizontal = 2.dp)
+        modifier = modifier
+            .padding(horizontal = 2.dp)
+            .graphicsLayer { alpha = if (isEnabled) 1f else 0.1f }
     ) {
         Box(
             modifier = Modifier.size(width = buttonSize, height = buttonSize * heightScale),
@@ -243,13 +247,13 @@ fun PerkButton(
                         color = if (isActive) Color.White.copy(alpha = 0.5f) else perkColor.copy(alpha = 0.3f),
                         shape = FlatTopHexagonShape(),
                     )
-                    .clickable(onClick = onClick),
+                    .clickable(enabled = isEnabled, onClick = onClick),
                 contentAlignment = Alignment.Center
             ) {
                 PerkIcon(
                     perk = perk,
                     modifier = Modifier.size(buttonSize * 0.45f),
-                    color = Color.White.copy(alpha = if (isActive) 1f else 0.7f)
+                    color = Color.White.copy(alpha = if (isActive) 1f else if (isEnabled) 0.7f else 0.3f)
                 )
             }
 
