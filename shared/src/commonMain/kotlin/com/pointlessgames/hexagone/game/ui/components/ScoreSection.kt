@@ -4,8 +4,10 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseOutExpo
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
@@ -52,7 +54,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -76,7 +82,7 @@ fun ScoreSection(
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
-        animationSpec = spring(stiffness = androidx.compose.animation.core.Spring.StiffnessLow),
+        animationSpec = spring(stiffness = Spring.StiffnessLow),
         label = "progress_animation"
     )
 
@@ -111,6 +117,7 @@ fun ScoreSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .graphicsLayer { clip = false } // Allow massive combo pop to breathe
             .padding(top = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -188,13 +195,13 @@ fun ScoreSection(
                 .height(IntrinsicSize.Min)
                 .background(Color(0xFF1C1C24), RoundedCornerShape(24.dp))
                 .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(24.dp))
-                .clip(RoundedCornerShape(24.dp)),
+                .graphicsLayer { clip = false }, // Allow children (combo) to pop outside
         ) {
             // Background Progress Bar with Wavy Edge
             Canvas(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight()
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(24.dp)) // Keep bar inside the rounded container
             ) {
                 val width = size.width * animatedProgress
                 val height = size.height
@@ -297,21 +304,57 @@ fun ScoreSection(
                     )
 
                     Row(
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.graphicsLayer { clip = false }
                     ) {
-                        Spacer(Modifier.width(130.dp))
+                        Spacer(Modifier.width(110.dp)) // Move closer to center to allow overlap
 
-                        AnimatedVisibility(
-                            visible = combo > 0,
-                            enter = fadeIn() + scaleIn(initialScale = 0.5f),
-                            exit = fadeOut() + scaleOut(targetScale = 0.5f)
-                        ) {
-                            Text(
-                                text = "x${combo + 1}",
-                                color = Color(0xFFFFD700),
-                                fontWeight = FontWeight.Black,
-                                fontSize = 24.sp,
-                            )
+                        val comboMultiplier = combo + 1
+                        AnimatedContent(
+                            targetState = comboMultiplier,
+                            transitionSpec = {
+                                val settleDuration = when {
+                                    targetState > 8 -> 5000
+                                    targetState > 4 -> 4000
+                                    else -> 3000
+                                }
+                                (fadeIn(animationSpec = tween(200)) + 
+                                    scaleIn(
+                                        initialScale = 3f,
+                                        animationSpec = tween(
+                                            durationMillis = settleDuration,
+                                            easing = EaseOutExpo
+                                        )
+                                    ))
+                                    .togetherWith(fadeOut(animationSpec = tween(200)))
+                                    .using(SizeTransform(clip = false))
+                            },
+                            label = "combo_pop"
+                        ) { targetCombo ->
+                            if (targetCombo > 1) {
+                                val colorFraction = ((targetCombo - 1) / 9f).coerceIn(0f, 1f)
+                                val comboColor = lerp(
+                                    Color(0xFFFFD700), // Yellow/Gold
+                                    Color(0xFFFF3D00), // Intense Orange/Red
+                                    colorFraction
+                                )
+                                Text(
+                                    text = "x$targetCombo",
+                                    color = comboColor,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 24.sp,
+                                    style = TextStyle(
+                                        shadow = Shadow(
+                                            color = Color.Black.copy(alpha = 0.5f),
+                                            offset = Offset(4f, 4f),
+                                            blurRadius = 8f
+                                        )
+                                    ),
+                                    modifier = Modifier.graphicsLayer {
+                                        rotationZ = -5f + colorFraction * 10f
+                                    }
+                                )
+                            }
                         }
                     }
                 }
