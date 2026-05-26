@@ -246,7 +246,7 @@ internal class GameViewModel(
 
         if (merge != null) {
             val comboMultiplier = state.combo + 1
-            val totalAddedScore = merge.finalValue * merge.totalCells * comboMultiplier
+            val totalAddedScore = merge.baseScore * comboMultiplier
 
             _uiState.update { currentState ->
                 val firstStep = merge.steps.first()

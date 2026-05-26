@@ -139,6 +139,11 @@ class GameEngine(
                 }
             }
 
+            val vMax = valuesToMerge.maxOf { it }
+            val n = totalCells
+            val k = valuesToMerge.size
+            val baseScore = (neighborCells.filter { it.value in valuesToMerge } + listOfNotNull(centerCell).filter { it.value in valuesToMerge }).sumOf { it.value } + n * n - n
+
             return MergeTransition(
                 targetX = x,
                 targetY = y,
@@ -146,6 +151,7 @@ class GameEngine(
                 finalValue = currentCenterValue,
                 totalCells = totalCells,
                 uniqueGroups = valuesToMerge.size,
+                baseScore = baseScore,
                 resultId = "cell_${idCounter++}"
             )
         }
@@ -164,7 +170,9 @@ class GameEngine(
         if (allCells.isNotEmpty()) {
             val vMax = allCells.maxOf { it.value }
             val n = allCells.size
+            val k = allCells.distinctBy { it.value }.size
             val newValue = vMax + n - 1
+            val baseScore = allCells.sumOf { it.value } + n * n - n
 
             return MergeTransition(
                 targetX = x,
@@ -172,7 +180,8 @@ class GameEngine(
                 steps = listOf(MergeStep(neighborCells, newValue)),
                 finalValue = newValue,
                 totalCells = n,
-                uniqueGroups = 1,
+                uniqueGroups = k,
+                baseScore = baseScore,
                 resultId = "cell_${idCounter++}"
             )
         }

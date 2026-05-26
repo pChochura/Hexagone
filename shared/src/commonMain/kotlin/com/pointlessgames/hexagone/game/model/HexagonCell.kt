@@ -24,6 +24,7 @@ data class MergeTransition(
     val finalValue: Int,
     val totalCells: Int,
     val uniqueGroups: Int,
+    val baseScore: Int,
     val resultId: String
 )
 
