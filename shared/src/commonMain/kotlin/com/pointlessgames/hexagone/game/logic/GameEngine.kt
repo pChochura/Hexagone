@@ -372,7 +372,13 @@ class GameEngine(
         val pos = emptyPositions.random()
         val perk = pickWeightedPerks(1).first()
         
-        return existingPerks + OnBoardPerk(pos.first, pos.second, perk, 3)
+        val lifespan = when {
+            perk.baseWeight <= 20 -> 1 // Legendary: must be collected immediately
+            perk.baseWeight <= 50 -> 2 // Rare: short window
+            else -> 3 // Common: standard window
+        }
+        
+        return existingPerks + OnBoardPerk(pos.first, pos.second, perk, lifespan)
     }
 
     fun updateOnBoardPerks(perks: List<OnBoardPerk>): List<OnBoardPerk> {
