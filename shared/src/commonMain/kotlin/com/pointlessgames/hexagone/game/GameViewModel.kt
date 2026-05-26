@@ -262,14 +262,11 @@ internal class GameViewModel(
 
     private fun moveTile(selectedId: String, x: Int, y: Int) {
         saveState()
-        var movedCell: HexagonCell? = null
         _uiState.update { state ->
             val cellToMove = state.grid.find { it.id == selectedId }
             if (cellToMove != null) {
-                val newCell = cellToMove.copy(x = x, y = y)
-                movedCell = newCell
                 state.copy(
-                    grid = state.grid.map { if (it.id == selectedId) newCell else it }
+                    grid = state.grid.map { if (it.id == selectedId) it.copy(x = x, y = y) else it }
                 )
             } else {
                 val previewToMove = state.preview.find { it.id == selectedId }
@@ -281,14 +278,7 @@ internal class GameViewModel(
             }
         }
 
-        val state = _uiState.value
-        val merge = movedCell?.let { engine.calculateMerge(it.x, it.y, state.grid) }
-
-        if (merge != null) {
-            _uiState.update { it.copy(pendingMerge = merge, selectedCellId = null, isBusy = true) }
-        } else {
-            finishPerkAction(Perk.MOVE_TILE)
-        }
+        finishPerkAction(Perk.MOVE_TILE)
     }
 
     private fun finishPerkAction(perk: Perk) {
