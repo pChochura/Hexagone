@@ -1,7 +1,11 @@
 package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.AnimationVector2D
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntOffsetAsState
@@ -25,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -35,18 +40,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,18 +89,18 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 internal fun GameGridOverlay(
-    gridState: List<HexagonCell>,
-    onBoardPerks: List<OnBoardPerk>,
-    mergeHints: List<MergeHint>,
-    previewState: List<PreviewCell>,
-    pendingMerge: MergeTransition?,
+    gridStateProvider: () -> List<HexagonCell>,
+    onBoardPerksProvider: () -> List<OnBoardPerk>,
+    mergeHintsProvider: () -> List<MergeHint>,
+    previewStateProvider: () -> List<PreviewCell>,
+    pendingMergeProvider: () -> MergeTransition?,
     hoveredMergeState: StateFlow<MergeTransition?>,
-    potentialMerges: Map<Pair<Int, Int>, PotentialMerge>,
-    activePerk: Perk?,
-    selectedCellId: String?,
-    activeMergeStepIndex: Int,
-    pendingMergeScore: Int,
-    combo: Int,
+    potentialMergesProvider: () -> Map<Pair<Int, Int>, PotentialMerge>,
+    activePerkProvider: () -> Perk?,
+    selectedCellIdProvider: () -> String?,
+    activeMergeStepIndexProvider: () -> Int,
+    pendingMergeScoreProvider: () -> Int,
+    comboProvider: () -> Int,
     effects: SharedFlow<GameEffect>,
     onEmptySpaceClick: (Int, Int) -> Unit,
     onEmptySpaceTouchDown: (Int, Int) -> Unit,
@@ -97,9 +110,22 @@ internal fun GameGridOverlay(
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
+    val textMeasurer = rememberTextMeasurer()
     val finishedMergeCount = remember { mutableIntStateOf(0) }
     val localParticles = remember { mutableStateListOf<Particle>() }
     val localScorePopups = remember { mutableStateListOf<ScorePopup>() }
+
+    val ghostAnimations = remember { androidx.compose.runtime.mutableStateMapOf<String, GhostAnimationState>() }
+    val ghostStripeOffset = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        ghostStripeOffset.animateTo(
+            targetValue = 11.5f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(3000, easing = LinearEasing),
+                repeatMode = androidx.compose.animation.core.RepeatMode.Restart
+            )
+        )
+    }
 
     LaunchedEffect(effects) {
         effects.collect { effect ->
@@ -138,26 +164,54 @@ internal fun GameGridOverlay(
         val totalWidth = (cellWidth * (1f + (columns - 1) * 0.75f))
         val totalHeight = (cellHeight * (rows + 0.5f))
 
-        val currentStep = pendingMerge?.steps?.getOrNull(activeMergeStepIndex)
-        val mergingIds = remember(currentStep) { currentStep?.mergingCells?.map { it.id }?.toSet() ?: emptySet() }
-
-        LaunchedEffect(pendingMerge, activeMergeStepIndex) {
-            if (currentStep != null) {
-                finishedMergeCount.intValue = 0
-                if (currentStep.mergingCells.isEmpty()) onMergeAnimationFinished()
-                else {
-                    snapshotFlow { finishedMergeCount.intValue }.first { it >= currentStep.mergingCells.size }
-                    val targetOffset = HexagonGridDefaults.calculateOffset(pendingMerge.targetX, pendingMerge.targetY, cellWidth, cellHeight, gapPx)
-                    val center = Offset(targetOffset.x + itemWidth / 2, targetOffset.y + itemHeight / 2)
-                    val color = HexagonGridDefaults.getColorForValue(currentStep.resultValue)
-                    localParticles.addAll(List(30) {
-                        val angle = Random.nextFloat() * 2 * PI.toFloat(); val speed = Random.nextFloat() * 400f + 200f
-                        Particle(Random.nextLong(), center.x, center.y, cos(angle) * speed, sin(angle) * speed, color, 1f, Random.nextFloat() * 8f + 4f)
-                    })
-                    if (activeMergeStepIndex >= pendingMerge.steps.lastIndex) {
-                        localScorePopups.add(ScorePopup(Random.nextLong(), center.x, center.y, pendingMergeScore, 1f, color))
+        LaunchedEffect(cellWidth, cellHeight, gapPx) {
+            snapshotFlow { previewStateProvider() }.collect { previews ->
+                val currentIds = previews.map { it.id }.toSet()
+                ghostAnimations.keys.retainAll { it in currentIds }
+                previews.forEach { preview ->
+                    val targetOffset = HexagonGridDefaults.calculateOffset(preview.x, preview.y, cellWidth, cellHeight, gapPx)
+                    val state = ghostAnimations.getOrPut(preview.id) {
+                        GhostAnimationState(preview.id, targetOffset).apply {
+                            launch { scale.animateTo(0.8f, spring(Spring.DampingRatioLowBouncy, 1800f)) }
+                        }
                     }
-                    onMergeAnimationFinished()
+                    if (state.offset.targetValue != targetOffset) {
+                        launch { state.offset.animateTo(targetOffset, moveAnimationSpec) }
+                    }
+                }
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            hoveredMergeState.collect { current ->
+                ghostAnimations.forEach { (id, state) ->
+                    val preview = previewStateProvider().find { it.id == id }
+                    val isOverlapped = current != null && preview != null && current.targetX == preview.x && current.targetY == preview.y
+                    launch { state.alpha.animateTo(if (isOverlapped) 0f else 1f, tween(200)) }
+                }
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { pendingMergeProvider() to activeMergeStepIndexProvider() }.collect { (pendingMerge, activeMergeStepIndex) ->
+                val currentStep = pendingMerge?.steps?.getOrNull(activeMergeStepIndex)
+                if (currentStep != null) {
+                    finishedMergeCount.intValue = 0
+                    if (currentStep.mergingCells.isEmpty()) onMergeAnimationFinished()
+                    else {
+                        snapshotFlow { finishedMergeCount.intValue }.first { it >= currentStep.mergingCells.size }
+                        val targetOffset = HexagonGridDefaults.calculateOffset(pendingMerge.targetX, pendingMerge.targetY, cellWidth, cellHeight, gapPx)
+                        val center = Offset(targetOffset.x + itemWidth / 2, targetOffset.y + itemHeight / 2)
+                        val color = HexagonGridDefaults.getColorForValue(currentStep.resultValue)
+                        localParticles.addAll(List(30) {
+                            val angle = Random.nextFloat() * 2 * PI.toFloat(); val speed = Random.nextFloat() * 400f + 200f
+                            Particle(Random.nextLong(), center.x, center.y, cos(angle) * speed, sin(angle) * speed, color, 1f, Random.nextFloat() * 8f + 4f)
+                        })
+                        if (activeMergeStepIndex >= pendingMerge.steps.lastIndex) {
+                            localScorePopups.add(ScorePopup(Random.nextLong(), center.x, center.y, pendingMergeScoreProvider(), 1f, color))
+                        }
+                        onMergeAnimationFinished()
+                    }
                 }
             }
         }
@@ -174,6 +228,20 @@ internal fun GameGridOverlay(
         }
 
         val onAnimationFinishedLambda = remember { { finishedMergeCount.intValue += 1 } }
+        val infiniteTransition = rememberInfiniteTransition(label = "wiggle_ghost")
+        val wiggleState = infiniteTransition.animateFloat(-2f, 2f, infiniteRepeatable(tween(500), androidx.compose.animation.core.RepeatMode.Reverse), label = "wiggle")
+        val pulseState = infiniteTransition.animateFloat(0.9f, 1.0f, infiniteRepeatable(tween(800), androidx.compose.animation.core.RepeatMode.Reverse), label = "pulse")
+        val floatState = infiniteTransition.animateFloat(-5f, 5f, infiniteRepeatable(tween(1200), androidx.compose.animation.core.RepeatMode.Reverse), label = "float")
+
+        val activeHoverMerge = remember { mutableStateOf<MergeTransition?>(null) }
+        val hoverProgress = remember { Animatable(0f) }
+        LaunchedEffect(hoveredMergeState) {
+            hoveredMergeState.collect {
+                activeHoverMerge.value = it
+                if (it != null) hoverProgress.animateTo(1f, tween(200))
+                else if (hoverProgress.value > 0f) hoverProgress.animateTo(0f, tween(200))
+            }
+        }
 
         Box(
             modifier = Modifier.size(with(density) { totalWidth.toDp() }, with(density) { totalHeight.toDp() }).graphicsLayer { clip = false }
@@ -198,45 +266,139 @@ internal fun GameGridOverlay(
         ) {
             HexagonGrid(
                 columns = columns, rows = rows, itemGap = itemGap,
-                outlineContent = { col, row ->
-                    val hint = remember(mergeHints, col, row) { mergeHints.find { it.x == col && it.y == row } }
-                    val onBoardPerk = remember(onBoardPerks, col, row) { onBoardPerks.find { it.x == col && it.y == row } }
-                    StaticSlot(hint, onBoardPerk, activePerk, selectedCellId)
+                modifier = Modifier
+                    .drawBehind {
+                        val hints = mergeHintsProvider()
+                        hints.forEach { hint ->
+                            val offset = HexagonGridDefaults.calculateOffset(hint.x, hint.y, cellWidth, cellHeight, gapPx)
+                            val center = Offset(offset.x + itemWidth / 2, offset.y + itemHeight / 2)
+                            drawCircle(
+                                color = Color.White.copy(alpha = 0.2f),
+                                radius = (2 + hint.weight * 3).dp.toPx(),
+                                center = center
+                            )
+                        }
+
+                        val perks = onBoardPerksProvider()
+                        perks.forEach { op ->
+                            val offset = HexagonGridDefaults.calculateOffset(op.x, op.y, cellWidth, cellHeight, gapPx)
+                            val perkSize = Size(16.dp.toPx(), 16.dp.toPx())
+                            val perkOffset = Offset(
+                                offset.x + (itemWidth - perkSize.width) / 2,
+                                offset.y + (itemHeight - perkSize.height) / 2 - 4.dp.toPx()
+                            )
+                            withTransform({
+                                translate(perkOffset.x, perkOffset.y)
+                            }) {
+                                HexagonGridDefaults.drawPerkIcon(
+                                    this,
+                                    op.perk,
+                                    perkSize,
+                                    HexagonGridDefaults.getColorForPerk(op.perk).copy(alpha = 0.6f),
+                                    2.dp.toPx()
+                                )
+                            }
+
+                            val textLayoutResult = textMeasurer.measure(
+                                text = op.lifespan.toString(),
+                                style = TextStyle(
+                                    color = Color.White.copy(alpha = 0.5f),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            )
+                            drawText(
+                                textLayoutResult,
+                                topLeft = Offset(
+                                    offset.x + (itemWidth - textLayoutResult.size.width) / 2,
+                                    offset.y + (itemHeight + perkSize.height) / 2 - 2.dp.toPx()
+                                )
+                            )
+                        }
+                    }
+                    .drawWithContent {
+                        val activePerk = activePerkProvider()
+                        val isSelectable = activePerk == Perk.MOVE_TILE || activePerk == Perk.REMOVE_TILE || activePerk == Perk.SWAP_TILES
+                        val selectedCellId = selectedCellIdProvider()
+                        val previews = previewStateProvider()
+                        previews.forEach { preview ->
+                            val animState = ghostAnimations[preview.id] ?: return@forEach
+                            if (animState.offset.value == animState.offset.targetValue && selectedCellId != preview.id) {
+                                drawGhost(
+                                    drawScope = this,
+                                    preview = preview,
+                                    animState = animState,
+                                    itemWidth = itemWidth,
+                                    itemHeight = itemHeight,
+                                    wiggleValue = if (isSelectable) wiggleState.value else 0f,
+                                    stripeOffset = ghostStripeOffset.value,
+                                    textMeasurer = textMeasurer
+                                )
+                            }
+                        }
+
+                        drawContent()
+
+                        val currentMerge = activeHoverMerge.value
+                        val progress = hoverProgress.value
+                        if (progress > 0f && currentMerge != null) {
+                            val potentialMerge = potentialMergesProvider()[currentMerge.targetX to currentMerge.targetY]
+                            if (potentialMerge != null) {
+                                drawHoverResult(
+                                    drawScope = this,
+                                    merge = potentialMerge,
+                                    combo = comboProvider(),
+                                    cellWidth = cellWidth,
+                                    cellHeight = cellHeight,
+                                    gapPx = gapPx,
+                                    itemWidth = itemWidth,
+                                    itemHeight = itemHeight,
+                                    progress = progress,
+                                    pulseValue = pulseState.value,
+                                    floatValue = floatState.value,
+                                    stripeOffset = ghostStripeOffset.value,
+                                    textMeasurer = textMeasurer
+                                )
+                            }
+                        }
+
+                        previews.forEach { preview ->
+                            val animState = ghostAnimations[preview.id] ?: return@forEach
+                            if (animState.offset.value != animState.offset.targetValue || selectedCellId == preview.id) {
+                                drawGhost(
+                                    drawScope = this,
+                                    preview = preview,
+                                    animState = animState,
+                                    itemWidth = itemWidth,
+                                    itemHeight = itemHeight,
+                                    wiggleValue = if (isSelectable) wiggleState.value else 0f,
+                                    stripeOffset = ghostStripeOffset.value,
+                                    textMeasurer = textMeasurer
+                                )
+                            }
+                        }
+                    },
+                outlineContent = { _, _ ->
+                    StaticSlot(activePerkProvider, { selectedCellIdProvider() != null })
                 },
             ) {
-                previewState.forEach { preview ->
-                    key(preview.id) {
-                        AnimatedPreviewHexagon(
-                            preview = preview, cellWidth = cellWidth, cellHeight = cellHeight, gapPx = gapPx,
-                            moveAnimationSpec = moveAnimationSpec, selectedCellId = selectedCellId, activePerk = activePerk,
-                            hoveredMergeState = hoveredMergeState,
-                            density = density, itemWidth = itemWidth, itemHeight = itemHeight,
-                        )
-                    }
-                }
-
-                gridState.forEach { cell ->
-                    key(cell.id) {
-                        AnimatedGridHexagon(
-                            cell = cell, cellWidth = cellWidth, cellHeight = cellHeight, gapPx = gapPx,
-                            moveAnimationSpec = moveAnimationSpec, selectedCellId = selectedCellId, activePerk = activePerk,
-                            hoveredMergeState = hoveredMergeState,
-                            isMerging = cell.id in mergingIds,
-                            density = density, itemWidth = itemWidth, itemHeight = itemHeight,
-                            onCellClick = onCellClick,
-                            onAnimationFinished = onAnimationFinishedLambda
-                        )
-                    }
-                }
-
-                // Hover Result Previews (Placed last to naturally draw on top if zIndex is equal)
-                potentialMerges.forEach { (pos, merge) ->
-                    key(pos) {
-                        HoverResultHexagon(
-                            merge = merge, combo = combo, cellWidth = cellWidth, cellHeight = cellHeight, gapPx = gapPx,
-                            density = density, itemWidth = itemWidth, itemHeight = itemHeight,
-                            hoveredMergeState = hoveredMergeState
-                        )
+                Box {
+                    val gridState = gridStateProvider()
+                    gridState.forEach { cell ->
+                        key(cell.id) {
+                            AnimatedGridHexagon(
+                                cell = cell, cellWidth = cellWidth, cellHeight = cellHeight, gapPx = gapPx,
+                                moveAnimationSpec = moveAnimationSpec,
+                                selectedCellIdProvider = selectedCellIdProvider,
+                                activePerkProvider = activePerkProvider,
+                                pendingMergeProvider = pendingMergeProvider,
+                                activeMergeStepIndexProvider = activeMergeStepIndexProvider,
+                                hoveredMergeState = hoveredMergeState,
+                                density = density, itemWidth = itemWidth, itemHeight = itemHeight,
+                                onCellClick = onCellClick,
+                                onAnimationFinished = onAnimationFinishedLambda
+                            )
+                        }
                     }
                 }
             }
@@ -247,78 +409,168 @@ internal fun GameGridOverlay(
     }
 }
 
-@Composable
-private fun StaticSlot(hint: MergeHint?, onBoardPerk: OnBoardPerk?, activePerk: Perk?, selectedCellId: String?) {
-    Box(contentAlignment = Alignment.Center) {
-        Hexagon(
-            modifier = Modifier.fillMaxSize()
-                .then(if (activePerk == Perk.MOVE_TILE && selectedCellId != null) Modifier.border(1.dp, Color.White.copy(alpha = 0.4f), FlatTopHexagonShape()) else Modifier),
-            isOutline = true,
-        )
-        if (onBoardPerk != null) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                PerkIcon(
-                    perk = onBoardPerk.perk,
-                    modifier = Modifier.size(16.dp),
-                    color = HexagonGridDefaults.getColorForPerk(onBoardPerk.perk).copy(alpha = 0.6f)
-                )
-                Text(
-                    text = onBoardPerk.lifespan.toString(),
-                    color = Color.White.copy(alpha = 0.5f),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Black,
-                    lineHeight = 9.sp
-                )
-            }
+private fun drawGhost(
+    drawScope: DrawScope,
+    preview: PreviewCell,
+    animState: GhostAnimationState,
+    itemWidth: Float,
+    itemHeight: Float,
+    wiggleValue: Float,
+    stripeOffset: Float,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer
+) {
+    val offset = animState.offset.value
+    val scale = animState.scale.value
+    val alpha = animState.alpha.value
+
+    drawScope.withTransform({
+        translate(offset.x.toFloat(), offset.y.toFloat())
+        scale(scale, scale, Offset(itemWidth / 2, itemHeight / 2))
+        rotate(wiggleValue, Offset(itemWidth / 2, itemHeight / 2))
+    }) {
+        val backgroundColor = HexagonGridDefaults.getColorForValue(preview.value).copy(alpha = 0.3f)
+        HexagonGridDefaults.drawHexagonPath(this, Size(itemWidth, itemHeight), backgroundColor, alpha = alpha)
+
+        clipPath(HexagonGridDefaults.getHexagonPath(Size(itemWidth, itemHeight))) {
+            HexagonGridDefaults.drawGhostStripes(
+                this,
+                Size(itemWidth, itemHeight),
+                stripeOffset * drawScope.density,
+                alpha = 0.15f * alpha
+            )
         }
-        if (hint != null) Box(Modifier.size((4 + hint.weight * 6).dp).background(Color.White.copy(alpha = 0.2f), CircleShape))
+
+        val textLayoutResult = textMeasurer.measure(
+            text = preview.value.toString(),
+            style = TextStyle(
+                color = Color.White.copy(alpha = alpha),
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp
+            )
+        )
+        drawText(
+            textLayoutResult,
+            topLeft = Offset(
+                (itemWidth - textLayoutResult.size.width) / 2,
+                (itemHeight - textLayoutResult.size.height) / 2
+            )
+        )
     }
 }
 
-@Composable
-private fun AnimatedPreviewHexagon(
-    preview: PreviewCell, cellWidth: Float, cellHeight: Float, gapPx: Float,
-    moveAnimationSpec: androidx.compose.animation.core.AnimationSpec<IntOffset>,
-    selectedCellId: String?, activePerk: Perk?,
-    hoveredMergeState: StateFlow<MergeTransition?>,
-    density: androidx.compose.ui.unit.Density, itemWidth: Float, itemHeight: Float,
+private fun drawHoverResult(
+    drawScope: DrawScope,
+    merge: PotentialMerge,
+    combo: Int,
+    cellWidth: Float,
+    cellHeight: Float,
+    gapPx: Float,
+    itemWidth: Float,
+    itemHeight: Float,
+    progress: Float,
+    pulseValue: Float,
+    floatValue: Float,
+    stripeOffset: Float,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer
 ) {
-    val targetOffset = remember(preview.x, preview.y, cellWidth, cellHeight, gapPx) { HexagonGridDefaults.calculateOffset(preview.x, preview.y, cellWidth, cellHeight, gapPx) }
-    val animatedOffset by animateIntOffsetAsState(targetOffset, moveAnimationSpec, label = "ghost_offset")
-    val animatedScale by animateFloatAsState(0.8f, spring(Spring.DampingRatioLowBouncy, 1800f), label = "ghost_scale")
-    val infiniteTransition = rememberInfiniteTransition(label = "wiggle_ghost")
-    val wiggleState = infiniteTransition.animateFloat(-2f, 2f, infiniteRepeatable(tween(500), androidx.compose.animation.core.RepeatMode.Reverse), label = "wiggle")
-    val isSelectable = activePerk == Perk.MOVE_TILE || activePerk == Perk.REMOVE_TILE || activePerk == Perk.SWAP_TILES
-    val isSelected = selectedCellId == preview.id
+    val targetOffset = HexagonGridDefaults.calculateOffset(merge.targetX, merge.targetY, cellWidth, cellHeight, gapPx)
+    val center = Offset(targetOffset.x + itemWidth / 2, targetOffset.y + itemHeight / 2)
+    
+    drawScope.withTransform({
+        translate(targetOffset.x.toFloat(), targetOffset.y.toFloat())
+        val s = 0.8f + 0.2f * progress * pulseValue
+        scale(s, s, Offset(itemWidth / 2, itemHeight / 2))
+    }) {
+        val backgroundColor = HexagonGridDefaults.getColorForValue(merge.finalValue).copy(alpha = 0.5f * progress * 0.7f)
+        HexagonGridDefaults.drawHexagonPath(this, Size(itemWidth, itemHeight), backgroundColor)
 
-    val isOverlappedState = remember { mutableStateOf(false) }
-    LaunchedEffect(hoveredMergeState) {
-        hoveredMergeState.collect { current ->
-            isOverlappedState.value = current != null && current.targetX == preview.x && current.targetY == preview.y
+        clipPath(HexagonGridDefaults.getHexagonPath(Size(itemWidth, itemHeight))) {
+            HexagonGridDefaults.drawGhostStripes(
+                this,
+                Size(itemWidth, itemHeight),
+                stripeOffset * drawScope.density,
+                alpha = 0.15f * progress * 0.7f
+            )
         }
+
+        HexagonGridDefaults.drawHexagonPath(this, Size(itemWidth, itemHeight), Color.White.copy(alpha = 0.3f * progress), style = Stroke(width = 2.dp.toPx()))
+
+        val textLayoutResult = textMeasurer.measure(
+            text = merge.finalValue.toString(),
+            style = TextStyle(
+                color = Color.White.copy(alpha = progress),
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp
+            )
+        )
+        drawText(
+            textLayoutResult,
+            topLeft = Offset(
+                (itemWidth - textLayoutResult.size.width) / 2,
+                (itemHeight - textLayoutResult.size.height) / 2
+            )
+        )
     }
 
+    // Draw score popup
+    val scoreText = "+${merge.baseScore * (combo + 1)}"
+    val scoreTextLayout = textMeasurer.measure(
+        text = scoreText,
+        style = TextStyle(color = Color.White, fontWeight = FontWeight.Black, fontSize = 16.sp)
+    )
+    
+    val popupWidth = scoreTextLayout.size.width + with(drawScope) { 20.dp.toPx() }
+    val popupHeight = scoreTextLayout.size.height + with(drawScope) { 8.dp.toPx() }
+    val popupTopLeft = Offset(
+        center.x - popupWidth / 2f,
+        center.y - 140f + floatValue - popupHeight / 2f
+    )
+
+    drawScope.withTransform({
+        val s = 0.8f + 0.2f * progress * pulseValue
+        scale(s, s, Offset(popupTopLeft.x + popupWidth / 2f, popupTopLeft.y + popupHeight / 2f))
+    }) {
+        drawRoundRect(
+            color = Color.Black.copy(alpha = 0.7f * progress),
+            topLeft = popupTopLeft,
+            size = Size(popupWidth, popupHeight),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(popupHeight / 2f, popupHeight / 2f)
+        )
+        drawRoundRect(
+            color = Color.White.copy(alpha = 0.4f * progress),
+            topLeft = popupTopLeft,
+            size = Size(popupWidth, popupHeight),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(popupHeight / 2f, popupHeight / 2f),
+            style = Stroke(width = 1.dp.toPx())
+        )
+        drawText(
+            scoreTextLayout,
+            topLeft = Offset(
+                popupTopLeft.x + (popupWidth - scoreTextLayout.size.width) / 2f,
+                popupTopLeft.y + (popupHeight - scoreTextLayout.size.height) / 2f
+            ),
+            alpha = progress
+        )
+    }
+}
+
+private class GhostAnimationState(
+    val id: String,
+    initialOffset: IntOffset,
+) {
+    val offset = Animatable(initialOffset, IntOffset.VectorConverter)
+    val scale = Animatable(0f)
+    val alpha = Animatable(1f)
+}
+
+@Composable
+private fun StaticSlot(activePerkProvider: () -> Perk?, isAnySelectedProvider: () -> Boolean) {
+    val activePerk = activePerkProvider()
+    val isAnySelected = isAnySelectedProvider()
     Hexagon(
-        value = preview.value.toString(),
-        backgroundColor = HexagonGridDefaults.getColorForValue(preview.value).copy(alpha = 0.3f),
-        modifier = Modifier.size(with(density) { itemWidth.toDp() }, with(density) { itemHeight.toDp() })
-            .layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints)
-                layout(placeable.width, placeable.height) {
-                    placeable.place(animatedOffset, zIndex = if (isSelected || animatedOffset != targetOffset) 7f else 1f)
-                }
-            }
-            .graphicsLayer {
-                scaleX = animatedScale; scaleY = animatedScale
-                rotationZ = if (isSelectable && !isSelected) wiggleState.value else 0f
-                alpha = if (isOverlappedState.value) 0f else 1f
-            }
-            .then(if (isSelected) Modifier.border(2.dp, Color.White, FlatTopHexagonShape()) else Modifier),
-        isGhost = true,
+        modifier = Modifier.fillMaxSize()
+            .then(if (activePerk == Perk.MOVE_TILE && isAnySelected) Modifier.border(1.dp, Color.White.copy(alpha = 0.4f), FlatTopHexagonShape()) else Modifier),
+        isOutline = true,
     )
 }
 
@@ -326,20 +578,27 @@ private fun AnimatedPreviewHexagon(
 private fun AnimatedGridHexagon(
     cell: HexagonCell, cellWidth: Float, cellHeight: Float, gapPx: Float,
     moveAnimationSpec: androidx.compose.animation.core.AnimationSpec<IntOffset>,
-    selectedCellId: String?, activePerk: Perk?,
-    hoveredMergeState: StateFlow<MergeTransition?>, isMerging: Boolean,
+    selectedCellIdProvider: () -> String?, activePerkProvider: () -> Perk?,
+    pendingMergeProvider: () -> MergeTransition?, activeMergeStepIndexProvider: () -> Int,
+    hoveredMergeState: StateFlow<MergeTransition?>,
     density: androidx.compose.ui.unit.Density, itemWidth: Float, itemHeight: Float,
     onCellClick: (HexagonCell) -> Unit, onAnimationFinished: () -> Unit
 ) {
+    val isMergingProvider = remember(cell.id) {
+        {
+            val pendingMerge = pendingMergeProvider()
+            val activeMergeStepIndex = activeMergeStepIndexProvider()
+            val currentStep = pendingMerge?.steps?.getOrNull(activeMergeStepIndex)
+            currentStep?.mergingCells?.any { it.id == cell.id } == true
+        }
+    }
     val targetOffset = remember(cell.x, cell.y, cellWidth, cellHeight, gapPx) { HexagonGridDefaults.calculateOffset(cell.x, cell.y, cellWidth, cellHeight, gapPx) }
-    val animatedOffset by animateIntOffsetAsState(targetOffset, moveAnimationSpec, label = "cell_offset", finishedListener = { if (isMerging) onAnimationFinished() })
+    val animatedOffset by animateIntOffsetAsState(targetOffset, moveAnimationSpec, label = "cell_offset", finishedListener = { if (isMergingProvider()) onAnimationFinished() })
     var targetScale by remember { mutableStateOf(0f) }; LaunchedEffect(Unit) { targetScale = 1f }
     val scale by animateFloatAsState(targetScale, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium), label = "cell_scale")
     val alpha by animateFloatAsState(1f, spring(stiffness = Spring.StiffnessMedium), label = "cell_alpha")
     val infiniteTransition = rememberInfiniteTransition(label = "wiggle_cell")
     val wiggleState = infiniteTransition.animateFloat(-2f, 2f, infiniteRepeatable(tween(500), androidx.compose.animation.core.RepeatMode.Reverse), label = "wiggle")
-    val isSelected = selectedCellId == cell.id
-    val isSelectable = activePerk == Perk.MOVE_TILE || activePerk == Perk.REMOVE_TILE || activePerk == Perk.SWAP_TILES
 
     val isHoveredState = remember { mutableStateOf(false) }
     LaunchedEffect(hoveredMergeState) {
@@ -349,6 +608,9 @@ private fun AnimatedGridHexagon(
     }
 
     val shape = remember { FlatTopHexagonShape() }
+    val selectedCellId = selectedCellIdProvider()
+    val activePerk = activePerkProvider()
+    val isSelected = selectedCellId == cell.id
 
     Hexagon(
         value = cell.value.toString(),
@@ -357,17 +619,28 @@ private fun AnimatedGridHexagon(
             .layout { measurable, constraints ->
                 val placeable = measurable.measure(constraints)
                 layout(placeable.width, placeable.height) {
+                    val selectedCellId = selectedCellIdProvider()
+                    val pendingMerge = pendingMergeProvider()
+                    val activeMergeStepIndex = activeMergeStepIndexProvider()
+                    val currentStep = pendingMerge?.steps?.getOrNull(activeMergeStepIndex)
+                    val isMergingLocal = currentStep?.mergingCells?.any { it.id == cell.id } == true
+                    
                     placeable.place(
                         animatedOffset,
-                        zIndex = if (isSelected || isMerging || animatedOffset != targetOffset) 8f else if (isHoveredState.value) 6f else 2f
+                        zIndex = if (selectedCellId == cell.id || isMergingLocal || animatedOffset != targetOffset) 8f else if (isHoveredState.value) 6f else 2f
                     )
                 }
             }
             .graphicsLayer {
                 this.alpha = alpha; val hovered = isHoveredState.value
-                scaleX = scale * (if (isSelected) 1.2f else if (hovered) 1.1f else 1f)
-                scaleY = scale * (if (isSelected) 1.2f else if (hovered) 1.1f else 1f)
-                rotationZ = if (isSelectable && !isSelected) wiggleState.value else 0f
+                val selectedCellId = selectedCellIdProvider()
+                val isSelectedLocal = selectedCellId == cell.id
+                val activePerk = activePerkProvider()
+                val isSelectableLocal = activePerk == Perk.MOVE_TILE || activePerk == Perk.REMOVE_TILE || activePerk == Perk.SWAP_TILES
+                
+                scaleX = scale * (if (isSelectedLocal) 1.2f else if (hovered) 1.1f else 1f)
+                scaleY = scale * (if (isSelectedLocal) 1.2f else if (hovered) 1.1f else 1f)
+                rotationZ = if (isSelectableLocal && !isSelectedLocal) wiggleState.value else 0f
             }
             .drawWithContent {
                 drawContent()
@@ -383,76 +656,6 @@ private fun AnimatedGridHexagon(
     )
 }
 
-@Composable
-private fun HoverResultHexagon(
-    merge: PotentialMerge, combo: Int, cellWidth: Float, cellHeight: Float, gapPx: Float,
-    density: androidx.compose.ui.unit.Density, itemWidth: Float, itemHeight: Float,
-    hoveredMergeState: StateFlow<MergeTransition?>,
-) {
-    val targetOffset = remember(merge.targetX, merge.targetY, cellWidth, cellHeight, gapPx) {
-        HexagonGridDefaults.calculateOffset(merge.targetX, merge.targetY, cellWidth, cellHeight, gapPx)
-    }
-    
-    val hoverProgress = remember { Animatable(0f) }
-    LaunchedEffect(hoveredMergeState) {
-        hoveredMergeState.collect { current ->
-            val isTarget = current != null && current.targetX == merge.targetX && current.targetY == merge.targetY
-            if (isTarget) hoverProgress.animateTo(1f, tween(200))
-            else if (hoverProgress.value > 0f) hoverProgress.animateTo(0f, tween(200))
-        }
-    }
-
-    val infiniteTransition = rememberInfiniteTransition(label = "hover_anim")
-    val pulseState = infiniteTransition.animateFloat(0.9f, 1.0f, infiniteRepeatable(tween(800), androidx.compose.animation.core.RepeatMode.Reverse), label = "pulse")
-    val floatState = infiniteTransition.animateFloat(-5f, 5f, infiniteRepeatable(tween(1200), androidx.compose.animation.core.RepeatMode.Reverse), label = "float")
-
-    Box(Modifier.fillMaxSize().zIndex(20f)) {
-        Hexagon(
-            value = merge.finalValue.toString(),
-            backgroundColor = HexagonGridDefaults.getColorForValue(merge.finalValue).copy(alpha = 0.5f),
-            modifier = Modifier.size(with(density) { itemWidth.toDp() }, with(density) { itemHeight.toDp() })
-                .layout { measurable, constraints ->
-                    val placeable = measurable.measure(constraints)
-                    layout(placeable.width, placeable.height) {
-                        placeable.place(targetOffset, zIndex = 21f)
-                    }
-                }
-                .graphicsLayer {
-                    val progress = hoverProgress.value
-                    alpha = progress * 0.7f
-                    val s = 0.8f + 0.2f * progress * pulseState.value
-                    scaleX = s; scaleY = s
-                }
-                .border(2.dp, Color.White.copy(alpha = 0.3f), FlatTopHexagonShape()),
-            isGhost = true,
-        )
-        val center = Offset(targetOffset.x + itemWidth / 2, targetOffset.y + itemHeight / 2)
-        Box(
-            Modifier.layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints)
-                layout(placeable.width, placeable.height) {
-                    placeable.placeRelative(
-                        (center.x - placeable.width / 2).toInt(),
-                        (center.y - 140 + floatState.value - placeable.height / 2).toInt(),
-                        zIndex = 22f
-                    )
-                }
-            }
-            .graphicsLayer {
-                val progress = hoverProgress.value
-                alpha = progress
-                val s = 0.8f + 0.2f * progress * pulseState.value
-                scaleX = s; scaleY = s
-            }
-            .background(Color.Black.copy(alpha = 0.7f), CircleShape)
-            .border(1.dp, Color.White.copy(alpha = 0.4f), CircleShape)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("+${merge.baseScore * (combo + 1)}", color = Color.White, fontWeight = FontWeight.Black, fontSize = 16.sp)
-        }
-    }
-}
 
 @Composable
 private fun ScorePopupsLayer(scorePopups: List<ScorePopup>, onPopupFinished: (Long) -> Unit) {

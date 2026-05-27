@@ -79,6 +79,37 @@ internal fun GameScreen(viewModel: GameViewModel) {
         label = "stuck_bounce",
     )
 
+    // Stable Providers for GameGridOverlay
+    val mergeHintsState = androidx.compose.runtime.rememberUpdatedState(uiState.mergeHints)
+    val previewState = androidx.compose.runtime.rememberUpdatedState(uiState.preview)
+    val gridState = androidx.compose.runtime.rememberUpdatedState(uiState.grid)
+    val onBoardPerksState = androidx.compose.runtime.rememberUpdatedState(uiState.onBoardPerks)
+    val potentialMergesState = remember {
+        androidx.compose.runtime.derivedStateOf {
+            uiState.grid
+            uiState.activePerk
+            viewModel.getPotentialMerges()
+        }
+    }
+    val pendingMergeState = androidx.compose.runtime.rememberUpdatedState(uiState.pendingMerge)
+    val activeMergeStepIndexState = androidx.compose.runtime.rememberUpdatedState(uiState.activeMergeStepIndex)
+    val pendingMergeScoreState = androidx.compose.runtime.rememberUpdatedState(uiState.pendingMergeScore)
+    val comboState = androidx.compose.runtime.rememberUpdatedState(uiState.combo)
+    val activePerkState = androidx.compose.runtime.rememberUpdatedState(uiState.activePerk)
+    val selectedCellIdState = androidx.compose.runtime.rememberUpdatedState(uiState.selectedCellId)
+
+    val mergeHintsProvider = remember { { mergeHintsState.value } }
+    val previewStateProvider = remember { { previewState.value } }
+    val gridStateProvider = remember { { gridState.value } }
+    val onBoardPerksProvider = remember { { onBoardPerksState.value } }
+    val potentialMergesProvider = remember { { potentialMergesState.value } }
+    val pendingMergeProvider = remember { { pendingMergeState.value } }
+    val activeMergeStepIndexProvider = remember { { activeMergeStepIndexState.value } }
+    val pendingMergeScoreProvider = remember { { pendingMergeScoreState.value } }
+    val comboProvider = remember { { comboState.value } }
+    val activePerkProvider = remember { { activePerkState.value } }
+    val selectedCellIdProvider = remember { { selectedCellIdState.value } }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -121,20 +152,18 @@ internal fun GameScreen(viewModel: GameViewModel) {
                 Spacer(Modifier.weight(0.1f))
 
                 GameGridOverlay(
-                    gridState = uiState.grid,
-                    onBoardPerks = uiState.onBoardPerks,
-                    mergeHints = uiState.mergeHints,
-                    previewState = uiState.preview,
-                    pendingMerge = uiState.pendingMerge,
+                    gridStateProvider = gridStateProvider,
+                    onBoardPerksProvider = onBoardPerksProvider,
+                    mergeHintsProvider = mergeHintsProvider,
+                    previewStateProvider = previewStateProvider,
+                    pendingMergeProvider = pendingMergeProvider,
                     hoveredMergeState = viewModel.hoveredMerge,
-                    potentialMerges = remember(uiState.grid, uiState.activePerk) {
-                        viewModel.getPotentialMerges()
-                    },
-                    activePerk = uiState.activePerk,
-                    selectedCellId = uiState.selectedCellId,
-                    activeMergeStepIndex = uiState.activeMergeStepIndex,
-                    pendingMergeScore = uiState.pendingMergeScore,
-                    combo = uiState.combo,
+                    potentialMergesProvider = potentialMergesProvider,
+                    activePerkProvider = activePerkProvider,
+                    selectedCellIdProvider = selectedCellIdProvider,
+                    activeMergeStepIndexProvider = activeMergeStepIndexProvider,
+                    pendingMergeScoreProvider = pendingMergeScoreProvider,
+                    comboProvider = comboProvider,
                     effects = viewModel.effects,
                     onEmptySpaceClick = onEmptySpaceClick,
                     onEmptySpaceTouchDown = onEmptySpaceTouchDown,
