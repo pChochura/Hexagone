@@ -1,7 +1,9 @@
 package com.pointlessgames.hexagone.game.model
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
+@Immutable
 data class HexagonCell(
     val id: String,
     val x: Int,
@@ -9,6 +11,7 @@ data class HexagonCell(
     val value: Int
 )
 
+@Immutable
 data class OnBoardPerk(
     val x: Int,
     val y: Int,
@@ -16,6 +19,7 @@ data class OnBoardPerk(
     val lifespan: Int
 )
 
+@Immutable
 data class PreviewCell(
     val id: String,
     val x: Int,
@@ -24,6 +28,7 @@ data class PreviewCell(
     val rank: Int
 )
 
+@Immutable
 data class MergeTransition(
     val targetX: Int,
     val targetY: Int,
@@ -35,6 +40,7 @@ data class MergeTransition(
     val resultId: String
 )
 
+@Immutable
 data class MergeStep(
     val mergingCells: List<HexagonCell>,
     val resultValue: Int
@@ -57,12 +63,14 @@ enum class Perk(
     val isLegendary: Boolean get() = baseWeight <= 20
 }
 
+@Immutable
 data class MergeHint(
     val x: Int,
     val y: Int,
     val weight: Float // 0.0 to 1.0
 )
 
+@Immutable
 data class Particle(
     val id: Long,
     val x: Float,
@@ -74,6 +82,7 @@ data class Particle(
     val size: Float
 )
 
+@Immutable
 data class ScorePopup(
     val id: Long,
     val x: Float,

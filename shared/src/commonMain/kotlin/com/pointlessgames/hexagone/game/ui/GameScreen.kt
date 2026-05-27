@@ -121,16 +121,13 @@ internal fun GameScreen(viewModel: GameViewModel) {
                     selectedCellId = uiState.selectedCellId,
                     activeMergeStepIndex = uiState.activeMergeStepIndex,
                     pendingMergeScore = uiState.pendingMergeScore,
-                    particles = uiState.particles,
-                    scorePopups = uiState.scorePopups,
                     combo = uiState.combo,
+                    effects = viewModel.effects,
                     onEmptySpaceClick = viewModel::onEmptySpaceClicked,
                     onEmptySpaceTouchDown = viewModel::onEmptySpaceTouchDown,
                     onEmptySpaceTouchUp = viewModel::onEmptySpaceTouchUp,
                     onCellClick = viewModel::onCellClicked,
                     onMergeAnimationFinished = viewModel::onMergeAnimationFinished,
-                    onAddParticles = viewModel::addParticles,
-                    onAddScorePopup = viewModel::addScorePopup,
                     modifier = Modifier.weight(1f, fill = false).fillMaxWidth(),
                 )
 

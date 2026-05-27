@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -137,9 +138,9 @@ fun PerkBar(
                     modifier = Modifier.padding(16.dp),
                 )
             } else {
-                val distinctPerks = collectedPerks.distinct()
+                val distinctPerks = remember(collectedPerks) { collectedPerks.distinct() }
                 distinctPerks.forEachIndexed { index, perk ->
-                    val count = collectedPerks.count { it == perk }
+                    val count = remember(collectedPerks, perk) { collectedPerks.count { it == perk } }
                     val isActive = activePerk == perk
                     val isEnabled = !isStuck || perk.canSaveFromStuck
 
@@ -148,7 +149,7 @@ fun PerkBar(
                         count = count,
                         isActive = isActive,
                         isEnabled = isEnabled,
-                        onClick = { onPerkClick(perk) },
+                        onClick = remember(onPerkClick, perk) { { onPerkClick(perk) } },
                         modifier = Modifier.padding(
                             start = if (index == 0) 16.dp else 6.dp,
                             end = if (index == distinctPerks.lastIndex) 16.dp else 6.dp,

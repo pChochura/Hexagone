@@ -1,5 +1,6 @@
 package com.pointlessgames.hexagone.game.ui.components
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -27,6 +28,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,6 +49,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.pointlessgames.hexagone.game.GameEffect
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeHint
 import com.pointlessgames.hexagone.game.model.MergeTransition
@@ -56,6 +60,7 @@ import com.pointlessgames.hexagone.game.model.PreviewCell
 import com.pointlessgames.hexagone.game.model.ScorePopup
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.PI
@@ -66,7 +71,7 @@ import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
-fun GameGridOverlay(
+internal fun GameGridOverlay(
     gridState: List<HexagonCell>,
     onBoardPerks: List<OnBoardPerk>,
     mergeHints: List<MergeHint>,
@@ -77,20 +82,65 @@ fun GameGridOverlay(
     selectedCellId: String?,
     activeMergeStepIndex: Int,
     pendingMergeScore: Int,
-    particles: List<Particle>,
-    scorePopups: List<ScorePopup>,
     combo: Int,
+    effects: SharedFlow<GameEffect>,
     onEmptySpaceClick: (Int, Int) -> Unit,
     onEmptySpaceTouchDown: (Int, Int) -> Unit,
     onEmptySpaceTouchUp: () -> Unit,
     onCellClick: (HexagonCell) -> Unit,
     onMergeAnimationFinished: () -> Unit,
-    onAddParticles: (List<Particle>) -> Unit,
-    onAddScorePopup: (Float, Float, Int, Color) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
-    var finishedMergeCount by remember { mutableStateOf(0) }
+    val finishedMergeCount = remember { mutableIntStateOf(0) }
+
+    val localParticles = remember { mutableStateListOf<Particle>() }
+    val localScorePopups = remember { mutableStateListOf<ScorePopup>() }
+
+    LaunchedEffect(effects) {
+        effects.collect { effect ->
+            when (effect) {
+                is GameEffect.Particles -> localParticles.addAll(effect.particles)
+                is GameEffect.ScorePopup -> {
+                    localScorePopups.add(
+                        ScorePopup(
+                            id = Random.nextLong(),
+                            x = effect.x,
+                            y = effect.y,
+                            score = effect.score,
+                            life = 1f,
+                            color = effect.color,
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    // High-frequency animation loop ONLY for particles (rendered in Draw Phase)
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(16)
+            val dt = 0.016f
+            if (localParticles.isNotEmpty()) {
+                val iterator = localParticles.listIterator()
+                while (iterator.hasNext()) {
+                    val p = iterator.next()
+                    if (p.life <= 0) {
+                        iterator.remove()
+                    } else {
+                        iterator.set(
+                            p.copy(
+                                x = p.x + p.vx * dt,
+                                y = p.y + p.vy * dt,
+                                life = p.life - dt * 2f,
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     val columns = 5
     val rows = 4
@@ -104,49 +154,6 @@ fun GameGridOverlay(
             visibilityThreshold = IntOffset(1, 1),
         )
     }
-
-    val infiniteTransition = rememberInfiniteTransition(label = "infinite")
-    val wiggleRotation by infiniteTransition.animateFloat(
-        initialValue = -2f,
-        targetValue = 2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(500),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
-        ),
-        label = "wiggle",
-    )
-
-    val previewPulse by infiniteTransition.animateFloat(
-        initialValue = 0.9f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
-        ),
-        label = "pulse",
-    )
-
-    val previewFloat by infiniteTransition.animateFloat(
-        initialValue = -5f,
-        targetValue = 5f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
-        ),
-        label = "float",
-    )
-
-    val previewAlpha by animateFloatAsState(
-        targetValue = if (hoveredMerge != null) 1f else 0f,
-        animationSpec = tween(300),
-        label = "preview_alpha",
-    )
-
-    val previewScaleTarget by animateFloatAsState(
-        targetValue = if (hoveredMerge != null) 1f else 0.8f,
-        animationSpec = spring(stiffness = Spring.StiffnessLow),
-        label = "preview_scale",
-    )
 
     BoxWithConstraints(
         modifier = modifier.graphicsLayer { clip = false },
@@ -166,11 +173,11 @@ fun GameGridOverlay(
 
         LaunchedEffect(pendingMerge, activeMergeStepIndex) {
             if (currentStep != null) {
-                finishedMergeCount = 0
+                finishedMergeCount.intValue = 0
                 if (currentStep.mergingCells.isEmpty()) {
                     onMergeAnimationFinished()
                 } else {
-                    snapshotFlow { finishedMergeCount }
+                    snapshotFlow { finishedMergeCount.intValue }
                         .first { it >= currentStep.mergingCells.size }
 
                     val targetOffset = HexagonGridDefaults.calculateOffset(
@@ -201,13 +208,22 @@ fun GameGridOverlay(
                             size = Random.nextFloat() * 8f + 4f,
                         )
                     }
-                    onAddParticles(newParticles)
+                    localParticles.addAll(newParticles)
 
                     // 2. Add Score Popup with correct value (including combo)
                     // Only on the last step to avoid intermediate score discrepancies
                     val isLastStep = activeMergeStepIndex >= pendingMerge.steps.lastIndex
                     if (isLastStep) {
-                        onAddScorePopup(center.x, center.y, pendingMergeScore, color)
+                        localScorePopups.add(
+                            ScorePopup(
+                                id = Random.nextLong(),
+                                x = center.x,
+                                y = center.y,
+                                score = pendingMergeScore,
+                                life = 1f,
+                                color = color,
+                            ),
+                        )
                     }
 
                     onMergeAnimationFinished()
@@ -230,6 +246,9 @@ fun GameGridOverlay(
             }
             return null
         }
+
+        val onAnimationFinishedLambda = remember { { finishedMergeCount.intValue += 1 } }
+        val onCellClickLambda = remember(onCellClick) { onCellClick }
 
         Box(
             modifier = Modifier
@@ -336,63 +355,21 @@ fun GameGridOverlay(
                 // Draw preview hexagons (ghosts)
                 previewState.forEach { preview ->
                     key(preview.id) {
-                        val targetOffset = HexagonGridDefaults.calculateOffset(
-                            preview.x,
-                            preview.y,
-                            cellWidth,
-                            cellHeight,
-                            gapPx,
-                        )
-                        val animatedOffset by animateIntOffsetAsState(
-                            targetValue = targetOffset,
-                            animationSpec = moveAnimationSpec,
-                            label = "ghost_offset",
-                        )
-                        val isMoving = animatedOffset != targetOffset
-                        val targetScale = 0.8f
-                        val animatedScale by animateFloatAsState(
-                            targetValue = targetScale,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = 1800f,
-                            ),
-                            label = "ghost_scale",
-                        )
-
-                        val isSelected = selectedCellId == preview.id
-                        val isSelectable =
-                            activePerk == Perk.MOVE_TILE || activePerk == Perk.REMOVE_TILE || activePerk == Perk.SWAP_TILES
-                        val isOverlappedByHover = hoveredMerge != null &&
-                                hoveredMerge.targetX == preview.x &&
-                                hoveredMerge.targetY == preview.y
-
-                        Hexagon(
-                            value = preview.value.toString(),
-                            backgroundColor = HexagonGridDefaults.getColorForValue(preview.value)
-                                .copy(alpha = 0.3f),
-                            modifier = Modifier
-                                .size(
-                                    width = with(density) { itemWidth.toDp() },
-                                    height = with(density) { itemHeight.toDp() },
-                                )
-                                .offset { animatedOffset }
-                                .zIndex(if (isSelected || isMoving) 5f else 1f)
-                                .graphicsLayer {
-                                    scaleX = animatedScale
-                                    scaleY = animatedScale
-                                    rotationZ =
-                                        if (isSelectable && !isSelected) wiggleRotation else 0f
-                                    alpha = if (isOverlappedByHover) 0f else 1f
-                                }
-                                .then(
-                                    if (isSelected) Modifier.border(
-                                        2.dp,
-                                        Color.White,
-                                        FlatTopHexagonShape(),
-                                    ) else Modifier,
-                                ),
-                            onClick = null,
-                            isGhost = true,
+                        val isOverlappedByHover = remember(hoveredMerge, preview.x, preview.y) {
+                            hoveredMerge != null && hoveredMerge.targetX == preview.x && hoveredMerge.targetY == preview.y
+                        }
+                        AnimatedPreviewHexagon(
+                            preview = preview,
+                            cellWidth = cellWidth,
+                            cellHeight = cellHeight,
+                            gapPx = gapPx,
+                            moveAnimationSpec = moveAnimationSpec,
+                            selectedCellId = selectedCellId,
+                            activePerk = activePerk,
+                            isOverlappedByHover = isOverlappedByHover,
+                            density = density,
+                            itemWidth = itemWidth,
+                            itemHeight = itemHeight,
                         )
                     }
                 }
@@ -400,226 +377,430 @@ fun GameGridOverlay(
                 // Draw actual grid tiles
                 gridState.forEach { cell ->
                     key(cell.id) {
-                        val targetOffset = HexagonGridDefaults.calculateOffset(
-                            cell.x,
-                            cell.y,
-                            cellWidth,
-                            cellHeight,
-                            gapPx,
-                        )
-                        val animatedOffset by animateIntOffsetAsState(
-                            targetValue = targetOffset,
-                            animationSpec = moveAnimationSpec,
-                            label = "cell_offset",
-                            finishedListener = {
-                                if (mergingCells.any { it.id == cell.id }) {
-                                    finishedMergeCount++
-                                }
-                            },
-                        )
-                        val isMoving = animatedOffset != targetOffset
-
-                        var targetScale by remember { mutableStateOf(0f) }
-                        val scale by animateFloatAsState(
-                            targetValue = targetScale,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMedium,
-                            ),
-                            label = "cell_scale",
-                        )
-
-                        val alpha by animateFloatAsState(
-                            targetValue = 1f,
-                            animationSpec = spring(
-                                stiffness = Spring.StiffnessMedium,
-                            ),
-                            label = "cell_alpha",
-                        )
-                        LaunchedEffect(Unit) {
-                            targetScale = 1f
-                        }
-
-                        val isSelected = selectedCellId == cell.id
-                        val isHovered =
+                        val isHovered = remember(hoveredMerge, cell.id) {
                             hoveredMerge?.steps?.any { step -> step.mergingCells.any { it.id == cell.id } } == true
-                        val isMerging = mergingCells.any { it.id == cell.id }
-                        val isSelectable =
-                            activePerk == Perk.MOVE_TILE || activePerk == Perk.REMOVE_TILE || activePerk == Perk.SWAP_TILES
-
-                        Hexagon(
-                            value = cell.value.toString(),
-                            backgroundColor = HexagonGridDefaults.getColorForValue(cell.value),
-                            modifier = Modifier
-                                .size(
-                                    width = with(density) { itemWidth.toDp() },
-                                    height = with(density) { itemHeight.toDp() },
-                                )
-                                .offset { animatedOffset }
-                                .zIndex(if (isSelected || isHovered || isMerging || isMoving) 5f else 1f)
-                                .graphicsLayer {
-                                    this.alpha = alpha
-                                    scaleX =
-                                        scale * (if (isSelected) 1.2f else if (isHovered) 1.1f else 1f)
-                                    scaleY =
-                                        scale * (if (isSelected) 1.2f else if (isHovered) 1.1f else 1f)
-                                    rotationZ =
-                                        if (isSelectable && !isSelected) wiggleRotation else 0f
-                                }
-                                .then(
-                                    if (isSelected) Modifier.border(
-                                        2.dp,
-                                        Color.White,
-                                        FlatTopHexagonShape(),
-                                    ) else if (isHovered) Modifier.border(
-                                        2.dp,
-                                        Color.White.copy(alpha = 0.5f),
-                                        FlatTopHexagonShape(),
-                                    ) else Modifier,
-                                ),
-                            onClick = if (activePerk != null) {
-                                { onCellClick(cell) }
-                            } else null,
+                        }
+                        val isMerging = remember(mergingCells, cell.id) {
+                            mergingCells.any { it.id == cell.id }
+                        }
+                        AnimatedGridHexagon(
+                            cell = cell,
+                            cellWidth = cellWidth,
+                            cellHeight = cellHeight,
+                            gapPx = gapPx,
+                            moveAnimationSpec = moveAnimationSpec,
+                            selectedCellId = selectedCellId,
+                            activePerk = activePerk,
+                            isHovered = isHovered,
+                            isMerging = isMerging,
+                            density = density,
+                            itemWidth = itemWidth,
+                            itemHeight = itemHeight,
+                            onCellClick = onCellClickLambda,
+                            onAnimationFinished = onAnimationFinishedLambda
                         )
                     }
                 }
 
                 // Hover Result Preview
-                hoveredMerge?.let { merge ->
-                    val targetOffset = HexagonGridDefaults.calculateOffset(
-                        merge.targetX,
-                        merge.targetY,
-                        cellWidth,
-                        cellHeight,
-                        gapPx,
-                    )
-
-                    Hexagon(
-                        value = merge.finalValue.toString(),
-                        backgroundColor = HexagonGridDefaults.getColorForValue(merge.finalValue)
-                            .copy(alpha = 0.5f),
-                        modifier = Modifier
-                            .size(
-                                width = with(density) { itemWidth.toDp() },
-                                height = with(density) { itemHeight.toDp() },
-                            )
-                            .offset { targetOffset }
-                            .zIndex(3f)
-                            .graphicsLayer {
-                                scaleX = 0.9f * previewPulse * previewScaleTarget
-                                scaleY = 0.9f * previewPulse * previewScaleTarget
-                                alpha = 0.7f * previewAlpha
-                            }
-                            .border(
-                                width = 2.dp,
-                                color = Color.White.copy(alpha = 0.3f * previewAlpha),
-                                shape = FlatTopHexagonShape(),
-                            ),
-                        isOutline = false,
-                        isGhost = true,
-                    )
-                }
-            }
-
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                particles.forEach { p ->
-                    drawCircle(
-                        color = p.color,
-                        radius = p.size * p.life,
-                        center = Offset(p.x, p.y),
-                        alpha = p.life,
-                    )
-                }
-            }
-
-            scorePopups.forEach { popup ->
-                key(popup.id) {
-                    Box(
-                        modifier = Modifier
-                            .layout { measurable, constraints ->
-                                val placeable = measurable.measure(constraints)
-                                layout(placeable.width, placeable.height) {
-                                    placeable.placeRelative(
-                                        (popup.x - placeable.width / 2).toInt(),
-                                        (popup.y - placeable.height / 2).toInt(),
-                                    )
-                                }
-                            }
-                            .zIndex(100f)
-                            .graphicsLayer {
-                                alpha = popup.life
-                                val s = 1f + (1f - popup.life) * 0.3f
-                                scaleX = s
-                                scaleY = s
-                            },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = "+${popup.score}",
-                            color = Color.White,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 24.sp,
-                            modifier = Modifier
-                                .background(
-                                    Color.Black.copy(alpha = 0.6f * popup.life),
-                                    CircleShape,
-                                )
-                                .border(
-                                    1.dp,
-                                    Color.White.copy(alpha = 0.4f * popup.life),
-                                    CircleShape,
-                                )
-                                .padding(horizontal = 12.dp, vertical = 4.dp),
+                if (hoveredMerge != null) {
+                    key("hover_result") {
+                        HoverResultHexagon(
+                            merge = hoveredMerge,
+                            cellWidth = cellWidth,
+                            cellHeight = cellHeight,
+                            gapPx = gapPx,
+                            density = density,
+                            itemWidth = itemWidth,
+                            itemHeight = itemHeight,
+                            combo = combo,
                         )
                     }
                 }
             }
 
-            // Predicted score preview
-            hoveredMerge?.let { merge ->
-                val targetOffset = HexagonGridDefaults.calculateOffset(
-                    merge.targetX,
-                    merge.targetY,
-                    cellWidth,
-                    cellHeight,
-                    gapPx,
-                )
-                val center = Offset(
-                    targetOffset.x + itemWidth / 2,
-                    targetOffset.y + itemHeight / 2,
-                )
-                val predictedScore = merge.baseScore * (combo + 1)
+            ParticlesLayer(localParticles)
 
-                Box(
-                    modifier = Modifier
-                        .layout { measurable, constraints ->
-                            val placeable = measurable.measure(constraints)
-                            layout(placeable.width, placeable.height) {
-                                placeable.placeRelative(
-                                    (center.x - placeable.width / 2).toInt(),
-                                    (center.y - 140 + previewFloat - placeable.height / 2).toInt(),
-                                )
-                            }
-                        }
-                        .zIndex(101f)
-                        .graphicsLayer {
-                            scaleX = previewPulse * previewScaleTarget
-                            scaleY = previewPulse * previewScaleTarget
-                            alpha = previewAlpha
-                        }
-                        .background(Color.Black.copy(alpha = 0.7f * previewAlpha), CircleShape)
-                        .border(1.dp, Color.White.copy(alpha = 0.4f * previewAlpha), CircleShape)
-                        .padding(horizontal = 10.dp, vertical = 4.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "+$predictedScore",
-                        color = Color.White.copy(alpha = previewAlpha),
-                        fontWeight = FontWeight.Black,
-                        fontSize = 16.sp,
+            ScorePopupsLayer(
+                scorePopups = localScorePopups,
+                onPopupFinished = { id ->
+                    localScorePopups.removeAll { it.id == id }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AnimatedPreviewHexagon(
+    preview: PreviewCell,
+    cellWidth: Float,
+    cellHeight: Float,
+    gapPx: Float,
+    moveAnimationSpec: androidx.compose.animation.core.AnimationSpec<IntOffset>,
+    selectedCellId: String?,
+    activePerk: Perk?,
+    isOverlappedByHover: Boolean,
+    density: androidx.compose.ui.unit.Density,
+    itemWidth: Float,
+    itemHeight: Float,
+) {
+    val targetOffset = remember(preview.x, preview.y, cellWidth, cellHeight, gapPx) {
+        HexagonGridDefaults.calculateOffset(preview.x, preview.y, cellWidth, cellHeight, gapPx)
+    }
+    val animatedOffset by animateIntOffsetAsState(
+        targetValue = targetOffset,
+        animationSpec = moveAnimationSpec,
+        label = "ghost_offset",
+    )
+    val isMoving = animatedOffset != targetOffset
+    val animatedScale by animateFloatAsState(
+        targetValue = 0.8f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = 1800f,
+        ),
+        label = "ghost_scale",
+    )
+
+    val infiniteTransition = rememberInfiniteTransition(label = "wiggle_ghost")
+    val wiggleRotation by infiniteTransition.animateFloat(
+        initialValue = -2f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+        ),
+        label = "wiggle",
+    )
+
+    val isSelected = selectedCellId == preview.id
+    val isSelectable = activePerk == Perk.MOVE_TILE || activePerk == Perk.REMOVE_TILE || activePerk == Perk.SWAP_TILES
+
+    Hexagon(
+        value = preview.value.toString(),
+        backgroundColor = HexagonGridDefaults.getColorForValue(preview.value).copy(alpha = 0.3f),
+        modifier = Modifier
+            .size(
+                width = with(density) { itemWidth.toDp() },
+                height = with(density) { itemHeight.toDp() },
+            )
+            .offset { animatedOffset }
+            .zIndex(if (isSelected || isMoving) 5f else 1f)
+            .graphicsLayer {
+                scaleX = animatedScale
+                scaleY = animatedScale
+                rotationZ = if (isSelectable && !isSelected) wiggleRotation else 0f
+                alpha = if (isOverlappedByHover) 0f else 1f
+            }
+            .then(
+                if (isSelected) Modifier.border(
+                    2.dp,
+                    Color.White,
+                    FlatTopHexagonShape(),
+                ) else Modifier,
+            ),
+        onClick = null,
+        isGhost = true,
+    )
+}
+
+@Composable
+private fun AnimatedGridHexagon(
+    cell: HexagonCell,
+    cellWidth: Float,
+    cellHeight: Float,
+    gapPx: Float,
+    moveAnimationSpec: androidx.compose.animation.core.AnimationSpec<IntOffset>,
+    selectedCellId: String?,
+    activePerk: Perk?,
+    isHovered: Boolean,
+    isMerging: Boolean,
+    density: androidx.compose.ui.unit.Density,
+    itemWidth: Float,
+    itemHeight: Float,
+    onCellClick: (HexagonCell) -> Unit,
+    onAnimationFinished: () -> Unit
+) {
+    val targetOffset = remember(cell.x, cell.y, cellWidth, cellHeight, gapPx) {
+        HexagonGridDefaults.calculateOffset(cell.x, cell.y, cellWidth, cellHeight, gapPx)
+    }
+    val animatedOffset by animateIntOffsetAsState(
+        targetValue = targetOffset,
+        animationSpec = moveAnimationSpec,
+        label = "cell_offset",
+        finishedListener = {
+            if (isMerging) {
+                onAnimationFinished()
+            }
+        },
+    )
+    val isMoving = animatedOffset != targetOffset
+
+    var targetScale by remember { mutableStateOf(0f) }
+    val scale by animateFloatAsState(
+        targetValue = targetScale,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "cell_scale",
+    )
+
+    val alpha by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = spring(
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "cell_alpha",
+    )
+    LaunchedEffect(Unit) {
+        targetScale = 1f
+    }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "wiggle_cell")
+    val wiggleRotation by infiniteTransition.animateFloat(
+        initialValue = -2f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+        ),
+        label = "wiggle",
+    )
+
+    val isSelected = selectedCellId == cell.id
+    val isSelectable = activePerk == Perk.MOVE_TILE || activePerk == Perk.REMOVE_TILE || activePerk == Perk.SWAP_TILES
+
+    Hexagon(
+        value = cell.value.toString(),
+        backgroundColor = HexagonGridDefaults.getColorForValue(cell.value),
+        modifier = Modifier
+            .size(
+                width = with(density) { itemWidth.toDp() },
+                height = with(density) { itemHeight.toDp() },
+            )
+            .offset { animatedOffset }
+            .zIndex(if (isSelected || isHovered || isMerging || isMoving) 5f else 1f)
+            .graphicsLayer {
+                this.alpha = alpha
+                scaleX = scale * (if (isSelected) 1.2f else if (isHovered) 1.1f else 1f)
+                scaleY = scale * (if (isSelected) 1.2f else if (isHovered) 1.1f else 1f)
+                rotationZ = if (isSelectable && !isSelected) wiggleRotation else 0f
+            }
+            .then(
+                if (isSelected) Modifier.border(
+                    2.dp,
+                    Color.White,
+                    FlatTopHexagonShape(),
+                ) else if (isHovered) Modifier.border(
+                    2.dp,
+                    Color.White.copy(alpha = 0.5f),
+                    FlatTopHexagonShape(),
+                ) else Modifier,
+            ),
+        onClick = if (activePerk != null) {
+            { onCellClick(cell) }
+        } else null,
+    )
+}
+
+@Composable
+private fun HoverResultHexagon(
+    merge: MergeTransition,
+    cellWidth: Float,
+    cellHeight: Float,
+    gapPx: Float,
+    density: androidx.compose.ui.unit.Density,
+    itemWidth: Float,
+    itemHeight: Float,
+    combo: Int,
+) {
+    val targetOffset = HexagonGridDefaults.calculateOffset(
+        merge.targetX,
+        merge.targetY,
+        cellWidth,
+        cellHeight,
+        gapPx,
+    )
+
+    val infiniteTransition = rememberInfiniteTransition(label = "hover_anim")
+    val pulse by infiniteTransition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+        ),
+        label = "pulse",
+    )
+    val floatAnim by infiniteTransition.animateFloat(
+        initialValue = -5f,
+        targetValue = 5f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+        ),
+        label = "float",
+    )
+
+    val alphaAnim by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(300),
+        label = "preview_alpha",
+    )
+
+    val scaleTarget by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessLow),
+        label = "preview_scale",
+    )
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Hexagon(
+            value = merge.finalValue.toString(),
+            backgroundColor = HexagonGridDefaults.getColorForValue(merge.finalValue).copy(alpha = 0.5f),
+            modifier = Modifier
+                .size(
+                    width = with(density) { itemWidth.toDp() },
+                    height = with(density) { itemHeight.toDp() },
+                )
+                .offset { targetOffset }
+                .zIndex(3f)
+                .graphicsLayer {
+                    scaleX = 0.9f * pulse * scaleTarget
+                    scaleY = 0.9f * pulse * scaleTarget
+                    alpha = 0.7f * alphaAnim
+                }
+                .border(
+                    width = 2.dp,
+                    color = Color.White.copy(alpha = 0.3f * alphaAnim),
+                    shape = FlatTopHexagonShape(),
+                ),
+            isOutline = false,
+            isGhost = true,
+        )
+
+        val center = Offset(
+            targetOffset.x + itemWidth / 2,
+            targetOffset.y + itemHeight / 2,
+        )
+        val predictedScore = merge.baseScore * (combo + 1)
+
+        Box(
+            modifier = Modifier
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints)
+                    layout(placeable.width, placeable.height) {
+                        placeable.placeRelative(
+                            (center.x - placeable.width / 2).toInt(),
+                            (center.y - 140 + floatAnim - placeable.height / 2).toInt(),
+                        )
+                    }
+                }
+                .zIndex(101f)
+                .graphicsLayer {
+                    scaleX = pulse * scaleTarget
+                    scaleY = pulse * scaleTarget
+                    alpha = alphaAnim
+                }
+                .background(Color.Black.copy(alpha = 0.7f * alphaAnim), CircleShape)
+                .border(1.dp, Color.White.copy(alpha = 0.4f * alphaAnim), CircleShape)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "+$predictedScore",
+                color = Color.White.copy(alpha = alphaAnim),
+                fontWeight = FontWeight.Black,
+                fontSize = 16.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScorePopupsLayer(
+    scorePopups: List<ScorePopup>,
+    onPopupFinished: (Long) -> Unit
+) {
+    scorePopups.forEach { popup ->
+        key(popup.id) {
+            ScorePopupItem(popup, onPopupFinished)
+        }
+    }
+}
+
+@Composable
+private fun ScorePopupItem(
+    popup: ScorePopup,
+    onFinished: (Long) -> Unit
+) {
+    val animProgress = remember { Animatable(1f) }
+    
+    LaunchedEffect(Unit) {
+        animProgress.animateTo(
+            targetValue = 0f,
+            animationSpec = tween(durationMillis = 800)
+        )
+        onFinished(popup.id)
+    }
+
+    Box(
+        modifier = Modifier
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                layout(placeable.width, placeable.height) {
+                    // Offset calculation happens in Layout Phase
+                    val progress = animProgress.value
+                    val yOffset = (1f - progress) * 100f
+                    placeable.placeRelative(
+                        (popup.x - placeable.width / 2).toInt(),
+                        (popup.y - yOffset - placeable.height / 2).toInt(),
                     )
                 }
             }
+            .zIndex(100f)
+            .graphicsLayer {
+                // Alpha/Scale happens in Draw Phase
+                val progress = animProgress.value
+                alpha = progress
+                val s = 1f + (1f - progress) * 0.3f
+                scaleX = s
+                scaleY = s
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "+${popup.score}",
+            color = Color.White,
+            fontWeight = FontWeight.Black,
+            fontSize = 24.sp,
+            modifier = Modifier
+                .background(
+                    Color.Black.copy(alpha = 0.6f),
+                    CircleShape,
+                )
+                .border(
+                    1.dp,
+                    Color.White.copy(alpha = 0.4f),
+                    CircleShape,
+                )
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+        )
+    }
+}
+
+@Composable
+private fun ParticlesLayer(particles: List<Particle>) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        particles.forEach { p ->
+            drawCircle(
+                color = p.color,
+                radius = p.size * p.life,
+                center = Offset(p.x, p.y),
+                alpha = p.life,
+            )
         }
     }
 }

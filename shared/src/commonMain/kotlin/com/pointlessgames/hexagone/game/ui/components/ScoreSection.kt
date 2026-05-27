@@ -102,7 +102,7 @@ fun ScoreSection(
         previousScore = score
     }
 
-    var manualWaveOffset by remember { mutableStateOf(0f) }
+    val waveOffset = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
         var lastTimeNanos = withFrameNanos { it }
         while (true) {
@@ -111,7 +111,8 @@ fun ScoreSection(
             lastTimeNanos = currentTimeNanos
             val baseSpeed = PI.toFloat() / 2f
             val speed = baseSpeed * (1f + waveIntensity.value * 4f)
-            manualWaveOffset += dt * speed
+            val delta = dt * speed
+            waveOffset.snapTo((waveOffset.value + delta) % (2 * PI.toFloat()))
         }
     }
 
@@ -208,6 +209,7 @@ fun ScoreSection(
                 val height = size.height
                 
                 if (width > 0) {
+                    val currentWaveOffset = waveOffset.value
                     val path = Path().apply {
                         moveTo(0f, 0f)
                         lineTo(width, 0f)
@@ -219,7 +221,7 @@ fun ScoreSection(
                         val steps = 30
                         for (i in 0..steps) {
                             val y = (i / steps.toFloat()) * height
-                            val dx = sin(y / wavePeriod * 2 * PI.toFloat() + manualWaveOffset) * waveAmplitude
+                            val dx = sin(y / wavePeriod * 2 * PI.toFloat() + currentWaveOffset) * waveAmplitude
                             lineTo(width + dx, y)
                         }
                         
@@ -245,13 +247,13 @@ fun ScoreSection(
                         val wavePeriod = height * 0.8f
                         
                         val firstY = 0f
-                        val firstDx = sin(firstY / wavePeriod * 2 * PI.toFloat() + manualWaveOffset) * waveAmplitude
+                        val firstDx = sin(firstY / wavePeriod * 2 * PI.toFloat() + currentWaveOffset) * waveAmplitude
                         moveTo(width + firstDx, firstY)
                         
                         val steps = 30
                         for (i in 1..steps) {
                             val y = (i / steps.toFloat()) * height
-                            val dx = sin(y / wavePeriod * 2 * PI.toFloat() + manualWaveOffset) * waveAmplitude
+                            val dx = sin(y / wavePeriod * 2 * PI.toFloat() + currentWaveOffset) * waveAmplitude
                             lineTo(width + dx, y)
                         }
                     }

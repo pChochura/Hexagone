@@ -23,9 +23,11 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -229,7 +231,9 @@ fun PerkButton(
     showDropRate: Boolean = false,
     buttonSize: Dp = 54.dp
 ) {
-    val perkColor = if (isEnabled) HexagonGridDefaults.getColorForPerk(perk) else Color.Gray
+    val perkColor = remember(perk, isEnabled) {
+        if (isEnabled) HexagonGridDefaults.getColorForPerk(perk) else Color.Gray
+    }
     val isLegendary = perk.isLegendary
     val heightScale = 0.866f // Flat-top hexagon height/width ratio
     
@@ -246,7 +250,7 @@ fun PerkButton(
             // Legendary Glow
             if (isLegendary && isEnabled) {
                 val infiniteTransition = rememberInfiniteTransition(label = "legendary_glow")
-                val glowAlpha by infiniteTransition.animateFloat(
+                val glowAlpha = infiniteTransition.animateFloat(
                     initialValue = 0.3f,
                     targetValue = 0.8f,
                     animationSpec = infiniteRepeatable(
@@ -260,24 +264,28 @@ fun PerkButton(
                     modifier = Modifier
                         .size(width = buttonSize + 8.dp, height = (buttonSize + 8.dp) * heightScale)
                         .clip(FlatTopHexagonShape())
-                        .background(perkColor.copy(alpha = glowAlpha * 0.4f))
+                        .drawBehind {
+                            drawRect(perkColor.copy(alpha = glowAlpha.value * 0.4f))
+                        }
                 )
             }
 
             // Main Hexagon Body
+            val brush = remember(isActive, perkColor) {
+                Brush.verticalGradient(
+                    if (isActive) {
+                        listOf(perkColor, perkColor.copy(alpha = 0.7f))
+                    } else {
+                        listOf(perkColor.copy(alpha = 0.2f), perkColor.copy(alpha = 0.05f))
+                    }
+                )
+            }
+            
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(FlatTopHexagonShape())
-                    .background(
-                        Brush.verticalGradient(
-                            if (isActive) {
-                                listOf(perkColor, perkColor.copy(alpha = 0.7f))
-                            } else {
-                                listOf(perkColor.copy(alpha = 0.2f), perkColor.copy(alpha = 0.05f))
-                            }
-                        )
-                    )
+                    .background(brush)
                     .border(
                         width = if (isActive) 2.dp else if (isLegendary) 2.dp else 1.dp,
                         color = if (isActive) Color.White.copy(alpha = 0.5f) else if (isLegendary) perkColor else perkColor.copy(alpha = 0.3f),

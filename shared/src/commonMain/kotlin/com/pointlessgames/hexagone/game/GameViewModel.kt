@@ -1,5 +1,6 @@
 package com.pointlessgames.hexagone.game
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,13 +15,17 @@ import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PreviewCell
 import com.pointlessgames.hexagone.game.model.ScorePopup
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
+@Immutable
 internal data class GameUiState(
     val grid: List<HexagonCell> = emptyList(),
     val mergeHints: List<MergeHint> = emptyList(),
@@ -33,6 +38,7 @@ internal data class GameUiState(
     val score: Int = 0,
     val bestScore: Int = 0,
     val level: Int = 1,
+    val levelProgress: Float = 0f,
     val highestValue: Int = 1,
     val combo: Int = 0,
     val isBusy: Boolean = false,
@@ -44,13 +50,16 @@ internal data class GameUiState(
     val activePerk: Perk? = null,
     val selectedCellId: String? = null,
     val mergeHintsEnabled: Boolean = true,
-    val particles: List<Particle> = emptyList(),
-    val scorePopups: List<ScorePopup> = emptyList(),
     val maxCombo: Int = 0,
     val totalMerges: Int = 0,
     val showGameOverBoard: Boolean = false,
     val reachedComboTiers: Set<ComboTier> = emptySet(),
 )
+
+internal sealed interface GameEffect {
+    data class Particles(val particles: List<Particle>) : GameEffect
+    data class ScorePopup(val x: Float, val y: Float, val score: Int, val color: Color) : GameEffect
+}
 
 internal enum class ComboTier(val label: String, val threshold: Int) {
     SURGE("SURGE", 11),
@@ -80,6 +89,9 @@ internal class GameViewModel(
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
+    private val _effects = MutableSharedFlow<GameEffect>()
+    val effects: SharedFlow<GameEffect> = _effects.asSharedFlow()
+
     private var lastLevel = 1
     private var stateHistory = mutableListOf<GameState>()
 
@@ -101,60 +113,18 @@ internal class GameViewModel(
             }
         }
         restartGame()
-        startAnimationLoop()
-    }
-
-    private fun startAnimationLoop() {
-        viewModelScope.launch {
-            while (true) {
-                delay(16)
-                val dt = 0.016f
-
-                _uiState.update { state ->
-                    val nextParticles = if (state.particles.isNotEmpty()) {
-                        state.particles.mapNotNull { p ->
-                            if (p.life <= 0) null
-                            else p.copy(
-                                x = p.x + p.vx * dt,
-                                y = p.y + p.vy * dt,
-                                life = p.life - dt * 2f,
-                            )
-                        }
-                    } else state.particles
-
-                    val nextPopups = if (state.scorePopups.isNotEmpty()) {
-                        state.scorePopups.mapNotNull { s ->
-                            if (s.life <= 0) null
-                            else s.copy(
-                                y = s.y - dt * 100f,
-                                life = s.life - dt * 1.2f,
-                            )
-                        }
-                    } else state.scorePopups
-
-                    state.copy(
-                        particles = nextParticles,
-                        scorePopups = nextPopups,
-                    )
-                }
-            }
-        }
     }
 
     fun addParticles(newParticles: List<Particle>) {
-        _uiState.update { it.copy(particles = it.particles + newParticles) }
+        viewModelScope.launch {
+            _effects.emit(GameEffect.Particles(newParticles))
+        }
     }
 
     fun addScorePopup(x: Float, y: Float, score: Int, color: Color) {
-        val newPopup = ScorePopup(
-            id = Random.nextLong(),
-            x = x,
-            y = y,
-            score = score,
-            life = 1f,
-            color = color,
-        )
-        _uiState.update { it.copy(scorePopups = it.scorePopups + newPopup) }
+        viewModelScope.launch {
+            _effects.emit(GameEffect.ScorePopup(x, y, score, color))
+        }
     }
 
     private fun saveState() {
@@ -213,6 +183,7 @@ internal class GameViewModel(
                 val nextPerkOptions = state.perkOptions.ifEmpty { engine.pickWeightedPerks(3) }
                 state.copy(
                     level = lvl,
+                    levelProgress = engine.getLevelProgress(currentScore, lvl),
                     highestValue = state.grid.maxOfOrNull { it.value } ?: 1,
                     perkOptions = nextPerkOptions,
                     pendingLevelUps = state.pendingLevelUps + levelDifference,
@@ -220,6 +191,7 @@ internal class GameViewModel(
             } else {
                 state.copy(
                     level = lvl,
+                    levelProgress = engine.getLevelProgress(currentScore, lvl),
                     highestValue = state.grid.maxOfOrNull { it.value } ?: 1,
                 )
             }
@@ -617,6 +589,7 @@ internal class GameViewModel(
                     it.copy(
                         score = it.score + totalAddedScore,
                         bestScore = nextBestScore,
+                        levelProgress = engine.getLevelProgress(it.score + totalAddedScore, it.level),
                         combo = finalCombo,
                         grid = finalGrid,
                         collectedPerks = it.collectedPerks + listOfNotNull(collectedOnBoard) + newlyEarnedPerks,
@@ -744,10 +717,7 @@ internal class GameViewModel(
         }
     }
 
-    fun getLevelProgress(): Float {
-        val state = _uiState.value
-        return engine.getLevelProgress(state.score, state.level)
-    }
+    fun getLevelProgress(): Float = _uiState.value.levelProgress
 
     fun onViewBoardToggled() {
         _uiState.update { it.copy(showGameOverBoard = !it.showGameOverBoard) }
