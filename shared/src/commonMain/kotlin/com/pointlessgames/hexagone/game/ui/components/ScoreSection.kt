@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -332,28 +333,55 @@ fun ScoreSection(
                             label = "combo_pop"
                         ) { targetCombo ->
                             if (targetCombo > 1) {
+                                val tier = when {
+                                    targetCombo >= 31 -> "ZENITH"
+                                    targetCombo >= 21 -> "OVERDRIVE"
+                                    targetCombo >= 13 -> "SURGE"
+                                    else -> null
+                                }
+                                
                                 val colorFraction = ((targetCombo - 1) / 9f).coerceIn(0f, 1f)
-                                val comboColor = lerp(
+                                val baseColor = lerp(
                                     Color(0xFFFFD700), // Yellow/Gold
                                     Color(0xFFFF3D00), // Intense Orange/Red
                                     colorFraction
                                 )
-                                Text(
-                                    text = "x$targetCombo",
-                                    color = comboColor,
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 24.sp,
-                                    style = TextStyle(
-                                        shadow = Shadow(
-                                            color = Color.Black.copy(alpha = 0.5f),
-                                            offset = Offset(4f, 4f),
-                                            blurRadius = 8f
+                                
+                                val comboColor = when (tier) {
+                                    "SURGE" -> Color(0xFF00E5FF)
+                                    "OVERDRIVE" -> Color(0xFFFF00FF)
+                                    "ZENITH" -> Color(0xFFFFFF00)
+                                    else -> baseColor
+                                }
+                                
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "x$targetCombo",
+                                        color = comboColor,
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 24.sp,
+                                        style = TextStyle(
+                                            shadow = Shadow(
+                                                color = Color.Black.copy(alpha = 0.5f),
+                                                offset = Offset(4f, 4f),
+                                                blurRadius = 8f
+                                            )
+                                        ),
+                                        modifier = Modifier.graphicsLayer {
+                                            rotationZ = -5f + colorFraction * 10f
+                                        }
+                                    )
+                                    if (tier != null) {
+                                        Text(
+                                            text = tier,
+                                            color = comboColor,
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 10.sp,
+                                            letterSpacing = 2.sp,
+                                            modifier = Modifier.offset(y = (-4).dp)
                                         )
-                                    ),
-                                    modifier = Modifier.graphicsLayer {
-                                        rotationZ = -5f + colorFraction * 10f
                                     }
-                                )
+                                }
                             }
                         }
                     }

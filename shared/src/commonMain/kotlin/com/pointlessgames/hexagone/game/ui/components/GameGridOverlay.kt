@@ -1,6 +1,5 @@
 package com.pointlessgames.hexagone.game.ui.components
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -14,7 +13,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -31,7 +29,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -57,10 +54,8 @@ import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PreviewCell
 import com.pointlessgames.hexagone.game.model.ScorePopup
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.PI
@@ -170,15 +165,13 @@ fun GameGridOverlay(
         val mergingCells = currentStep?.mergingCells ?: emptyList()
 
         LaunchedEffect(pendingMerge, activeMergeStepIndex) {
-            val step = currentStep
-            if (step != null && pendingMerge != null) {
+            if (currentStep != null) {
                 finishedMergeCount = 0
-                if (step.mergingCells.isEmpty()) {
+                if (currentStep.mergingCells.isEmpty()) {
                     onMergeAnimationFinished()
                 } else {
                     snapshotFlow { finishedMergeCount }
-                        .filter { it >= step.mergingCells.size }
-                        .first()
+                        .first { it >= currentStep.mergingCells.size }
 
                     val targetOffset = HexagonGridDefaults.calculateOffset(
                         pendingMerge.targetX,
@@ -191,7 +184,7 @@ fun GameGridOverlay(
                         targetOffset.x + itemWidth / 2,
                         targetOffset.y + itemHeight / 2,
                     )
-                    val color = HexagonGridDefaults.getColorForValue(step.resultValue)
+                    val color = HexagonGridDefaults.getColorForValue(currentStep.resultValue)
 
                     // 1. Add Particles
                     val newParticles = List(30) {
@@ -242,7 +235,7 @@ fun GameGridOverlay(
             modifier = Modifier
                 .size(
                     width = with(density) { totalWidth.toDp() },
-                    height = with(density) { totalHeight.toDp() }
+                    height = with(density) { totalHeight.toDp() },
                 )
                 .graphicsLayer { clip = false }
                 .pointerInput(cellWidth, cellHeight, gapPx) {
@@ -252,7 +245,7 @@ fun GameGridOverlay(
                             val initialCell = getCellAt(down.position.x, down.position.y)
 
                             val job = launch {
-                                delay(200)
+                                delay(200.milliseconds)
                                 initialCell?.let { (x, y) ->
                                     onEmptySpaceTouchDown(x, y)
                                 }
@@ -281,7 +274,7 @@ fun GameGridOverlay(
                             }
                         }
                     }
-                }
+                },
         ) {
             HexagonGrid(
                 columns = columns,
@@ -290,7 +283,7 @@ fun GameGridOverlay(
                 outlineContent = { col, row ->
                     val hint = mergeHints.find { it.x == col && it.y == row }
                     val onBoardPerk = onBoardPerks.find { it.x == col && it.y == row }
-                    
+
                     Box(contentAlignment = Alignment.Center) {
                         Hexagon(
                             modifier = Modifier
@@ -306,24 +299,25 @@ fun GameGridOverlay(
                                 ),
                             isOutline = true,
                         )
-                        
+
                         if (onBoardPerk != null) {
                             Column(
                                 modifier = Modifier.fillMaxSize(),
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
+                                verticalArrangement = Arrangement.Center,
                             ) {
                                 PerkIcon(
                                     perk = onBoardPerk.perk,
                                     modifier = Modifier.size(16.dp),
-                                    color = HexagonGridDefaults.getColorForPerk(onBoardPerk.perk).copy(alpha = 0.6f)
+                                    color = HexagonGridDefaults.getColorForPerk(onBoardPerk.perk)
+                                        .copy(alpha = 0.6f),
                                 )
                                 Text(
                                     text = onBoardPerk.lifespan.toString(),
                                     color = Color.White.copy(alpha = 0.5f),
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Black,
-                                    lineHeight = 9.sp
+                                    lineHeight = 9.sp,
                                 )
                             }
                         }
@@ -333,7 +327,7 @@ fun GameGridOverlay(
                             Box(
                                 modifier = Modifier
                                     .size(dotSize)
-                                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                                    .background(Color.White.copy(alpha = 0.2f), CircleShape),
                             )
                         }
                     }
@@ -386,7 +380,8 @@ fun GameGridOverlay(
                                 .graphicsLayer {
                                     scaleX = animatedScale
                                     scaleY = animatedScale
-                                    rotationZ = if (isSelectable && !isSelected) wiggleRotation else 0f
+                                    rotationZ =
+                                        if (isSelectable && !isSelected) wiggleRotation else 0f
                                     alpha = if (isOverlappedByHover) 0f else 1f
                                 }
                                 .then(
@@ -446,8 +441,9 @@ fun GameGridOverlay(
                         }
 
                         val isSelected = selectedCellId == cell.id
-                        val isHovered = hoveredMerge?.steps?.any { step -> step.mergingCells.any { it.id == cell.id } } == true
-                        val isMerging = mergingCells.any { it.id == cell.id } == true
+                        val isHovered =
+                            hoveredMerge?.steps?.any { step -> step.mergingCells.any { it.id == cell.id } } == true
+                        val isMerging = mergingCells.any { it.id == cell.id }
                         val isSelectable =
                             activePerk == Perk.MOVE_TILE || activePerk == Perk.REMOVE_TILE || activePerk == Perk.SWAP_TILES
 
@@ -467,7 +463,8 @@ fun GameGridOverlay(
                                         scale * (if (isSelected) 1.2f else if (isHovered) 1.1f else 1f)
                                     scaleY =
                                         scale * (if (isSelected) 1.2f else if (isHovered) 1.1f else 1f)
-                                    rotationZ = if (isSelectable && !isSelected) wiggleRotation else 0f
+                                    rotationZ =
+                                        if (isSelectable && !isSelected) wiggleRotation else 0f
                                 }
                                 .then(
                                     if (isSelected) Modifier.border(
@@ -563,7 +560,10 @@ fun GameGridOverlay(
                             fontWeight = FontWeight.Black,
                             fontSize = 24.sp,
                             modifier = Modifier
-                                .background(Color.Black.copy(alpha = 0.6f * popup.life), CircleShape)
+                                .background(
+                                    Color.Black.copy(alpha = 0.6f * popup.life),
+                                    CircleShape,
+                                )
                                 .border(
                                     1.dp,
                                     Color.White.copy(alpha = 0.4f * popup.life),
