@@ -55,7 +55,7 @@ A merge occurs when 2+ tiles of the same value touch.
     *   **SURGE (x11)**: +1 Random Rare Perk.
     *   **OVERDRIVE (x21)**: +1 Random Legendary Perk.
     *   **ZENITH (x31)**: +1 Legendary Perk & Board-wide +1 value upgrade.
-*   **Combo UI**: A cinematic "slam" animation that morphs from **Yellow to Red** to **Tier Colors** (Cyan/Pink/Gold) with a character-accurate glyph shadow and 3-5s slow-fade settle.
+*   **Combo UI**: A cinematic "slam" animation located to the **left of the score box**. Morphs from **Yellow to Red** to **Tier Colors** (Cyan/Pink/Gold) with a character-accurate glyph shadow and 3-5s slow-fade settle.
 
 ---
 
@@ -74,7 +74,13 @@ Perks are strategic tools collected via leveling up or on-board scavenge.
     *   **Common** (Weight 100-80): UNDO, MOVE TILE, REMOVE TILE.
     *   **Rare** (Weight 50): ADVANCE QUEUE, SWAP TILES.
     *   **Legendary** (Weight 20): FUSION, CHAIN MERGE (features a distinct pulsating aura).
-*   **Scavenge Mechanic**: 10% chance to spawn a perk on an empty hex. Captured by triggering a **merge** on that position.
+*   **On-Board Spawning (Pity System)**:
+    *   **Fairness**: A perk is guaranteed not to spawn for 8 turns, and guaranteed to spawn by 15 turns if the board has space.
+    *   **Clutter Control**: Max 1 perk on board at any time.
+    *   **Ghost Priority**: Spawns prioritize empty positions not occupied by upcoming queue pieces (ghosts).
+*   **Collection Logic**:
+    *   **Player Collection**: Perks are captured by triggering a **merge**, **fusion**, or moving a tile onto the perk position.
+    *   **Queue Solidification**: If a queue piece lands on a perk position, the perk is deleted (not collected).
 *   **Weighted Lifespan**: Common perks last 3 turns, Rare 2 turns, and Legendary must be captured in exactly 1 turn.
 
 ---
@@ -84,13 +90,18 @@ Perks are strategic tools collected via leveling up or on-board scavenge.
 *   **Atmospheric Dimming**: Seamless full-screen focus shift during choice-heavy states (Level Up, Stuck).
 *   **Neon Bloom**: Contoured, multi-layered "neon" outlines around active strategic areas (Perk Shelf, Result Card).
 *   **Fluid HUD**: A liquid level progress bar with a wavy edge. "Splashes" with intensity and speed proportional to the points earned relative to the current level.
+*   **Stable Popup Stacking**: Popups (Score/Perks) group by **grid coordinates** and use **deterministic ID sorting** for stable horizontal offsets, preventing layout jitter during rapid merges.
+*   **Dynamic Level Up**: 
+    *   **Queue Indicator**: A badge showing the number of pending level-up rewards.
+    *   **Perk Refresh**: Uses `AnimatedContent` to scale/fade perks when selecting multiple rewards in sequence.
 *   **Emergency Mode**: When stuck, the HUD displays a floating, bouncing tooltip and faster shelf pulse to guide players toward using a perk.
 *   **Interactive Result Card**: Floating frosted glass overlay with animated score count-ups, detailed stats (merges, max combo, highest tile), and a "View Board" peek mode.
 
 ---
 
 ## 5. Development Guidelines
-1.  **State Atomicitity**: Use `_uiState.update { ... }` for all gameplay changes to ensure consistency.
+1.  **State Atomicity**: Use `_uiState.update { ... }` for all gameplay changes to ensure consistency.
 2.  **Interaction Locking**: Check `isBusy` and `pendingMerge` to block gestures during animations.
 3.  **No Delays for UI**: Use `finishedListener` callbacks and `LaunchedEffect(state)` for reliable animation sequencing.
-4.  **Level Choice Queueing**: Multiple level-ups are queued and handled sequentially to ensure no rewards are skipped.
+4.  **Level Choice Queueing**: Multiple level-ups are queued. Use `perkSpawnCounter` to track turns between on-board spawns.
+5.  **Ghost/Perk Interactions**: Always clean up overlapping ghosts or perks when a tile occupies a hex to maintain board clarity.
