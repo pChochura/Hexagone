@@ -8,6 +8,8 @@ interface GridPopup {
     val id: Long
     val x: Float
     val y: Float
+    val gridX: Int
+    val gridY: Int
 }
 
 @Immutable
@@ -97,6 +99,8 @@ data class ScorePopup(
     override val id: Long,
     override val x: Float,
     override val y: Float,
+    override val gridX: Int,
+    override val gridY: Int,
     val score: Int,
     val life: Float,
     val color: Color,
@@ -108,6 +112,8 @@ data class PerkPopup(
     override val id: Long,
     override val x: Float,
     override val y: Float,
+    override val gridX: Int,
+    override val gridY: Int,
     val perk: Perk,
     val life: Float
 ) : GridPopup

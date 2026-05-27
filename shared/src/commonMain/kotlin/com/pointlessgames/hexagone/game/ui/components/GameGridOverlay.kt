@@ -181,23 +181,22 @@ internal fun GameGridOverlay(
             effects.collect { effect ->
                 when (effect) {
                     is GameEffect.ScorePopup -> {
-                        val finalPos = if (effect.isGridCoordinate) {
-                            val offset = HexagonGridDefaults.calculateOffset(
-                                effect.x.toInt(),
-                                effect.y.toInt(),
-                                cellWidth,
-                                cellHeight,
-                                gapPx,
-                            )
-                            Offset(offset.x + itemWidth / 2, offset.y + itemHeight / 2)
-                        } else {
-                            Offset(effect.x, effect.y)
-                        }
+                        val offset = HexagonGridDefaults.calculateOffset(
+                            effect.gridX,
+                            effect.gridY,
+                            cellWidth,
+                            cellHeight,
+                            gapPx,
+                        )
+                        val centerX = offset.x + itemWidth / 2
+                        val centerY = offset.y + itemHeight / 2
                         localScorePopups.add(
                             ScorePopup(
                                 Random.nextLong(),
-                                finalPos.x,
-                                finalPos.y,
+                                centerX,
+                                centerY,
+                                effect.gridX,
+                                effect.gridY,
                                 effect.score,
                                 1f,
                                 effect.color,
@@ -207,23 +206,22 @@ internal fun GameGridOverlay(
                     }
 
                     is GameEffect.PerkPopup -> {
-                        val finalPos = if (effect.isGridCoordinate) {
-                            val offset = HexagonGridDefaults.calculateOffset(
-                                effect.x.toInt(),
-                                effect.y.toInt(),
-                                cellWidth,
-                                cellHeight,
-                                gapPx,
-                            )
-                            Offset(offset.x + itemWidth / 2, offset.y + itemHeight / 2)
-                        } else {
-                            Offset(effect.x, effect.y)
-                        }
+                        val offset = HexagonGridDefaults.calculateOffset(
+                            effect.gridX,
+                            effect.gridY,
+                            cellWidth,
+                            cellHeight,
+                            gapPx,
+                        )
+                        val centerX = offset.x + itemWidth / 2
+                        val centerY = offset.y + itemHeight / 2
                         localPerkPopups.add(
                             PerkPopup(
                                 Random.nextLong(),
-                                finalPos.x,
-                                finalPos.y,
+                                centerX,
+                                centerY,
+                                effect.gridX,
+                                effect.gridY,
                                 effect.perk,
                                 1f,
                             ),
@@ -594,12 +592,15 @@ private fun PopupsLayer(
     val standardPopups = scorePopups.filter { it.label == null }
 
     val tacticalGroups = tacticalPopups.groupBy {
-        it.x.roundToInt() to it.y.roundToInt()
+        it.gridX to it.gridY
     }
 
-    tacticalGroups.forEach { (_, items) ->
-        val total = items.size
-        items.forEachIndexed { index, item ->
+    tacticalGroups.forEach { (_, groupItems) ->
+        // Sort items by ID for stable indexing within the group
+        val sortedItems = groupItems.sortedBy { it.id }
+        val total = sortedItems.size
+        
+        sortedItems.forEachIndexed { index, item ->
             key(item.id) {
                 val horizontalOffset = if (total > 1) {
                     val totalWidth = (total - 1) * spacing
@@ -608,7 +609,7 @@ private fun PopupsLayer(
 
                 val animOffset by animateFloatAsState(
                     targetValue = horizontalOffset,
-                    animationSpec = spring(stiffness = Spring.StiffnessLow),
+                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
                     label = "popup_slide"
                 )
 

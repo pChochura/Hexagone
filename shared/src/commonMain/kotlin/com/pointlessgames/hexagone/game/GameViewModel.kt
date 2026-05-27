@@ -69,18 +69,16 @@ internal data class PotentialMerge(
 internal sealed interface GameEffect {
     data class Particles(val particles: List<Particle>) : GameEffect
     data class ScorePopup(
-        val x: Float,
-        val y: Float,
+        val gridX: Int,
+        val gridY: Int,
         val score: Int,
         val color: Color,
-        val label: String? = null,
-        val isGridCoordinate: Boolean = false
+        val label: String? = null
     ) : GameEffect
     data class PerkPopup(
-        val x: Float,
-        val y: Float,
-        val perk: Perk,
-        val isGridCoordinate: Boolean = false
+        val gridX: Int,
+        val gridY: Int,
+        val perk: Perk
     ) : GameEffect
 }
 
@@ -150,15 +148,15 @@ internal class GameViewModel(
         }
     }
 
-    fun addScorePopup(x: Float, y: Float, score: Int, color: Color, label: String? = null, isGridCoordinate: Boolean = false) {
+    fun addScorePopup(gridX: Int, gridY: Int, score: Int, color: Color, label: String? = null) {
         viewModelScope.launch {
-            _effects.emit(GameEffect.ScorePopup(x, y, score, color, label, isGridCoordinate))
+            _effects.emit(GameEffect.ScorePopup(gridX, gridY, score, color, label))
         }
     }
 
-    fun addPerkPopup(x: Float, y: Float, perk: Perk, isGridCoordinate: Boolean = false) {
+    fun addPerkPopup(gridX: Int, gridY: Int, perk: Perk) {
         viewModelScope.launch {
-            _effects.emit(GameEffect.PerkPopup(x, y, perk, isGridCoordinate))
+            _effects.emit(GameEffect.PerkPopup(gridX, gridY, perk))
         }
     }
 
@@ -331,7 +329,7 @@ internal class GameViewModel(
             val collectedPerk = state.onBoardPerks.find { it.x == x && it.y == y }?.perk
             
             if (collectedPerk != null) {
-                addPerkPopup(x.toFloat(), y.toFloat(), collectedPerk, isGridCoordinate = true)
+                addPerkPopup(x, y, collectedPerk)
             }
 
             if (cellToMove != null) {
@@ -411,7 +409,7 @@ internal class GameViewModel(
                         score = s.score + finalBonus
                     )
                 }
-                addScorePopup(preview.x.toFloat(), preview.y.toFloat(), finalBonus, Color(0xFF90A4AE), label, isGridCoordinate = true)
+                addScorePopup(preview.x, preview.y, finalBonus, Color(0xFF90A4AE), label)
                 finishPerkAction(Perk.REMOVE_TILE)
             }
 
@@ -460,7 +458,7 @@ internal class GameViewModel(
                     score = it.score + finalBonus
                 ) }
                 val popupColor = if (barRaised) Color(0xFF4FC3F7) else if (isOnlyHighest) Color(0xFFF06292) else Color(0xFF90A4AE)
-                addScorePopup(cell.x.toFloat(), cell.y.toFloat(), finalBonus, popupColor, label, isGridCoordinate = true)
+                addScorePopup(cell.x, cell.y, finalBonus, popupColor, label)
                 finishPerkAction(Perk.REMOVE_TILE)
             }
 
@@ -495,8 +493,8 @@ internal class GameViewModel(
         val collectedPerkAt1 = state.onBoardPerks.find { it.x == x1 && it.y == y1 }?.perk
         val collectedPerkAt2 = state.onBoardPerks.find { it.x == x2 && it.y == y2 }?.perk
         
-        if (collectedPerkAt1 != null) addPerkPopup(x1.toFloat(), y1.toFloat(), collectedPerkAt1, isGridCoordinate = true)
-        if (collectedPerkAt2 != null) addPerkPopup(x2.toFloat(), y2.toFloat(), collectedPerkAt2, isGridCoordinate = true)
+        if (collectedPerkAt1 != null) addPerkPopup(x1, y1, collectedPerkAt1)
+        if (collectedPerkAt2 != null) addPerkPopup(x2, y2, collectedPerkAt2)
 
         _uiState.update { currentState ->
             currentState.copy(
@@ -669,12 +667,11 @@ internal class GameViewModel(
                 }
 
                 addScorePopup(
-                    merge.targetX.toFloat(),
-                    merge.targetY.toFloat(),
+                    merge.targetX,
+                    merge.targetY,
                     combinedScore,
                     popupColor,
-                    label,
-                    isGridCoordinate = true
+                    label
                 )
 
                 val collectedOnBoard =
@@ -682,10 +679,9 @@ internal class GameViewModel(
                 
                 if (collectedOnBoard != null) {
                     addPerkPopup(
-                        merge.targetX.toFloat(),
-                        merge.targetY.toFloat(),
-                        collectedOnBoard,
-                        isGridCoordinate = true
+                        merge.targetX,
+                        merge.targetY,
+                        collectedOnBoard
                     )
                 }
 
