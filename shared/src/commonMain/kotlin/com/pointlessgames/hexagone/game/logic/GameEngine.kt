@@ -358,24 +358,40 @@ class GameEngine(
 
     fun trySpawnPerkOnBoard(
         grid: List<HexagonCell>,
-        existingPerks: List<OnBoardPerk>
-    ): List<OnBoardPerk> {
-        // 10% chance to spawn a perk on an empty space
-        if (Random.nextFloat() > 0.1f) return existingPerks
+        previews: List<PreviewCell>,
+        existingPerks: List<OnBoardPerk>,
+        perkSpawnCounter: Int
+    ): Pair<List<OnBoardPerk>, Int> {
+        // Increment counter for this turn
+        val newCounter = perkSpawnCounter + 1
+
+        // 1. Rule: Only one perk on the board at a time
+        if (existingPerks.isNotEmpty()) return existingPerks to newCounter
+
+        // 2. Rule: Pity/Fairness system
+        // Minimum 8 turns, Guaranteed at 15 turns
+        val minTurns = 8
+        val maxTurns = 15
         
+        if (newCounter < minTurns) return existingPerks to newCounter
+        
+        val spawnChance = (newCounter - minTurns).toFloat() / (maxTurns - minTurns)
+        if (Random.nextFloat() > spawnChance) return existingPerks to newCounter
+        
+        // 3. Rule: Don't spawn where a ghost/preview will land
         val occupied = grid.map { it.x to it.y }.toSet()
-        val perkPositions = existingPerks.map { it.x to it.y }.toSet()
+        val previewPositions = previews.map { it.x to it.y }.toSet()
         
         val emptyPositions = mutableListOf<Pair<Int, Int>>()
         for (y in 0 until rows) {
             for (x in 0 until columns) {
-                if (x to y !in occupied && x to y !in perkPositions) {
+                if (x to y !in occupied && x to y !in previewPositions) {
                     emptyPositions.add(x to y)
                 }
             }
         }
         
-        if (emptyPositions.isEmpty()) return existingPerks
+        if (emptyPositions.isEmpty()) return existingPerks to newCounter
         
         val pos = emptyPositions.random()
         val perk = pickWeightedPerks(1).first()
@@ -386,7 +402,8 @@ class GameEngine(
             else -> 3 // Common: standard window
         }
         
-        return existingPerks + OnBoardPerk(pos.first, pos.second, perk, lifespan)
+        // Reset counter on successful spawn
+        return (existingPerks + OnBoardPerk(pos.first, pos.second, perk, lifespan)) to 0
     }
 
     fun updateOnBoardPerks(perks: List<OnBoardPerk>): List<OnBoardPerk> {

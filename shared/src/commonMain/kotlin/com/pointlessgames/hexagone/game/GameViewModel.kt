@@ -54,6 +54,7 @@ internal data class GameUiState(
     val totalMerges: Int = 0,
     val showGameOverBoard: Boolean = false,
     val reachedComboTiers: Set<ComboTier> = emptySet(),
+    val perkSpawnCounter: Int = 0,
 )
 
 @Immutable
@@ -578,6 +579,7 @@ internal class GameViewModel(
             bestScore = _uiState.value.bestScore,
             collectedPerks = listOf(),
             onBoardPerks = emptyList(),
+            perkSpawnCounter = 0,
         )
         updateLevel()
         checkValidMoves()
@@ -820,13 +822,19 @@ internal class GameViewModel(
                 _uiState.value.preview,
             )
             val updatedPerks = engine.updateOnBoardPerks(_uiState.value.onBoardPerks)
-            val nextPerks = engine.trySpawnPerkOnBoard(newState, updatedPerks)
+            val (nextPerks, nextCounter) = engine.trySpawnPerkOnBoard(
+                newState,
+                newPreviews,
+                updatedPerks,
+                _uiState.value.perkSpawnCounter
+            )
 
             _uiState.update {
                 it.copy(
                     grid = newState,
                     preview = newPreviews,
                     onBoardPerks = nextPerks,
+                    perkSpawnCounter = nextCounter,
                 )
             }
             updateLevel()
