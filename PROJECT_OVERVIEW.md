@@ -49,9 +49,13 @@ A merge occurs when 2+ tiles of the same value touch.
 *   **Base Score**: $\sum Values_{merging} + n^2 - n$. This formula ensures higher-value pieces are significantly more rewarding.
 
 ### Scoring & Combos
-*   **Sequential Merges**: Multi-group merges happen in steps (largest first) to build visual momentum.
-*   **Combo System**: A multiplier that builds with every group merge in a move. It is maintained until a "weak" move (only 1 group) or a reset.
-*   **Combo UI**: Features a high-impact "slam" animation that morphs from **Yellow to Red** as it approaches a x10 multiplier.
+*   **Sequential Merges**: Multi-group merges happen in steps (largest first) to build visual momentum and sold impact.
+*   **Combo System**: A multiplier that builds with every group merge. Clamped at **x12** for internal scoring to prevent economy inflation.
+*   **Tiered Milestones (Overdrive)**: Crossing specific thresholds grants permanent rewards:
+    *   **SURGE (x11)**: +1 Random Rare Perk.
+    *   **OVERDRIVE (x21)**: +1 Random Legendary Perk.
+    *   **ZENITH (x31)**: +1 Legendary Perk & Board-wide +1 value upgrade.
+*   **Combo UI**: A cinematic "slam" animation that morphs from **Yellow to Red** to **Tier Colors** (Cyan/Pink/Gold) with a character-accurate glyph shadow and 3-5s slow-fade settle.
 
 ---
 
@@ -60,29 +64,33 @@ A merge occurs when 2+ tiles of the same value touch.
 ### Predictive Hint System
 The game calculates **Weighted Hints** for every empty tile:
 *   **Look-Ahead**: Simulates the current move + the next 3 pieces in the queue.
-*   **Weighting**: Assigns a favorability score (0.0 - 1.0) based on immediate points, combo building, and future board setup.
-*   **Visuals**: Subtle dots that grow in size based on the strategic value of the move.
+*   **Evaluation**: Assigns favorability (0.0 - 1.0) based on score, combo potential, and future board setup.
+*   **Perk Awareness**: Recalculates hints based on active perks (e.g., highlighting Fusion spots).
+*   **Visuals**: Subtle, dynamic dots that scale in size based on strategic value.
 
 ### Perk Economy
 Perks are strategic tools collected via leveling up or on-board scavenge.
 *   **Rarity Weights**: 
-    *   **Common** (100-80 weight): UNDO, MOVE TILE, REMOVE TILE.
-    *   **Rare** (50 weight): ADVANCE QUEUE, SWAP TILES.
-    *   **Legendary** (20 weight): FUSION, CHAIN MERGE (features a distinct pulsating aura).
-*   **Scavenge Mechanic**: Random 10% chance to spawn a perk on an empty hex. Must be captured via a merge at that position within 1-3 turns (depending on rarity).
+    *   **Common** (Weight 100-80): UNDO, MOVE TILE, REMOVE TILE.
+    *   **Rare** (Weight 50): ADVANCE QUEUE, SWAP TILES.
+    *   **Legendary** (Weight 20): FUSION, CHAIN MERGE (features a distinct pulsating aura).
+*   **Scavenge Mechanic**: 10% chance to spawn a perk on an empty hex. Captured by triggering a **merge** on that position.
+*   **Weighted Lifespan**: Common perks last 3 turns, Rare 2 turns, and Legendary must be captured in exactly 1 turn.
 
 ---
 
 ## 4. UI & Visual Identity
 
-*   **Atmospheric Dimming**: The board dims to focus on Level Up choices or "No Moves Left" scenarios.
+*   **Atmospheric Dimming**: Seamless full-screen focus shift during choice-heavy states (Level Up, Stuck).
 *   **Neon Bloom**: Contoured, multi-layered "neon" outlines around active strategic areas (Perk Shelf, Result Card).
-*   **Fluid HUD**: A liquid-like level progress bar that "splashes" with intensity proportional to the points earned.
-*   **Interactive Result Card**: A frosted glass overlay featuring score count-ups and a "View Board" peek mode.
+*   **Fluid HUD**: A liquid level progress bar with a wavy edge. "Splashes" with intensity and speed proportional to the points earned relative to the current level.
+*   **Emergency Mode**: When stuck, the HUD displays a floating, bouncing tooltip and faster shelf pulse to guide players toward using a perk.
+*   **Interactive Result Card**: Floating frosted glass overlay with animated score count-ups, detailed stats (merges, max combo, highest tile), and a "View Board" peek mode.
 
 ---
 
 ## 5. Development Guidelines
-1.  **State Atomicitity**: Use `_uiState.update { ... }` for all gameplay changes.
-2.  **Interaction Locking**: Always check `isBusy` or `pendingMerge` before processing gestures.
-3.  **No Delays for UI**: Do not use `delay()` for animation sequencing; use the `finishedListener` callbacks in `GameGridOverlay`.
+1.  **State Atomicitity**: Use `_uiState.update { ... }` for all gameplay changes to ensure consistency.
+2.  **Interaction Locking**: Check `isBusy` and `pendingMerge` to block gestures during animations.
+3.  **No Delays for UI**: Use `finishedListener` callbacks and `LaunchedEffect(state)` for reliable animation sequencing.
+4.  **Level Choice Queueing**: Multiple level-ups are queued and handled sequentially to ensure no rewards are skipped.
