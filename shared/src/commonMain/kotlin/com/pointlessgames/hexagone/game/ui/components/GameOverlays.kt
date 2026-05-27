@@ -68,7 +68,7 @@ import kotlin.math.sin
 @Composable
 fun GameOverlays(
     isGameOver: Boolean,
-    score: Int,
+    scoreProvider: () -> Int,
     bestScore: Int,
     level: Int,
     maxCombo: Int,
@@ -76,80 +76,79 @@ fun GameOverlays(
     highestValue: Int,
     showBoard: Boolean,
     perkOptions: List<Perk>,
-    collectedPerks: List<Perk>,
     onPerkSelected: (Perk) -> Unit,
-    onUsePerk: (Perk) -> Unit,
     onRestart: () -> Unit,
     onViewBoardToggle: () -> Unit,
     onShare: () -> Unit,
     onLeaderboard: () -> Unit
 ) {
     val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver
-    val dimAlpha by animateFloatAsState(
+    val dimAlphaState = animateFloatAsState(
         targetValue = if (isAnyOverlayVisible && !showBoard) 0.8f else 0f,
         animationSpec = tween(500),
         label = "dim_alpha"
     )
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (dimAlpha > 0f) {
+    if (isAnyOverlayVisible || dimAlphaState.value > 0f) {
+        Box(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = dimAlpha))
+                    .graphicsLayer { alpha = dimAlphaState.value }
+                    .background(Color.Black)
                     .clickable(
                         enabled = isAnyOverlayVisible && !showBoard,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) { /* Consume clicks */ }
             )
-        }
 
-        AnimatedVisibility(
-            visible = perkOptions.isNotEmpty(),
-            enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn() + scaleIn(initialScale = 0.9f),
-            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-            modifier = Modifier.align(Alignment.BottomCenter),
-        ) {
-            PerkSelectionDialog(
-                options = perkOptions,
-                onPerkSelected = onPerkSelected,
-            )
-        }
-
-        AnimatedVisibility(
-            visible = isGameOver && !showBoard,
-            enter = fadeIn(tween(1000)) + slideInVertically(initialOffsetY = { it / 4 }),
-            exit = fadeOut(tween(500)) + scaleOut(targetScale = 0.8f),
-            modifier = Modifier.align(Alignment.Center)
-        ) {
-            GameOverDialog(
-                score = score,
-                bestScore = bestScore,
-                level = level,
-                maxCombo = maxCombo,
-                totalMerges = totalMerges,
-                highestValue = highestValue,
-                onRestart = onRestart,
-                onViewBoard = onViewBoardToggle,
-                onShare = onShare,
-                onLeaderboard = onLeaderboard
-            )
-        }
-
-        if (isGameOver && showBoard) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .statusBarsPadding()
-                    .padding(16.dp)
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .clickable { onViewBoardToggle() },
-                contentAlignment = Alignment.Center
+            AnimatedVisibility(
+                visible = perkOptions.isNotEmpty(),
+                enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn() + scaleIn(initialScale = 0.9f),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+                modifier = Modifier.align(Alignment.BottomCenter),
             ) {
-                Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                PerkSelectionDialog(
+                    options = perkOptions,
+                    onPerkSelected = onPerkSelected,
+                )
+            }
+
+            AnimatedVisibility(
+                visible = isGameOver && !showBoard,
+                enter = fadeIn(tween(1000)) + slideInVertically(initialOffsetY = { it / 4 }),
+                exit = fadeOut(tween(500)) + scaleOut(targetScale = 0.8f),
+                modifier = Modifier.align(Alignment.Center)
+            ) {
+                GameOverDialog(
+                    score = scoreProvider(),
+                    bestScore = bestScore,
+                    level = level,
+                    maxCombo = maxCombo,
+                    totalMerges = totalMerges,
+                    highestValue = highestValue,
+                    onRestart = onRestart,
+                    onViewBoard = onViewBoardToggle,
+                    onShare = onShare,
+                    onLeaderboard = onLeaderboard
+                )
+            }
+
+            if (isGameOver && showBoard) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .statusBarsPadding()
+                        .padding(16.dp)
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .clickable { onViewBoardToggle() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                }
             }
         }
     }
@@ -614,4 +613,3 @@ private fun SecondaryGameButton(
         Text(text = icon, color = Color.White, fontSize = 20.sp)
     }
 }
-

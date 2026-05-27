@@ -46,6 +46,16 @@ import com.pointlessgames.hexagone.game.ui.components.ScoreSection
 internal fun GameScreen(viewModel: GameViewModel) {
     val uiState by viewModel.uiState.collectAsState()
 
+    val onEmptySpaceClick = remember(viewModel) { viewModel::onEmptySpaceClicked }
+    val onEmptySpaceTouchDown = remember(viewModel) { viewModel::onEmptySpaceTouchDown }
+    val onEmptySpaceTouchUp = remember(viewModel) { viewModel::onEmptySpaceTouchUp }
+    val onCellClick = remember(viewModel) { viewModel::onCellClicked }
+    val onMergeAnimationFinished = remember(viewModel) { viewModel::onMergeAnimationFinished }
+    val onPerkClick = remember(viewModel) { viewModel::onUsePerkClicked }
+    val onPerkSelected = remember(viewModel) { viewModel::onPerkSelected }
+    val onRestart = remember(viewModel) { viewModel::onRestartClicked }
+    val onViewBoardToggle = remember(viewModel) { viewModel::onViewBoardToggled }
+
     val gridAlpha by animateFloatAsState(
         targetValue = if (uiState.isGameOver && !uiState.showGameOverBoard) 0.1f else 1f,
         animationSpec = spring(stiffness = Spring.StiffnessLow),
@@ -116,18 +126,21 @@ internal fun GameScreen(viewModel: GameViewModel) {
                     mergeHints = uiState.mergeHints,
                     previewState = uiState.preview,
                     pendingMerge = uiState.pendingMerge,
-                    hoveredMerge = uiState.hoveredMerge,
+                    hoveredMergeState = viewModel.hoveredMerge,
+                    potentialMerges = remember(uiState.grid, uiState.activePerk) {
+                        viewModel.getPotentialMerges()
+                    },
                     activePerk = uiState.activePerk,
                     selectedCellId = uiState.selectedCellId,
                     activeMergeStepIndex = uiState.activeMergeStepIndex,
                     pendingMergeScore = uiState.pendingMergeScore,
                     combo = uiState.combo,
                     effects = viewModel.effects,
-                    onEmptySpaceClick = viewModel::onEmptySpaceClicked,
-                    onEmptySpaceTouchDown = viewModel::onEmptySpaceTouchDown,
-                    onEmptySpaceTouchUp = viewModel::onEmptySpaceTouchUp,
-                    onCellClick = viewModel::onCellClicked,
-                    onMergeAnimationFinished = viewModel::onMergeAnimationFinished,
+                    onEmptySpaceClick = onEmptySpaceClick,
+                    onEmptySpaceTouchDown = onEmptySpaceTouchDown,
+                    onEmptySpaceTouchUp = onEmptySpaceTouchUp,
+                    onCellClick = onCellClick,
+                    onMergeAnimationFinished = onMergeAnimationFinished,
                     modifier = Modifier.weight(1f, fill = false).fillMaxWidth(),
                 )
 
@@ -186,7 +199,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
                 collectedPerks = uiState.collectedPerks,
                 activePerk = uiState.activePerk,
                 isStuck = uiState.isStuck,
-                onPerkClick = viewModel::onUsePerkClicked,
+                onPerkClick = onPerkClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .graphicsLayer { clip = false }
@@ -196,7 +209,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
 
     GameOverlays(
         isGameOver = uiState.isGameOver,
-        score = uiState.score,
+        scoreProvider = { uiState.score },
         bestScore = uiState.bestScore,
         level = uiState.level,
         maxCombo = uiState.maxCombo,
@@ -204,11 +217,9 @@ internal fun GameScreen(viewModel: GameViewModel) {
         highestValue = uiState.highestValue,
         showBoard = uiState.showGameOverBoard,
         perkOptions = uiState.perkOptions,
-        collectedPerks = uiState.collectedPerks,
-        onPerkSelected = viewModel::onPerkSelected,
-        onUsePerk = viewModel::onUsePerkClicked,
-        onRestart = viewModel::onRestartClicked,
-        onViewBoardToggle = viewModel::onViewBoardToggled,
+        onPerkSelected = onPerkSelected,
+        onRestart = onRestart,
+        onViewBoardToggle = onViewBoardToggle,
         onShare = { /* TODO: Implement snapshot and share */ },
         onLeaderboard = { /* TODO: Implement leaderboard */ }
     )

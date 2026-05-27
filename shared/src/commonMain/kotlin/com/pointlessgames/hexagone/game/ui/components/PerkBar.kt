@@ -45,7 +45,7 @@ fun PerkBar(
     modifier: Modifier = Modifier,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "perk_glow")
-    val glowAlpha by infiniteTransition.animateFloat(
+    val glowAlphaState = infiniteTransition.animateFloat(
         initialValue = if (isStuck) 0.4f else 0.05f,
         targetValue = if (isStuck) 1.0f else 0.2f,
         animationSpec = infiniteRepeatable(
@@ -61,6 +61,7 @@ fun PerkBar(
             .then(
                 if (collectedPerks.isNotEmpty()) {
                     Modifier.drawBehind {
+                        val glowAlpha = glowAlphaState.value
                         val baseColor = Color(0xFFF06292)
                         val cornerRadius = 32.dp.toPx()
 

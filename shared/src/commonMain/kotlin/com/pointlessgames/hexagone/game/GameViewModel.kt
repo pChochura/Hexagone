@@ -56,6 +56,15 @@ internal data class GameUiState(
     val reachedComboTiers: Set<ComboTier> = emptySet(),
 )
 
+@Immutable
+internal data class PotentialMerge(
+    val targetX: Int,
+    val targetY: Int,
+    val finalValue: Int,
+    val baseScore: Int,
+    val participatingIds: Set<String>
+)
+
 internal sealed interface GameEffect {
     data class Particles(val particles: List<Particle>) : GameEffect
     data class ScorePopup(val x: Float, val y: Float, val score: Int, val color: Color) : GameEffect
@@ -88,6 +97,9 @@ internal class GameViewModel(
 
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
+
+    private val _hoveredMerge = MutableStateFlow<MergeTransition?>(null)
+    val hoveredMerge: StateFlow<MergeTransition?> = _hoveredMerge.asStateFlow()
 
     private val _effects = MutableSharedFlow<GameEffect>()
     val effects: SharedFlow<GameEffect> = _effects.asSharedFlow()
@@ -203,7 +215,7 @@ internal class GameViewModel(
         if (state.pendingMerge != null || state.isBusy || state.isGameOver || state.isStuck || state.perkOptions.isNotEmpty()) return
 
         saveState()
-        _uiState.update { it.copy(hoveredMerge = null) }
+        _hoveredMerge.value = null
 
         val perk = state.activePerk
         val selectedId = state.selectedCellId
@@ -277,11 +289,11 @@ internal class GameViewModel(
         } else {
             engine.calculateMerge(x, y, state.grid)
         }
-        _uiState.update { it.copy(hoveredMerge = merge) }
+        _hoveredMerge.value = merge
     }
 
     fun onEmptySpaceTouchUp() {
-        _uiState.update { it.copy(hoveredMerge = null) }
+        _hoveredMerge.value = null
     }
 
     private fun moveTile(selectedId: String, x: Int, y: Int) {
@@ -718,6 +730,36 @@ internal class GameViewModel(
     }
 
     fun getLevelProgress(): Float = _uiState.value.levelProgress
+
+    fun getPotentialMerges(): Map<Pair<Int, Int>, PotentialMerge> {
+        val state = _uiState.value
+        val grid = state.grid
+        val perk = state.activePerk
+        val result = mutableMapOf<Pair<Int, Int>, PotentialMerge>()
+        
+        for (x in 0 until engine.columns) {
+            for (y in 0 until engine.rows) {
+                if (grid.none { it.x == x && it.y == y }) {
+                    val merge = if (perk == Perk.FUSION) {
+                        engine.calculateFusion(x, y, grid)
+                    } else {
+                        engine.calculateMerge(x, y, grid)
+                    }
+                    
+                    if (merge != null) {
+                        result[x to y] = PotentialMerge(
+                            targetX = x,
+                            targetY = y,
+                            finalValue = merge.finalValue,
+                            baseScore = merge.baseScore,
+                            participatingIds = merge.steps.flatMap { it.mergingCells }.map { it.id }.toSet()
+                        )
+                    }
+                }
+            }
+        }
+        return result
+    }
 
     fun onViewBoardToggled() {
         _uiState.update { it.copy(showGameOverBoard = !it.showGameOverBoard) }
