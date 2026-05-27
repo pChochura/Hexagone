@@ -50,6 +50,7 @@ class GameEngine(
     fun pickRandomPreviews(
         currentGrid: List<HexagonCell>,
         existingPreviews: List<PreviewCell>,
+        existingPerks: List<OnBoardPerk>,
         count: Int
     ): List<PreviewCell> {
         if (existingPreviews.isNotEmpty()) return existingPreviews
@@ -58,6 +59,8 @@ class GameEngine(
         val spawnPool = boardPool.take((boardPool.size * 0.7f).toInt().coerceAtLeast(2))
 
         val currentOccupied = currentGrid.map { it.x to it.y }.toSet()
+        val perkPositions = existingPerks.map { it.x to it.y }.toSet()
+        
         val emptyPositions = mutableListOf<Pair<Int, Int>>()
         for (y in 0 until rows) {
             for (x in 0 until columns) {
@@ -69,8 +72,12 @@ class GameEngine(
 
         val spawnValue = spawnPool.random()
 
+        // Prioritize positions that are both empty AND don't have a perk
+        val bestPositions = emptyPositions.filter { it !in perkPositions }
+        val targetPool = if (bestPositions.isNotEmpty()) bestPositions else emptyPositions
+
         // Pick a "central" empty tile that has at least 2 empty neighbors
-        val candidates = emptyPositions.filter { pos ->
+        val candidates = targetPool.filter { pos ->
             val neighbors = getNeighbors(pos.first, pos.second)
             neighbors.count { it !in currentOccupied } >= 2
         }.shuffled()
@@ -81,7 +88,7 @@ class GameEngine(
             val groupSize = Random.nextInt(2, 4) // 2 or 3 tiles
             neighbors.take(groupSize)
         } else {
-            listOf(emptyPositions.random())
+            listOf(targetPool.random())
         }
 
         return groupPositions.map { (x, y) ->
@@ -412,19 +419,21 @@ class GameEngine(
 
     fun spawnFromQueue(
         currentState: List<HexagonCell>,
-        currentPreviews: List<PreviewCell>
-    ): Pair<List<HexagonCell>, List<PreviewCell>> {
-        if (currentPreviews.isEmpty()) return currentState to currentPreviews
-
+        currentPreviews: List<PreviewCell>,
+        currentPerks: List<OnBoardPerk>
+    ): Triple<List<HexagonCell>, List<PreviewCell>, List<OnBoardPerk>> {
         var newState = currentState
+        var nextPerks = currentPerks
         currentPreviews.forEach { p ->
             if (newState.none { it.x == p.x && it.y == p.y }) {
                 newState = newState + createCell(p.x, p.y, p.value, isTactical = p.isTactical)
+                // Delete perk if a ghost lands on it (don't collect)
+                nextPerks = nextPerks.filterNot { it.x == p.x && it.y == p.y }
             }
         }
 
-        val nextPreviews = pickRandomPreviews(newState, emptyList(), 3)
-        return newState to nextPreviews
+        val nextPreviews = pickRandomPreviews(newState, emptyList(), nextPerks, 3)
+        return Triple(newState, nextPreviews, nextPerks)
     }
 
     fun decrementTacticalFlags(grid: List<HexagonCell>): List<HexagonCell> {

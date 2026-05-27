@@ -284,6 +284,7 @@ internal class GameViewModel(
                             y = y,
                         ) else cell
                     },
+                    preview = currentState.preview.filterNot { it.x == x && it.y == y },
                     pendingMerge = merge,
                     activeMergeStepIndex = 0,
                     pendingMergeScore = totalAddedScore,
@@ -327,6 +328,12 @@ internal class GameViewModel(
         saveState()
         _uiState.update { state ->
             val cellToMove = state.grid.find { it.id == selectedId }
+            val collectedPerk = state.onBoardPerks.find { it.x == x && it.y == y }?.perk
+            
+            if (collectedPerk != null) {
+                addPerkPopup(x.toFloat(), y.toFloat(), collectedPerk, isGridCoordinate = true)
+            }
+
             if (cellToMove != null) {
                 state.copy(
                     grid = state.grid.map {
@@ -336,6 +343,9 @@ internal class GameViewModel(
                             isTactical = true
                         ) else it
                     },
+                    preview = state.preview.filterNot { it.x == x && it.y == y },
+                    collectedPerks = state.collectedPerks + listOfNotNull(collectedPerk),
+                    onBoardPerks = state.onBoardPerks.filterNot { it.x == x && it.y == y }
                 )
             } else {
                 val previewToMove = state.preview.find { it.id == selectedId }
@@ -347,7 +357,9 @@ internal class GameViewModel(
                                 y = y,
                                 isTactical = true
                             ) else it
-                        },
+                        }.filterNot { it.id != selectedId && it.x == x && it.y == y },
+                        collectedPerks = state.collectedPerks + listOfNotNull(collectedPerk),
+                        onBoardPerks = state.onBoardPerks.filterNot { it.x == x && it.y == y }
                     )
                 } else state
             }
@@ -359,7 +371,11 @@ internal class GameViewModel(
     private fun finishPerkAction(perk: Perk) {
         consumePerk(perk)
         _uiState.update { it.copy(activePerk = null, selectedCellId = null) }
-        checkValidMoves()
+        if (_uiState.value.preview.isEmpty()) {
+            spawnFromQueue(_uiState.value.grid)
+        } else {
+            checkValidMoves()
+        }
     }
 
     fun onPreviewClicked(preview: PreviewCell) {
@@ -368,7 +384,12 @@ internal class GameViewModel(
 
         when (val perk = state.activePerk) {
             Perk.MOVE_TILE -> {
-                _uiState.update { it.copy(selectedCellId = preview.id) }
+                val selectedId = state.selectedCellId
+                if (selectedId != null && selectedId != preview.id) {
+                    moveTile(selectedId, preview.x, preview.y)
+                } else {
+                    _uiState.update { it.copy(selectedCellId = preview.id) }
+                }
             }
 
             Perk.REMOVE_TILE -> {
@@ -471,6 +492,12 @@ internal class GameViewModel(
         val x2 = cell2?.x ?: preview2?.x ?: return
         val y2 = cell2?.y ?: preview2?.y ?: return
 
+        val collectedPerkAt1 = state.onBoardPerks.find { it.x == x1 && it.y == y1 }?.perk
+        val collectedPerkAt2 = state.onBoardPerks.find { it.x == x2 && it.y == y2 }?.perk
+        
+        if (collectedPerkAt1 != null) addPerkPopup(x1.toFloat(), y1.toFloat(), collectedPerkAt1, isGridCoordinate = true)
+        if (collectedPerkAt2 != null) addPerkPopup(x2.toFloat(), y2.toFloat(), collectedPerkAt2, isGridCoordinate = true)
+
         _uiState.update { currentState ->
             currentState.copy(
                 grid = currentState.grid.map {
@@ -487,6 +514,8 @@ internal class GameViewModel(
                         else -> it
                     }
                 },
+                collectedPerks = currentState.collectedPerks + listOfNotNull(collectedPerkAt1, collectedPerkAt2),
+                onBoardPerks = currentState.onBoardPerks.filterNot { (it.x == x1 && it.y == y1) || (it.x == x2 && it.y == y2) }
             )
         }
         finishPerkAction(Perk.SWAP_TILES)
@@ -565,7 +594,7 @@ internal class GameViewModel(
         lastProcessedMergeId = null
         lastProcessedStepIndex = -1
         val initialGrid = engine.generateInitialGrid()
-        val initialPreviews = engine.pickRandomPreviews(initialGrid, emptyList(), 3)
+        val initialPreviews = engine.pickRandomPreviews(initialGrid, emptyList(), emptyList(), 3)
         _uiState.value = GameUiState(
             grid = initialGrid,
             mergeHints = if (_uiState.value.mergeHintsEnabled) engine.findMergeHints(
@@ -817,11 +846,13 @@ internal class GameViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isBusy = true) }
             val gridWithoutTactical = engine.decrementTacticalFlags(currentState)
-            val (newState, newPreviews) = engine.spawnFromQueue(
+            val currentPerks = _uiState.value.onBoardPerks
+            val (newState, newPreviews, perksAfterSpawn) = engine.spawnFromQueue(
                 gridWithoutTactical,
                 _uiState.value.preview,
+                currentPerks
             )
-            val updatedPerks = engine.updateOnBoardPerks(_uiState.value.onBoardPerks)
+            val updatedPerks = engine.updateOnBoardPerks(perksAfterSpawn)
             val (nextPerks, nextCounter) = engine.trySpawnPerkOnBoard(
                 newState,
                 newPreviews,
