@@ -338,10 +338,12 @@ fun Hexagon(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     isOutline: Boolean = false,
-    isGhost: Boolean = false
+    isGhost: Boolean = false,
+    isTactical: Boolean = false
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "hexagon_animations")
+    
     val stripeOffset = if (isGhost) {
-        val infiniteTransition = rememberInfiniteTransition(label = "stripe_transition")
         infiniteTransition.animateFloat(
             initialValue = 0f,
             targetValue = 11.5f, // step = stripeWidth(1.5) + gap(10)
@@ -350,6 +352,18 @@ fun Hexagon(
                 repeatMode = androidx.compose.animation.core.RepeatMode.Restart
             ),
             label = "stripe_offset"
+        )
+    } else null
+
+    val tacticalPulse = if (isTactical) {
+        infiniteTransition.animateFloat(
+            initialValue = 0.4f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1000),
+                repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+            ),
+            label = "tactical_pulse"
         )
     } else null
 
@@ -397,6 +411,12 @@ fun Hexagon(
                     Modifier.border(
                         width = 1.dp,
                         color = Color.White.copy(alpha = 0.1f),
+                        shape = FlatTopHexagonShape(),
+                    )
+                } else if (isTactical) {
+                    Modifier.border(
+                        width = 2.dp,
+                        color = Color(0xFFBB86FC).copy(alpha = tacticalPulse?.value ?: 1f),
                         shape = FlatTopHexagonShape(),
                     )
                 } else Modifier

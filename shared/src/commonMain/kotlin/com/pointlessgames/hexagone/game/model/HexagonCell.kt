@@ -8,7 +8,8 @@ data class HexagonCell(
     val id: String,
     val x: Int,
     val y: Int,
-    val value: Int
+    val value: Int,
+    val isTactical: Boolean = false
 )
 
 @Immutable
@@ -25,7 +26,8 @@ data class PreviewCell(
     val x: Int,
     val y: Int,
     val value: Int,
-    val rank: Int
+    val rank: Int,
+    val isTactical: Boolean = false
 )
 
 @Immutable
@@ -37,7 +39,8 @@ data class MergeTransition(
     val totalCells: Int,
     val uniqueGroups: Int,
     val baseScore: Int,
-    val resultId: String
+    val resultId: String,
+    val isTactical: Boolean = false
 )
 
 @Immutable
@@ -89,7 +92,8 @@ data class ScorePopup(
     val y: Float,
     val score: Int,
     val life: Float,
-    val color: Color
+    val color: Color,
+    val label: String? = null
 )
 
 @Immutable

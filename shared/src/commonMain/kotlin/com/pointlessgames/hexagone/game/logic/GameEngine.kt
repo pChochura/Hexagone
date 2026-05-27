@@ -146,7 +146,10 @@ class GameEngine(
             }
 
             val mergingCells = neighborCells.filter { it.value in valuesToMerge } + listOfNotNull(centerCell).filter { it.value in valuesToMerge }
-            val baseScore = calculateBaseScore(mergingCells)
+            var baseScore = calculateBaseScore(mergingCells)
+            if (mergingCells.any { it.isTactical }) {
+                baseScore = (baseScore * 1.5).toInt()
+            }
 
             return MergeTransition(
                 targetX = x,
@@ -156,7 +159,8 @@ class GameEngine(
                 totalCells = totalCells,
                 uniqueGroups = valuesToMerge.size,
                 baseScore = baseScore,
-                resultId = "cell_${idCounter++}"
+                resultId = "cell_${idCounter++}",
+                isTactical = mergingCells.any { it.isTactical }
             )
         }
         return null
@@ -176,7 +180,10 @@ class GameEngine(
             val n = allCells.size
             val k = allCells.distinctBy { it.value }.size
             val newValue = vMax + n - 1
-            val baseScore = calculateBaseScore(allCells)
+            var baseScore = calculateBaseScore(allCells)
+            if (allCells.any { it.isTactical }) {
+                baseScore = (baseScore * 1.5).toInt()
+            }
 
             return MergeTransition(
                 targetX = x,
@@ -186,7 +193,8 @@ class GameEngine(
                 totalCells = n,
                 uniqueGroups = k,
                 baseScore = baseScore,
-                resultId = "cell_${idCounter++}"
+                resultId = "cell_${idCounter++}",
+                isTactical = allCells.any { it.isTactical }
             )
         }
         return null
@@ -323,8 +331,8 @@ class GameEngine(
         return false
     }
 
-    fun createCell(x: Int, y: Int, value: Int, id: String? = null): HexagonCell {
-        return HexagonCell(id ?: "cell_${idCounter++}", x, y, value)
+    fun createCell(x: Int, y: Int, value: Int, id: String? = null, isTactical: Boolean = false): HexagonCell {
+        return HexagonCell(id ?: "cell_${idCounter++}", x, y, value, isTactical)
     }
 
     fun calculateLevel(score: Int): Int {
@@ -394,11 +402,15 @@ class GameEngine(
         var newState = currentState
         currentPreviews.forEach { p ->
             if (newState.none { it.x == p.x && it.y == p.y }) {
-                newState = newState + createCell(p.x, p.y, p.value)
+                newState = newState + createCell(p.x, p.y, p.value, isTactical = p.isTactical)
             }
         }
 
         val nextPreviews = pickRandomPreviews(newState, emptyList(), 3)
         return newState to nextPreviews
+    }
+
+    fun decrementTacticalFlags(grid: List<HexagonCell>): List<HexagonCell> {
+        return grid.map { it.copy(isTactical = false) }
     }
 }

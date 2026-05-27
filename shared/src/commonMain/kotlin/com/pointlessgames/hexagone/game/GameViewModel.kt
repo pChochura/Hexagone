@@ -67,7 +67,14 @@ internal data class PotentialMerge(
 
 internal sealed interface GameEffect {
     data class Particles(val particles: List<Particle>) : GameEffect
-    data class ScorePopup(val x: Float, val y: Float, val score: Int, val color: Color) : GameEffect
+    data class ScorePopup(
+        val x: Float,
+        val y: Float,
+        val score: Int,
+        val color: Color,
+        val label: String? = null,
+        val isGridCoordinate: Boolean = false
+    ) : GameEffect
     data class PerkPopup(val x: Float, val y: Float, val perk: Perk) : GameEffect
 }
 
@@ -107,6 +114,7 @@ internal class GameViewModel(
 
     private var lastLevel = 1
     private var stateHistory = mutableListOf<GameState>()
+    private var lastMoveScore: Int? = null
 
     init {
         viewModelScope.launch {
@@ -134,9 +142,9 @@ internal class GameViewModel(
         }
     }
 
-    fun addScorePopup(x: Float, y: Float, score: Int, color: Color) {
+    fun addScorePopup(x: Float, y: Float, score: Int, color: Color, label: String? = null, isGridCoordinate: Boolean = false) {
         viewModelScope.launch {
-            _effects.emit(GameEffect.ScorePopup(x, y, score, color))
+            _effects.emit(GameEffect.ScorePopup(x, y, score, color, label, isGridCoordinate))
         }
     }
 
@@ -166,7 +174,10 @@ internal class GameViewModel(
 
     private fun undoLastMove(): Boolean {
         if (stateHistory.isEmpty()) return false
+        val currentState = _uiState.value
         val previousState = stateHistory.removeAt(stateHistory.size - 1)
+
+        lastMoveScore = currentState.score - previousState.score
 
         _uiState.update { state ->
             state.copy(
@@ -313,6 +324,7 @@ internal class GameViewModel(
                         if (it.id == selectedId) it.copy(
                             x = x,
                             y = y,
+                            isTactical = true
                         ) else it
                     },
                 )
@@ -324,6 +336,7 @@ internal class GameViewModel(
                             if (it.id == selectedId) it.copy(
                                 x = x,
                                 y = y,
+                                isTactical = true
                             ) else it
                         },
                     )
@@ -351,16 +364,24 @@ internal class GameViewModel(
 
             Perk.REMOVE_TILE -> {
                 saveState()
-                val remaining = state.preview.filter { it.id != preview.id }
-                _uiState.update {
-                    it.copy(
-                        preview = engine.pickRandomPreviews(
-                            it.grid,
-                            remaining,
-                            3,
-                        ),
+                val baseCleanupScore = preview.value * 10
+                
+                val currentMinOnBoard = state.grid.minOfOrNull { it.value } ?: Int.MAX_VALUE
+                val isLowestValue = preview.value <= currentMinOnBoard
+                val isLastInQueue = state.preview.count { it.value == preview.value } == 1
+                val noneOnBoard = state.grid.none { it.value == preview.value }
+                
+                val barRaised = isLowestValue && isLastInQueue && noneOnBoard
+                val finalBonus = if (barRaised) baseCleanupScore + 250 else baseCleanupScore
+                val label = if (barRaised) "BAR RAISED" else "CLEANUP"
+
+                _uiState.update { s ->
+                    s.copy(
+                        preview = s.preview.filter { it.id != preview.id },
+                        score = s.score + finalBonus
                     )
                 }
+                addScorePopup(preview.x.toFloat(), preview.y.toFloat(), finalBonus, Color(0xFF90A4AE), label, isGridCoordinate = true)
                 finishPerkAction(Perk.REMOVE_TILE)
             }
 
@@ -388,7 +409,28 @@ internal class GameViewModel(
 
             Perk.REMOVE_TILE -> {
                 saveState()
-                _uiState.update { it.copy(grid = it.grid.filter { it.id != cell.id }) }
+                val baseCleanupScore = cell.value * 10
+                
+                val currentMin = state.grid.minOfOrNull { it.value } ?: Int.MAX_VALUE
+                val isLowestValue = cell.value <= currentMin
+                val isLastOnBoard = state.grid.count { it.value == cell.value } == 1
+                val noneInQueue = state.preview.none { it.value == cell.value }
+                
+                val barRaised = isLowestValue && isLastOnBoard && noneInQueue
+                val isOnlyHighest = state.grid.count { it.value == state.highestValue } == 1 && cell.value == state.highestValue
+                
+                var finalBonus = baseCleanupScore
+                if (barRaised) finalBonus += 250
+                if (isOnlyHighest) finalBonus *= 2
+                
+                val label = if (barRaised && isOnlyHighest) "JANITOR+" else if (barRaised) "BAR RAISED" else if (isOnlyHighest) "SACRIFICE" else "CLEANUP"
+
+                _uiState.update { it.copy(
+                    grid = it.grid.filter { it.id != cell.id },
+                    score = it.score + finalBonus
+                ) }
+                val popupColor = if (barRaised) Color(0xFF4FC3F7) else if (isOnlyHighest) Color(0xFFF06292) else Color(0xFF90A4AE)
+                addScorePopup(cell.x.toFloat(), cell.y.toFloat(), finalBonus, popupColor, label, isGridCoordinate = true)
                 finishPerkAction(Perk.REMOVE_TILE)
             }
 
@@ -424,15 +466,15 @@ internal class GameViewModel(
             currentState.copy(
                 grid = currentState.grid.map {
                     when (it.id) {
-                        id1 -> it.copy(x = x2, y = y2)
-                        id2 -> it.copy(x = x1, y = y1)
+                        id1 -> it.copy(x = x2, y = y2, isTactical = true)
+                        id2 -> it.copy(x = x1, y = y1, isTactical = true)
                         else -> it
                     }
                 },
                 preview = currentState.preview.map {
                     when (it.id) {
-                        id1 -> it.copy(x = x2, y = y2)
-                        id2 -> it.copy(x = x1, y = y1)
+                        id1 -> it.copy(x = x2, y = y2, isTactical = true)
+                        id2 -> it.copy(x = x1, y = y1, isTactical = true)
                         else -> it
                     }
                 },
@@ -555,6 +597,19 @@ internal class GameViewModel(
             if (isLastStep) {
                 val totalAddedScore = currentState.pendingMergeScore
 
+                val redemptionBonus = if (lastMoveScore != null && totalAddedScore > lastMoveScore!!) {
+                    val bonus = 250 + ((totalAddedScore - lastMoveScore!!) * 0.5).toInt()
+                    lastMoveScore = null
+                    bonus
+                } else {
+                    lastMoveScore = null
+                    0
+                }
+
+                if (redemptionBonus > 0) {
+                    addScorePopup(merge.targetX.toFloat(), merge.targetY.toFloat(), redemptionBonus, Color(0xFFFFD54F), "REDEMPTION", isGridCoordinate = true)
+                }
+
                 val collectedOnBoard =
                     currentState.onBoardPerks.find { it.x == merge.targetX && it.y == merge.targetY }?.perk
                 val remainingOnBoard =
@@ -569,8 +624,9 @@ internal class GameViewModel(
                         0
                     }
 
+                val finalScore = currentState.score + totalAddedScore + redemptionBonus
                 val nextBestScore =
-                    if (currentState.score + totalAddedScore > currentState.bestScore) currentState.score + totalAddedScore else currentState.bestScore
+                    if (finalScore > currentState.bestScore) finalScore else currentState.bestScore
                 if (nextBestScore > currentState.bestScore) {
                     settingsRepository.setBestScore(nextBestScore)
                 }
@@ -606,9 +662,9 @@ internal class GameViewModel(
                         } else stateAfterStep
 
                     it.copy(
-                        score = it.score + totalAddedScore,
+                        score = finalScore,
                         bestScore = nextBestScore,
-                        levelProgress = engine.getLevelProgress(it.score + totalAddedScore, it.level),
+                        levelProgress = engine.getLevelProgress(finalScore, it.level),
                         combo = finalCombo,
                         grid = finalGrid,
                         collectedPerks = it.collectedPerks + listOfNotNull(collectedOnBoard) + newlyEarnedPerks,
@@ -712,8 +768,9 @@ internal class GameViewModel(
     private fun spawnFromQueue(currentState: List<HexagonCell>) {
         viewModelScope.launch {
             _uiState.update { it.copy(isBusy = true) }
+            val gridWithoutTactical = engine.decrementTacticalFlags(currentState)
             val (newState, newPreviews) = engine.spawnFromQueue(
-                currentState,
+                gridWithoutTactical,
                 _uiState.value.preview,
             )
             val updatedPerks = engine.updateOnBoardPerks(_uiState.value.onBoardPerks)

@@ -18,6 +18,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -129,30 +130,7 @@ internal fun GameGridOverlay(
         effects.collect { effect ->
             when (effect) {
                 is GameEffect.Particles -> localParticles.addAll(effect.particles)
-                is GameEffect.ScorePopup -> {
-                    localScorePopups.add(
-                        ScorePopup(
-                            Random.nextLong(),
-                            effect.x,
-                            effect.y,
-                            effect.score,
-                            1f,
-                            effect.color,
-                        ),
-                    )
-                }
-
-                is GameEffect.PerkPopup -> {
-                    localPerkPopups.add(
-                        PerkPopup(
-                            Random.nextLong(),
-                            effect.x,
-                            effect.y,
-                            effect.perk,
-                            1f,
-                        ),
-                    )
-                }
+                else -> {}
             }
         }
     }
@@ -197,6 +175,51 @@ internal fun GameGridOverlay(
         val itemHeight = (cellHeight - gapPx).coerceAtLeast(0f)
         val totalWidth = (cellWidth * (1f + (columns - 1) * 0.75f))
         val totalHeight = (cellHeight * (rows + 0.5f))
+
+        LaunchedEffect(effects, cellWidth, cellHeight, gapPx, itemWidth, itemHeight) {
+            effects.collect { effect ->
+                when (effect) {
+                    is GameEffect.ScorePopup -> {
+                        val finalPos = if (effect.isGridCoordinate) {
+                            val offset = HexagonGridDefaults.calculateOffset(
+                                effect.x.toInt(),
+                                effect.y.toInt(),
+                                cellWidth,
+                                cellHeight,
+                                gapPx,
+                            )
+                            Offset(offset.x + itemWidth / 2, offset.y + itemHeight / 2)
+                        } else {
+                            Offset(effect.x, effect.y)
+                        }
+                        localScorePopups.add(
+                            ScorePopup(
+                                Random.nextLong(),
+                                finalPos.x,
+                                finalPos.y,
+                                effect.score,
+                                1f,
+                                effect.color,
+                                effect.label,
+                            ),
+                        )
+                    }
+
+                    is GameEffect.PerkPopup -> {
+                        localPerkPopups.add(
+                            PerkPopup(
+                                Random.nextLong(),
+                                effect.x,
+                                effect.y,
+                                effect.perk,
+                                1f,
+                            ),
+                        )
+                    }
+                    else -> {}
+                }
+            }
+        }
 
         LaunchedEffect(cellWidth, cellHeight, gapPx) {
             snapshotFlow { previewStateProvider() }.collect { previews ->
@@ -281,6 +304,7 @@ internal fun GameGridOverlay(
                                     pendingMergeScoreProvider(),
                                     1f,
                                     color,
+                                    label = if (pendingMerge.isTactical) "TACTICIAN" else null
                                 ),
                             )
 
@@ -602,6 +626,15 @@ private fun drawGhost(
             alpha = alpha,
         )
 
+        if (preview.isTactical) {
+            HexagonGridDefaults.drawHexagonPath(
+                this,
+                Size(itemWidth, itemHeight),
+                Color(0xFFBB86FC).copy(alpha = alpha),
+                style = Stroke(width = 2.dp.toPx())
+            )
+        }
+
         clipPath(HexagonGridDefaults.getHexagonPath(Size(itemWidth, itemHeight))) {
             HexagonGridDefaults.drawGhostStripes(
                 this,
@@ -839,6 +872,7 @@ private fun AnimatedGridHexagon(
     Hexagon(
         value = cell.value.toString(),
         backgroundColor = HexagonGridDefaults.getColorForValue(cell.value),
+        isTactical = cell.isTactical,
         modifier = Modifier.size(
             with(density) { itemWidth.toDp() },
             with(density) { itemHeight.toDp() },
@@ -905,8 +939,22 @@ private fun ScorePopupsLayer(scorePopups: List<ScorePopup>, onPopupFinished: (Lo
 
 @Composable
 private fun ScorePopupItem(popup: ScorePopup, onFinished: (Long) -> Unit) {
+    val isSpecial = popup.label != null
+
+    if (isSpecial) {
+        SpecialScorePopup(popup, onFinished)
+    } else {
+        StandardScorePopup(popup, onFinished)
+    }
+}
+
+@Composable
+private fun StandardScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit) {
     val animProgress = remember { Animatable(1f) }
-    LaunchedEffect(Unit) { animProgress.animateTo(0f, tween(800)); onFinished(popup.id) }
+    LaunchedEffect(Unit) {
+        animProgress.animateTo(0f, tween(800))
+        onFinished(popup.id)
+    }
     Box(
         Modifier.layout { measurable, constraints ->
             val placeable = measurable.measure(constraints)
@@ -919,8 +967,10 @@ private fun ScorePopupItem(popup: ScorePopup, onFinished: (Long) -> Unit) {
             }
         }
             .graphicsLayer {
-                alpha = animProgress.value;
-                val s = 1f + (1f - animProgress.value) * 0.3f; scaleX = s; scaleY = s
+                alpha = animProgress.value
+                val s = 1f + (1f - animProgress.value) * 0.3f
+                scaleX = s
+                scaleY = s
             }
             .background(Color.Black.copy(alpha = 0.6f), CircleShape)
             .border(1.dp, Color.White.copy(alpha = 0.4f), CircleShape)
@@ -933,6 +983,82 @@ private fun ScorePopupItem(popup: ScorePopup, onFinished: (Long) -> Unit) {
             fontWeight = FontWeight.Black,
             fontSize = 24.sp,
         )
+    }
+}
+
+@Composable
+private fun SpecialScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit) {
+    val scale = remember { Animatable(0f) }
+    val alpha = remember { Animatable(1f) }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "special_score_hover")
+    val hoverOffset by infiniteTransition.animateFloat(
+        initialValue = -5f,
+        targetValue = 5f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+        ),
+        label = "hover",
+    )
+
+    LaunchedEffect(Unit) {
+        scale.animateTo(
+            targetValue = 1f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioLowBouncy,
+                stiffness = Spring.StiffnessLow,
+            ),
+        )
+        delay(1200.milliseconds)
+        launch { alpha.animateTo(0f, tween(400)) }
+        scale.animateTo(0.8f, tween(400))
+        onFinished(popup.id)
+    }
+
+    Box(
+        Modifier.layout { measurable, constraints ->
+            val placeable = measurable.measure(constraints)
+            layout(placeable.width, placeable.height) {
+                placeable.placeRelative(
+                    (popup.x - placeable.width / 2).toInt(),
+                    (popup.y - 120f + hoverOffset - placeable.height / 2).toInt(),
+                    zIndex = 110f,
+                )
+            }
+        }
+            .graphicsLayer {
+                this.alpha = alpha.value
+                scaleX = scale.value
+                scaleY = scale.value
+            }
+            .background(Color.Black.copy(alpha = 0.7f), CircleShape)
+            .border(
+                2.dp,
+                popup.color.copy(alpha = 0.8f),
+                CircleShape
+            )
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            if (popup.label != null) {
+                val labelColor = if (popup.label == "TACTICIAN") Color(0xFFBB86FC) else popup.color
+                Text(
+                    popup.label,
+                    color = labelColor,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 11.sp,
+                    letterSpacing = 1.2.sp
+                )
+            }
+            Text(
+                "+${popup.score}",
+                color = Color.White,
+                fontWeight = FontWeight.Black,
+                fontSize = 28.sp,
+            )
+        }
     }
 }
 
