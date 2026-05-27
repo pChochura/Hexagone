@@ -639,8 +639,6 @@ internal class GameViewModel(
                                     y = merge.targetY,
                                 ) else cell
                             },
-                            collectedPerks = it.collectedPerks + listOfNotNull(collectedOnBoard),
-                            onBoardPerks = remainingOnBoard,
                             pendingMerge = chainMerge,
                             activeMergeStepIndex = 0,
                             pendingMergeScore = chainScore,
@@ -654,8 +652,6 @@ internal class GameViewModel(
                     _uiState.update {
                         it.copy(
                             activePerk = null,
-                            collectedPerks = it.collectedPerks + listOfNotNull(collectedOnBoard),
-                            onBoardPerks = remainingOnBoard,
                         )
                     }
                     spawnFromQueue(_uiState.value.grid)
