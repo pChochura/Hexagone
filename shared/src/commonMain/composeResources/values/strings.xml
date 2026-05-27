@@ -1,6 +1,69 @@
 <resources>
     <string name="app_name">Hexagone</string>
 
+    <!-- UI Elements -->
+    <string name="score_label">SCORE</string>
+    <string name="level_label">LVL %1$d</string>
+    <string name="best_score_label">BEST </string>
+    <string name="max_label">MAX</string>
+    <string name="perk_active_label">PERK</string>
+    <string name="level_up_title">LEVEL UP!</string>
+    <string name="choose_your_perk">Choose your perk</string>
+    <string name="game_over_title">GAME OVER</string>
+    <string name="new_best_label">NEW BEST</string>
+    <string name="stat_level">LEVEL</string>
+    <string name="stat_merges">MERGES</string>
+    <string name="stat_max_combo">MAX COMBO</string>
+    <string name="stat_max_piece">MAX PIECE</string>
+    <string name="play_again_button">PLAY AGAIN</string>
+    <string name="view_board_button">VIEW BOARD</string>
+    <string name="no_more_moves_title">NO MORE MOVES</string>
+    <string name="game_over_subtitle">Better luck next time!</string>
+    <string name="try_perk_subtitle">Try using a perk.</string>
+    <string name="restart_game_button">RESTART GAME</string>
+    <string name="perk_bar_empty_hint">Level up to collect perks and enhance your strategy!</string>
+    <string name="no_moves_left_warning">NO MOVES LEFT! USE A PERK</string>
+
+    <!-- Perk Action States (Score Section) -->
+    <string name="perk_action_select">Select</string>
+    <string name="perk_action_move">Move</string>
+    <string name="perk_action_pick">Pick</string>
+    <string name="perk_action_first">First</string>
+    <string name="perk_action_second">Second</string>
+    <string name="perk_action_fuse">Fuse</string>
+
+    <!-- Combo Tiers -->
+    <string name="tier_surge">SURGE</string>
+    <string name="tier_overdrive">OVERDRIVE</string>
+    <string name="tier_zenith">ZENITH</string>
+
+    <!-- Game Effects / Popup Labels -->
+    <string name="label_tactical_redemption">TACTICAL REDEMPTION</string>
+    <string name="label_redemption">REDEMPTION</string>
+    <string name="label_tactician">TACTICIAN</string>
+    <string name="label_janitor_plus">JANITOR+</string>
+    <string name="label_bar_raised">BAR RAISED</string>
+    <string name="label_sacrifice">SACRIFICE</string>
+    <string name="label_cleanup">CLEANUP</string>
+
+    <!-- Perk Names -->
+    <string name="perk_undo_name">UNDO</string>
+    <string name="perk_move_tile_name">MOVE TILE</string>
+    <string name="perk_remove_tile_name">REMOVE TILE</string>
+    <string name="perk_advance_queue_name">ADVANCE QUEUE</string>
+    <string name="perk_swap_tiles_name">SWAP TILES</string>
+    <string name="perk_fusion_name">FUSION</string>
+    <string name="perk_chain_merge_name">CHAIN MERGE</string>
+
+    <!-- Perk Descriptions -->
+    <string name="perk_undo_desc">Undo your last move.</string>
+    <string name="perk_move_tile_desc">Select a tile and move it to any empty spot.</string>
+    <string name="perk_remove_tile_desc">Select a tile and remove it from the board.</string>
+    <string name="perk_advance_queue_desc">Instantly spawn the next piece from your queue.</string>
+    <string name="perk_swap_tiles_desc">Select two tiles to swap their positions.</string>
+    <string name="perk_fusion_desc">Merge all surrounding tiles into a single superior tile.</string>
+    <string name="perk_chain_merge_desc">Your next move will trigger chain reactions.</string>
+
     <!-- Tooltips -->
     <string name="undo_last_move">Undo last move</string>
     <string name="redo_previous_move">Redo previous move</string>

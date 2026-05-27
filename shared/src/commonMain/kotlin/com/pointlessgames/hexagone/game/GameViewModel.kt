@@ -13,7 +13,14 @@ import com.pointlessgames.hexagone.game.model.OnBoardPerk
 import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PreviewCell
-import com.pointlessgames.hexagone.game.model.ScorePopup
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.label_bar_raised
+import hexagone.shared.generated.resources.label_cleanup
+import hexagone.shared.generated.resources.label_janitor_plus
+import hexagone.shared.generated.resources.label_redemption
+import hexagone.shared.generated.resources.label_sacrifice
+import hexagone.shared.generated.resources.label_tactical_redemption
+import hexagone.shared.generated.resources.label_tactician
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,9 +31,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlin.random.Random
+import org.jetbrains.compose.resources.StringResource
 
 @Immutable
 internal data class GameUiState(
@@ -67,7 +73,7 @@ internal data class PotentialMerge(
     val targetY: Int,
     val finalValue: Int,
     val baseScore: Int,
-    val participatingIds: Set<String>
+    val participatingIds: Set<String>,
 )
 
 internal sealed interface GameEffect {
@@ -77,20 +83,21 @@ internal sealed interface GameEffect {
         val gridY: Int,
         val score: Int,
         val color: Color,
-        val label: String? = null
+        val labelRes: StringResource? = null,
     ) : GameEffect
+
     data class PerkPopup(
         val gridX: Int,
         val gridY: Int,
-        val perk: Perk
+        val perk: Perk,
     ) : GameEffect
 }
 
 @Serializable
-internal enum class ComboTier(val label: String, val threshold: Int) {
-    SURGE("SURGE", 11),
-    OVERDRIVE("OVERDRIVE", 21),
-    ZENITH("ZENITH", 31)
+internal enum class ComboTier(val threshold: Int) {
+    SURGE(11),
+    OVERDRIVE(21),
+    ZENITH(31)
 }
 
 @Serializable
@@ -160,7 +167,7 @@ internal class GameViewModel(
                             perkOptions = savedState.perkOptions,
                             canReroll = savedState.canReroll,
                             bestScore = best,
-                            mergeHintsEnabled = hintsEnabled
+                            mergeHintsEnabled = hintsEnabled,
                         )
                     }
                     lastLevel = savedState.level
@@ -184,9 +191,15 @@ internal class GameViewModel(
         }
     }
 
-    fun addScorePopup(gridX: Int, gridY: Int, score: Int, color: Color, label: String? = null) {
+    fun addScorePopup(
+        gridX: Int,
+        gridY: Int,
+        score: Int,
+        color: Color,
+        labelRes: StringResource? = null,
+    ) {
         viewModelScope.launch {
-            _effects.emit(GameEffect.ScorePopup(gridX, gridY, score, color, label))
+            _effects.emit(GameEffect.ScorePopup(gridX, gridY, score, color, labelRes))
         }
     }
 
@@ -380,7 +393,7 @@ internal class GameViewModel(
         _uiState.update { state ->
             val cellToMove = state.grid.find { it.id == selectedId }
             val collectedPerk = state.onBoardPerks.find { it.x == x && it.y == y }?.perk
-            
+
             if (collectedPerk != null) {
                 addPerkPopup(x, y, collectedPerk)
             }
@@ -391,12 +404,12 @@ internal class GameViewModel(
                         if (it.id == selectedId) it.copy(
                             x = x,
                             y = y,
-                            isTactical = true
+                            isTactical = true,
                         ) else it
                     },
                     preview = state.preview.filterNot { it.x == x && it.y == y },
                     collectedPerks = state.collectedPerks + listOfNotNull(collectedPerk),
-                    onBoardPerks = state.onBoardPerks.filterNot { it.x == x && it.y == y }
+                    onBoardPerks = state.onBoardPerks.filterNot { it.x == x && it.y == y },
                 )
             } else {
                 val previewToMove = state.preview.find { it.id == selectedId }
@@ -406,11 +419,11 @@ internal class GameViewModel(
                             if (it.id == selectedId) it.copy(
                                 x = x,
                                 y = y,
-                                isTactical = true
+                                isTactical = true,
                             ) else it
                         }.filterNot { it.id != selectedId && it.x == x && it.y == y },
                         collectedPerks = state.collectedPerks + listOfNotNull(collectedPerk),
-                        onBoardPerks = state.onBoardPerks.filterNot { it.x == x && it.y == y }
+                        onBoardPerks = state.onBoardPerks.filterNot { it.x == x && it.y == y },
                     )
                 } else state
             }
@@ -446,23 +459,24 @@ internal class GameViewModel(
             Perk.REMOVE_TILE -> {
                 saveState()
                 val baseCleanupScore = preview.value * 10
-                
+
                 val currentMinOnBoard = state.grid.minOfOrNull { it.value } ?: Int.MAX_VALUE
                 val isLowestValue = preview.value <= currentMinOnBoard
                 val isLastInQueue = state.preview.count { it.value == preview.value } == 1
                 val noneOnBoard = state.grid.none { it.value == preview.value }
-                
+
                 val barRaised = isLowestValue && isLastInQueue && noneOnBoard
                 val finalBonus = if (barRaised) baseCleanupScore + 250 else baseCleanupScore
-                val label = if (barRaised) "BAR RAISED" else "CLEANUP"
+                val labelRes =
+                    if (barRaised) Res.string.label_bar_raised else Res.string.label_cleanup
 
                 _uiState.update { s ->
                     s.copy(
                         preview = s.preview.filter { it.id != preview.id },
-                        score = s.score + finalBonus
+                        score = s.score + finalBonus,
                     )
                 }
-                addScorePopup(preview.x, preview.y, finalBonus, Color(0xFF90A4AE), label)
+                addScorePopup(preview.x, preview.y, finalBonus, Color(0xFF90A4AE), labelRes)
                 finishPerkAction(Perk.REMOVE_TILE)
             }
 
@@ -491,27 +505,41 @@ internal class GameViewModel(
             Perk.REMOVE_TILE -> {
                 saveState()
                 val baseCleanupScore = cell.value * 10
-                
+
                 val currentMin = state.grid.minOfOrNull { it.value } ?: Int.MAX_VALUE
                 val isLowestValue = cell.value <= currentMin
                 val isLastOnBoard = state.grid.count { it.value == cell.value } == 1
                 val noneInQueue = state.preview.none { it.value == cell.value }
-                
+
                 val barRaised = isLowestValue && isLastOnBoard && noneInQueue
-                val isOnlyHighest = state.grid.count { it.value == state.highestValue } == 1 && cell.value == state.highestValue
-                
+                val isOnlyHighest =
+                    state.grid.count { it.value == state.highestValue } == 1 && cell.value == state.highestValue
+
                 var finalBonus = baseCleanupScore
                 if (barRaised) finalBonus += 250
                 if (isOnlyHighest) finalBonus *= 2
-                
-                val label = if (barRaised && isOnlyHighest) "JANITOR+" else if (barRaised) "BAR RAISED" else if (isOnlyHighest) "SACRIFICE" else "CLEANUP"
 
-                _uiState.update { it.copy(
-                    grid = it.grid.filter { it.id != cell.id },
-                    score = it.score + finalBonus
-                ) }
-                val popupColor = if (barRaised) Color(0xFF4FC3F7) else if (isOnlyHighest) Color(0xFFF06292) else Color(0xFF90A4AE)
-                addScorePopup(cell.x, cell.y, finalBonus, popupColor, label)
+                val labelRes = if (barRaised && isOnlyHighest) {
+                    Res.string.label_janitor_plus
+                } else if (barRaised) {
+                    Res.string.label_bar_raised
+                } else if (isOnlyHighest) {
+                    Res.string.label_sacrifice
+                } else {
+                    Res.string.label_cleanup
+                }
+
+                _uiState.update {
+                    it.copy(
+                        grid = it.grid.filter { it.id != cell.id },
+                        score = it.score + finalBonus,
+                    )
+                }
+                val popupColor =
+                    if (barRaised) Color(0xFF4FC3F7) else if (isOnlyHighest) Color(0xFFF06292) else Color(
+                        0xFF90A4AE,
+                    )
+                addScorePopup(cell.x, cell.y, finalBonus, popupColor, labelRes)
                 finishPerkAction(Perk.REMOVE_TILE)
             }
 
@@ -545,7 +573,7 @@ internal class GameViewModel(
 
         val collectedPerkAt1 = state.onBoardPerks.find { it.x == x1 && it.y == y1 }?.perk
         val collectedPerkAt2 = state.onBoardPerks.find { it.x == x2 && it.y == y2 }?.perk
-        
+
         if (collectedPerkAt1 != null) addPerkPopup(x1, y1, collectedPerkAt1)
         if (collectedPerkAt2 != null) addPerkPopup(x2, y2, collectedPerkAt2)
 
@@ -565,8 +593,11 @@ internal class GameViewModel(
                         else -> it
                     }
                 },
-                collectedPerks = currentState.collectedPerks + listOfNotNull(collectedPerkAt1, collectedPerkAt2),
-                onBoardPerks = currentState.onBoardPerks.filterNot { (it.x == x1 && it.y == y1) || (it.x == x2 && it.y == y2) }
+                collectedPerks = currentState.collectedPerks + listOfNotNull(
+                    collectedPerkAt1,
+                    collectedPerkAt2,
+                ),
+                onBoardPerks = currentState.onBoardPerks.filterNot { (it.x == x1 && it.y == y1) || (it.x == x2 && it.y == y2) },
             )
         }
         finishPerkAction(Perk.SWAP_TILES)
@@ -645,7 +676,7 @@ internal class GameViewModel(
         _uiState.update {
             it.copy(
                 perkOptions = engine.pickWeightedPerks(3, excludeLegendary = true),
-                canReroll = false
+                canReroll = false,
             )
         }
         persistState(getCurrentGameState())
@@ -713,26 +744,30 @@ internal class GameViewModel(
             if (isLastStep) {
                 val totalAddedScore = currentState.pendingMergeScore
 
-                val redemptionBonus = if (lastMoveScore != null && totalAddedScore > lastMoveScore!!) {
-                    val bonus = 250 + ((totalAddedScore - lastMoveScore!!) * 0.5).toInt()
-                    lastMoveScore = null
-                    bonus
-                } else {
-                    lastMoveScore = null
-                    0
-                }
+                val redemptionBonus =
+                    if (lastMoveScore != null && totalAddedScore > lastMoveScore!!) {
+                        val bonus = 250 + ((totalAddedScore - lastMoveScore!!) * 0.5).toInt()
+                        lastMoveScore = null
+                        bonus
+                    } else {
+                        lastMoveScore = null
+                        0
+                    }
 
                 val combinedScore = totalAddedScore + redemptionBonus
-                val label = when {
-                    redemptionBonus > 0 && merge.isTactical -> "TACTICAL REDEMPTION"
-                    redemptionBonus > 0 -> "REDEMPTION"
-                    merge.isTactical -> "TACTICIAN"
+                val labelRes = when {
+                    redemptionBonus > 0 && merge.isTactical -> Res.string.label_tactical_redemption
+                    redemptionBonus > 0 -> Res.string.label_redemption
+                    merge.isTactical -> Res.string.label_tactician
                     else -> null
                 }
 
-                val popupColor = when (label) {
-                    "TACTICAL REDEMPTION", "REDEMPTION" -> Color(0xFFFFD54F)
-                    "TACTICIAN" -> Color(0xFFBB86FC)
+                val popupColor = when (labelRes) {
+                    Res.string.label_tactical_redemption, Res.string.label_redemption -> Color(
+                        0xFFFFD54F,
+                    )
+
+                    Res.string.label_tactician -> Color(0xFFBB86FC)
                     else -> Color.White
                 }
 
@@ -741,17 +776,17 @@ internal class GameViewModel(
                     merge.targetY,
                     combinedScore,
                     popupColor,
-                    label
+                    labelRes,
                 )
 
                 val collectedOnBoard =
                     currentState.onBoardPerks.find { it.x == merge.targetX && it.y == merge.targetY }?.perk
-                
+
                 if (collectedOnBoard != null) {
                     addPerkPopup(
                         merge.targetX,
                         merge.targetY,
-                        collectedOnBoard
+                        collectedOnBoard,
                     )
                 }
 
@@ -917,14 +952,14 @@ internal class GameViewModel(
             val (newState, newPreviews, perksAfterSpawn) = engine.spawnFromQueue(
                 gridWithoutTactical,
                 _uiState.value.preview,
-                currentPerks
+                currentPerks,
             )
             val updatedPerks = engine.updateOnBoardPerks(perksAfterSpawn)
             val (nextPerks, nextCounter) = engine.trySpawnPerkOnBoard(
                 newState,
                 newPreviews,
                 updatedPerks,
-                _uiState.value.perkSpawnCounter
+                _uiState.value.perkSpawnCounter,
             )
 
             _uiState.update {
@@ -949,7 +984,7 @@ internal class GameViewModel(
         val grid = state.grid
         val perk = state.activePerk
         val result = mutableMapOf<Pair<Int, Int>, PotentialMerge>()
-        
+
         for (x in 0 until engine.columns) {
             for (y in 0 until engine.rows) {
                 if (grid.none { it.x == x && it.y == y }) {
@@ -958,14 +993,15 @@ internal class GameViewModel(
                     } else {
                         engine.calculateMerge(x, y, grid)
                     }
-                    
+
                     if (merge != null) {
                         result[x to y] = PotentialMerge(
                             targetX = x,
                             targetY = y,
                             finalValue = merge.finalValue,
                             baseScore = merge.baseScore,
-                            participatingIds = merge.steps.flatMap { it.mergingCells }.map { it.id }.toSet()
+                            participatingIds = merge.steps.flatMap { it.mergingCells }.map { it.id }
+                                .toSet(),
                         )
                     }
                 }

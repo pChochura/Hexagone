@@ -3,6 +3,7 @@ package com.pointlessgames.hexagone.game.model
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.StringResource
 
 @Immutable
 interface GridPopup {
@@ -64,18 +65,16 @@ data class MergeStep(
 
 @Serializable
 enum class Perk(
-    val displayName: String,
-    val description: String,
     val baseWeight: Int,
     val canSaveFromStuck: Boolean = true
 ) {
-    UNDO("UNDO", "Undo your last move.", baseWeight = 100),
-    MOVE_TILE("MOVE TILE", "Select a tile and move it to any empty spot.", baseWeight = 80),
-    REMOVE_TILE("REMOVE TILE", "Select a tile and remove it from the board.", baseWeight = 80),
-    ADVANCE_QUEUE("ADVANCE QUEUE", "Instantly spawn the next piece from your queue.", baseWeight = 50),
-    SWAP_TILES("SWAP TILES", "Select two tiles to swap their positions.", baseWeight = 50),
-    FUSION("FUSION", "Merge all surrounding tiles into a single superior tile.", baseWeight = 20),
-    CHAIN_MERGE("CHAIN MERGE", "Your next move will trigger chain reactions.", baseWeight = 20, canSaveFromStuck = false);
+    UNDO(baseWeight = 100),
+    MOVE_TILE(baseWeight = 80),
+    REMOVE_TILE(baseWeight = 80),
+    ADVANCE_QUEUE(baseWeight = 50),
+    SWAP_TILES(baseWeight = 50),
+    FUSION(baseWeight = 20),
+    CHAIN_MERGE(baseWeight = 20, canSaveFromStuck = false);
 
     val isLegendary: Boolean get() = baseWeight <= 20
 }
@@ -109,7 +108,7 @@ data class ScorePopup(
     val score: Int,
     val life: Float,
     val color: Color,
-    val label: String? = null
+    val labelRes: StringResource? = null
 ) : GridPopup
 
 @Immutable

@@ -29,6 +29,7 @@ import com.pointlessgames.hexagone.ui.theme.DefaultCornerRadius
 import com.pointlessgames.hexagone.ui.theme.DefaultIconsSize
 import com.pointlessgames.hexagone.ui.theme.DefaultSpacing
 import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.app_name
 import hexagone.shared.generated.resources.continue_where_you_left_off
 import hexagone.shared.generated.resources.go_to_daily_challenge
 import hexagone.shared.generated.resources.go_to_level_creator
@@ -125,13 +126,8 @@ internal fun StartScreen(
 
 @Composable
 private fun Logo() {
-    val letters = listOf(
-        "K" to (Color.DarkGray to Color.White),
-        "R" to (Color.DarkGray to Color.White),
-        "O" to (Color.DarkGray to Color.White),
-        "M" to (Color.DarkGray to Color.White),
-        "A" to (Color.DarkGray to Color.White),
-    )
+    val appName = stringResource(Res.string.app_name).uppercase()
+    val letters = appName.map { it.toString() }
 
     Row(
         modifier = Modifier
@@ -143,13 +139,13 @@ private fun Logo() {
         horizontalArrangement = Arrangement.spacedBy(DefaultSpacing.current.extraSmall),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        letters.forEach { (letter, colors) ->
+        letters.forEach { letter ->
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .aspectRatio(1f)
                     .background(
-                        color = colors.first,
+                        color = Color.DarkGray,
                         shape = MaterialTheme.shapes.small,
                     ),
                 contentAlignment = Alignment.Center,
@@ -158,7 +154,7 @@ private fun Logo() {
                     text = letter,
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
-                    color = colors.second,
+                    color = Color.White,
                     textAlign = TextAlign.Center,
                 )
             }

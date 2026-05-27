@@ -64,6 +64,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.choose_your_perk
+import hexagone.shared.generated.resources.game_over_subtitle
+import hexagone.shared.generated.resources.game_over_title
+import hexagone.shared.generated.resources.level_up_title
+import hexagone.shared.generated.resources.new_best_label
+import hexagone.shared.generated.resources.no_more_moves_title
+import hexagone.shared.generated.resources.play_again_button
+import hexagone.shared.generated.resources.restart_game_button
+import hexagone.shared.generated.resources.stat_level
+import hexagone.shared.generated.resources.stat_max_combo
+import hexagone.shared.generated.resources.stat_max_piece
+import hexagone.shared.generated.resources.stat_merges
+import hexagone.shared.generated.resources.try_perk_subtitle
+import hexagone.shared.generated.resources.view_board_button
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -219,7 +235,7 @@ private fun PerkSelectionDialog(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "LEVEL UP!",
+                        text = stringResource(Res.string.level_up_title),
                         color = Color(0xFFF06292),
                         fontWeight = FontWeight.Black,
                         fontSize = 32.sp,
@@ -270,7 +286,7 @@ private fun PerkSelectionDialog(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "Choose your perk",
+                text = stringResource(Res.string.choose_your_perk),
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
@@ -367,7 +383,7 @@ private fun GameOverDialog(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "GAME OVER",
+                text = stringResource(Res.string.game_over_title),
                 color = Color.White.copy(alpha = 0.4f),
                 fontWeight = FontWeight.Black,
                 fontSize = 12.sp,
@@ -406,7 +422,12 @@ private fun GameOverDialog(
                             .background(Color(0xFFF06292), RoundedCornerShape(100.dp))
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
-                        Text("NEW BEST", color = Color.White, fontWeight = FontWeight.Black, fontSize = 9.sp)
+                        Text(
+                            text = stringResource(Res.string.new_best_label),
+                            color = Color.White,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 9.sp
+                        )
                     }
                 }
             }
@@ -422,15 +443,15 @@ private fun GameOverDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    GameOverStatBox("LEVEL", level.toString(), modifier = Modifier.weight(1f))
-                    GameOverStatBox("MERGES", totalMerges.toString(), modifier = Modifier.weight(1f))
+                    GameOverStatBox(stringResource(Res.string.stat_level), level.toString(), modifier = Modifier.weight(1f))
+                    GameOverStatBox(stringResource(Res.string.stat_merges), totalMerges.toString(), modifier = Modifier.weight(1f))
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    GameOverStatBox("MAX COMBO", "x$maxCombo", modifier = Modifier.weight(1f))
-                    GameOverStatBox("MAX PIECE", highestValue.toString(), isHex = true, modifier = Modifier.weight(1f))
+                    GameOverStatBox(stringResource(Res.string.stat_max_combo), "x$maxCombo", modifier = Modifier.weight(1f))
+                    GameOverStatBox(stringResource(Res.string.stat_max_piece), highestValue.toString(), isHex = true, modifier = Modifier.weight(1f))
                 }
             }
 
@@ -449,7 +470,7 @@ private fun GameOverDialog(
                 )
             ) {
                 Text(
-                    text = "PLAY AGAIN",
+                    text = stringResource(Res.string.play_again_button),
                     fontWeight = FontWeight.Black,
                     fontSize = 16.sp,
                     letterSpacing = 1.sp
@@ -479,7 +500,7 @@ private fun GameOverDialog(
 
             // View Board
             Text(
-                text = "VIEW BOARD",
+                text = stringResource(Res.string.view_board_button),
                 color = Color.White.copy(alpha = 0.5f),
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp,
@@ -608,13 +629,13 @@ private fun StatusDialog(
 
                 Column {
                     Text(
-                        text = if (isGameOver) "GAME OVER" else "NO MORE MOVES",
+                        text = if (isGameOver) stringResource(Res.string.game_over_title) else stringResource(Res.string.no_more_moves_title),
                         color = Color(0xFFD1C4E9),
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp,
                     )
                     Text(
-                        text = if (isGameOver) "Better luck next time!" else "Try using a perk.",
+                        text = if (isGameOver) stringResource(Res.string.game_over_subtitle) else stringResource(Res.string.try_perk_subtitle),
                         color = Color.White.copy(alpha = 0.5f),
                         fontSize = 14.sp,
                     )
@@ -654,7 +675,11 @@ private fun StatusDialog(
                 ),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
             ) {
-                Text("RESTART GAME", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(
+                    text = stringResource(Res.string.restart_game_button),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
             }
         }
     }

@@ -71,8 +71,13 @@ import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PerkPopup
 import com.pointlessgames.hexagone.game.model.PreviewCell
 import com.pointlessgames.hexagone.game.model.ScorePopup
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.label_redemption
+import hexagone.shared.generated.resources.label_tactical_redemption
+import hexagone.shared.generated.resources.label_tactician
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -200,7 +205,7 @@ internal fun GameGridOverlay(
                                 effect.score,
                                 1f,
                                 effect.color,
-                                effect.label,
+                                effect.labelRes,
                             ),
                         )
                     }
@@ -588,8 +593,8 @@ private fun PopupsLayer(
     // Separate tactical (slow/centered higher) and standard (fast/moving lower) popups.
     // We only group tactical ones for horizontal stacking to avoid "jumps" when fast
     // score popups disappear while a slow perk popup is still visible.
-    val tacticalPopups = perkPopups + scorePopups.filter { it.label != null }
-    val standardPopups = scorePopups.filter { it.label == null }
+    val tacticalPopups = perkPopups + scorePopups.filter { it.labelRes != null }
+    val standardPopups = scorePopups.filter { it.labelRes == null }
 
     val tacticalGroups = tacticalPopups.groupBy {
         it.gridX to it.gridY
@@ -978,7 +983,7 @@ private fun ScorePopupItem(
     horizontalOffset: Float = 0f,
     containerWidth: Float = Float.MAX_VALUE
 ) {
-    val isSpecial = popup.label != null
+    val isSpecial = popup.labelRes != null
 
     if (isSpecial) {
         SpecialScorePopup(popup, onFinished, horizontalOffset, containerWidth)
@@ -1083,14 +1088,14 @@ private fun SpecialScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit, hor
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            if (popup.label != null) {
-                val labelColor = when (popup.label) {
-                    "TACTICIAN" -> Color(0xFFBB86FC)
-                    "TACTICAL REDEMPTION", "REDEMPTION" -> Color(0xFFFFD54F)
+            if (popup.labelRes != null) {
+                val labelColor = when (popup.labelRes) {
+                    Res.string.label_tactician -> Color(0xFFBB86FC)
+                    Res.string.label_tactical_redemption, Res.string.label_redemption -> Color(0xFFFFD54F)
                     else -> popup.color
                 }
                 Text(
-                    popup.label,
+                    stringResource(popup.labelRes),
                     color = labelColor,
                     fontWeight = FontWeight.Black,
                     fontSize = 11.sp,

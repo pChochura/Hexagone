@@ -1,0 +1,66 @@
+<resources>
+    <string name="app_name">Hexagone</string>
+
+    <!-- UI Elements -->
+    <string name="score_label">WYNIK</string>
+    <string name="level_label">POZIOM %1$d</string>
+    <string name="best_score_label">NAJLEPSZY </string>
+    <string name="max_label">MAX</string>
+    <string name="perk_active_label">PERK</string>
+    <string name="level_up_title">AWANS!</string>
+    <string name="choose_your_perk">Wybierz perk</string>
+    <string name="game_over_title">KONIEC GRY</string>
+    <string name="new_best_label">NOWY REKORD</string>
+    <string name="stat_level">POZIOM</string>
+    <string name="stat_merges">POŁĄCZENIA</string>
+    <string name="stat_max_combo">MAX COMBO</string>
+    <string name="stat_max_piece">NAJWIĘKSZY</string>
+    <string name="play_again_button">ZAGRAJ PONOWNIE</string>
+    <string name="view_board_button">ZOBACZ PLANSZĘ</string>
+    <string name="no_more_moves_title">BRAK RUCHÓW</string>
+    <string name="game_over_subtitle">Powodzenia następnym razem!</string>
+    <string name="try_perk_subtitle">Spróbuj użyć perka.</string>
+    <string name="restart_game_button">RESTARTUJ GRĘ</string>
+    <string name="perk_bar_empty_hint">Zdobywaj poziomy, aby odblokować perki i ulepszyć swoją strategię!</string>
+    <string name="no_moves_left_warning">BRAK RUCHÓW! UŻYJ PERKA</string>
+
+    <!-- Perk Action States (Score Section) -->
+    <string name="perk_action_select">Wybierz</string>
+    <string name="perk_action_move">Przesuń</string>
+    <string name="perk_action_pick">Wskaż</string>
+    <string name="perk_action_first">Pierwszy</string>
+    <string name="perk_action_second">Drugi</string>
+    <string name="perk_action_fuse">Połącz</string>
+
+    <!-- Combo Tiers -->
+    <string name="tier_surge">PRZYPŁYW</string>
+    <string name="tier_overdrive">PRZECIĄŻENIE</string>
+    <string name="tier_zenith">ZENIT</string>
+
+    <!-- Game Effects / Popup Labels -->
+    <string name="label_tactical_redemption">TAKTYCZNE ODKUPIENIE</string>
+    <string name="label_redemption">ODKUPIENIE</string>
+    <string name="label_tactician">TAKTYK</string>
+    <string name="label_janitor_plus">WOŹNY+</string>
+    <string name="label_bar_raised">POPRZECZKA W GÓRĘ</string>
+    <string name="label_sacrifice">POŚWIĘCENIE</string>
+    <string name="label_cleanup">SPRZĄTANIE</string>
+
+    <!-- Perk Names -->
+    <string name="perk_undo_name">COFNIJ</string>
+    <string name="perk_move_tile_name">PRZESUŃ PŁYTKĘ</string>
+    <string name="perk_remove_tile_name">USUŃ PŁYTKĘ</string>
+    <string name="perk_advance_queue_name">PRZYSPIESZ KOLEJKĘ</string>
+    <string name="perk_swap_tiles_name">ZAMIEŃ PŁYTKI</string>
+    <string name="perk_fusion_name">FUZJA</string>
+    <string name="perk_chain_merge_name">REAKCJA ŁAŃCUCHOWA</string>
+
+    <!-- Perk Descriptions -->
+    <string name="perk_undo_desc">Cofnij swój ostatni ruch.</string>
+    <string name="perk_move_tile_desc">Wybierz płytkę i przesuń ją w dowolne wolne miejsce.</string>
+    <string name="perk_remove_tile_desc">Wybierz płytkę i usuń ją z planszy.</string>
+    <string name="perk_advance_queue_desc">Natychmiast dodaj kolejną płytkę z kolejki.</string>
+    <string name="perk_swap_tiles_desc">Wybierz dwie płytki, aby zamienić je miejscami.</string>
+    <string name="perk_fusion_desc">Połącz wszystkie sąsiednie płytki w jedną potężną.</string>
+    <string name="perk_chain_merge_desc">Twój następny ruch wywoła reakcje łańcuchowe.</string>
+</resources>

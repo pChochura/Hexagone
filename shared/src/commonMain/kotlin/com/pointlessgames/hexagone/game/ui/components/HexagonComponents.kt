@@ -50,6 +50,22 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.perk_advance_queue_desc
+import hexagone.shared.generated.resources.perk_advance_queue_name
+import hexagone.shared.generated.resources.perk_chain_merge_desc
+import hexagone.shared.generated.resources.perk_chain_merge_name
+import hexagone.shared.generated.resources.perk_fusion_desc
+import hexagone.shared.generated.resources.perk_fusion_name
+import hexagone.shared.generated.resources.perk_move_tile_desc
+import hexagone.shared.generated.resources.perk_move_tile_name
+import hexagone.shared.generated.resources.perk_remove_tile_desc
+import hexagone.shared.generated.resources.perk_remove_tile_name
+import hexagone.shared.generated.resources.perk_swap_tiles_desc
+import hexagone.shared.generated.resources.perk_swap_tiles_name
+import hexagone.shared.generated.resources.perk_undo_desc
+import hexagone.shared.generated.resources.perk_undo_name
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
@@ -330,6 +346,26 @@ class FlatTopHexagonShape : Shape {
     }
 }
 
+val Perk.displayNameRes get() = when(this) {
+    Perk.UNDO -> Res.string.perk_undo_name
+    Perk.MOVE_TILE -> Res.string.perk_move_tile_name
+    Perk.REMOVE_TILE -> Res.string.perk_remove_tile_name
+    Perk.ADVANCE_QUEUE -> Res.string.perk_advance_queue_name
+    Perk.SWAP_TILES -> Res.string.perk_swap_tiles_name
+    Perk.FUSION -> Res.string.perk_fusion_name
+    Perk.CHAIN_MERGE -> Res.string.perk_chain_merge_name
+}
+
+val Perk.descriptionRes get() = when(this) {
+    Perk.UNDO -> Res.string.perk_undo_desc
+    Perk.MOVE_TILE -> Res.string.perk_move_tile_desc
+    Perk.REMOVE_TILE -> Res.string.perk_remove_tile_desc
+    Perk.ADVANCE_QUEUE -> Res.string.perk_advance_queue_desc
+    Perk.SWAP_TILES -> Res.string.perk_swap_tiles_desc
+    Perk.FUSION -> Res.string.perk_fusion_desc
+    Perk.CHAIN_MERGE -> Res.string.perk_chain_merge_desc
+}
+
 @Composable
 fun Hexagon(
     value: String? = null,
@@ -553,7 +589,7 @@ fun PerkButton(
         Spacer(Modifier.height(4.dp))
 
         Text(
-            text = perk.displayName,
+            text = stringResource(perk.displayNameRes),
             color = if (isActive) perkColor else Color.White.copy(alpha = 0.8f),
             fontSize = if (showDescription) 12.sp else 8.sp,
             fontWeight = FontWeight.Black,
@@ -576,7 +612,7 @@ fun PerkButton(
         if (showDescription) {
             Spacer(Modifier.height(4.dp))
             Text(
-                text = perk.description,
+                text = stringResource(perk.descriptionRes),
                 color = Color.White.copy(alpha = 0.5f),
                 fontSize = 9.sp,
                 textAlign = TextAlign.Center,

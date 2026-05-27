@@ -35,6 +35,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.perk_bar_empty_hint
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PerkBar(
@@ -130,7 +133,7 @@ fun PerkBar(
         ) {
             if (collectedPerks.isEmpty()) {
                 Text(
-                    text = "Level up to collect perks and enhance your strategy!",
+                    text = stringResource(Res.string.perk_bar_empty_hint),
                     color = Color.White.copy(alpha = 0.3f),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,

@@ -65,6 +65,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.app_name
+import hexagone.shared.generated.resources.best_score_label
+import hexagone.shared.generated.resources.level_label
+import hexagone.shared.generated.resources.max_label
+import hexagone.shared.generated.resources.perk_action_first
+import hexagone.shared.generated.resources.perk_action_fuse
+import hexagone.shared.generated.resources.perk_action_move
+import hexagone.shared.generated.resources.perk_action_pick
+import hexagone.shared.generated.resources.perk_action_second
+import hexagone.shared.generated.resources.perk_action_select
+import hexagone.shared.generated.resources.perk_active_label
+import hexagone.shared.generated.resources.score_label
+import hexagone.shared.generated.resources.tier_overdrive
+import hexagone.shared.generated.resources.tier_surge
+import hexagone.shared.generated.resources.tier_zenith
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -152,7 +169,7 @@ fun ScoreSection(
             }
 
             Text(
-                text = "HEXAGONE",
+                text = stringResource(Res.string.app_name).uppercase(),
                 color = Color(0xFFC5CAE9),
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 22.sp,
@@ -275,7 +292,7 @@ fun ScoreSection(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "SCORE",
+                        text = stringResource(Res.string.score_label),
                         color = Color.White.copy(alpha = 0.4f),
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
@@ -289,7 +306,7 @@ fun ScoreSection(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = "LVL $level",
+                        text = stringResource(Res.string.level_label, level),
                         color = Color(0xFFF06292).copy(alpha = 0.6f),
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
@@ -310,7 +327,7 @@ fun ScoreSection(
                 Spacer(Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "BEST ",
+                        text = stringResource(Res.string.best_score_label),
                         color = Color.White.copy(alpha = 0.3f),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
@@ -356,9 +373,9 @@ fun ScoreSection(
                 ) { targetCombo ->
                     if (targetCombo > 1) {
                         val tier = when {
-                            targetCombo >= 31 -> "ZENITH"
-                            targetCombo >= 21 -> "OVERDRIVE"
-                            targetCombo >= 13 -> "SURGE"
+                            targetCombo >= 31 -> Res.string.tier_zenith
+                            targetCombo >= 21 -> Res.string.tier_overdrive
+                            targetCombo >= 13 -> Res.string.tier_surge
                             else -> null
                         }
                         
@@ -370,9 +387,9 @@ fun ScoreSection(
                         )
                         
                         val comboColor = when (tier) {
-                            "SURGE" -> Color(0xFF00E5FF)
-                            "OVERDRIVE" -> Color(0xFFFF00FF)
-                            "ZENITH" -> Color(0xFFFFFF00)
+                            Res.string.tier_surge -> Color(0xFF00E5FF)
+                            Res.string.tier_overdrive -> Color(0xFFFF00FF)
+                            Res.string.tier_zenith -> Color(0xFFFFFF00)
                             else -> baseColor
                         }
                         
@@ -395,7 +412,7 @@ fun ScoreSection(
                             )
                             if (tier != null) {
                                 Text(
-                                    text = tier,
+                                    text = stringResource(tier),
                                     color = comboColor,
                                     fontWeight = FontWeight.Black,
                                     fontSize = 10.sp,
@@ -426,18 +443,19 @@ fun ScoreSection(
                     if (perk != null) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "PERK",
+                                text = stringResource(Res.string.perk_active_label),
                                 color = Color(0xFFF06292),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 10.sp,
                             )
+                            val actionRes = when (perk) {
+                                Perk.MOVE_TILE -> if (selectedCellId == null) Res.string.perk_action_select else Res.string.perk_action_move
+                                Perk.REMOVE_TILE -> Res.string.perk_action_pick
+                                Perk.SWAP_TILES -> if (selectedCellId == null) Res.string.perk_action_first else Res.string.perk_action_second
+                                else -> Res.string.perk_action_fuse
+                            }
                             Text(
-                                text = when (perk) {
-                                    Perk.MOVE_TILE -> if (selectedCellId == null) "Select" else "Move"
-                                    Perk.REMOVE_TILE -> "Pick"
-                                    Perk.SWAP_TILES -> if (selectedCellId == null) "First" else "Second"
-                                    else -> "Fuse"
-                                },
+                                text = stringResource(actionRes),
                                 color = Color.White.copy(alpha = 0.6f),
                                 fontSize = 10.sp,
                                 textAlign = TextAlign.Center,
@@ -447,7 +465,7 @@ fun ScoreSection(
                     } else {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "MAX",
+                                text = stringResource(Res.string.max_label),
                                 color = Color.White.copy(alpha = 0.3f),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 10.sp,

@@ -41,6 +41,9 @@ import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.no_moves_left_warning
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun GameScreen(viewModel: GameViewModel) {
@@ -214,7 +217,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                 ) {
                     Text(
-                        text = "NO MOVES LEFT! USE A PERK",
+                        text = stringResource(Res.string.no_moves_left_warning),
                         color = Color.White,
                         fontWeight = FontWeight.Black,
                         fontSize = 11.sp,
