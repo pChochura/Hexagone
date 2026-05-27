@@ -606,9 +606,28 @@ internal class GameViewModel(
                     0
                 }
 
-                if (redemptionBonus > 0) {
-                    addScorePopup(merge.targetX.toFloat(), merge.targetY.toFloat(), redemptionBonus, Color(0xFFFFD54F), "REDEMPTION", isGridCoordinate = true)
+                val combinedScore = totalAddedScore + redemptionBonus
+                val label = when {
+                    redemptionBonus > 0 && merge.isTactical -> "TACTICAL REDEMPTION"
+                    redemptionBonus > 0 -> "REDEMPTION"
+                    merge.isTactical -> "TACTICIAN"
+                    else -> null
                 }
+
+                val popupColor = when (label) {
+                    "TACTICAL REDEMPTION", "REDEMPTION" -> Color(0xFFFFD54F)
+                    "TACTICIAN" -> Color(0xFFBB86FC)
+                    else -> Color.White
+                }
+
+                addScorePopup(
+                    merge.targetX.toFloat(),
+                    merge.targetY.toFloat(),
+                    combinedScore,
+                    popupColor,
+                    label,
+                    isGridCoordinate = true
+                )
 
                 val collectedOnBoard =
                     currentState.onBoardPerks.find { it.x == merge.targetX && it.y == merge.targetY }?.perk

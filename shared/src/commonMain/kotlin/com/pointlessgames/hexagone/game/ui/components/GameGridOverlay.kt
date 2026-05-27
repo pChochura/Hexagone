@@ -279,35 +279,7 @@ internal fun GameGridOverlay(
                         val center =
                             Offset(targetOffset.x + itemWidth / 2, targetOffset.y + itemHeight / 2)
                         val color = HexagonGridDefaults.getColorForValue(currentStep.resultValue)
-                        localParticles.addAll(
-                            List(30) {
-                                val angle = Random.nextFloat() * 2 * PI.toFloat();
-                                val speed = Random.nextFloat() * 400f + 200f
-                                Particle(
-                                    Random.nextLong(),
-                                    center.x,
-                                    center.y,
-                                    cos(angle) * speed,
-                                    sin(angle) * speed,
-                                    color,
-                                    1f,
-                                    Random.nextFloat() * 8f + 4f,
-                                )
-                            },
-                        )
                         if (activeMergeStepIndex >= pendingMerge.steps.lastIndex) {
-                            localScorePopups.add(
-                                ScorePopup(
-                                    Random.nextLong(),
-                                    center.x,
-                                    center.y,
-                                    pendingMergeScoreProvider(),
-                                    1f,
-                                    color,
-                                    label = if (pendingMerge.isTactical) "TACTICIAN" else null
-                                ),
-                            )
-
                             val onBoardPerks = onBoardPerksProvider()
                             val collected =
                                 onBoardPerks.find { it.x == pendingMerge.targetX && it.y == pendingMerge.targetY }
@@ -1043,7 +1015,11 @@ private fun SpecialScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             if (popup.label != null) {
-                val labelColor = if (popup.label == "TACTICIAN") Color(0xFFBB86FC) else popup.color
+                val labelColor = when (popup.label) {
+                    "TACTICIAN" -> Color(0xFFBB86FC)
+                    "TACTICAL REDEMPTION", "REDEMPTION" -> Color(0xFFFFD54F)
+                    else -> popup.color
+                }
                 Text(
                     popup.label,
                     color = labelColor,
