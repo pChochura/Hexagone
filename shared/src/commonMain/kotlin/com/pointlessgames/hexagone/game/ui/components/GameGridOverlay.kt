@@ -282,28 +282,28 @@ internal fun GameGridOverlay(
                         val perks = onBoardPerksProvider()
                         perks.forEach { op ->
                             val offset = HexagonGridDefaults.calculateOffset(op.x, op.y, cellWidth, cellHeight, gapPx)
-                            val perkSize = Size(16.dp.toPx(), 16.dp.toPx())
-                            val perkOffset = Offset(
-                                offset.x + (itemWidth - perkSize.width) / 2,
-                                offset.y + (itemHeight - perkSize.height) / 2 - 4.dp.toPx()
+                            val mysterySize = Size(10.dp.toPx(), 10.dp.toPx())
+                            val mysteryOffset = Offset(
+                                offset.x + (itemWidth - mysterySize.width) / 2,
+                                offset.y + (itemHeight - mysterySize.height) / 2 - 2.dp.toPx()
                             )
                             withTransform({
-                                translate(perkOffset.x, perkOffset.y)
+                                translate(mysteryOffset.x, mysteryOffset.y)
                             }) {
                                 HexagonGridDefaults.drawPerkIcon(
                                     this,
-                                    op.perk,
-                                    perkSize,
-                                    HexagonGridDefaults.getColorForPerk(op.perk).copy(alpha = 0.6f),
-                                    2.dp.toPx()
+                                    null, // Pass null to hide the specific perk
+                                    mysterySize,
+                                    Color.White.copy(alpha = 0.4f),
+                                    1.5.dp.toPx()
                                 )
                             }
 
                             val textLayoutResult = textMeasurer.measure(
                                 text = op.lifespan.toString(),
                                 style = TextStyle(
-                                    color = Color.White.copy(alpha = 0.5f),
-                                    fontSize = 9.sp,
+                                    color = Color.White.copy(alpha = 0.6f),
+                                    fontSize = 8.sp,
                                     fontWeight = FontWeight.Black
                                 )
                             )
@@ -311,7 +311,7 @@ internal fun GameGridOverlay(
                                 textLayoutResult,
                                 topLeft = Offset(
                                     offset.x + (itemWidth - textLayoutResult.size.width) / 2,
-                                    offset.y + (itemHeight + perkSize.height) / 2 - 2.dp.toPx()
+                                    offset.y + (itemHeight + mysterySize.height) / 2 + 1.dp.toPx()
                                 )
                             )
                         }

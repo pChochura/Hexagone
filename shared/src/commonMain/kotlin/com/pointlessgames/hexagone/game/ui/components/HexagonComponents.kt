@@ -152,12 +152,25 @@ object HexagonGridDefaults {
 
     fun drawPerkIcon(
         drawScope: DrawScope,
-        perk: Perk,
+        perk: Perk?,
         size: Size,
         color: Color,
         strokeWidth: Float
     ) {
         with(drawScope) {
+            if (perk == null) {
+                // Draw Mystery Icon (?)
+                val path = Path().apply {
+                    // Stylized ?
+                    moveTo(size.width * 0.35f, size.height * 0.25f)
+                    cubicTo(size.width * 0.35f, 0f, size.width * 0.75f, 0f, size.width * 0.75f, size.height * 0.3f)
+                    cubicTo(size.width * 0.75f, size.height * 0.45f, size.width * 0.55f, size.height * 0.45f, size.width * 0.55f, size.height * 0.6f)
+                    moveTo(size.width * 0.55f, size.height * 0.75f)
+                    lineTo(size.width * 0.55f, size.height * 0.85f)
+                }
+                drawPath(path, color = color, style = Stroke(width = strokeWidth))
+                return@with
+            }
             when (perk) {
                 Perk.ADVANCE_QUEUE -> {
                     val path = Path().apply {
@@ -556,7 +569,7 @@ fun PerkButton(
 
 @Composable
 fun PerkIcon(
-    perk: Perk,
+    perk: Perk?,
     modifier: Modifier = Modifier,
     color: Color = Color.White
 ) {
