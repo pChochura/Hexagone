@@ -79,6 +79,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -206,11 +207,23 @@ internal fun GameGridOverlay(
                     }
 
                     is GameEffect.PerkPopup -> {
+                        val finalPos = if (effect.isGridCoordinate) {
+                            val offset = HexagonGridDefaults.calculateOffset(
+                                effect.x.toInt(),
+                                effect.y.toInt(),
+                                cellWidth,
+                                cellHeight,
+                                gapPx,
+                            )
+                            Offset(offset.x + itemWidth / 2, offset.y + itemHeight / 2)
+                        } else {
+                            Offset(effect.x, effect.y)
+                        }
                         localPerkPopups.add(
                             PerkPopup(
                                 Random.nextLong(),
-                                effect.x,
-                                effect.y,
+                                finalPos.x,
+                                finalPos.y,
                                 effect.perk,
                                 1f,
                             ),
@@ -300,15 +313,6 @@ internal fun GameGridOverlay(
                                             Random.nextFloat() * 6f + 2f,
                                         )
                                     },
-                                )
-                                localPerkPopups.add(
-                                    PerkPopup(
-                                        Random.nextLong(),
-                                        center.x,
-                                        center.y,
-                                        collected.perk,
-                                        1f,
-                                    ),
                                 )
                             }
                         }
@@ -561,10 +565,70 @@ internal fun GameGridOverlay(
             }
 
             ParticlesLayer(localParticles)
-            ScorePopupsLayer(localScorePopups, { id -> localScorePopups.removeAll { it.id == id } })
-            ParticlesLayer(localParticles)
-            ScorePopupsLayer(localScorePopups, { id -> localScorePopups.removeAll { it.id == id } })
-            PerkPopupsLayer(localPerkPopups, { id -> localPerkPopups.removeAll { it.id == id } })
+            PopupsLayer(
+                scorePopups = localScorePopups,
+                perkPopups = localPerkPopups,
+                onScoreFinished = { id -> localScorePopups.removeAll { it.id == id } },
+                onPerkFinished = { id -> localPerkPopups.removeAll { it.id == id } },
+                containerWidth = totalWidth
+            )
+        }
+    }
+}
+
+@Composable
+private fun PopupsLayer(
+    scorePopups: List<ScorePopup>,
+    perkPopups: List<PerkPopup>,
+    onScoreFinished: (Long) -> Unit,
+    onPerkFinished: (Long) -> Unit,
+    containerWidth: Float
+) {
+    val density = LocalDensity.current
+    val spacing = with(density) { 80.dp.toPx() }
+
+    // Separate tactical (slow/centered higher) and standard (fast/moving lower) popups.
+    // We only group tactical ones for horizontal stacking to avoid "jumps" when fast
+    // score popups disappear while a slow perk popup is still visible.
+    val tacticalPopups = perkPopups + scorePopups.filter { it.label != null }
+    val standardPopups = scorePopups.filter { it.label == null }
+
+    val tacticalGroups = tacticalPopups.groupBy {
+        it.x.roundToInt() to it.y.roundToInt()
+    }
+
+    tacticalGroups.forEach { (_, items) ->
+        val total = items.size
+        items.forEachIndexed { index, item ->
+            key(item.id) {
+                val horizontalOffset = if (total > 1) {
+                    val totalWidth = (total - 1) * spacing
+                    -totalWidth / 2 + index * spacing
+                } else 0f
+
+                val animOffset by animateFloatAsState(
+                    targetValue = horizontalOffset,
+                    animationSpec = spring(stiffness = Spring.StiffnessLow),
+                    label = "popup_slide"
+                )
+
+                when (item) {
+                    is ScorePopup -> {
+                        ScorePopupItem(item, onScoreFinished, animOffset, containerWidth)
+                    }
+                    is PerkPopup -> {
+                        PerkPopItem(item, onPerkFinished, animOffset, containerWidth)
+                    }
+                }
+            }
+        }
+    }
+
+    // Standard score popups are fast-paced and move vertically, so they don't need
+    // to participate in horizontal stacking with slow-paced tactical/perk popups.
+    standardPopups.forEach { item ->
+        key(item.id) {
+            ScorePopupItem(item, onScoreFinished, 0f, containerWidth)
         }
     }
 }
@@ -904,24 +968,26 @@ private fun AnimatedGridHexagon(
 }
 
 
-@Composable
-private fun ScorePopupsLayer(scorePopups: List<ScorePopup>, onPopupFinished: (Long) -> Unit) {
-    scorePopups.forEach { popup -> key(popup.id) { ScorePopupItem(popup, onPopupFinished) } }
-}
+
 
 @Composable
-private fun ScorePopupItem(popup: ScorePopup, onFinished: (Long) -> Unit) {
+private fun ScorePopupItem(
+    popup: ScorePopup,
+    onFinished: (Long) -> Unit,
+    horizontalOffset: Float = 0f,
+    containerWidth: Float = Float.MAX_VALUE
+) {
     val isSpecial = popup.label != null
 
     if (isSpecial) {
-        SpecialScorePopup(popup, onFinished)
+        SpecialScorePopup(popup, onFinished, horizontalOffset, containerWidth)
     } else {
-        StandardScorePopup(popup, onFinished)
+        StandardScorePopup(popup, onFinished, horizontalOffset, containerWidth)
     }
 }
 
 @Composable
-private fun StandardScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit) {
+private fun StandardScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit, horizontalOffset: Float = 0f, containerWidth: Float = Float.MAX_VALUE) {
     val animProgress = remember { Animatable(1f) }
     LaunchedEffect(Unit) {
         animProgress.animateTo(0f, tween(800))
@@ -931,8 +997,9 @@ private fun StandardScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit) {
         Modifier.layout { measurable, constraints ->
             val placeable = measurable.measure(constraints)
             layout(placeable.width, placeable.height) {
+                val xPos = (popup.x + horizontalOffset - placeable.width / 2).coerceIn(0f, containerWidth - placeable.width)
                 placeable.placeRelative(
-                    (popup.x - placeable.width / 2).toInt(),
+                    xPos.toInt(),
                     (popup.y - (1f - animProgress.value) * 100f - placeable.height / 2).toInt(),
                     zIndex = 100f,
                 )
@@ -959,7 +1026,7 @@ private fun StandardScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit) {
 }
 
 @Composable
-private fun SpecialScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit) {
+private fun SpecialScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit, horizontalOffset: Float = 0f, containerWidth: Float = Float.MAX_VALUE) {
     val scale = remember { Animatable(0f) }
     val alpha = remember { Animatable(1f) }
 
@@ -992,8 +1059,9 @@ private fun SpecialScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit) {
         Modifier.layout { measurable, constraints ->
             val placeable = measurable.measure(constraints)
             layout(placeable.width, placeable.height) {
+                val xPos = (popup.x + horizontalOffset - placeable.width / 2).coerceIn(0f, containerWidth - placeable.width)
                 placeable.placeRelative(
-                    (popup.x - placeable.width / 2).toInt(),
+                    xPos.toInt(),
                     (popup.y - 120f + hoverOffset - placeable.height / 2).toInt(),
                     zIndex = 110f,
                 )
@@ -1038,22 +1106,14 @@ private fun SpecialScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit) {
     }
 }
 
-@Composable
-private fun PerkPopupsLayer(
-    perkPopups: List<PerkPopup>,
-    onPopupFinished: (Long) -> Unit,
-) {
-    perkPopups.forEach { popup ->
-        key(popup.id) {
-            PerkPopItem(popup, onPopupFinished)
-        }
-    }
-}
+
 
 @Composable
 private fun PerkPopItem(
     popup: PerkPopup,
     onFinished: (Long) -> Unit,
+    horizontalOffset: Float = 0f,
+    containerWidth: Float = Float.MAX_VALUE
 ) {
     val scale = remember { Animatable(0f) }
     val alpha = remember { Animatable(1f) }
@@ -1091,8 +1151,9 @@ private fun PerkPopItem(
             .layout { measurable, constraints ->
                 val placeable = measurable.measure(constraints)
                 layout(placeable.width, placeable.height) {
+                    val xPos = (popup.x + horizontalOffset - placeable.width / 2).coerceIn(0f, containerWidth - placeable.width)
                     placeable.placeRelative(
-                        (popup.x - placeable.width / 2).toInt(),
+                        xPos.toInt(),
                         (popup.y - 120f + hoverOffset - placeable.height / 2).toInt(),
                         zIndex = 105f,
                     )
@@ -1118,3 +1179,5 @@ private fun ParticlesLayer(particles: List<Particle>) {
         particles.forEach { p -> drawCircle(p.color, p.size * p.life, Offset(p.x, p.y), p.life) }
     }
 }
+
+

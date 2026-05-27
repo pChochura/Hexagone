@@ -75,7 +75,12 @@ internal sealed interface GameEffect {
         val label: String? = null,
         val isGridCoordinate: Boolean = false
     ) : GameEffect
-    data class PerkPopup(val x: Float, val y: Float, val perk: Perk) : GameEffect
+    data class PerkPopup(
+        val x: Float,
+        val y: Float,
+        val perk: Perk,
+        val isGridCoordinate: Boolean = false
+    ) : GameEffect
 }
 
 internal enum class ComboTier(val label: String, val threshold: Int) {
@@ -115,6 +120,8 @@ internal class GameViewModel(
     private var lastLevel = 1
     private var stateHistory = mutableListOf<GameState>()
     private var lastMoveScore: Int? = null
+    private var lastProcessedMergeId: String? = null
+    private var lastProcessedStepIndex: Int = -1
 
     init {
         viewModelScope.launch {
@@ -148,9 +155,9 @@ internal class GameViewModel(
         }
     }
 
-    fun addPerkPopup(x: Float, y: Float, perk: Perk) {
+    fun addPerkPopup(x: Float, y: Float, perk: Perk, isGridCoordinate: Boolean = false) {
         viewModelScope.launch {
-            _effects.emit(GameEffect.PerkPopup(x, y, perk))
+            _effects.emit(GameEffect.PerkPopup(x, y, perk, isGridCoordinate))
         }
     }
 
@@ -286,6 +293,7 @@ internal class GameViewModel(
                 consumePerk(Perk.FUSION)
             }
         } else {
+            lastMoveScore = null // Reset redemption if the next move isn't a merge
             if (perk == Perk.CHAIN_MERGE) {
                 finishPerkAction(Perk.CHAIN_MERGE)
                 _uiState.update { it.copy(activePerk = null) }
@@ -553,6 +561,8 @@ internal class GameViewModel(
     private fun restartGame() {
         stateHistory.clear()
         lastLevel = 1
+        lastProcessedMergeId = null
+        lastProcessedStepIndex = -1
         val initialGrid = engine.generateInitialGrid()
         val initialPreviews = engine.pickRandomPreviews(initialGrid, emptyList(), 3)
         _uiState.value = GameUiState(
@@ -574,8 +584,15 @@ internal class GameViewModel(
     }
 
     fun onMergeAnimationFinished() {
-        val merge = _uiState.value.pendingMerge ?: return
-        val stepIndex = _uiState.value.activeMergeStepIndex
+        val state = _uiState.value
+        val merge = state.pendingMerge ?: return
+        val stepIndex = state.activeMergeStepIndex
+
+        // Prevent multiple processing of the same merge step (e.g. if multiple cells finish at once)
+        if (lastProcessedMergeId == merge.resultId && lastProcessedStepIndex == stepIndex) return
+        lastProcessedMergeId = merge.resultId
+        lastProcessedStepIndex = stepIndex
+
         val currentStep = merge.steps[stepIndex]
 
         viewModelScope.launch {
@@ -631,6 +648,16 @@ internal class GameViewModel(
 
                 val collectedOnBoard =
                     currentState.onBoardPerks.find { it.x == merge.targetX && it.y == merge.targetY }?.perk
+                
+                if (collectedOnBoard != null) {
+                    addPerkPopup(
+                        merge.targetX.toFloat(),
+                        merge.targetY.toFloat(),
+                        collectedOnBoard,
+                        isGridCoordinate = true
+                    )
+                }
+
                 val remainingOnBoard =
                     currentState.onBoardPerks.filterNot { it.x == merge.targetX && it.y == merge.targetY }
 

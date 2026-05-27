@@ -4,6 +4,13 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
 @Immutable
+interface GridPopup {
+    val id: Long
+    val x: Float
+    val y: Float
+}
+
+@Immutable
 data class HexagonCell(
     val id: String,
     val x: Int,
@@ -87,20 +94,20 @@ data class Particle(
 
 @Immutable
 data class ScorePopup(
-    val id: Long,
-    val x: Float,
-    val y: Float,
+    override val id: Long,
+    override val x: Float,
+    override val y: Float,
     val score: Int,
     val life: Float,
     val color: Color,
     val label: String? = null
-)
+) : GridPopup
 
 @Immutable
 data class PerkPopup(
-    val id: Long,
-    val x: Float,
-    val y: Float,
+    override val id: Long,
+    override val x: Float,
+    override val y: Float,
     val perk: Perk,
     val life: Float
-)
+) : GridPopup
