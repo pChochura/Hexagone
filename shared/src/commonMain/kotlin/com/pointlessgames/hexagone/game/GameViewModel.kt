@@ -58,6 +58,7 @@ internal data class GameUiState(
     val showGameOverBoard: Boolean = false,
     val reachedComboTiers: Set<ComboTier> = emptySet(),
     val perkSpawnCounter: Int = 0,
+    val canReroll: Boolean = true,
 )
 
 @Immutable
@@ -108,6 +109,7 @@ internal data class GameState(
     val perkSpawnCounter: Int,
     val reachedComboTiers: Set<ComboTier>,
     val perkOptions: List<Perk>,
+    val canReroll: Boolean,
 )
 
 internal class GameViewModel(
@@ -156,6 +158,7 @@ internal class GameViewModel(
                             perkSpawnCounter = savedState.perkSpawnCounter,
                             reachedComboTiers = savedState.reachedComboTiers,
                             perkOptions = savedState.perkOptions,
+                            canReroll = savedState.canReroll,
                             bestScore = best,
                             mergeHintsEnabled = hintsEnabled
                         )
@@ -163,7 +166,7 @@ internal class GameViewModel(
                     lastLevel = savedState.level
                     updateLevel()
                     checkValidMoves()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     _uiState.update { it.copy(bestScore = best, mergeHintsEnabled = hintsEnabled) }
                     restartGame()
                 }
@@ -217,6 +220,7 @@ internal class GameViewModel(
             perkSpawnCounter = state.perkSpawnCounter,
             reachedComboTiers = state.reachedComboTiers,
             perkOptions = state.perkOptions,
+            canReroll = state.canReroll,
         )
     }
 
@@ -271,6 +275,7 @@ internal class GameViewModel(
                     highestValue = state.grid.maxOfOrNull { it.value } ?: 1,
                     perkOptions = nextPerkOptions,
                     pendingLevelUps = state.pendingLevelUps + levelDifference,
+                    canReroll = if (state.perkOptions.isEmpty()) true else state.canReroll,
                 )
             } else {
                 state.copy(
@@ -626,9 +631,23 @@ internal class GameViewModel(
                 collectedPerks = it.collectedPerks + perk,
                 perkOptions = if (remainingLevelUps > 0) engine.pickWeightedPerks(3) else emptyList(),
                 pendingLevelUps = remainingLevelUps,
+                canReroll = true,
             )
         }
         checkValidMoves()
+        persistState(getCurrentGameState())
+    }
+
+    fun onRerollClicked() {
+        val state = _uiState.value
+        if (!state.canReroll || state.perkOptions.isEmpty()) return
+
+        _uiState.update {
+            it.copy(
+                perkOptions = engine.pickWeightedPerks(3, excludeLegendary = true),
+                canReroll = false
+            )
+        }
         persistState(getCurrentGameState())
     }
 

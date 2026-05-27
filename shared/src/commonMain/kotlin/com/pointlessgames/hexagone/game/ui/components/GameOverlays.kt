@@ -80,7 +80,9 @@ fun GameOverlays(
     showBoard: Boolean,
     perkOptions: List<Perk>,
     pendingLevelUps: Int,
+    canReroll: Boolean,
     onPerkSelected: (Perk) -> Unit,
+    onRerollClicked: () -> Unit,
     onRestart: () -> Unit,
     onViewBoardToggle: () -> Unit,
     onShare: () -> Unit,
@@ -116,7 +118,9 @@ fun GameOverlays(
                 PerkSelectionDialog(
                     options = perkOptions,
                     pendingLevelUps = pendingLevelUps,
+                    canReroll = canReroll,
                     onPerkSelected = onPerkSelected,
+                    onRerollClicked = onRerollClicked,
                 )
             }
 
@@ -163,7 +167,9 @@ fun GameOverlays(
 private fun PerkSelectionDialog(
     options: List<Perk>,
     pendingLevelUps: Int,
+    canReroll: Boolean,
     onPerkSelected: (Perk) -> Unit,
+    onRerollClicked: () -> Unit,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "levelup_pulse")
     val pulseScale by infiniteTransition.animateFloat(
@@ -207,31 +213,55 @@ private fun PerkSelectionDialog(
                     .background(Color.White.copy(alpha = 0.15f), CircleShape)
             )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "LEVEL UP!",
-                    color = Color(0xFFF06292),
-                    fontWeight = FontWeight.Black,
-                    fontSize = 32.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.graphicsLayer {
-                        scaleX = pulseScale
-                        scaleY = pulseScale
-                    }
-                )
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "LEVEL UP!",
+                        color = Color(0xFFF06292),
+                        fontWeight = FontWeight.Black,
+                        fontSize = 32.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.graphicsLayer {
+                            scaleX = pulseScale
+                            scaleY = pulseScale
+                        }
+                    )
 
-                if (pendingLevelUps > 1) {
-                    Spacer(Modifier.width(16.dp))
+                    if (pendingLevelUps > 1) {
+                        Spacer(Modifier.width(12.dp))
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFFF06292).copy(alpha = 0.2f), CircleShape)
+                                .border(1.dp, Color(0xFFF06292).copy(alpha = 0.5f), CircleShape)
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "+$pendingLevelUps",
+                                color = Color(0xFFF06292),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+
+                if (canReroll) {
                     Box(
                         modifier = Modifier
-                            .background(Color(0xFFF06292), CircleShape)
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                            .align(Alignment.CenterEnd)
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .clickable { onRerollClicked() }
+                            .padding(8.dp),
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "+$pendingLevelUps",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
+                            text = "🎲",
+                            fontSize = 22.sp,
+                            modifier = Modifier.graphicsLayer { alpha = 0.6f }
                         )
                     }
                 }

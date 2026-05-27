@@ -297,8 +297,8 @@ class GameEngine(
         }
     }
 
-    fun pickWeightedPerks(count: Int): List<Perk> {
-        val pool = Perk.entries.toMutableList()
+    fun pickWeightedPerks(count: Int, excludeLegendary: Boolean = false): List<Perk> {
+        val pool = Perk.entries.filter { !excludeLegendary || !it.isLegendary }.toMutableList()
         val result = mutableListOf<Perk>()
         
         repeat(count) {
