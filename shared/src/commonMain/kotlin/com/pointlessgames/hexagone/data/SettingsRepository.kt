@@ -14,6 +14,7 @@ class SettingsRepository(
 ) {
     private val bestScoreKey = intPreferencesKey("best_score")
     private val mergeHintsEnabledKey = booleanPreferencesKey("merge_hints_enabled")
+    private val gameStateKey = androidx.datastore.preferences.core.stringPreferencesKey("game_state")
 
     suspend fun getBestScore(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[bestScoreKey] ?: 0
@@ -35,6 +36,22 @@ class SettingsRepository(
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[mergeHintsEnabledKey] = enabled
+            }
+        }
+    }
+
+    suspend fun getGameState(): String? = withContext(Dispatchers.IO) {
+        appSettings.data.first()[gameStateKey]
+    }
+
+    suspend fun setGameState(state: String?) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                if (state == null) {
+                    prefs.remove(gameStateKey)
+                } else {
+                    prefs[gameStateKey] = state
+                }
             }
         }
     }

@@ -23,6 +23,9 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlin.random.Random
 
 @Immutable
@@ -82,12 +85,14 @@ internal sealed interface GameEffect {
     ) : GameEffect
 }
 
+@Serializable
 internal enum class ComboTier(val label: String, val threshold: Int) {
     SURGE("SURGE", 11),
     OVERDRIVE("OVERDRIVE", 21),
     ZENITH("ZENITH", 31)
 }
 
+@Serializable
 internal data class GameState(
     val grid: List<HexagonCell>,
     val preview: List<PreviewCell>,
@@ -99,6 +104,10 @@ internal data class GameState(
     val maxCombo: Int,
     val totalMerges: Int,
     val onBoardPerks: List<OnBoardPerk>,
+    val pendingLevelUps: Int,
+    val perkSpawnCounter: Int,
+    val reachedComboTiers: Set<ComboTier>,
+    val perkOptions: List<Perk>,
 )
 
 internal class GameViewModel(
@@ -126,20 +135,44 @@ internal class GameViewModel(
         viewModelScope.launch {
             val best = settingsRepository.getBestScore()
             val hintsEnabled = settingsRepository.getMergeHintsEnabled()
-            _uiState.update { it.copy(bestScore = best, mergeHintsEnabled = hintsEnabled) }
-            // Re-calculate hints once we know if they are enabled
-            _uiState.update {
-                it.copy(
-                    mergeHints = if (hintsEnabled) engine.findMergeHints(
-                        it.grid,
-                        it.preview,
-                        it.combo,
-                        it.activePerk,
-                    ) else emptyList(),
-                )
+            val savedStateJson = settingsRepository.getGameState()
+
+            if (savedStateJson != null) {
+                try {
+                    val savedState = Json.decodeFromString<GameState>(savedStateJson)
+                    _uiState.update {
+                        it.copy(
+                            grid = savedState.grid,
+                            preview = savedState.preview,
+                            score = savedState.score,
+                            level = savedState.level,
+                            highestValue = savedState.highestValue,
+                            combo = savedState.combo,
+                            collectedPerks = savedState.collectedPerks,
+                            maxCombo = savedState.maxCombo,
+                            totalMerges = savedState.totalMerges,
+                            onBoardPerks = savedState.onBoardPerks,
+                            pendingLevelUps = savedState.pendingLevelUps,
+                            perkSpawnCounter = savedState.perkSpawnCounter,
+                            reachedComboTiers = savedState.reachedComboTiers,
+                            perkOptions = savedState.perkOptions,
+                            bestScore = best,
+                            mergeHintsEnabled = hintsEnabled
+                        )
+                    }
+                    lastLevel = savedState.level
+                    updateLevel()
+                    checkValidMoves()
+                } catch (e: Exception) {
+                    _uiState.update { it.copy(bestScore = best, mergeHintsEnabled = hintsEnabled) }
+                    restartGame()
+                }
+            } else {
+                _uiState.update { it.copy(bestScore = best, mergeHintsEnabled = hintsEnabled) }
+                restartGame()
             }
+            recalculateHints()
         }
-        restartGame()
     }
 
     fun addParticles(newParticles: List<Particle>) {
@@ -161,8 +194,15 @@ internal class GameViewModel(
     }
 
     private fun saveState() {
+        val currentState = getCurrentGameState()
+        stateHistory.add(currentState)
+        if (stateHistory.size > 10) stateHistory.removeAt(0)
+        persistState(currentState)
+    }
+
+    private fun getCurrentGameState(): GameState {
         val state = _uiState.value
-        val currentState = GameState(
+        return GameState(
             grid = state.grid,
             preview = state.preview,
             score = state.score,
@@ -173,9 +213,17 @@ internal class GameViewModel(
             maxCombo = state.maxCombo,
             totalMerges = state.totalMerges,
             onBoardPerks = state.onBoardPerks,
+            pendingLevelUps = state.pendingLevelUps,
+            perkSpawnCounter = state.perkSpawnCounter,
+            reachedComboTiers = state.reachedComboTiers,
+            perkOptions = state.perkOptions,
         )
-        stateHistory.add(currentState)
-        if (stateHistory.size > 10) stateHistory.removeAt(0)
+    }
+
+    private fun persistState(state: GameState) {
+        viewModelScope.launch {
+            settingsRepository.setGameState(Json.encodeToString(state))
+        }
     }
 
     private fun undoLastMove(): Boolean {
@@ -550,6 +598,7 @@ internal class GameViewModel(
             Perk.UNDO -> {
                 if (undoLastMove()) {
                     consumePerk(Perk.UNDO)
+                    persistState(getCurrentGameState())
                 }
             }
 
@@ -580,6 +629,7 @@ internal class GameViewModel(
             )
         }
         checkValidMoves()
+        persistState(getCurrentGameState())
     }
 
     fun onRestartClicked() {
@@ -610,6 +660,7 @@ internal class GameViewModel(
         )
         updateLevel()
         checkValidMoves()
+        persistState(getCurrentGameState())
     }
 
     fun onMergeAnimationFinished() {
@@ -833,6 +884,7 @@ internal class GameViewModel(
             viewModelScope.launch {
                 delay(1000)
                 _uiState.update { it.copy(isGameOver = true) }
+                settingsRepository.setGameState(null)
             }
         }
         recalculateHints()
@@ -867,6 +919,7 @@ internal class GameViewModel(
             updateLevel()
             checkValidMoves()
             _uiState.update { it.copy(isBusy = false) }
+            persistState(getCurrentGameState())
         }
     }
 

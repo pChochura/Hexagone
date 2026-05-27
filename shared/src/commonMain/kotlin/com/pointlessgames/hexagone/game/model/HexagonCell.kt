@@ -2,6 +2,7 @@ package com.pointlessgames.hexagone.game.model
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import kotlinx.serialization.Serializable
 
 @Immutable
 interface GridPopup {
@@ -13,6 +14,7 @@ interface GridPopup {
 }
 
 @Immutable
+@Serializable
 data class HexagonCell(
     val id: String,
     val x: Int,
@@ -22,6 +24,7 @@ data class HexagonCell(
 )
 
 @Immutable
+@Serializable
 data class OnBoardPerk(
     val x: Int,
     val y: Int,
@@ -30,6 +33,7 @@ data class OnBoardPerk(
 )
 
 @Immutable
+@Serializable
 data class PreviewCell(
     val id: String,
     val x: Int,
@@ -58,6 +62,7 @@ data class MergeStep(
     val resultValue: Int
 )
 
+@Serializable
 enum class Perk(
     val displayName: String,
     val description: String,
