@@ -1,12 +1,15 @@
 package com.pointlessgames.hexagone.game.ui.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -76,6 +79,7 @@ fun GameOverlays(
     highestValue: Int,
     showBoard: Boolean,
     perkOptions: List<Perk>,
+    pendingLevelUps: Int,
     onPerkSelected: (Perk) -> Unit,
     onRestart: () -> Unit,
     onViewBoardToggle: () -> Unit,
@@ -111,6 +115,7 @@ fun GameOverlays(
             ) {
                 PerkSelectionDialog(
                     options = perkOptions,
+                    pendingLevelUps = pendingLevelUps,
                     onPerkSelected = onPerkSelected,
                 )
             }
@@ -157,14 +162,15 @@ fun GameOverlays(
 @Composable
 private fun PerkSelectionDialog(
     options: List<Perk>,
+    pendingLevelUps: Int,
     onPerkSelected: (Perk) -> Unit,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "levelup_pulse")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.1f,
+        targetValue = 1.05f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000),
+            animation = tween(1200),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulse"
@@ -201,17 +207,35 @@ private fun PerkSelectionDialog(
                     .background(Color.White.copy(alpha = 0.15f), CircleShape)
             )
 
-            Text(
-                text = "LEVEL UP!",
-                color = Color(0xFFF06292),
-                fontWeight = FontWeight.Black,
-                fontSize = 32.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.graphicsLayer {
-                    scaleX = pulseScale
-                    scaleY = pulseScale
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "LEVEL UP!",
+                    color = Color(0xFFF06292),
+                    fontWeight = FontWeight.Black,
+                    fontSize = 32.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = pulseScale
+                        scaleY = pulseScale
+                    }
+                )
+
+                if (pendingLevelUps > 1) {
+                    Spacer(Modifier.width(16.dp))
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xFFF06292), CircleShape)
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "+$pendingLevelUps",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
                 }
-            )
+            }
 
             Spacer(Modifier.height(8.dp))
 
@@ -225,19 +249,29 @@ private fun PerkSelectionDialog(
 
             Spacer(Modifier.height(32.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                options.forEach { perk ->
-                    PerkButton(
-                        perk = perk,
-                        onClick = { onPerkSelected(perk) },
-                        modifier = Modifier.weight(1f),
-                        showDescription = true,
-                        showDropRate = true,
-                        buttonSize = 64.dp
-                    )
+            AnimatedContent(
+                targetState = options,
+                transitionSpec = {
+                    (fadeIn(animationSpec = tween(400)) + scaleIn(initialScale = 0.8f))
+                        .togetherWith(fadeOut(animationSpec = tween(400)) + scaleOut(targetScale = 0.8f))
+                        .using(SizeTransform(clip = false))
+                },
+                label = "perk_refresh"
+            ) { perkOptions ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    perkOptions.forEach { perk ->
+                        PerkButton(
+                            perk = perk,
+                            onClick = { onPerkSelected(perk) },
+                            modifier = Modifier.weight(1f),
+                            showDescription = true,
+                            showDropRate = true,
+                            buttonSize = 64.dp
+                        )
+                    }
                 }
             }
         }

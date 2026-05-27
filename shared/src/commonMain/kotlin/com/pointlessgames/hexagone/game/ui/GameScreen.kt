@@ -246,6 +246,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
         highestValue = uiState.highestValue,
         showBoard = uiState.showGameOverBoard,
         perkOptions = uiState.perkOptions,
+        pendingLevelUps = uiState.pendingLevelUps,
         onPerkSelected = onPerkSelected,
         onRestart = onRestart,
         onViewBoardToggle = onViewBoardToggle,
