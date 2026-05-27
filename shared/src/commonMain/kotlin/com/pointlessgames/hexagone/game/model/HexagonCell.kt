@@ -91,3 +91,12 @@ data class ScorePopup(
     val life: Float,
     val color: Color
 )
+
+@Immutable
+data class PerkPopup(
+    val id: Long,
+    val x: Float,
+    val y: Float,
+    val perk: Perk,
+    val life: Float
+)

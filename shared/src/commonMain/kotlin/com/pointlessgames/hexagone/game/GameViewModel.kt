@@ -68,6 +68,7 @@ internal data class PotentialMerge(
 internal sealed interface GameEffect {
     data class Particles(val particles: List<Particle>) : GameEffect
     data class ScorePopup(val x: Float, val y: Float, val score: Int, val color: Color) : GameEffect
+    data class PerkPopup(val x: Float, val y: Float, val perk: Perk) : GameEffect
 }
 
 internal enum class ComboTier(val label: String, val threshold: Int) {
@@ -136,6 +137,12 @@ internal class GameViewModel(
     fun addScorePopup(x: Float, y: Float, score: Int, color: Color) {
         viewModelScope.launch {
             _effects.emit(GameEffect.ScorePopup(x, y, score, color))
+        }
+    }
+
+    fun addPerkPopup(x: Float, y: Float, perk: Perk) {
+        viewModelScope.launch {
+            _effects.emit(GameEffect.PerkPopup(x, y, perk))
         }
     }
 
