@@ -771,32 +771,14 @@ private fun drawGhost(
             )
         }
 
-        if (currentHoverMerge?.isRemoval == true && isHovered) {
-            val strokeWidth = spacing.tiny.toPx()
-            drawLine(
-                color = Color.Red,
-                start = Offset(0f, 0f),
-                end = Offset(itemWidth, itemHeight),
-                strokeWidth = strokeWidth
+        clipPath(HexagonGridDefaults.getHexagonPath(Size(itemWidth, itemHeight))) {
+            HexagonGridDefaults.drawGhostStripes(
+                this,
+                Size(itemWidth, itemHeight),
+                stripeOffset * drawScope.density,
+                spacing,
+                alpha = 0.15f * alpha,
             )
-            drawLine(
-                color = Color.Red,
-                start = Offset(itemWidth, 0f),
-                end = Offset(0f, itemHeight),
-                strokeWidth = strokeWidth
-            )
-        }
-
-        if (true) {
-            clipPath(HexagonGridDefaults.getHexagonPath(Size(itemWidth, itemHeight))) {
-                HexagonGridDefaults.drawGhostStripes(
-                    this,
-                    Size(itemWidth, itemHeight),
-                    stripeOffset * drawScope.density,
-                    spacing,
-                    alpha = 0.15f * alpha,
-                )
-            }
         }
 
         val textLayoutResult = textMeasurer.measure(
@@ -1118,32 +1100,16 @@ private fun AnimatedGridHexagon(
             .drawWithContent {
                 drawContent()
                 if (isHoveredState.value) {
-                    if (currentHoverMerge?.isRemoval == true) {
-                        val strokeWidth = spacing.tiny.toPx()
-                        drawLine(
-                            color = Color.Red,
-                            start = Offset(0f, 0f),
-                            end = Offset(size.width, size.height),
-                            strokeWidth = strokeWidth
+                    val outline = shape.createOutline(size, layoutDirection, this)
+                    if (outline is Outline.Generic) {
+                        val selectedCellId = selectedCellIdProvider()
+                        val isSelectedLocal = selectedCellId == cell.id
+                        val borderColor = if (isSelectedLocal) Color.White else Color.White.copy(alpha = 0.5f)
+                        drawPath(
+                            outline.path,
+                            borderColor,
+                            style = Stroke(width = spacing.tiny.toPx()),
                         )
-                        drawLine(
-                            color = Color.Red,
-                            start = Offset(size.width, 0f),
-                            end = Offset(0f, size.height),
-                            strokeWidth = strokeWidth
-                        )
-                    } else {
-                        val outline = shape.createOutline(size, layoutDirection, this)
-                        if (outline is Outline.Generic) {
-                            val selectedCellId = selectedCellIdProvider()
-                            val isSelectedLocal = selectedCellId == cell.id
-                            val borderColor = if (isSelectedLocal) Color.White else Color.White.copy(alpha = 0.5f)
-                            drawPath(
-                                outline.path,
-                                borderColor,
-                                style = Stroke(width = spacing.tiny.toPx()),
-                            )
-                        }
                     }
                 }
             }

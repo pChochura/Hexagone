@@ -503,7 +503,6 @@ fun Hexagon(
 
     val ghostModifier = if (isGhost) {
         Modifier.drawWithContent {
-            val alpha = 0.3f
             val stripeAlpha = 0.15f
             drawContent()
             val stripeWidth = spacing.extraTiny.toPx() * 1.5f
