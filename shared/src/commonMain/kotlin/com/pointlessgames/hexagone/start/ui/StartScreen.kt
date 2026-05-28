@@ -19,15 +19,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pointlessgames.hexagone.LocalNavigator
 import com.pointlessgames.hexagone.start.StartViewModel
 import com.pointlessgames.hexagone.ui.LocalInnerPadding
 import com.pointlessgames.hexagone.ui.TiltedRoundedCornersShape
 import com.pointlessgames.hexagone.ui.components.ShapeButton
-import com.pointlessgames.hexagone.ui.theme.DefaultCornerRadius
-import com.pointlessgames.hexagone.ui.theme.DefaultIconsSize
-import com.pointlessgames.hexagone.ui.theme.DefaultSpacing
+import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.iconsSize
+import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.app_name
 import hexagone.shared.generated.resources.continue_where_you_left_off
@@ -44,9 +45,9 @@ internal fun StartScreen(
     viewModel: StartViewModel,
 ) {
     val navigator = LocalNavigator.current
-    val spacing = DefaultSpacing.current
-    val iconsSizes = DefaultIconsSize.current
-    val cornerRadius = DefaultCornerRadius.current
+    val spacing = MaterialTheme.spacing
+    val iconsSizes = MaterialTheme.iconsSize
+    val cornerRadius = MaterialTheme.cornerRadius
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -61,7 +62,7 @@ internal fun StartScreen(
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 128.dp),
+                .padding(bottom = spacing.immense),
             verticalArrangement = Arrangement.spacedBy(spacing.large),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -133,10 +134,10 @@ private fun Logo() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                horizontal = DefaultSpacing.current.extraLarge,
-                vertical = 128.dp,
+                horizontal = MaterialTheme.spacing.extraLarge,
+                vertical = MaterialTheme.spacing.immense,
             ),
-        horizontalArrangement = Arrangement.spacedBy(DefaultSpacing.current.extraSmall),
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraSmall),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         letters.forEach { letter ->

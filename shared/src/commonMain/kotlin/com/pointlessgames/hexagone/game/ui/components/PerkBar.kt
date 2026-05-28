@@ -36,6 +36,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
+import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.perk_bar_empty_hint
 import org.jetbrains.compose.resources.stringResource
@@ -50,6 +52,8 @@ fun PerkBar(
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val surfaceColor = MaterialTheme.colorScheme.surface
+    val spacing = MaterialTheme.spacing
+    val cornerRadius = MaterialTheme.cornerRadius
     val infiniteTransition = rememberInfiniteTransition(label = "perk_glow")
     val glowAlphaState = infiniteTransition.animateFloat(
         initialValue = if (isStuck) 0.4f else 0.05f,
@@ -69,24 +73,24 @@ fun PerkBar(
                     Modifier.drawBehind {
                         val glowAlpha = glowAlphaState.value
                         val baseColor = primaryColor
-                        val cornerRadius = 32.dp.toPx()
+                        val cr = cornerRadius.extraLarge.toPx()
 
                         val path = Path().apply {
                             moveTo(0f, size.height)
-                            lineTo(0f, cornerRadius)
+                            lineTo(0f, cr)
                             arcTo(
-                                rect = Rect(0f, 0f, cornerRadius * 2, cornerRadius * 2),
+                                rect = Rect(0f, 0f, cr * 2, cr * 2),
                                 startAngleDegrees = 180f,
                                 sweepAngleDegrees = 90f,
                                 forceMoveTo = false,
                             )
-                            lineTo(size.width - cornerRadius, 0f)
+                            lineTo(size.width - cr, 0f)
                             arcTo(
                                 rect = Rect(
-                                    size.width - cornerRadius * 2,
+                                    size.width - cr * 2,
                                     0f,
                                     size.width,
-                                    cornerRadius * 2,
+                                    cr * 2,
                                 ),
                                 startAngleDegrees = 270f,
                                 sweepAngleDegrees = 90f,
@@ -101,7 +105,7 @@ fun PerkBar(
                             drawPath(
                                 path = path,
                                 color = baseColor.copy(alpha = alpha),
-                                style = Stroke(width = (i * 3).dp.toPx()),
+                                style = Stroke(width = (spacing.extraSmall * i).toPx()),
                             )
                         }
 
@@ -109,7 +113,7 @@ fun PerkBar(
                         drawPath(
                             path = path,
                             color = baseColor.copy(alpha = glowAlpha * 0.5f),
-                            style = Stroke(width = 1.dp.toPx()),
+                            style = Stroke(width = spacing.extraTiny.toPx()),
                         )
                     }
                 } else Modifier,
@@ -121,16 +125,16 @@ fun PerkBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .animateContentSize()
-                .background(surfaceColor, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .background(surfaceColor, RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge))
                 .border(
-                    1.dp,
+                    spacing.extraTiny,
                     Color.White.copy(alpha = 0.08f),
-                    RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                    RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge),
                 )
-                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .clip(RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge))
                 .horizontalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(16.dp),
+                .padding(spacing.large),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -142,7 +146,7 @@ fun PerkBar(
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
                     lineHeight = 18.sp,
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(spacing.large),
                 )
             } else {
                 val distinctPerks = remember(collectedPerks) { collectedPerks.distinct() }
@@ -159,8 +163,8 @@ fun PerkBar(
                         tooltipDescription = perk.descriptionRes,
                         onClick = remember(onPerkClick, perk) { { onPerkClick(perk) } },
                         modifier = Modifier.padding(
-                            start = if (index == 0) 16.dp else 6.dp,
-                            end = if (index == distinctPerks.lastIndex) 16.dp else 6.dp,
+                            start = if (index == 0) spacing.large else spacing.semiSmall,
+                            end = if (index == distinctPerks.lastIndex) spacing.large else spacing.semiSmall,
                         ),
                     )
                 }

@@ -17,13 +17,14 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
-import com.pointlessgames.hexagone.ui.theme.DefaultIconsSize
+import androidx.compose.material3.MaterialTheme
+import com.pointlessgames.hexagone.ui.theme.iconsSize
 
 private const val ANIMATION_DURATION = 500
 
 @Composable
 internal fun InlineLoader(
-    size: Dp = DefaultIconsSize.current.extraLarge,
+    size: Dp = MaterialTheme.iconsSize.extraLarge,
     animationDuration: Int = ANIMATION_DURATION,
 ) {
     val transition = rememberInfiniteTransition("InlineLoader")

@@ -31,7 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
-import com.pointlessgames.hexagone.ui.theme.DefaultSpacing
+import com.pointlessgames.hexagone.ui.theme.spacing
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -59,8 +59,8 @@ fun Tooltip(
                     .clip(MaterialTheme.shapes.small)
                     .background(MaterialTheme.colorScheme.inverseSurface)
                     .padding(
-                        horizontal = DefaultSpacing.current.medium,
-                        vertical = DefaultSpacing.current.small,
+                        horizontal = MaterialTheme.spacing.medium,
+                        vertical = MaterialTheme.spacing.small,
                     ),
                 text = stringResource(contentDescription),
                 style = MaterialTheme.typography.bodySmall,

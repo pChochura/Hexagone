@@ -8,7 +8,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import com.pointlessgames.hexagone.ui.theme.DefaultIconsSize
+import androidx.compose.material3.MaterialTheme
+import com.pointlessgames.hexagone.ui.theme.iconsSize
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
@@ -20,13 +21,13 @@ internal fun LoadingIcon(
     icon: DrawableResource?,
     contentColor: Color,
     contentDescription: String? = null,
-    size: Dp = DefaultIconsSize.current.small,
+    size: Dp = MaterialTheme.iconsSize.small,
     animationDuration: Int = DEFAULT_ANIMATION_DURATION,
 ) {
     AnimatedContent(isLoading, contentAlignment = Alignment.Center) { isLoading ->
         if (isLoading) {
             InlineLoader(
-                size = DefaultIconsSize.current.smaller(size),
+                size = MaterialTheme.iconsSize.smaller(size),
                 animationDuration = animationDuration,
             )
         } else if (icon != null) {

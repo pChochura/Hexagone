@@ -66,6 +66,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
+import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.app_name
 import hexagone.shared.generated.resources.best_score_label
@@ -138,10 +140,12 @@ fun ScoreSection(
         modifier = modifier
             .fillMaxWidth()
             .graphicsLayer { clip = false } // Allow massive combo pop to breathe
-            .padding(top = 8.dp),
+            .padding(top = MaterialTheme.spacing.small),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val colorScheme = MaterialTheme.colorScheme
+        val spacing = MaterialTheme.spacing
+        val cornerRadius = MaterialTheme.cornerRadius
         // Top Header with Game Name and Icons
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -149,9 +153,9 @@ fun ScoreSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { /* TODO */ }) {
-                Canvas(modifier = Modifier.size(24.dp)) {
+                Canvas(modifier = Modifier.size(spacing.extraLarge)) {
                     val barWidth = size.width * 0.2f
-                    val spacing = size.width * 0.1f
+                    val gap = size.width * 0.1f
                     drawRect(
                         color = Color.White.copy(alpha = 0.7f),
                         topLeft = Offset(0f, size.height * 0.6f),
@@ -159,12 +163,12 @@ fun ScoreSection(
                     )
                     drawRect(
                         color = Color.White.copy(alpha = 0.7f),
-                        topLeft = Offset(barWidth + spacing, size.height * 0.2f),
+                        topLeft = Offset(barWidth + gap, size.height * 0.2f),
                         size = Size(barWidth, size.height * 0.8f)
                     )
                     drawRect(
                         color = Color.White.copy(alpha = 0.7f),
-                        topLeft = Offset((barWidth + spacing) * 2, size.height * 0.4f),
+                        topLeft = Offset((barWidth + gap) * 2, size.height * 0.4f),
                         size = Size(barWidth, size.height * 0.6f)
                     )
                 }
@@ -179,13 +183,13 @@ fun ScoreSection(
             )
 
             IconButton(onClick = { /* TODO */ }) {
-                Canvas(modifier = Modifier.size(24.dp)) {
+                Canvas(modifier = Modifier.size(spacing.extraLarge)) {
                     val outerRadius = size.minDimension / 2.5f
                     val innerRadius = size.minDimension / 5f
                     drawCircle(
                         color = Color.White.copy(alpha = 0.7f),
                         radius = outerRadius,
-                        style = Stroke(width = 2.dp.toPx())
+                        style = Stroke(width = spacing.tiny.toPx())
                     )
                     drawCircle(
                         color = Color.White.copy(alpha = 0.7f),
@@ -195,34 +199,34 @@ fun ScoreSection(
                     for (i in 0 until 8) {
                         val angle = i * (2 * PI / 8).toFloat()
                         val start = center + Offset(cos(angle) * outerRadius, sin(angle) * outerRadius)
-                        val end = center + Offset(cos(angle) * (outerRadius + 4.dp.toPx()), sin(angle) * (outerRadius + 4.dp.toPx()))
+                        val end = center + Offset(cos(angle) * (outerRadius + spacing.extraSmall.toPx()), sin(angle) * (outerRadius + spacing.extraSmall.toPx()))
                         drawLine(
                             color = Color.White.copy(alpha = 0.7f),
                             start = start,
                             end = end,
-                            strokeWidth = 3.dp.toPx()
+                            strokeWidth = spacing.extraSmall.toPx() * 0.75f
                         )
                     }
                 }
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(spacing.large))
 
         // Unified Score Section with Progress and Max/Perk Integrated
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min)
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
-                .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(24.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(cornerRadius.large))
+                .border(spacing.extraTiny, Color.White.copy(alpha = 0.05f), RoundedCornerShape(cornerRadius.large))
                 .graphicsLayer { clip = false }, // Allow children (combo) to pop outside
         ) {
             // Background Progress Bar with Wavy Edge
             Canvas(
                 modifier = Modifier
                     .matchParentSize()
-                    .clip(RoundedCornerShape(24.dp)) // Keep bar inside the rounded container
+                    .clip(RoundedCornerShape(cornerRadius.large)) // Keep bar inside the rounded container
             ) {
                 val width = size.width * animatedProgress
                 val height = size.height
@@ -234,7 +238,7 @@ fun ScoreSection(
                         lineTo(width, 0f)
                         
                         // Wavy edge at the progress boundary
-                        val waveAmplitude = (3.dp + 10.dp * waveIntensity.value).toPx()
+                        val waveAmplitude = (spacing.extraSmall + spacing.semiMedium * waveIntensity.value).toPx()
                         val wavePeriod = height * 0.8f
                         
                         val steps = 30
@@ -262,7 +266,7 @@ fun ScoreSection(
 
                     // Add a subtle highlight at the very edge
                     val edgePath = Path().apply {
-                        val waveAmplitude = (3.dp + 10.dp * waveIntensity.value).toPx()
+                        val waveAmplitude = (spacing.extraSmall + spacing.semiMedium * waveIntensity.value).toPx()
                         val wavePeriod = height * 0.8f
                         
                         val firstY = 0f
@@ -280,7 +284,7 @@ fun ScoreSection(
                     drawPath(
                         path = edgePath,
                         color = Color.White.copy(alpha = 0.1f + 0.2f * waveIntensity.value),
-                        style = Stroke(width = (1.5.dp + 1.dp * waveIntensity.value).toPx())
+                        style = Stroke(width = (spacing.extraTiny + spacing.extraTiny * waveIntensity.value).toPx())
                     )
                 }
             }
@@ -288,7 +292,7 @@ fun ScoreSection(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                    .padding(horizontal = spacing.extraLarge, vertical = spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -300,13 +304,13 @@ fun ScoreSection(
                         fontSize = 14.sp,
                         letterSpacing = 1.sp
                     )
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(spacing.small))
                     Text(
                         text = "•",
                         color = Color.White.copy(alpha = 0.2f),
                         fontSize = 14.sp
                     )
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(spacing.small))
                     Text(
                         text = stringResource(Res.string.level_label, level),
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
@@ -326,7 +330,7 @@ fun ScoreSection(
                     )
                 }
 
-                Spacer(Modifier.height(2.dp))
+                Spacer(Modifier.height(spacing.tiny))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(Res.string.best_score_label),
@@ -347,8 +351,8 @@ fun ScoreSection(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .padding(start = 24.dp)
-                    .width(60.dp),
+                    .padding(start = spacing.extraLarge)
+                    .width(spacing.giant),
                 contentAlignment = Alignment.Center
             ) {
                 val comboMultiplier = combo + 1
@@ -419,7 +423,7 @@ fun ScoreSection(
                                     fontWeight = FontWeight.Black,
                                     fontSize = 10.sp,
                                     letterSpacing = 2.sp,
-                                    modifier = Modifier.offset(y = (-4).dp)
+                                    modifier = Modifier.offset(y = -spacing.extraSmall)
                                 )
                             }
                         }
@@ -431,8 +435,8 @@ fun ScoreSection(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = 24.dp)
-                    .width(60.dp),
+                    .padding(end = spacing.extraLarge)
+                    .width(spacing.giant),
                 contentAlignment = Alignment.Center
             ) {
                 AnimatedContent(
@@ -472,13 +476,13 @@ fun ScoreSection(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 10.sp,
                             )
-                            Spacer(Modifier.height(4.dp))
+                            Spacer(Modifier.height(spacing.extraSmall))
                             val colorScheme = MaterialTheme.colorScheme
                             Hexagon(
                                 value = highestValue.toString(),
                                 backgroundColor = HexagonGridDefaults.getColorForValue(highestValue, colorScheme).copy(alpha = 0.2f),
                                 isOutline = true,
-                                modifier = Modifier.size(28.dp).aspectRatio(1 / 0.866f),
+                                modifier = Modifier.size(spacing.huge).aspectRatio(1 / 0.866f),
                             )
                         }
                     }

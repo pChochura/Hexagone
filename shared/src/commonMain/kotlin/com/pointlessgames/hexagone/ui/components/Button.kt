@@ -16,7 +16,7 @@ import androidx.compose.ui.semantics.Role
 import com.pointlessgames.hexagone.ui.CustomIndicationNodeFactory
 import com.pointlessgames.hexagone.ui.TiltedRoundedCornersShape
 import com.pointlessgames.hexagone.ui.dragIndication
-import com.pointlessgames.hexagone.ui.theme.DefaultSpacing
+import com.pointlessgames.hexagone.ui.theme.spacing
 import org.jetbrains.compose.resources.DrawableResource
 
 @Composable
@@ -32,7 +32,7 @@ internal fun Button(
     isLoading: Boolean = false,
     onClick: () -> Unit,
 ) {
-    val spacing = DefaultSpacing.current
+    val spacing = MaterialTheme.spacing
 
     Row(
         modifier = modifier

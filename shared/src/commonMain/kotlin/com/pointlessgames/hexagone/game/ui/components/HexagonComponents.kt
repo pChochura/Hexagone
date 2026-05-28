@@ -55,6 +55,8 @@ import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.components.Tooltip
+import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -140,10 +142,11 @@ object HexagonGridDefaults {
         drawScope: DrawScope,
         size: Size,
         stripeOffsetPx: Float,
+        spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
         alpha: Float = 0.15f
     ) {
-        val stripeWidth = with(drawScope) { 1.5.dp.toPx() }
-        val gap = with(drawScope) { 10.dp.toPx() }
+        val stripeWidth = with(drawScope) { spacing.extraTiny.toPx() * 1.5f }
+        val gap = with(drawScope) { spacing.semiMedium.toPx() }
         val color = Color.White.copy(alpha = alpha)
         val step = stripeWidth + gap
 
@@ -410,11 +413,13 @@ fun Hexagon(
         )
     } else null
 
+    val spacing = MaterialTheme.spacing
+
     val ghostModifier = if (isGhost) {
         Modifier.drawWithContent {
             drawContent()
-            val stripeWidth = 1.5.dp.toPx()
-            val gap = 10.dp.toPx()
+            val stripeWidth = spacing.extraTiny.toPx() * 1.5f
+            val gap = spacing.semiMedium.toPx()
             val color = Color.White.copy(alpha = 0.15f)
             val step = stripeWidth + gap
             val offsetPx = (stripeOffset?.value ?: 0f).dp.toPx()
@@ -452,13 +457,13 @@ fun Hexagon(
             .then(
                 if (isOutline) {
                     Modifier.border(
-                        width = 1.dp,
+                        width = spacing.extraTiny,
                         color = Color.White.copy(alpha = 0.1f),
                         shape = FlatTopHexagonShape(),
                     )
                 } else if (isTactical) {
                     Modifier.border(
-                        width = 2.dp,
+                        width = spacing.tiny,
                         color = MaterialTheme.colorScheme.secondary.copy(alpha = tacticalPulse?.value ?: 1f),
                         shape = FlatTopHexagonShape(),
                     )
@@ -481,9 +486,9 @@ fun Hexagon(
             PerkIcon(
                 perk = perk,
                 modifier = Modifier
-                    .size(16.dp)
+                    .size(spacing.large)
                     .align(Alignment.BottomCenter)
-                    .offset(y = (-6).dp),
+                    .offset(y = -spacing.semiSmall),
                 color = Color.White.copy(alpha = 0.6f)
             )
         }
@@ -500,8 +505,9 @@ fun PerkButton(
     isActive: Boolean = false,
     isEnabled: Boolean = true,
     tooltipDescription: StringResource? = null,
-    buttonSize: Dp = 54.dp
+    buttonSize: Dp = MaterialTheme.spacing.extraHuge
 ) {
+    val spacing = MaterialTheme.spacing
     val colorScheme = MaterialTheme.colorScheme
     val perkColor = remember(perk, isEnabled) {
         if (isEnabled) HexagonGridDefaults.getColorForPerk(perk, colorScheme) else Color.Gray
@@ -512,7 +518,7 @@ fun PerkButton(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
-            .padding(horizontal = 2.dp)
+            .padding(horizontal = spacing.tiny)
             .graphicsLayer { alpha = if (isEnabled) 1f else 0.1f }
     ) {
         val hexagonContent = @Composable {
@@ -535,7 +541,7 @@ fun PerkButton(
                     
                     Box(
                         modifier = Modifier
-                            .size(width = buttonSize + 8.dp, height = (buttonSize + 8.dp) * heightScale)
+                            .size(width = buttonSize + spacing.small, height = (buttonSize + spacing.small) * heightScale)
                             .clip(FlatTopHexagonShape())
                             .drawBehind {
                                 drawRect(perkColor.copy(alpha = glowAlpha.value * 0.4f))
@@ -560,7 +566,7 @@ fun PerkButton(
                         .clip(FlatTopHexagonShape())
                         .background(brush)
                         .border(
-                            width = if (isActive) 2.dp else if (isLegendary) 2.dp else 1.dp,
+                            width = if (isActive) spacing.tiny else if (isLegendary) spacing.tiny else spacing.extraTiny,
                             color = if (isActive) Color.White.copy(alpha = 0.5f) else if (isLegendary) perkColor else perkColor.copy(alpha = 0.3f),
                             shape = FlatTopHexagonShape(),
                         )
@@ -579,10 +585,10 @@ fun PerkButton(
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .offset(x = 6.dp, y = (-2).dp)
-                            .size(20.dp)
+                            .offset(x = spacing.semiSmall, y = -spacing.tiny)
+                            .size(spacing.semiLarge)
                             .background(perkColor, CircleShape)
-                            .border(1.dp, MaterialTheme.colorScheme.surface, CircleShape),
+                            .border(spacing.extraTiny, MaterialTheme.colorScheme.surface, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -606,7 +612,7 @@ fun PerkButton(
             hexagonContent()
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(spacing.medium))
 
         Text(
             text = stringResource(perk.displayNameRes),
@@ -615,7 +621,7 @@ fun PerkButton(
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center,
             lineHeight = 11.sp,
-            modifier = Modifier.width(buttonSize + 10.dp)
+            modifier = Modifier.width(buttonSize + spacing.semiMedium)
         )
     }
 }
@@ -626,13 +632,14 @@ fun PerkIcon(
     modifier: Modifier = Modifier,
     color: Color = Color.White
 ) {
+    val spacing = MaterialTheme.spacing
     Canvas(modifier = modifier) {
         HexagonGridDefaults.drawPerkIcon(
             drawScope = this,
             perk = perk,
             size = size,
             color = color,
-            strokeWidth = 2.dp.toPx()
+            strokeWidth = spacing.tiny.toPx()
         )
     }
 }
@@ -642,7 +649,7 @@ fun HexagonGrid(
     columns: Int,
     rows: Int,
     modifier: Modifier = Modifier,
-    itemGap: Dp = 2.dp,
+    itemGap: Dp = MaterialTheme.spacing.tiny,
     outlineContent: @Composable (col: Int, row: Int) -> Unit = { _, _ -> },
     content: @Composable () -> Unit = {},
 ) {

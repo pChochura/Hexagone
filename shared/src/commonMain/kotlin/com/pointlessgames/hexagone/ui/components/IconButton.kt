@@ -16,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import com.pointlessgames.hexagone.ui.TiltedRoundedCornersShape
-import com.pointlessgames.hexagone.ui.theme.DefaultCornerRadius
-import com.pointlessgames.hexagone.ui.theme.DefaultIconsSize
+import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.iconsSize
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 
@@ -65,12 +65,12 @@ internal fun IconButton(
                 center = center,
             )
         },
-        size = DefaultIconsSize.current.large,
-        iconSize = DefaultIconsSize.current.medium,
+        size = MaterialTheme.iconsSize.large,
+        iconSize = MaterialTheme.iconsSize.medium,
         icon = iconRes,
         contentDescription = contentDescription,
-        defaultShape = TiltedRoundedCornersShape(0f, DefaultCornerRadius.current.full),
-        pressedShape = TiltedRoundedCornersShape(0f, DefaultCornerRadius.current.full),
+        defaultShape = TiltedRoundedCornersShape(0f, MaterialTheme.cornerRadius.full),
+        pressedShape = TiltedRoundedCornersShape(0f, MaterialTheme.cornerRadius.full),
         defaultBackgroundColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0f),
         pressedBackgroundColor = MaterialTheme.colorScheme.tertiary,
         contentColor = tint,

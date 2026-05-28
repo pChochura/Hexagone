@@ -1,16 +1,24 @@
 package com.pointlessgames.hexagone.ui.theme
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-internal data class CornerRadius(
+data class CornerRadius(
+    val none: Dp = 0.dp,
     val small: Dp = 8.dp,
     val medium: Dp = 16.dp,
     val large: Dp = 24.dp,
-
-    // 50 percent
-    val full: Int = 50,
+    val extraLarge: Dp = 32.dp,
+    val full: Dp = 100.dp,
 )
 
-internal val DefaultCornerRadius = staticCompositionLocalOf { CornerRadius() }
+val LocalCornerRadius = staticCompositionLocalOf { CornerRadius() }
+
+val MaterialTheme.cornerRadius: CornerRadius
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalCornerRadius.current

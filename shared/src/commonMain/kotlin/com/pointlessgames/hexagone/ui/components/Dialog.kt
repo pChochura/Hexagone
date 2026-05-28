@@ -16,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.pointlessgames.hexagone.ui.TiltedRoundedCornersShape
-import com.pointlessgames.hexagone.ui.theme.DefaultCornerRadius
-import com.pointlessgames.hexagone.ui.theme.DefaultSpacing
+import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.spacing
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
@@ -34,7 +34,7 @@ internal fun Dialog(
     onDismissRequest: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val spacing = DefaultSpacing.current
+    val spacing = MaterialTheme.spacing
 
     Dialog(
         onDismissRequest = onDismissRequest,
@@ -81,7 +81,7 @@ private fun TopRow(
     icon: DrawableResource,
     title: StringResource,
 ) {
-    val spacing = DefaultSpacing.current
+    val spacing = MaterialTheme.spacing
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(spacing.extraSmall),
@@ -108,7 +108,8 @@ private fun BottomRow(
     onPrimaryButtonClick: () -> Unit,
     onSecondaryButtonClick: () -> Unit,
 ) {
-    val spacing = DefaultSpacing.current
+    val spacing = MaterialTheme.spacing
+    val cornerRadius = MaterialTheme.cornerRadius
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -118,8 +119,8 @@ private fun BottomRow(
         Button(
             icon = null,
             text = stringResource(secondaryButtonText),
-            defaultShape = TiltedRoundedCornersShape(0f, DefaultCornerRadius.current.small),
-            pressedShape = TiltedRoundedCornersShape(0f, DefaultCornerRadius.current.medium),
+            defaultShape = TiltedRoundedCornersShape(0f, cornerRadius.small),
+            pressedShape = TiltedRoundedCornersShape(0f, cornerRadius.medium),
             defaultBackgroundColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0f),
             pressedBackgroundColor = MaterialTheme.colorScheme.secondary,
             contentColor = MaterialTheme.colorScheme.onSecondary,
@@ -129,8 +130,8 @@ private fun BottomRow(
         Button(
             icon = null,
             text = stringResource(primaryButtonText),
-            defaultShape = TiltedRoundedCornersShape(0f, DefaultCornerRadius.current.small),
-            pressedShape = TiltedRoundedCornersShape(0f, DefaultCornerRadius.current.medium),
+            defaultShape = TiltedRoundedCornersShape(0f, cornerRadius.small),
+            pressedShape = TiltedRoundedCornersShape(0f, cornerRadius.medium),
             defaultBackgroundColor = MaterialTheme.colorScheme.primary,
             pressedBackgroundColor = MaterialTheme.colorScheme.secondary,
             contentColor = MaterialTheme.colorScheme.onPrimary,

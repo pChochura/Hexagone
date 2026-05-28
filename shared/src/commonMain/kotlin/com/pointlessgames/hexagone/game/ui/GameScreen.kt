@@ -43,6 +43,8 @@ import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
+import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.no_moves_left_warning
 import org.jetbrains.compose.resources.stringResource
@@ -128,7 +130,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
         // Debug Trigger (Hidden)
         Box(
             modifier = Modifier
-                .size(48.dp)
+                .size(MaterialTheme.spacing.extraHuge)
                 .statusBarsPadding()
                 .clickable(
                     interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
@@ -151,7 +153,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
                 modifier = Modifier
                     .weight(1f)
                     .graphicsLayer { clip = false }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = MaterialTheme.spacing.large, vertical = MaterialTheme.spacing.small),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 ScoreSection(
@@ -193,7 +195,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
             }
             
             // Placeholder to keep space for PerkBar
-            Spacer(Modifier.height(130.dp))
+            Spacer(Modifier.height(MaterialTheme.spacing.immense))
         }
 
         // Dimming Layer (above board, below PerkBar)
@@ -223,11 +225,11 @@ internal fun GameScreen(viewModel: GameViewModel) {
             if (uiState.isStuck) {
                 Box(
                     modifier = Modifier
-                        .offset(y = (-10).dp + stuckBounce.dp)
-                        .shadow(elevation = 12.dp, shape = RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
-                        .border(2.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .offset(y = -MaterialTheme.spacing.semiMedium + stuckBounce.dp)
+                        .shadow(elevation = MaterialTheme.spacing.medium, shape = RoundedCornerShape(MaterialTheme.cornerRadius.small))
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(MaterialTheme.cornerRadius.small))
+                        .border(MaterialTheme.spacing.tiny, Color.White.copy(alpha = 0.5f), RoundedCornerShape(MaterialTheme.cornerRadius.small))
+                        .padding(horizontal = MaterialTheme.spacing.medium, vertical = MaterialTheme.spacing.semiSmall),
                 ) {
                     Text(
                         text = stringResource(Res.string.no_moves_left_warning),
@@ -237,7 +239,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
                         letterSpacing = 1.sp,
                     )
                 }
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(MaterialTheme.spacing.medium))
             }
 
             PerkBar(

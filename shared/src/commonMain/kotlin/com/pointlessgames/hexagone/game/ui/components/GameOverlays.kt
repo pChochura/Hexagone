@@ -75,6 +75,8 @@ import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.components.Tooltip
+import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.choose_your_perk
 import hexagone.shared.generated.resources.game_over_subtitle
@@ -130,6 +132,8 @@ fun GameOverlays(
     val confettiPieces = remember { androidx.compose.runtime.mutableStateListOf<ConfettiPiece>() }
     var hasSpawnedConfetti by remember(isGameOver) { mutableStateOf(false) }
 
+    val spacing = MaterialTheme.spacing
+    val cornerRadius = MaterialTheme.cornerRadius
     val primaryColor = MaterialTheme.colorScheme.primary
     androidx.compose.runtime.LaunchedEffect(isNewBest) {
         if (isNewBest && !hasSpawnedConfetti) {
@@ -267,16 +271,16 @@ fun GameOverlays(
                     modifier = Modifier
                         .fillMaxSize()
                         .navigationBarsPadding()
-                        .padding(bottom = 80.dp),
+                        .padding(bottom = spacing.massive),
                     contentAlignment = Alignment.BottomCenter
                 ) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(100.dp))
+                            .clip(RoundedCornerShape(cornerRadius.full))
                             .background(Color.Black.copy(alpha = 0.6f))
-                            .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(100.dp))
+                            .border(spacing.extraTiny, Color.White.copy(alpha = 0.2f), RoundedCornerShape(cornerRadius.full))
                             .clickable { onViewBoardToggle() }
-                            .padding(horizontal = 24.dp, vertical = 12.dp),
+                            .padding(horizontal = spacing.extraLarge, vertical = spacing.medium),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -313,6 +317,9 @@ private fun PerkSelectionDialog(
         label = "pulse"
     )
 
+    val spacing = MaterialTheme.spacing
+    val cornerRadius = MaterialTheme.cornerRadius
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -321,26 +328,26 @@ private fun PerkSelectionDialog(
                     listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
                 ),
             )
-            .padding(top = 100.dp),
+            .padding(top = spacing.colossal),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge))
                 .border(
-                    2.dp,
+                    spacing.tiny,
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                    RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                    RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge),
                 )
                 .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 24.dp),
+                .padding(horizontal = spacing.extraLarge, vertical = spacing.extraLarge),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Drag Handle
             Box(
                 modifier = Modifier
-                    .padding(bottom = 24.dp)
-                    .size(width = 48.dp, height = 4.dp)
+                    .padding(bottom = spacing.extraLarge)
+                    .size(width = spacing.extraHuge, height = spacing.extraSmall)
                     .background(Color.White.copy(alpha = 0.15f), CircleShape)
             )
 
@@ -362,12 +369,12 @@ private fun PerkSelectionDialog(
                     )
 
                     if (pendingLevelUps > 1) {
-                        Spacer(Modifier.width(12.dp))
+                        Spacer(Modifier.width(spacing.medium))
                         Box(
                             modifier = Modifier
                                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), CircleShape)
-                                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape)
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                .border(spacing.extraTiny, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape)
+                                .padding(horizontal = spacing.small, vertical = spacing.tiny)
                         ) {
                             Text(
                                 text = "+$pendingLevelUps",
@@ -387,10 +394,10 @@ private fun PerkSelectionDialog(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(44.dp)
+                                .size(spacing.extraHuge)
                                 .clip(CircleShape)
                                 .clickable { onRerollClicked() }
-                                .padding(8.dp),
+                                .padding(spacing.small),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -403,7 +410,7 @@ private fun PerkSelectionDialog(
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(spacing.small))
 
             Text(
                 text = stringResource(Res.string.choose_your_perk),
@@ -413,7 +420,7 @@ private fun PerkSelectionDialog(
                 textAlign = TextAlign.Center,
             )
 
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(spacing.extraHuge))
 
             AnimatedContent(
                 targetState = options,
@@ -426,7 +433,7 @@ private fun PerkSelectionDialog(
             ) { perkOptions ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                 ) {
                     perkOptions.forEach { perk ->
                         PerkButton(
@@ -434,13 +441,13 @@ private fun PerkSelectionDialog(
                             onClick = { onPerkSelected(perk) },
                             modifier = Modifier.weight(1f),
                             tooltipDescription = perk.descriptionRes,
-                            buttonSize = 64.dp
+                            buttonSize = spacing.giant
                         )
                     }
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(spacing.extraLarge))
 
             Text(
                 text = stringResource(Res.string.perk_selection_hint),
@@ -518,6 +525,8 @@ private fun GameOverDialog(
         label = "max_piece_shift"
     )
 
+    val spacing = MaterialTheme.spacing
+    val cornerRadius = MaterialTheme.cornerRadius
     val primaryColor = MaterialTheme.colorScheme.primary
     val surfaceColor = MaterialTheme.colorScheme.surface
 
@@ -526,9 +535,9 @@ private fun GameOverDialog(
             .fillMaxWidth(0.9f)
             .drawBehind {
                 val baseColor = primaryColor
-                val cornerRadius = 32.dp.toPx()
+                val cr = cornerRadius.extraLarge.toPx()
                 val path = Path().apply {
-                    addRoundRect(RoundRect(Rect(0f, 0f, size.width, size.height), cornerRadius, cornerRadius))
+                    addRoundRect(RoundRect(Rect(0f, 0f, size.width, size.height), cr, cr))
                 }
 
                 // Restore Layered strokes for glow
@@ -536,26 +545,26 @@ private fun GameOverDialog(
                     drawPath(
                         path = path,
                         color = baseColor.copy(alpha = glowAlpha / (i * 2f)),
-                        style = Stroke(width = (i * 4).dp.toPx())
+                        style = Stroke(width = (spacing.extraSmall * i).toPx())
                     )
                 }
             }
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f), RoundedCornerShape(32.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(32.dp))
-            .padding(24.dp),
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f), RoundedCornerShape(cornerRadius.extraLarge))
+            .border(spacing.extraTiny, Color.White.copy(alpha = 0.1f), RoundedCornerShape(cornerRadius.extraLarge))
+            .padding(spacing.extraLarge),
     ) {
         // View Board Icon Button (Canvas drawn)
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .size(40.dp)
+                .size(spacing.extraHuge)
                 .clip(CircleShape)
                 .clickable { onViewBoard() }
-                .padding(8.dp),
+                .padding(spacing.small),
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
-                val stroke = 1.5.dp.toPx()
+                val stroke = spacing.extraTiny.toPx() * 1.5f
                 val color = Color.White.copy(alpha = 0.4f)
                 // Eyeball shape
                 val path = Path().apply {
@@ -579,7 +588,7 @@ private fun GameOverDialog(
                 letterSpacing = 4.sp
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(spacing.small))
 
             // Hero Section: Score & Max Piece
             Row(
@@ -602,20 +611,20 @@ private fun GameOverDialog(
                                     blurRadius = 30f
                                 )
                             ),
-                            modifier = Modifier.padding(horizontal = 20.dp)
+                            modifier = Modifier.padding(horizontal = spacing.semiLarge)
                         )
                         
                         if (isNewBest) {
                             Box(
                                 modifier = Modifier
-                                    .offset(x = 10.dp, y = (-5).dp)
+                                    .offset(x = spacing.semiMedium, y = -spacing.semiSmall)
                                     .graphicsLayer {
                                         scaleX = badgeScale
                                         scaleY = badgeScale
                                         rotationZ = badgeRotation
                                     }
-                                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(100.dp))
-                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(cornerRadius.full))
+                                    .padding(horizontal = spacing.small, vertical = spacing.tiny)
                             ) {
                                 Text(
                                     text = stringResource(Res.string.new_best_label).uppercase(),
@@ -636,7 +645,7 @@ private fun GameOverDialog(
                     )
                 }
 
-                Spacer(Modifier.width(24.dp))
+                Spacer(Modifier.width(spacing.extraLarge))
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(contentAlignment = Alignment.Center) {
@@ -657,7 +666,7 @@ private fun GameOverDialog(
                             value = highestValue.toString(),
                             backgroundColor = Color.Transparent,
                             modifier = Modifier
-                                .size(64.dp)
+                                .size(spacing.giant)
                                 .aspectRatio(1 / 0.866f)
                                 .background(
                                     brush = Brush.linearGradient(
@@ -667,10 +676,10 @@ private fun GameOverDialog(
                                     ),
                                     shape = FlatTopHexagonShape()
                                 )
-                                .border(1.dp, Color.White.copy(alpha = 0.15f), FlatTopHexagonShape())
+                                .border(spacing.extraTiny, Color.White.copy(alpha = 0.15f), FlatTopHexagonShape())
                         )
                     }
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(spacing.extraSmall))
                     Text(
                         text = "MAX",
                         color = Color.White.copy(alpha = 0.3f),
@@ -681,27 +690,27 @@ private fun GameOverDialog(
                 }
             }
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(spacing.extraHuge))
 
             // Organic Stats Row with Canvas Icons
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = spacing.small),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 OrganicStatItem(
-                    icon = { LevelIcon() },
+                    icon = { LevelIcon(spacing) },
                     label = stringResource(Res.string.stat_level),
                     value = level.toString()
                 )
                 OrganicStatItem(
-                    icon = { ComboIcon() },
+                    icon = { ComboIcon(spacing) },
                     label = stringResource(Res.string.stat_max_combo),
                     value = "x$maxCombo"
                 )
                 OrganicStatItem(
-                    icon = { MergeIcon() },
+                    icon = { MergeIcon(spacing) },
                     label = stringResource(Res.string.stat_merges),
                     value = totalMerges.toString()
                 )
@@ -711,10 +720,10 @@ private fun GameOverDialog(
 }
 
 @Composable
-private fun LevelIcon() {
+private fun LevelIcon(spacing: com.pointlessgames.hexagone.ui.theme.Spacing) {
     val color = MaterialTheme.colorScheme.primary
-    Canvas(modifier = Modifier.size(20.dp)) {
-        val stroke = 2.dp.toPx()
+    Canvas(modifier = Modifier.size(spacing.semiLarge)) {
+        val stroke = spacing.tiny.toPx()
         // Staircase shape
         drawLine(color, Offset(0f, size.height), Offset(size.width, 0f), stroke)
         drawLine(color, Offset(size.width, 0f), Offset(size.width * 0.6f, 0f), stroke)
@@ -723,10 +732,10 @@ private fun LevelIcon() {
 }
 
 @Composable
-private fun ComboIcon() {
+private fun ComboIcon(spacing: com.pointlessgames.hexagone.ui.theme.Spacing) {
     val color = MaterialTheme.colorScheme.primary
-    Canvas(modifier = Modifier.size(20.dp)) {
-        val stroke = 2.dp.toPx()
+    Canvas(modifier = Modifier.size(spacing.semiLarge)) {
+        val stroke = spacing.tiny.toPx()
         // Lightning bolt / Flash shape
         val path = Path().apply {
             moveTo(size.width * 0.6f, 0f)
@@ -742,10 +751,10 @@ private fun ComboIcon() {
 }
 
 @Composable
-private fun MergeIcon() {
+private fun MergeIcon(spacing: com.pointlessgames.hexagone.ui.theme.Spacing) {
     val color = MaterialTheme.colorScheme.primary
-    Canvas(modifier = Modifier.size(20.dp)) {
-        val stroke = 1.5.dp.toPx()
+    Canvas(modifier = Modifier.size(spacing.semiLarge)) {
+        val stroke = spacing.extraTiny.toPx() * 1.5f
         // Three merging circles
         drawCircle(color, radius = size.width / 4, center = Offset(size.width / 2, size.height / 3), style = Stroke(stroke))
         drawCircle(color, radius = size.width / 4, center = Offset(size.width / 3, size.height * 0.7f), style = Stroke(stroke))
@@ -759,17 +768,19 @@ private fun OrganicStatItem(
     label: String,
     value: String
 ) {
+    val spacing = MaterialTheme.spacing
+    val cornerRadius = MaterialTheme.cornerRadius
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
-                .size(44.dp)
+                .size(spacing.extraHuge)
                 .background(Color.White.copy(alpha = 0.05f), CircleShape)
-                .border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape),
+                .border(spacing.extraTiny, Color.White.copy(alpha = 0.1f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             icon()
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(spacing.small))
         Text(
             text = value,
             color = Color.White,
@@ -792,6 +803,8 @@ private fun GameOverBottomActions(
     onShare: () -> Unit,
     onLeaderboard: () -> Unit
 ) {
+    val spacing = MaterialTheme.spacing
+    val cornerRadius = MaterialTheme.cornerRadius
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -801,35 +814,37 @@ private fun GameOverBottomActions(
                 )
             )
             .navigationBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 32.dp)
+            .padding(horizontal = spacing.extraLarge, vertical = spacing.huge)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(spacing.large),
             verticalAlignment = Alignment.CenterVertically
         ) {
             SecondaryGameButton(
                 onClick = onShare,
                 icon = "⤴",
-                modifier = Modifier.size(56.dp)
+                modifier = Modifier.size(spacing.giant),
+                spacing = spacing,
+                cornerRadius = cornerRadius
             )
 
             Button(
                 onClick = onRestart,
                 modifier = Modifier
                     .weight(1f)
-                    .height(64.dp)
+                    .height(spacing.giant)
                     .graphicsLayer {
-                        shadowElevation = 8.dp.toPx()
-                        shape = RoundedCornerShape(20.dp)
+                        shadowElevation = spacing.small.toPx()
+                        shape = RoundedCornerShape(cornerRadius.medium)
                         clip = true
                     },
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(cornerRadius.medium),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = Color.White
                 ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = spacing.small)
             ) {
                 Text(
                     text = stringResource(Res.string.play_again_button).uppercase(),
@@ -842,7 +857,9 @@ private fun GameOverBottomActions(
             SecondaryGameButton(
                 onClick = onLeaderboard,
                 icon = "🏆",
-                modifier = Modifier.size(56.dp)
+                modifier = Modifier.size(spacing.giant),
+                spacing = spacing,
+                cornerRadius = cornerRadius
             )
         }
     }
@@ -856,6 +873,8 @@ private fun StatusDialog(
     onUsePerk: (Perk) -> Unit,
     onRestart: () -> Unit,
 ) {
+    val spacing = MaterialTheme.spacing
+    val cornerRadius = MaterialTheme.cornerRadius
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -864,26 +883,26 @@ private fun StatusDialog(
                     listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
                 ),
             )
-            .padding(top = 64.dp),
+            .padding(top = spacing.giant),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge))
                 .border(
-                    1.dp,
+                    spacing.extraTiny,
                     Color.White.copy(alpha = 0.08f),
-                    RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                    RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge),
                 )
                 .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 20.dp),
+                .padding(horizontal = spacing.extraLarge, vertical = spacing.semiLarge),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Drag Handle
             Box(
                 modifier = Modifier
-                    .padding(bottom = 20.dp)
-                    .size(width = 40.dp, height = 4.dp)
+                    .padding(bottom = spacing.semiLarge)
+                    .size(width = spacing.extraHuge, height = spacing.extraSmall)
                     .background(Color.White.copy(alpha = 0.1f), CircleShape)
             )
 
@@ -894,12 +913,12 @@ private fun StatusDialog(
                 val primaryColor = MaterialTheme.colorScheme.primary
                 Canvas(
                     modifier = Modifier
-                        .size(48.dp)
-                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), CircleShape)
-                        .padding(8.dp)
+                        .size(spacing.extraHuge)
+                        .border(spacing.extraTiny, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), CircleShape)
+                        .padding(spacing.small)
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape),
                 ) {
-                    val strokeWidth = 2.dp.toPx()
+                    val strokeWidth = spacing.tiny.toPx()
                     drawCircle(
                         color = primaryColor,
                         radius = size.minDimension / 2.5f,
@@ -915,7 +934,7 @@ private fun StatusDialog(
                     )
                 }
 
-                Spacer(Modifier.width(16.dp))
+                Spacer(Modifier.width(spacing.large))
 
                 Column {
                     Text(
@@ -932,7 +951,7 @@ private fun StatusDialog(
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(spacing.extraLarge))
 
             val displayPerks = collectedPerks.distinct().filter { it.canSaveFromStuck }
 
@@ -948,20 +967,20 @@ private fun StatusDialog(
                             onClick = { onUsePerk(perk) },
                             count = count,
                             tooltipDescription = perk.descriptionRes,
-                            buttonSize = 54.dp
+                            buttonSize = spacing.extraHuge
                         )
-                        Spacer(Modifier.width(12.dp))
+                        Spacer(Modifier.width(spacing.medium))
                     }
                 }
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(spacing.medium))
             }
 
             OutlinedButton(
                 onClick = onRestart,
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(spacing.extraHuge),
+                shape = RoundedCornerShape(spacing.medium),
                 border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
+                    spacing.extraTiny,
                     Color.White.copy(alpha = 0.3f),
                 ),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
@@ -980,13 +999,15 @@ private fun StatusDialog(
 private fun SecondaryGameButton(
     onClick: () -> Unit,
     icon: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
+    cornerRadius: com.pointlessgames.hexagone.ui.theme.CornerRadius,
 ) {
     Box(
         modifier = modifier
-            .height(52.dp)
-            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
+            .height(spacing.extraHuge)
+            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(cornerRadius.medium))
+            .border(spacing.extraTiny, Color.White.copy(alpha = 0.1f), RoundedCornerShape(cornerRadius.medium))
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {

@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.pointlessgames.hexagone.game.GameEffect
 import com.pointlessgames.hexagone.game.PotentialMerge
+import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeHint
 import com.pointlessgames.hexagone.game.model.MergeTransition
@@ -114,6 +115,7 @@ internal fun GameGridOverlay(
     modifier: Modifier = Modifier,
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val spacing = MaterialTheme.spacing
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
     val finishedMergeCount = remember { mutableIntStateOf(0) }
@@ -166,7 +168,7 @@ internal fun GameGridOverlay(
 
     val columns = 5;
     val rows = 4;
-    val itemGap = 4.dp;
+    val itemGap = spacing.extraSmall;
     val gapPx = with(density) { itemGap.toPx() }
     val moveAnimationSpec = remember {
         spring<IntOffset>(
@@ -426,7 +428,7 @@ internal fun GameGridOverlay(
                             val center = Offset(offset.x + itemWidth / 2, offset.y + itemHeight / 2)
                             drawCircle(
                                 color = Color.White.copy(alpha = 0.2f),
-                                radius = (2 + hint.weight * 3).dp.toPx(),
+                                radius = (spacing.tiny + spacing.extraSmall * hint.weight).toPx(),
                                 center = center,
                             )
                         }
@@ -440,10 +442,10 @@ internal fun GameGridOverlay(
                                 cellHeight,
                                 gapPx,
                             )
-                            val mysterySize = Size(10.dp.toPx(), 10.dp.toPx())
+                            val mysterySize = Size(spacing.semiMedium.toPx(), spacing.semiMedium.toPx())
                             val mysteryOffset = Offset(
                                 offset.x + (itemWidth - mysterySize.width) / 2,
-                                offset.y + itemHeight - mysterySize.height - 12.dp.toPx(),
+                                offset.y + itemHeight - mysterySize.height - spacing.medium.toPx(),
                             )
                             withTransform(
                                 {
@@ -455,7 +457,7 @@ internal fun GameGridOverlay(
                                     null, // Pass null to hide the specific perk
                                     mysterySize,
                                     Color.White.copy(alpha = 0.4f),
-                                    1.5.dp.toPx(),
+                                    spacing.extraTiny.toPx(),
                                 )
                             }
 
@@ -471,7 +473,7 @@ internal fun GameGridOverlay(
                                 textLayoutResult,
                                 topLeft = Offset(
                                     offset.x + (itemWidth - textLayoutResult.size.width) / 2,
-                                    offset.y + itemHeight - mysterySize.height - 12.dp.toPx() - textLayoutResult.size.height - 2.dp.toPx(),
+                                    offset.y + itemHeight - mysterySize.height - spacing.medium.toPx() - textLayoutResult.size.height - spacing.tiny.toPx(),
                                 ),
                             )
                         }
@@ -495,6 +497,7 @@ internal fun GameGridOverlay(
                                     stripeOffset = ghostStripeOffset.value,
                                     textMeasurer = textMeasurer,
                                     colorScheme = colorScheme,
+                                    spacing = spacing,
                                 )
                             }
                         }
@@ -522,6 +525,7 @@ internal fun GameGridOverlay(
                                     stripeOffset = ghostStripeOffset.value,
                                     textMeasurer = textMeasurer,
                                     colorScheme = colorScheme,
+                                    spacing = spacing,
                                 )
                             }
                         }
@@ -539,12 +543,13 @@ internal fun GameGridOverlay(
                                     stripeOffset = ghostStripeOffset.value,
                                     textMeasurer = textMeasurer,
                                     colorScheme = colorScheme,
+                                    spacing = spacing,
                                 )
                             }
                         }
                     },
                 outlineContent = { _, _ ->
-                    StaticSlot(activePerkProvider, { selectedCellIdProvider() != null })
+                    StaticSlot(activePerkProvider, { selectedCellIdProvider() != null }, spacing)
                 },
             ) {
                 Box {
@@ -567,6 +572,7 @@ internal fun GameGridOverlay(
                                 itemHeight = itemHeight,
                                 onCellClick = onCellClick,
                                 onAnimationFinished = onAnimationFinishedLambda,
+                                spacing = spacing,
                             )
                         }
                     }
@@ -579,7 +585,8 @@ internal fun GameGridOverlay(
                 perkPopups = localPerkPopups,
                 onScoreFinished = { id -> localScorePopups.removeAll { it.id == id } },
                 onPerkFinished = { id -> localPerkPopups.removeAll { it.id == id } },
-                containerWidth = totalWidth
+                containerWidth = totalWidth,
+                spacing = spacing,
             )
         }
     }
@@ -591,10 +598,11 @@ private fun PopupsLayer(
     perkPopups: List<PerkPopup>,
     onScoreFinished: (Long) -> Unit,
     onPerkFinished: (Long) -> Unit,
-    containerWidth: Float
+    containerWidth: Float,
+    spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
 ) {
     val density = LocalDensity.current
-    val spacing = with(density) { 80.dp.toPx() }
+    val popupSpacing = with(density) { spacing.massive.toPx() }
 
     // Separate tactical (slow/centered higher) and standard (fast/moving lower) popups.
     // We only group tactical ones for horizontal stacking to avoid "jumps" when fast
@@ -614,8 +622,8 @@ private fun PopupsLayer(
         sortedItems.forEachIndexed { index, item ->
             key(item.id) {
                 val horizontalOffset = if (total > 1) {
-                    val totalWidth = (total - 1) * spacing
-                    -totalWidth / 2 + index * spacing
+                    val totalWidth = (total - 1) * popupSpacing
+                    -totalWidth / 2 + index * popupSpacing
                 } else 0f
 
                 val animOffset by animateFloatAsState(
@@ -626,10 +634,10 @@ private fun PopupsLayer(
 
                 when (item) {
                     is ScorePopup -> {
-                        ScorePopupItem(item, onScoreFinished, animOffset, containerWidth)
+                        ScorePopupItem(item, onScoreFinished, animOffset, containerWidth, spacing)
                     }
                     is PerkPopup -> {
-                        PerkPopItem(item, onPerkFinished, animOffset, containerWidth)
+                        PerkPopItem(item, onPerkFinished, animOffset, containerWidth, spacing)
                     }
                 }
             }
@@ -640,7 +648,7 @@ private fun PopupsLayer(
     // to participate in horizontal stacking with slow-paced tactical/perk popups.
     standardPopups.forEach { item ->
         key(item.id) {
-            ScorePopupItem(item, onScoreFinished, 0f, containerWidth)
+            ScorePopupItem(item, onScoreFinished, 0f, containerWidth, spacing)
         }
     }
 }
@@ -655,6 +663,7 @@ private fun drawGhost(
     stripeOffset: Float,
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
     colorScheme: androidx.compose.material3.ColorScheme,
+    spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
 ) {
     val offset = animState.offset.value
     val scale = animState.scale.value
@@ -680,7 +689,7 @@ private fun drawGhost(
                 this,
                 Size(itemWidth, itemHeight),
                 colorScheme.secondary.copy(alpha = alpha),
-                style = Stroke(width = 2.dp.toPx())
+                style = Stroke(width = spacing.tiny.toPx())
             )
         }
 
@@ -689,6 +698,7 @@ private fun drawGhost(
                 this,
                 Size(itemWidth, itemHeight),
                 stripeOffset * drawScope.density,
+                spacing,
                 alpha = 0.15f * alpha,
             )
         }
@@ -726,6 +736,7 @@ private fun drawHoverResult(
     stripeOffset: Float,
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
     colorScheme: androidx.compose.material3.ColorScheme,
+    spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
 ) {
     val targetOffset = HexagonGridDefaults.calculateOffset(
         merge.targetX,
@@ -752,6 +763,7 @@ private fun drawHoverResult(
                 this,
                 Size(itemWidth, itemHeight),
                 stripeOffset * drawScope.density,
+                spacing,
                 alpha = 0.15f * progress * 0.7f,
             )
         }
@@ -760,7 +772,7 @@ private fun drawHoverResult(
             this,
             Size(itemWidth, itemHeight),
             Color.White.copy(alpha = 0.3f * progress),
-            style = Stroke(width = 2.dp.toPx()),
+            style = Stroke(width = spacing.tiny.toPx()),
         )
 
         val textLayoutResult = textMeasurer.measure(
@@ -787,8 +799,8 @@ private fun drawHoverResult(
         style = TextStyle(color = Color.White, fontWeight = FontWeight.Black, fontSize = 16.sp),
     )
 
-    val popupWidth = scoreTextLayout.size.width + with(drawScope) { 20.dp.toPx() }
-    val popupHeight = scoreTextLayout.size.height + with(drawScope) { 8.dp.toPx() }
+    val popupWidth = scoreTextLayout.size.width + with(drawScope) { spacing.semiLarge.toPx() }
+    val popupHeight = scoreTextLayout.size.height + with(drawScope) { spacing.small.toPx() }
     val popupTopLeft = Offset(
         center.x - popupWidth / 2f,
         center.y - 140f + floatValue - popupHeight / 2f,
@@ -817,7 +829,7 @@ private fun drawHoverResult(
                 popupHeight / 2f,
                 popupHeight / 2f,
             ),
-            style = Stroke(width = 1.dp.toPx()),
+            style = Stroke(width = spacing.extraTiny.toPx()),
         )
         drawText(
             scoreTextLayout,
@@ -840,14 +852,14 @@ private class GhostAnimationState(
 }
 
 @Composable
-private fun StaticSlot(activePerkProvider: () -> Perk?, isAnySelectedProvider: () -> Boolean) {
+private fun StaticSlot(activePerkProvider: () -> Perk?, isAnySelectedProvider: () -> Boolean, spacing: com.pointlessgames.hexagone.ui.theme.Spacing) {
     val activePerk = activePerkProvider()
     val isAnySelected = isAnySelectedProvider()
     Hexagon(
         modifier = Modifier.fillMaxSize()
             .then(
                 if (activePerk == Perk.MOVE_TILE && isAnySelected) Modifier.border(
-                    1.dp,
+                    spacing.extraTiny,
                     Color.White.copy(alpha = 0.4f),
                     FlatTopHexagonShape(),
                 ) else Modifier,
@@ -865,6 +877,7 @@ private fun AnimatedGridHexagon(
     hoveredMergeState: StateFlow<MergeTransition?>,
     density: androidx.compose.ui.unit.Density, itemWidth: Float, itemHeight: Float,
     onCellClick: (HexagonCell) -> Unit, onAnimationFinished: () -> Unit,
+    spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
 ) {
     val isMergingProvider = remember(cell.id) {
         {
@@ -963,14 +976,14 @@ private fun AnimatedGridHexagon(
                         drawPath(
                             outline.path,
                             Color.White.copy(alpha = 0.5f),
-                            style = Stroke(width = 2.dp.toPx()),
+                            style = Stroke(width = spacing.tiny.toPx()),
                         )
                     }
                 }
             }
             .then(
                 if (isSelected) Modifier.border(
-                    2.dp,
+                    spacing.tiny,
                     Color.White,
                     FlatTopHexagonShape(),
                 ) else Modifier,
@@ -989,19 +1002,26 @@ private fun ScorePopupItem(
     popup: ScorePopup,
     onFinished: (Long) -> Unit,
     horizontalOffset: Float = 0f,
-    containerWidth: Float = Float.MAX_VALUE
+    containerWidth: Float = Float.MAX_VALUE,
+    spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
 ) {
     val isSpecial = popup.labelRes != null
 
     if (isSpecial) {
-        SpecialScorePopup(popup, onFinished, horizontalOffset, containerWidth)
+        SpecialScorePopup(popup, onFinished, horizontalOffset, containerWidth, spacing)
     } else {
-        StandardScorePopup(popup, onFinished, horizontalOffset, containerWidth)
+        StandardScorePopup(popup, onFinished, horizontalOffset, containerWidth, spacing)
     }
 }
 
 @Composable
-private fun StandardScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit, horizontalOffset: Float = 0f, containerWidth: Float = Float.MAX_VALUE) {
+private fun StandardScorePopup(
+    popup: ScorePopup,
+    onFinished: (Long) -> Unit,
+    horizontalOffset: Float = 0f,
+    containerWidth: Float = Float.MAX_VALUE,
+    spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
+) {
     val animProgress = remember { Animatable(1f) }
     LaunchedEffect(Unit) {
         animProgress.animateTo(0f, tween(800))
@@ -1026,8 +1046,8 @@ private fun StandardScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit, ho
                 scaleY = s
             }
             .background(Color.Black.copy(alpha = 0.6f), CircleShape)
-            .border(1.dp, Color.White.copy(alpha = 0.4f), CircleShape)
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .border(spacing.extraTiny, Color.White.copy(alpha = 0.4f), CircleShape)
+            .padding(horizontal = spacing.medium, vertical = spacing.extraSmall),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -1040,7 +1060,13 @@ private fun StandardScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit, ho
 }
 
 @Composable
-private fun SpecialScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit, horizontalOffset: Float = 0f, containerWidth: Float = Float.MAX_VALUE) {
+private fun SpecialScorePopup(
+    popup: ScorePopup,
+    onFinished: (Long) -> Unit,
+    horizontalOffset: Float = 0f,
+    containerWidth: Float = Float.MAX_VALUE,
+    spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
+) {
     val scale = remember { Animatable(0f) }
     val alpha = remember { Animatable(1f) }
 
@@ -1088,11 +1114,11 @@ private fun SpecialScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit, hor
             }
             .background(Color.Black.copy(alpha = 0.7f), CircleShape)
             .border(
-                2.dp,
+                spacing.tiny,
                 popup.color.copy(alpha = 0.8f),
                 CircleShape
             )
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = spacing.large, vertical = spacing.small),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1127,7 +1153,8 @@ private fun PerkPopItem(
     popup: PerkPopup,
     onFinished: (Long) -> Unit,
     horizontalOffset: Float = 0f,
-    containerWidth: Float = Float.MAX_VALUE
+    containerWidth: Float = Float.MAX_VALUE,
+    spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
 ) {
     val scale = remember { Animatable(0f) }
     val alpha = remember { Animatable(1f) }
@@ -1179,11 +1206,11 @@ private fun PerkPopItem(
                 this.alpha = alpha.value
             }
             .background(Color.Black.copy(alpha = 0.6f), CircleShape)
-            .border(1.dp, Color.White.copy(alpha = 0.4f), CircleShape)
-            .padding(12.dp),
+            .border(spacing.extraTiny, Color.White.copy(alpha = 0.4f), CircleShape)
+            .padding(spacing.medium),
         contentAlignment = Alignment.Center,
     ) {
-        PerkIcon(perk = popup.perk, modifier = Modifier.size(20.dp), color = Color.White)
+        PerkIcon(perk = popup.perk, modifier = Modifier.size(spacing.semiLarge), color = Color.White)
     }
 }
 
@@ -1193,5 +1220,3 @@ private fun ParticlesLayer(particles: List<Particle>) {
         particles.forEach { p -> drawCircle(p.color, p.size * p.life, Offset(p.x, p.y), p.life) }
     }
 }
-
-

@@ -19,8 +19,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.ui.LocalInnerPadding
 import com.pointlessgames.hexagone.ui.theme.DefaultColors
-import com.pointlessgames.hexagone.ui.theme.DefaultCornerRadius
-import com.pointlessgames.hexagone.ui.theme.DefaultSpacing
+import com.pointlessgames.hexagone.ui.theme.LocalCornerRadius
+import com.pointlessgames.hexagone.ui.theme.LocalIconsSize
+import com.pointlessgames.hexagone.ui.theme.LocalSpacing
+import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.iconsSize
+import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.utils.LocalResultEventBus
 import com.pointlessgames.hexagone.utils.ResultEventBus
 import com.pointlessgames.hexagone.utils.plus
@@ -76,9 +80,9 @@ fun App() {
             onSurface = Color.White,
         ),
         shapes = MaterialTheme.shapes.copy(
-            small = RoundedCornerShape(DefaultCornerRadius.current.small),
-            medium = RoundedCornerShape(DefaultCornerRadius.current.medium),
-            large = RoundedCornerShape(DefaultCornerRadius.current.large),
+            small = RoundedCornerShape(MaterialTheme.cornerRadius.small),
+            medium = RoundedCornerShape(MaterialTheme.cornerRadius.medium),
+            large = RoundedCornerShape(MaterialTheme.cornerRadius.large),
         ),
         typography = MaterialTheme.typography.copy(
             headlineLarge = TextStyle(
@@ -106,8 +110,13 @@ fun App() {
             containerColor = MaterialTheme.colorScheme.background,
             contentWindowInsets = WindowInsets.systemBars,
         ) { innerPadding ->
-            val spacing = DefaultSpacing.current
+            val spacing = MaterialTheme.spacing
+            val cornerRadius = MaterialTheme.cornerRadius
+            val iconsSize = MaterialTheme.iconsSize
             CompositionLocalProvider(
+                LocalSpacing provides spacing,
+                LocalCornerRadius provides cornerRadius,
+                LocalIconsSize provides iconsSize,
                 LocalInnerPadding provides remember {
                     PaddingValues(spacing.extraLarge) + innerPadding
                 },

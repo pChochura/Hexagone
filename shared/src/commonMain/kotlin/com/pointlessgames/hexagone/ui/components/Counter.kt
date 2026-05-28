@@ -13,7 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import com.pointlessgames.hexagone.ui.theme.DefaultSpacing
+import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.decrement
 import hexagone.shared.generated.resources.icon_add
@@ -30,7 +30,7 @@ internal fun Counter(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(DefaultSpacing.current.medium),
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
     ) {
         IconButton(
             isEnabled = count > minValue,

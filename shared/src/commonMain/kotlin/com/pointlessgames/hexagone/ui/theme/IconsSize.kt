@@ -1,10 +1,13 @@
 package com.pointlessgames.hexagone.ui.theme
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-internal data class IconsSize(
+data class IconsSize(
     val extraSmall: Dp = 16.dp,
     val small: Dp = 24.dp,
     val medium: Dp = 32.dp,
@@ -21,4 +24,9 @@ internal data class IconsSize(
     }
 }
 
-internal val DefaultIconsSize = staticCompositionLocalOf { IconsSize() }
+val LocalIconsSize = staticCompositionLocalOf { IconsSize() }
+
+val MaterialTheme.iconsSize: IconsSize
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalIconsSize.current
