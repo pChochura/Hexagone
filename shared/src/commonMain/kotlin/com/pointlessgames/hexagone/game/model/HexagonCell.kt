@@ -54,7 +54,13 @@ data class MergeTransition(
     val uniqueGroups: Int,
     val baseScore: Int,
     val resultId: String,
-    val isTactical: Boolean = false
+    val isTactical: Boolean = false,
+    val previewSwaps: Map<String, Pair<Int, Int>>? = null,
+    val previewValues: Map<String, Int>? = null,
+    val participatingIds: Set<String>? = null,
+    val forceGhostIds: Set<String>? = null,
+    val forceSolidIds: Set<String>? = null,
+    val isRemoval: Boolean = false
 )
 
 @Immutable
@@ -74,7 +80,11 @@ enum class Perk(
     ADVANCE_QUEUE(baseWeight = 50),
     SWAP_TILES(baseWeight = 50),
     FUSION(baseWeight = 20),
-    CHAIN_MERGE(baseWeight = 20, canSaveFromStuck = false);
+    CHAIN_MERGE(baseWeight = 20, canSaveFromStuck = false),
+    DUPLICATE_TILE(baseWeight = 50),
+    SKIP_SPAWN(baseWeight = 50, canSaveFromStuck = false),
+    INCREMENT_TILE(baseWeight = 80),
+    PATH_MERGE(baseWeight = 5);
 
     val isLegendary: Boolean get() = baseWeight <= 20
 }

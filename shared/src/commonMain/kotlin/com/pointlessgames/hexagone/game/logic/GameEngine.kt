@@ -110,7 +110,7 @@ class GameEngine(
         return cells.sumOf { it.value } + n * n - n
     }
 
-    fun calculateMerge(x: Int, y: Int, grid: List<HexagonCell>): MergeTransition? {
+    fun calculateMerge(x: Int, y: Int, grid: List<HexagonCell>, placedValue: Int? = null): MergeTransition? {
         val neighborCoords = getNeighbors(x, y)
         val neighborCells = grid.filter { cell ->
             neighborCoords.any { it.first == cell.x && it.second == cell.y }
@@ -121,10 +121,11 @@ class GameEngine(
         // Group neighbors by value
         val groups = neighborCells.groupBy { it.value }.toMutableMap()
 
-        // If there's a center cell, add it to the corresponding group
-        centerCell?.let { center ->
-            val group = groups[center.value] ?: emptyList()
-            groups[center.value] = group + center
+        // If there's a center cell OR a placed value, add it to the corresponding group
+        val effectiveValue = centerCell?.value ?: placedValue
+        effectiveValue?.let { v ->
+            val group = groups[v] ?: emptyList()
+            groups[v] = group + (centerCell ?: createCell(x, y, v, id = "placed_temp"))
         }
 
         // A merge happens if any group has at least 2 cells total
@@ -137,7 +138,7 @@ class GameEngine(
 
             valuesToMerge.forEachIndexed { index, value ->
                 val groupCells = groups[value]!!
-                val mergingNeighbors = groupCells.filter { it.id != centerCell?.id }
+                val mergingNeighbors = groupCells.filter { it.id != (centerCell?.id ?: "placed_temp") }
 
                 if (index == 0) {
                     currentCenterValue = value + groupCells.size - 1
@@ -152,7 +153,9 @@ class GameEngine(
                 }
             }
 
-            val mergingCells = neighborCells.filter { it.value in valuesToMerge } + listOfNotNull(centerCell).filter { it.value in valuesToMerge }
+            val mergingCells = neighborCells.filter { it.value in valuesToMerge } + 
+                    listOfNotNull(centerCell).filter { it.value in valuesToMerge }
+
             var baseScore = calculateBaseScore(mergingCells)
             if (mergingCells.any { it.isTactical }) {
                 baseScore = (baseScore * 1.5).toInt()
@@ -167,10 +170,55 @@ class GameEngine(
                 uniqueGroups = valuesToMerge.size,
                 baseScore = baseScore,
                 resultId = "cell_${idCounter++}",
-                isTactical = mergingCells.any { it.isTactical }
+                isTactical = mergingCells.any { it.isTactical },
+                participatingIds = mergingCells.map { it.id }.toSet()
             )
         }
         return null
+    }
+
+    fun calculatePathMerge(x: Int, y: Int, value: Int, grid: List<HexagonCell>): MergeTransition? {
+        val targetCellInGrid = grid.find { it.x == x && it.y == y }
+        val targetValue = value
+
+        val connectedCells = mutableSetOf<HexagonCell>()
+        val queue = mutableListOf(targetCellInGrid ?: createCell(x, y, targetValue))
+
+        while (queue.isNotEmpty()) {
+            val current = queue.removeAt(0)
+            if (connectedCells.any { it.id == current.id }) continue
+            connectedCells.add(current)
+
+            val neighborCoords = getNeighbors(current.x, current.y)
+            grid.filter { cell ->
+                cell.value == targetValue &&
+                        neighborCoords.any { it.first == cell.x && it.second == cell.y }
+            }.forEach { queue.add(it) }
+        }
+
+        if (connectedCells.size < 2) return null
+
+        val mergingNeighbors = connectedCells.filter { it.id != (targetCellInGrid?.id ?: "") }
+        val finalValue = targetValue + connectedCells.size - 1
+        val baseScore = calculateBaseScore(connectedCells.toList())
+
+        return MergeTransition(
+            targetX = x,
+            targetY = y,
+            steps = listOf(MergeStep(mergingNeighbors, finalValue)),
+            finalValue = finalValue,
+            totalCells = connectedCells.size,
+            uniqueGroups = 1,
+            baseScore = baseScore,
+            resultId = "cell_${idCounter++}",
+            isTactical = connectedCells.any { it.isTactical },
+            participatingIds = connectedCells.map { it.id }.toSet()
+        )
+    }
+
+    fun calculatePathMerge(x: Int, y: Int, grid: List<HexagonCell>): MergeTransition? {
+        val targetCell = grid.find { it.x == x && it.y == y } ?: return null
+        return calculatePathMerge(x, y, targetCell.value, grid)
     }
 
     fun calculateFusion(x: Int, y: Int, grid: List<HexagonCell>): MergeTransition? {
@@ -201,7 +249,8 @@ class GameEngine(
                 uniqueGroups = k,
                 baseScore = baseScore,
                 resultId = "cell_${idCounter++}",
-                isTactical = allCells.any { it.isTactical }
+                isTactical = allCells.any { it.isTactical },
+                participatingIds = allCells.map { it.id }.toSet()
             )
         }
         return null
@@ -221,6 +270,8 @@ class GameEngine(
                 if (x to y !in occupied) {
                     val merge = if (activePerk == Perk.FUSION) {
                         calculateFusion(x, y, grid)
+                    } else if (activePerk == Perk.PATH_MERGE) {
+                        calculatePathMerge(x, y, grid)
                     } else {
                         calculateMerge(x, y, grid)
                     }
@@ -295,6 +346,38 @@ class GameEngine(
             val weight = ((eval - minEval) / range).toFloat()
             MergeHint(x, y, weight)
         }
+    }
+
+    fun simulateChainMerge(x: Int, y: Int, grid: List<HexagonCell>, combo: Int): MergeTransition? {
+        var merge = calculateMerge(x, y, grid) ?: return null
+        var totalScore = merge.baseScore * (combo + 1)
+        var finalValue = merge.finalValue
+        var currentGrid = grid.filter { cell ->
+            merge.steps.none { step -> step.mergingCells.any { it.id == cell.id } } &&
+                    (cell.x != x || cell.y != y)
+        } + createCell(x, y, merge.finalValue)
+
+        val allMergingIds = merge.steps.flatMap { it.mergingCells }.map { it.id }.toMutableSet()
+        var chainCount = 1
+        while (chainCount < 10) {
+            val chain = calculateMerge(x, y, currentGrid) ?: break
+            totalScore += chain.baseScore * (combo + chainCount + 1)
+            finalValue = chain.finalValue
+            allMergingIds.addAll(chain.steps.flatMap { it.mergingCells }.map { it.id })
+            currentGrid = currentGrid.filter { cell ->
+                chain.steps.none { step -> step.mergingCells.any { it.id == cell.id } } &&
+                        (cell.x != x || cell.y != y)
+            } + createCell(x, y, chain.finalValue)
+            chainCount++
+        }
+
+        return merge.copy(
+            finalValue = finalValue,
+            baseScore = totalScore,
+            uniqueGroups = chainCount, 
+            resultId = "preview_chain",
+            participatingIds = allMergingIds
+        )
     }
 
     fun pickWeightedPerks(count: Int, excludeLegendary: Boolean = false): List<Perk> {
@@ -401,7 +484,7 @@ class GameEngine(
         if (emptyPositions.isEmpty()) return existingPerks to newCounter
         
         val pos = emptyPositions.random()
-        val perk = pickWeightedPerks(1).first()
+        val perk = pickWeightedPerks(1, excludeLegendary = false).filter { it != Perk.PATH_MERGE }.firstOrNull() ?: return existingPerks to newCounter
         
         val lifespan = when {
             perk.baseWeight <= 20 -> 1 // Legendary: must be collected immediately
@@ -438,5 +521,101 @@ class GameEngine(
 
     fun decrementTacticalFlags(grid: List<HexagonCell>): List<HexagonCell> {
         return grid.map { it.copy(isTactical = false) }
+    }
+
+    fun canPerkResolveStuck(
+        perk: Perk,
+        grid: List<HexagonCell>,
+        previews: List<PreviewCell>,
+        previousStateNotStuck: Boolean
+    ): Boolean {
+        return when (perk) {
+            Perk.UNDO -> previousStateNotStuck
+            Perk.REMOVE_TILE -> grid.isNotEmpty()
+            Perk.MOVE_TILE -> {
+                val occupied = grid.map { it.x to it.y }.toSet()
+                if (occupied.size >= columns * rows) return false
+                val distinctValues = grid.map { it.value }.distinct()
+                for (y in 0 until rows) {
+                    for (x in 0 until columns) {
+                        if (x to y !in occupied) {
+                            for (v in distinctValues) {
+                                if (checkMergeAt(x, y, grid + createCell(x, y, v))) return true
+                            }
+                        }
+                    }
+                }
+                false
+            }
+            Perk.SWAP_TILES -> {
+                for (i in grid.indices) {
+                    for (j in i + 1 until grid.size) {
+                        val c1 = grid[i]
+                        val c2 = grid[j]
+                        val tempGrid = grid.map {
+                            when (it.id) {
+                                c1.id -> it.copy(value = c2.value)
+                                c2.id -> it.copy(value = c1.value)
+                                else -> it
+                            }
+                        }
+                        if (checkMergeAt(c1.x, c1.y, tempGrid) || checkMergeAt(c2.x, c2.y, tempGrid)) return true
+                    }
+                }
+                false
+            }
+            Perk.INCREMENT_TILE -> {
+                grid.any { cell ->
+                    checkMergeAt(cell.x, cell.y, grid.map { if (it.id == cell.id) it.copy(value = it.value + 1) else it })
+                }
+            }
+            Perk.DUPLICATE_TILE -> {
+                val occupied = grid.map { it.x to it.y }.toSet()
+                if (occupied.size >= columns * rows) return false
+                val distinctValues = (grid.map { it.value } + previews.map { it.value }).distinct()
+                for (y in 0 until rows) {
+                    for (x in 0 until columns) {
+                        if (x to y !in occupied) {
+                            for (v in distinctValues) {
+                                if (checkMergeAt(x, y, grid + createCell(x, y, v))) return true
+                            }
+                        }
+                    }
+                }
+                false
+            }
+            Perk.FUSION -> {
+                grid.any { cell ->
+                    getNeighbors(cell.x, cell.y).any { n -> grid.any { it.x == n.first && it.y == n.second } }
+                }
+            }
+            Perk.PATH_MERGE -> {
+                grid.any { cell ->
+                    val neighbors = getNeighbors(cell.x, cell.y)
+                    grid.any { n -> n.value == cell.value && neighbors.any { it.first == n.x && it.second == n.y } }
+                }
+            }
+            Perk.ADVANCE_QUEUE -> {
+                previews.any { p ->
+                    val neighbors = getNeighbors(p.x, p.y)
+                    grid.count { n -> n.value == p.value && neighbors.any { it.first == n.x && it.second == n.y } } >= 1
+                }
+            }
+            else -> false
+        }
+    }
+
+    private fun checkMergeAt(x: Int, y: Int, grid: List<HexagonCell>): Boolean {
+        val neighborCoords = getNeighbors(x, y)
+        val neighborCells = grid.filter { cell ->
+            neighborCoords.any { it.first == cell.x && it.second == cell.y }
+        }
+        val centerCell = grid.find { it.x == x && it.y == y }
+        val groups = neighborCells.groupBy { it.value }.toMutableMap()
+        centerCell?.let { center ->
+            val group = groups[center.value] ?: emptyList()
+            groups[center.value] = group + center
+        }
+        return groups.any { it.value.size >= 2 }
     }
 }

@@ -55,6 +55,8 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val onEmptySpaceClick = remember(viewModel) { viewModel::onEmptySpaceClicked }
     val onEmptySpaceTouchDown = remember(viewModel) { viewModel::onEmptySpaceTouchDown }
     val onEmptySpaceTouchUp = remember(viewModel) { viewModel::onEmptySpaceTouchUp }
+    val onCellTouchDown = remember(viewModel) { viewModel::onCellTouchDown }
+    val onCellTouchUp = remember(viewModel) { viewModel::onCellTouchUp }
     val onCellClick = remember(viewModel) { viewModel::onCellClicked }
     val onMergeAnimationFinished = remember(viewModel) { viewModel::onMergeAnimationFinished }
     val onPerkClick = remember(viewModel) { viewModel::onUsePerkClicked }
@@ -174,6 +176,8 @@ internal fun GameScreen(viewModel: GameViewModel) {
                     onEmptySpaceClick = onEmptySpaceClick,
                     onEmptySpaceTouchDown = onEmptySpaceTouchDown,
                     onEmptySpaceTouchUp = onEmptySpaceTouchUp,
+                    onCellTouchDown = onCellTouchDown,
+                    onCellTouchUp = onCellTouchUp,
                     onCellClick = onCellClick,
                     onMergeAnimationFinished = onMergeAnimationFinished,
                     modifier = Modifier.weight(1f, fill = false).fillMaxWidth(),

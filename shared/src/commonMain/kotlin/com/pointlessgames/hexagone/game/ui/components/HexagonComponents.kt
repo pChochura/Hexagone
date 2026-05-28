@@ -64,12 +64,20 @@ import hexagone.shared.generated.resources.perk_advance_queue_desc
 import hexagone.shared.generated.resources.perk_advance_queue_name
 import hexagone.shared.generated.resources.perk_chain_merge_desc
 import hexagone.shared.generated.resources.perk_chain_merge_name
+import hexagone.shared.generated.resources.perk_duplicate_tile_desc
+import hexagone.shared.generated.resources.perk_duplicate_tile_name
 import hexagone.shared.generated.resources.perk_fusion_desc
 import hexagone.shared.generated.resources.perk_fusion_name
+import hexagone.shared.generated.resources.perk_increment_tile_desc
+import hexagone.shared.generated.resources.perk_increment_tile_name
 import hexagone.shared.generated.resources.perk_move_tile_desc
 import hexagone.shared.generated.resources.perk_move_tile_name
+import hexagone.shared.generated.resources.perk_path_merge_desc
+import hexagone.shared.generated.resources.perk_path_merge_name
 import hexagone.shared.generated.resources.perk_remove_tile_desc
 import hexagone.shared.generated.resources.perk_remove_tile_name
+import hexagone.shared.generated.resources.perk_skip_spawn_desc
+import hexagone.shared.generated.resources.perk_skip_spawn_name
 import hexagone.shared.generated.resources.perk_swap_tiles_desc
 import hexagone.shared.generated.resources.perk_swap_tiles_name
 import hexagone.shared.generated.resources.perk_undo_desc
@@ -111,6 +119,10 @@ object HexagonGridDefaults {
             Perk.SWAP_TILES -> colorScheme.secondaryContainer
             Perk.CHAIN_MERGE -> colorScheme.primaryContainer
             Perk.ADVANCE_QUEUE -> colorScheme.onTertiaryContainer
+            Perk.DUPLICATE_TILE -> colorScheme.secondary
+            Perk.SKIP_SPAWN -> colorScheme.tertiary
+            Perk.INCREMENT_TILE -> colorScheme.primary
+            Perk.PATH_MERGE -> colorScheme.errorContainer
         }
     }
 
@@ -330,6 +342,72 @@ object HexagonGridDefaults {
                     }
                     drawPath(arrowPath, color = color)
                 }
+
+                Perk.DUPLICATE_TILE -> {
+                    drawRect(
+                        color = color,
+                        topLeft = Offset(size.width * 0.15f, size.height * 0.15f),
+                        size = Size(size.width * 0.45f, size.height * 0.45f),
+                        style = Stroke(width = strokeWidth)
+                    )
+                    drawRect(
+                        color = color,
+                        topLeft = Offset(size.width * 0.4f, size.height * 0.4f),
+                        size = Size(size.width * 0.45f, size.height * 0.45f),
+                        style = Stroke(width = strokeWidth)
+                    )
+                }
+
+                Perk.SKIP_SPAWN -> {
+                    drawArc(
+                        color = color,
+                        startAngle = 0f,
+                        sweepAngle = 360f,
+                        useCenter = false,
+                        style = Stroke(width = strokeWidth)
+                    )
+                    drawLine(
+                        color = color,
+                        start = Offset(size.width * 0.3f, size.height * 0.3f),
+                        end = Offset(size.width * 0.7f, size.height * 0.7f),
+                        strokeWidth = strokeWidth
+                    )
+                    val arrowPath = Path().apply {
+                        moveTo(size.width * 0.8f, size.height * 0.5f)
+                        lineTo(size.width * 0.55f, size.height * 0.35f)
+                        lineTo(size.width * 0.55f, size.height * 0.65f)
+                        close()
+                    }
+                    drawPath(arrowPath, color = color)
+                }
+
+                Perk.INCREMENT_TILE -> {
+                    drawLine(
+                        color = color,
+                        start = Offset(size.width * 0.5f, size.height * 0.2f),
+                        end = Offset(size.width * 0.5f, size.height * 0.8f),
+                        strokeWidth = strokeWidth
+                    )
+                    drawLine(
+                        color = color,
+                        start = Offset(size.width * 0.2f, size.height * 0.5f),
+                        end = Offset(size.width * 0.8f, size.height * 0.5f),
+                        strokeWidth = strokeWidth
+                    )
+                }
+
+                Perk.PATH_MERGE -> {
+                    val path = Path().apply {
+                        moveTo(size.width * 0.2f, size.height * 0.2f)
+                        lineTo(size.width * 0.5f, size.height * 0.5f)
+                        lineTo(size.width * 0.8f, size.height * 0.2f)
+                        moveTo(size.width * 0.2f, size.height * 0.8f)
+                        lineTo(size.width * 0.5f, size.height * 0.5f)
+                        lineTo(size.width * 0.8f, size.height * 0.8f)
+                    }
+                    drawPath(path, color = color, style = Stroke(width = strokeWidth))
+                    drawCircle(color, radius = size.width * 0.1f, center = Offset(size.width * 0.5f, size.height * 0.5f))
+                }
             }
         }
     }
@@ -364,6 +442,10 @@ val Perk.displayNameRes get() = when(this) {
     Perk.SWAP_TILES -> Res.string.perk_swap_tiles_name
     Perk.FUSION -> Res.string.perk_fusion_name
     Perk.CHAIN_MERGE -> Res.string.perk_chain_merge_name
+    Perk.DUPLICATE_TILE -> Res.string.perk_duplicate_tile_name
+    Perk.SKIP_SPAWN -> Res.string.perk_skip_spawn_name
+    Perk.INCREMENT_TILE -> Res.string.perk_increment_tile_name
+    Perk.PATH_MERGE -> Res.string.perk_path_merge_name
 }
 
 val Perk.descriptionRes get() = when(this) {
@@ -374,6 +456,10 @@ val Perk.descriptionRes get() = when(this) {
     Perk.SWAP_TILES -> Res.string.perk_swap_tiles_desc
     Perk.FUSION -> Res.string.perk_fusion_desc
     Perk.CHAIN_MERGE -> Res.string.perk_chain_merge_desc
+    Perk.DUPLICATE_TILE -> Res.string.perk_duplicate_tile_desc
+    Perk.SKIP_SPAWN -> Res.string.perk_skip_spawn_desc
+    Perk.INCREMENT_TILE -> Res.string.perk_increment_tile_desc
+    Perk.PATH_MERGE -> Res.string.perk_path_merge_desc
 }
 
 @Composable
@@ -417,10 +503,12 @@ fun Hexagon(
 
     val ghostModifier = if (isGhost) {
         Modifier.drawWithContent {
+            val alpha = 0.3f
+            val stripeAlpha = 0.15f
             drawContent()
             val stripeWidth = spacing.extraTiny.toPx() * 1.5f
             val gap = spacing.semiMedium.toPx()
-            val color = Color.White.copy(alpha = 0.15f)
+            val color = Color.White.copy(alpha = stripeAlpha)
             val step = stripeWidth + gap
             val offsetPx = (stripeOffset?.value ?: 0f).dp.toPx()
             
