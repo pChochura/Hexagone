@@ -12,7 +12,7 @@ The project is structured as a Kotlin Multiplatform (KMP) application with a sha
 ```text
 shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 ├── data/
-│   └── SettingsRepository.kt     # High Score & DataStore persistence
+│   └── SettingsRepository.kt     # Game State, High Score & DataStore persistence
 ├── di/
 │   └── AppModule.kt              # Koin Dependency Injection
 ├── game/
@@ -82,6 +82,7 @@ Perks are strategic tools collected via leveling up or on-board scavenge.
     *   **Player Collection**: Perks are captured by triggering a **merge**, **fusion**, or moving a tile onto the perk position.
     *   **Queue Solidification**: If a queue piece lands on a perk position, the perk is deleted (not collected).
 *   **Weighted Lifespan**: Common perks last 3 turns, Rare 2 turns, and Legendary must be captured in exactly 1 turn.
+*   **Cursed Reroll**: Once per level-up choice, the player can reroll the selection. **Penalty**: Legendary perks are removed from the generation pool for that specific roll (guarantees Common/Rare).
 
 ---
 
@@ -96,6 +97,7 @@ Perks are strategic tools collected via leveling up or on-board scavenge.
     *   **Perk Refresh**: Uses `AnimatedContent` to scale/fade perks when selecting multiple rewards in sequence.
 *   **Emergency Mode**: When stuck, the HUD displays a floating, bouncing tooltip and faster shelf pulse to guide players toward using a perk.
 *   **Interactive Result Card**: Floating frosted glass overlay with animated score count-ups, detailed stats (merges, max combo, highest tile), and a "View Board" peek mode.
+*   **Localization**: Full multi-language support (English, Polish) using **Compose Resources**. All strings are externalized to `strings.xml`.
 
 ---
 
@@ -103,5 +105,7 @@ Perks are strategic tools collected via leveling up or on-board scavenge.
 1.  **State Atomicity**: Use `_uiState.update { ... }` for all gameplay changes to ensure consistency.
 2.  **Interaction Locking**: Check `isBusy` and `pendingMerge` to block gestures during animations.
 3.  **No Delays for UI**: Use `finishedListener` callbacks and `LaunchedEffect(state)` for reliable animation sequencing.
-4.  **Level Choice Queueing**: Multiple level-ups are queued. Use `perkSpawnCounter` to track turns between on-board spawns.
-5.  **Ghost/Perk Interactions**: Always clean up overlapping ghosts or perks when a tile occupies a hex to maintain board clarity.
+4.  **State Persistence**: Game state is automatically serialized via `kotlinx.serialization` and saved to `DataStore` after every significant move or state change. This allows users to resume progress across app restarts.
+5.  **Score Tracking**: The system distinguishes between the **Historical Best** (saved to disk) and the **Session Best** (score at game start) to provide clear progress comparison during play.
+6.  **Level Choice Queueing**: Multiple level-ups are queued. Use `perkSpawnCounter` to track turns between on-board spawns.
+7.  **Ghost/Perk Interactions**: Always clean up overlapping ghosts or perks when a tile occupies a hex to maintain board clarity.
