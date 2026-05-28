@@ -1014,7 +1014,7 @@ internal class GameViewModel(
             mergeHintsEnabled = _uiState.value.mergeHintsEnabled,
             preview = initialPreviews,
             bestScore = absoluteBestScore,
-            collectedPerks = Perk.entries,
+            collectedPerks = emptyList(),
             onBoardPerks = emptyList(),
             perkSpawnCounter = 0,
         )
