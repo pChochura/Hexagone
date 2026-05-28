@@ -89,11 +89,14 @@ Perks are strategic tools collected via leveling up or on-board scavenge.
 ## 4. UI & Visual Identity
 
 *   **Atmospheric Dimming**: Seamless full-screen focus shift during choice-heavy states (Level Up, Stuck).
-*   **Neon Bloom**: Contoured, multi-layered "neon" outlines around active strategic areas (Perk Shelf, Result Card).
+*   **Tactical Tooltip System**: Persistent, neon-bordered tooltips triggered by long-press. Features dynamic scale-up origin tracking (originate from anchor) and a breathing "hover" float animation.
+*   **Neon Bloom**: Contoured, multi-layered "neon" outlines and inner glows around active strategic areas (Perk Shelf, Result Card, Tooltips).
+*   **Design Tokens**: Fully semantic theme implementation using Material 3 color mapping and specialized design tokens for `Spacing`, `CornerRadius`, and `IconSize`.
 *   **Fluid HUD**: A liquid level progress bar with a wavy edge. "Splashes" with intensity and speed proportional to the points earned relative to the current level.
 *   **Stable Popup Stacking**: Popups (Score/Perks) group by **grid coordinates** and use **deterministic ID sorting** for stable horizontal offsets, preventing layout jitter during rapid merges.
 *   **Dynamic Level Up**: 
     *   **Queue Indicator**: A badge showing the number of pending level-up rewards.
+    *   **Perk Selection**: Breathable, simplified layout focusing on icon and name; detailed descriptions and "Cursed Reroll" penalties are moved to persistent tooltips.
     *   **Perk Refresh**: Uses `AnimatedContent` to scale/fade perks when selecting multiple rewards in sequence.
 *   **Emergency Mode**: When stuck, the HUD displays a floating, bouncing tooltip and faster shelf pulse to guide players toward using a perk.
 *   **Interactive Result Card**: Floating frosted glass overlay with animated score count-ups, detailed stats (merges, max combo, highest tile), and a "View Board" peek mode.
