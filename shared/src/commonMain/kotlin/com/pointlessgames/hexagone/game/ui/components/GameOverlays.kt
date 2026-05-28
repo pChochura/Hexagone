@@ -46,11 +46,14 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
@@ -58,11 +61,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.choose_your_perk
@@ -79,6 +86,7 @@ import hexagone.shared.generated.resources.stat_max_piece
 import hexagone.shared.generated.resources.stat_merges
 import hexagone.shared.generated.resources.try_perk_subtitle
 import hexagone.shared.generated.resources.view_board_button
+import hexagone.shared.generated.resources.view_stats_button
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos
@@ -106,10 +114,64 @@ fun GameOverlays(
 ) {
     val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver
     val dimAlphaState = animateFloatAsState(
-        targetValue = if (isAnyOverlayVisible && !showBoard) 0.8f else 0f,
+        targetValue = if (isAnyOverlayVisible && !showBoard) 0.5f else 0f,
         animationSpec = tween(500),
         label = "dim_alpha"
     )
+
+    val currentScore = scoreProvider()
+    val isNewBest = isGameOver && currentScore >= bestScore && currentScore > 0
+    val confettiPieces = remember { androidx.compose.runtime.mutableStateListOf<ConfettiPiece>() }
+    var hasSpawnedConfetti by remember(isGameOver) { mutableStateOf(false) }
+
+    androidx.compose.runtime.LaunchedEffect(isNewBest) {
+        if (isNewBest && !hasSpawnedConfetti) {
+            repeat(60) {
+                val angle = kotlin.random.Random.nextFloat() * kotlin.math.PI.toFloat() + kotlin.math.PI.toFloat()
+                val speed = 200f + kotlin.random.Random.nextFloat() * 500f
+                confettiPieces.add(
+                    ConfettiPiece(
+                        x = 0f,
+                        y = 0f,
+                        vx = kotlin.math.cos(angle) * speed,
+                        vy = kotlin.math.sin(angle) * speed,
+                        rotation = kotlin.random.Random.nextFloat() * 360f,
+                        rotationSpeed = (-200..200).random().toFloat(),
+                        color = if (kotlin.random.Random.nextBoolean()) Color(0xFFF06292) else Color.White,
+                        life = 2.5f + kotlin.random.Random.nextFloat() * 2f,
+                        size = 8f + kotlin.random.Random.nextFloat() * 8f,
+                        flipSpeed = 3f + kotlin.random.Random.nextFloat() * 5f
+                    )
+                )
+            }
+            hasSpawnedConfetti = true
+            
+            while (confettiPieces.isNotEmpty()) {
+                kotlinx.coroutines.delay(16)
+                val dt = 0.016f
+                val iterator = confettiPieces.listIterator()
+                while (iterator.hasNext()) {
+                    val c = iterator.next()
+                    if (c.life <= 0) {
+                        iterator.remove()
+                    } else {
+                        iterator.set(
+                            c.copy(
+                                x = c.x + c.vx * dt + kotlin.math.sin(c.life * 5f) * 2f,
+                                y = c.y + c.vy * dt,
+                                vy = c.vy + 600f * dt,
+                                vx = c.vx * 0.98f,
+                                rotation = c.rotation + c.rotationSpeed * dt,
+                                life = c.life - dt
+                            )
+                        )
+                    }
+                }
+            }
+        } else if (!isGameOver) {
+            confettiPieces.clear()
+        }
+    }
 
     if (isAnyOverlayVisible || dimAlphaState.value > 0f) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -142,8 +204,8 @@ fun GameOverlays(
 
             AnimatedVisibility(
                 visible = isGameOver && !showBoard,
-                enter = fadeIn(tween(1000)) + slideInVertically(initialOffsetY = { it / 4 }),
-                exit = fadeOut(tween(500)) + scaleOut(targetScale = 0.8f),
+                enter = fadeIn(tween(800)) + slideInVertically(initialOffsetY = { -it / 8 }),
+                exit = fadeOut(tween(400)) + scaleOut(targetScale = 0.9f),
                 modifier = Modifier.align(Alignment.Center)
             ) {
                 GameOverDialog(
@@ -153,26 +215,71 @@ fun GameOverlays(
                     maxCombo = maxCombo,
                     totalMerges = totalMerges,
                     highestValue = highestValue,
+                    onViewBoard = onViewBoardToggle
+                )
+            }
+
+            AnimatedVisibility(
+                visible = isGameOver && !showBoard,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) {
+                GameOverBottomActions(
                     onRestart = onRestart,
-                    onViewBoard = onViewBoardToggle,
                     onShare = onShare,
                     onLeaderboard = onLeaderboard
+                )
+            }
+
+            if (confettiPieces.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .drawWithContent {
+                            withTransform({
+                                translate(size.width / 2, size.height / 3)
+                            }) {
+                                confettiPieces.forEach { c ->
+                                    rotate(c.rotation, Offset(c.x, c.y)) {
+                                        val flipScale = kotlin.math.abs(kotlin.math.sin(c.life * c.flipSpeed))
+                                        drawRect(
+                                            color = c.color.copy(alpha = (c.life * 1.5f).coerceIn(0f, 1f)),
+                                            topLeft = Offset(c.x - c.size / 2, c.y - (c.size * flipScale) / 2),
+                                            size = androidx.compose.ui.geometry.Size(c.size, c.size * flipScale)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                 )
             }
 
             if (isGameOver && showBoard) {
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .statusBarsPadding()
-                        .padding(16.dp)
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .clickable { onViewBoardToggle() },
-                    contentAlignment = Alignment.Center
+                        .fillMaxSize()
+                        .navigationBarsPadding()
+                        .padding(bottom = 80.dp),
+                    contentAlignment = Alignment.BottomCenter
                 ) {
-                    Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(Color.Black.copy(alpha = 0.6f))
+                            .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(100.dp))
+                            .clickable { onViewBoardToggle() }
+                            .padding(horizontal = 24.dp, vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.view_stats_button).uppercase(),
+                            color = Color.White,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 12.sp,
+                            letterSpacing = 1.sp
+                        )
+                    }
                 }
             }
         }
@@ -324,6 +431,19 @@ private fun PerkSelectionDialog(
     }
 }
 
+private data class ConfettiPiece(
+    val x: Float,
+    val y: Float,
+    val vx: Float,
+    val vy: Float,
+    val rotation: Float,
+    val rotationSpeed: Float,
+    val color: Color,
+    val life: Float,
+    val size: Float,
+    val flipSpeed: Float
+)
+
 @Composable
 private fun GameOverDialog(
     score: Int,
@@ -332,14 +452,11 @@ private fun GameOverDialog(
     maxCombo: Int,
     totalMerges: Int,
     highestValue: Int,
-    onRestart: () -> Unit,
     onViewBoard: () -> Unit,
-    onShare: () -> Unit,
-    onLeaderboard: () -> Unit
 ) {
     val animatedScore by animateIntAsState(
         targetValue = score,
-        animationSpec = tween(2000),
+        animationSpec = tween(1500),
         label = "score_count_up"
     )
 
@@ -354,6 +471,32 @@ private fun GameOverDialog(
         label = "glow_alpha"
     )
 
+    val isNewBest = score >= bestScore && score > 0
+    val badgeTransition = rememberInfiniteTransition(label = "new_best_pulse")
+    val badgeScale by badgeTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.1f,
+        animationSpec = infiniteRepeatable(animation = tween(800), repeatMode = RepeatMode.Reverse),
+        label = "badge_scale"
+    )
+    val badgeRotation by badgeTransition.animateFloat(
+        initialValue = -8f,
+        targetValue = 8f,
+        animationSpec = infiniteRepeatable(animation = tween(1200), repeatMode = RepeatMode.Reverse),
+        label = "badge_rotation"
+    )
+
+    val maxPieceTransition = rememberInfiniteTransition(label = "max_piece_shift")
+    val maxPieceShift by maxPieceTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = androidx.compose.animation.core.LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "max_piece_shift"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxWidth(0.9f)
@@ -364,7 +507,7 @@ private fun GameOverDialog(
                     addRoundRect(RoundRect(Rect(0f, 0f, size.width, size.height), cornerRadius, cornerRadius))
                 }
 
-                // Layered strokes for glow
+                // Restore Layered strokes for glow
                 for (i in 1..3) {
                     drawPath(
                         path = path,
@@ -373,192 +516,313 @@ private fun GameOverDialog(
                     )
                 }
             }
-            .background(Color(0xFF1C1C24).copy(alpha = 0.98f), RoundedCornerShape(32.dp))
+            .background(Color(0xFF1C1C24).copy(alpha = 0.96f), RoundedCornerShape(32.dp))
             .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(32.dp))
             .padding(24.dp),
-        contentAlignment = Alignment.Center
     ) {
+        // View Board Icon Button (Canvas drawn)
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(40.dp)
+                .clip(CircleShape)
+                .clickable { onViewBoard() }
+                .padding(8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val stroke = 1.5.dp.toPx()
+                val color = Color.White.copy(alpha = 0.4f)
+                // Eyeball shape
+                val path = Path().apply {
+                    moveTo(0f, size.height / 2)
+                    quadraticTo(size.width / 2, -size.height / 4, size.width, size.height / 2)
+                    quadraticTo(size.width / 2, size.height * 1.25f, 0f, size.height / 2)
+                }
+                drawPath(path, color, style = Stroke(stroke))
+                drawCircle(color, radius = size.width / 5, center = center, style = Stroke(stroke))
+            }
+        }
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = stringResource(Res.string.game_over_title),
-                color = Color.White.copy(alpha = 0.4f),
+                text = stringResource(Res.string.game_over_title).uppercase(),
+                color = Color.White.copy(alpha = 0.3f),
                 fontWeight = FontWeight.Black,
-                fontSize = 12.sp,
-                letterSpacing = 6.sp
+                fontSize = 10.sp,
+                letterSpacing = 4.sp
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(8.dp))
 
-            Box(contentAlignment = Alignment.Center) {
-                // Score Glow Effect
-                Box(
-                    modifier = Modifier
-                        .size(200.dp, 100.dp)
-                        .drawBehind {
-                            drawCircle(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(Color(0xFFF06292).copy(alpha = 0.15f * glowAlpha * 5f), Color.Transparent)
-                                ),
-                                radius = 100.dp.toPx()
-                            )
-                        }
-                )
-
-                Text(
-                    text = animatedScore.toString(),
-                    color = Color.White,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 72.sp,
-                    textAlign = TextAlign.Center
-                )
-                
-                if (score >= bestScore && score > 0) {
-                    Box(
-                        modifier = Modifier
-                            .offset(y = (-45).dp)
-                            .background(Color(0xFFF06292), RoundedCornerShape(100.dp))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
+            // Hero Section: Score & Max Piece
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(contentAlignment = Alignment.TopEnd) {
                         Text(
-                            text = stringResource(Res.string.new_best_label),
+                            text = animatedScore.toString(),
                             color = Color.White,
                             fontWeight = FontWeight.Black,
-                            fontSize = 9.sp
+                            fontSize = 72.sp,
+                            textAlign = TextAlign.Center,
+                            style = androidx.compose.ui.text.TextStyle(
+                                shadow = androidx.compose.ui.graphics.Shadow(
+                                    color = Color(0xFFF06292).copy(alpha = glowAlpha * 2f),
+                                    offset = Offset(0f, 0f),
+                                    blurRadius = 30f
+                                )
+                            ),
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
+                        
+                        if (isNewBest) {
+                            Box(
+                                modifier = Modifier
+                                    .offset(x = 10.dp, y = (-5).dp)
+                                    .graphicsLayer {
+                                        scaleX = badgeScale
+                                        scaleY = badgeScale
+                                        rotationZ = badgeRotation
+                                    }
+                                    .background(Color(0xFFF06292), RoundedCornerShape(100.dp))
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.new_best_label).uppercase(),
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 8.sp,
+                                )
+                            }
+                        }
+                    }
+                    
+                    Text(
+                        text = "BEST: $bestScore",
+                        color = Color.White.copy(alpha = 0.4f),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        letterSpacing = 1.sp
+                    )
+                }
+
+                Spacer(Modifier.width(24.dp))
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(contentAlignment = Alignment.Center) {
+                        val baseColor = HexagonGridDefaults.getColorForValue(highestValue)
+                        val shiftColor = Color(
+                            (baseColor.red * 0.6f + 0.4f).coerceIn(0f, 1f),
+                            (baseColor.green * 0.6f + 0.4f).coerceIn(0f, 1f),
+                            (baseColor.blue * 0.6f + 0.4f).coerceIn(0f, 1f),
+                            1f
+                        )
+                        
+                        // Interpolate colors for the gradient animation
+                        val c1 = androidx.compose.ui.graphics.lerp(baseColor, shiftColor, maxPieceShift)
+                        val c2 = androidx.compose.ui.graphics.lerp(shiftColor, baseColor, maxPieceShift)
+                        
+                        Hexagon(
+                            value = highestValue.toString(),
+                            backgroundColor = Color.Transparent,
+                            modifier = Modifier
+                                .size(64.dp)
+                                .aspectRatio(1 / 0.866f)
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(c1, c2, c1),
+                                        start = Offset(0f, 0f),
+                                        end = Offset.Infinite
+                                    ),
+                                    shape = FlatTopHexagonShape()
+                                )
+                                .border(1.dp, Color.White.copy(alpha = 0.15f), FlatTopHexagonShape())
                         )
                     }
-                }
-            }
-
-            Spacer(Modifier.height(32.dp))
-
-            // Stats Grid (2x2)
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    GameOverStatBox(stringResource(Res.string.stat_level), level.toString(), modifier = Modifier.weight(1f))
-                    GameOverStatBox(stringResource(Res.string.stat_merges), totalMerges.toString(), modifier = Modifier.weight(1f))
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    GameOverStatBox(stringResource(Res.string.stat_max_combo), "x$maxCombo", modifier = Modifier.weight(1f))
-                    GameOverStatBox(stringResource(Res.string.stat_max_piece), highestValue.toString(), isHex = true, modifier = Modifier.weight(1f))
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "MAX",
+                        color = Color.White.copy(alpha = 0.3f),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 9.sp,
+                        letterSpacing = 1.sp
+                    )
                 }
             }
 
             Spacer(Modifier.height(40.dp))
 
-            // Main Primary Action
-            Button(
-                onClick = onRestart,
+            // Organic Stats Row with Canvas Icons
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF06292),
-                    contentColor = Color.White
-                )
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Text(
-                    text = stringResource(Res.string.play_again_button),
-                    fontWeight = FontWeight.Black,
-                    fontSize = 16.sp,
-                    letterSpacing = 1.sp
+                OrganicStatItem(
+                    icon = { LevelIcon() },
+                    label = stringResource(Res.string.stat_level),
+                    value = level.toString()
+                )
+                OrganicStatItem(
+                    icon = { ComboIcon() },
+                    label = stringResource(Res.string.stat_max_combo),
+                    value = "x$maxCombo"
+                )
+                OrganicStatItem(
+                    icon = { MergeIcon() },
+                    label = stringResource(Res.string.stat_merges),
+                    value = totalMerges.toString()
                 )
             }
-
-            Spacer(Modifier.height(12.dp))
-
-            // Secondary Actions Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                SecondaryGameButton(
-                    onClick = onShare,
-                    icon = "⤴",
-                    modifier = Modifier.weight(1f)
-                )
-                SecondaryGameButton(
-                    onClick = onLeaderboard,
-                    icon = "🏆",
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            // View Board
-            Text(
-                text = stringResource(Res.string.view_board_button),
-                color = Color.White.copy(alpha = 0.5f),
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp,
-                letterSpacing = 1.sp,
-                modifier = Modifier
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onViewBoard
-                    )
-                    .padding(8.dp)
-            )
         }
     }
 }
 
 @Composable
-private fun GameOverStatBox(
-    label: String, 
-    value: String, 
-    modifier: Modifier = Modifier,
-    isHex: Boolean = false
+private fun LevelIcon() {
+    Canvas(modifier = Modifier.size(20.dp)) {
+        val color = Color(0xFFF06292)
+        val stroke = 2.dp.toPx()
+        // Staircase shape
+        drawLine(color, Offset(0f, size.height), Offset(size.width, 0f), stroke)
+        drawLine(color, Offset(size.width, 0f), Offset(size.width * 0.6f, 0f), stroke)
+        drawLine(color, Offset(size.width, 0f), Offset(size.width, size.height * 0.4f), stroke)
+    }
+}
+
+@Composable
+private fun ComboIcon() {
+    Canvas(modifier = Modifier.size(20.dp)) {
+        val color = Color(0xFFF06292)
+        val stroke = 2.dp.toPx()
+        // Lightning bolt / Flash shape
+        val path = Path().apply {
+            moveTo(size.width * 0.6f, 0f)
+            lineTo(size.width * 0.2f, size.height * 0.6f)
+            lineTo(size.width * 0.5f, size.height * 0.6f)
+            lineTo(size.width * 0.4f, size.height)
+            lineTo(size.width * 0.8f, size.height * 0.4f)
+            lineTo(size.width * 0.5f, size.height * 0.4f)
+            close()
+        }
+        drawPath(path, color, style = Stroke(stroke))
+    }
+}
+
+@Composable
+private fun MergeIcon() {
+    Canvas(modifier = Modifier.size(20.dp)) {
+        val color = Color(0xFFF06292)
+        val stroke = 1.5.dp.toPx()
+        // Three merging circles
+        drawCircle(color, radius = size.width / 4, center = Offset(size.width / 2, size.height / 3), style = Stroke(stroke))
+        drawCircle(color, radius = size.width / 4, center = Offset(size.width / 3, size.height * 0.7f), style = Stroke(stroke))
+        drawCircle(color, radius = size.width / 4, center = Offset(size.width * 0.66f, size.height * 0.7f), style = Stroke(stroke))
+    }
+}
+
+@Composable
+private fun OrganicStatItem(
+    icon: @Composable () -> Unit,
+    label: String,
+    value: String
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .background(Color.White.copy(alpha = 0.05f), CircleShape)
+                .border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            icon()
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = value,
+            color = Color.White,
+            fontWeight = FontWeight.Black,
+            fontSize = 18.sp
+        )
+        Text(
+            text = label.uppercase(),
+            color = Color.White.copy(alpha = 0.3f),
+            fontWeight = FontWeight.Bold,
+            fontSize = 8.sp,
+            letterSpacing = 0.5.sp
+        )
+    }
+}
+
+@Composable
+private fun GameOverBottomActions(
+    onRestart: () -> Unit,
+    onShare: () -> Unit,
+    onLeaderboard: () -> Unit
 ) {
     Box(
-        modifier = modifier
-            .height(64.dp)
-            .background(Color.White.copy(alpha = 0.03f), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = label,
-                color = Color.White.copy(alpha = 0.3f),
-                fontWeight = FontWeight.Bold,
-                fontSize = 9.sp,
-                letterSpacing = 0.5.sp
-            )
-            Spacer(Modifier.height(2.dp))
-            if (isHex) {
-                val valInt = value.toIntOrNull() ?: 1
-                Hexagon(
-                    value = value,
-                    backgroundColor = HexagonGridDefaults.getColorForValue(valInt).copy(alpha = 0.2f),
-                    isOutline = true,
-                    modifier = Modifier.size(24.dp).aspectRatio(1 / 0.866f)
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))
                 )
-            } else {
+            )
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 32.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SecondaryGameButton(
+                onClick = onShare,
+                icon = "⤴",
+                modifier = Modifier.size(56.dp)
+            )
+
+            Button(
+                onClick = onRestart,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(64.dp)
+                    .graphicsLayer {
+                        shadowElevation = 8.dp.toPx()
+                        shape = RoundedCornerShape(20.dp)
+                        clip = true
+                    },
+                shape = RoundedCornerShape(20.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFF06292),
+                    contentColor = Color.White
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+            ) {
                 Text(
-                    text = value,
-                    color = Color.White,
+                    text = stringResource(Res.string.play_again_button).uppercase(),
                     fontWeight = FontWeight.Black,
-                    fontSize = 18.sp
+                    fontSize = 18.sp,
+                    letterSpacing = 1.5.sp
                 )
             }
+
+            SecondaryGameButton(
+                onClick = onLeaderboard,
+                icon = "🏆",
+                modifier = Modifier.size(56.dp)
+            )
         }
     }
 }
+
 
 @Composable
 private fun StatusDialog(

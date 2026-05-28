@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -123,6 +124,17 @@ internal fun GameScreen(viewModel: GameViewModel) {
                 ),
             )
     ) {
+        // Debug Trigger (Hidden)
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .statusBarsPadding()
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null
+                ) { viewModel.triggerGameOver() }
+        )
+
         // Main Board Content
         Column(
             modifier = Modifier

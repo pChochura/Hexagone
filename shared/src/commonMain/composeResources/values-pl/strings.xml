@@ -17,6 +17,7 @@
     <string name="stat_max_piece">NAJWIĘKSZY</string>
     <string name="play_again_button">ZAGRAJ PONOWNIE</string>
     <string name="view_board_button">ZOBACZ PLANSZĘ</string>
+    <string name="view_stats_button">ZOBACZ STATYSTYKI</string>
     <string name="no_more_moves_title">BRAK RUCHÓW</string>
     <string name="game_over_subtitle">Powodzenia następnym razem!</string>
     <string name="try_perk_subtitle">Spróbuj użyć perka.</string>

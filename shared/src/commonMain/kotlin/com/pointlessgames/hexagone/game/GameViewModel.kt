@@ -1028,4 +1028,8 @@ internal class GameViewModel(
     fun onViewBoardToggled() {
         _uiState.update { it.copy(showGameOverBoard = !it.showGameOverBoard) }
     }
+
+    fun triggerGameOver() {
+        _uiState.update { it.copy(isGameOver = true) }
+    }
 }

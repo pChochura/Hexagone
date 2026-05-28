@@ -232,6 +232,7 @@ internal fun GameGridOverlay(
                             ),
                         )
                     }
+
                     else -> {}
                 }
             }
