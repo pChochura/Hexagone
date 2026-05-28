@@ -117,6 +117,7 @@ internal data class GameState(
     val reachedComboTiers: Set<ComboTier>,
     val perkOptions: List<Perk>,
     val canReroll: Boolean,
+    val sessionBestScore: Int,
 )
 
 internal class GameViewModel(
@@ -135,6 +136,7 @@ internal class GameViewModel(
     val effects: SharedFlow<GameEffect> = _effects.asSharedFlow()
 
     private var lastLevel = 1
+    private var absoluteBestScore = 0
     private var stateHistory = mutableListOf<GameState>()
     private var lastMoveScore: Int? = null
     private var lastProcessedMergeId: String? = null
@@ -166,10 +168,12 @@ internal class GameViewModel(
                             reachedComboTiers = savedState.reachedComboTiers,
                             perkOptions = savedState.perkOptions,
                             canReroll = savedState.canReroll,
-                            bestScore = best,
+                            bestScore = savedState.sessionBestScore,
                             mergeHintsEnabled = hintsEnabled,
                         )
                     }
+                    absoluteBestScore = best
+                    absoluteBestScore = maxOf(best, savedState.score)
                     lastLevel = savedState.level
                     updateLevel()
                     checkValidMoves()
@@ -178,6 +182,7 @@ internal class GameViewModel(
                     restartGame()
                 }
             } else {
+                absoluteBestScore = best
                 _uiState.update { it.copy(bestScore = best, mergeHintsEnabled = hintsEnabled) }
                 restartGame()
             }
@@ -209,6 +214,15 @@ internal class GameViewModel(
         }
     }
 
+    private fun persistBestScore(score: Int) {
+        if (score > absoluteBestScore) {
+            absoluteBestScore = score
+            viewModelScope.launch {
+                settingsRepository.setBestScore(score)
+            }
+        }
+    }
+
     private fun saveState() {
         val currentState = getCurrentGameState()
         stateHistory.add(currentState)
@@ -234,6 +248,7 @@ internal class GameViewModel(
             reachedComboTiers = state.reachedComboTiers,
             perkOptions = state.perkOptions,
             canReroll = state.canReroll,
+            sessionBestScore = state.bestScore,
         )
     }
 
@@ -470,12 +485,14 @@ internal class GameViewModel(
                 val labelRes =
                     if (barRaised) Res.string.label_bar_raised else Res.string.label_cleanup
 
+                val nextScore = _uiState.value.score + finalBonus
                 _uiState.update { s ->
                     s.copy(
                         preview = s.preview.filter { it.id != preview.id },
-                        score = s.score + finalBonus,
+                        score = nextScore,
                     )
                 }
+                persistBestScore(nextScore)
                 addScorePopup(preview.x, preview.y, finalBonus, Color(0xFF90A4AE), labelRes)
                 finishPerkAction(Perk.REMOVE_TILE)
             }
@@ -529,12 +546,14 @@ internal class GameViewModel(
                     Res.string.label_cleanup
                 }
 
+                val nextScore = _uiState.value.score + finalBonus
                 _uiState.update {
                     it.copy(
                         grid = it.grid.filter { it.id != cell.id },
-                        score = it.score + finalBonus,
+                        score = nextScore,
                     )
                 }
+                persistBestScore(nextScore)
                 val popupColor =
                     if (barRaised) Color(0xFF4FC3F7) else if (isOnlyHighest) Color(0xFFF06292) else Color(
                         0xFF90A4AE,
@@ -703,7 +722,7 @@ internal class GameViewModel(
             ) else emptyList(),
             mergeHintsEnabled = _uiState.value.mergeHintsEnabled,
             preview = initialPreviews,
-            bestScore = _uiState.value.bestScore,
+            bestScore = absoluteBestScore,
             collectedPerks = listOf(),
             onBoardPerks = emptyList(),
             perkSpawnCounter = 0,
@@ -803,11 +822,7 @@ internal class GameViewModel(
                     }
 
                 val finalScore = currentState.score + totalAddedScore + redemptionBonus
-                val nextBestScore =
-                    if (finalScore > currentState.bestScore) finalScore else currentState.bestScore
-                if (nextBestScore > currentState.bestScore) {
-                    settingsRepository.setBestScore(nextBestScore)
-                }
+                persistBestScore(finalScore)
 
                 // Tier Reward Logic
                 val newReachedTiers = mutableSetOf<ComboTier>()
@@ -841,7 +856,7 @@ internal class GameViewModel(
 
                     it.copy(
                         score = finalScore,
-                        bestScore = nextBestScore,
+                        bestScore = currentState.bestScore,
                         levelProgress = engine.getLevelProgress(finalScore, it.level),
                         combo = finalCombo,
                         grid = finalGrid,
