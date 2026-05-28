@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,6 +48,8 @@ fun PerkBar(
     onPerkClick: (Perk) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val surfaceColor = MaterialTheme.colorScheme.surface
     val infiniteTransition = rememberInfiniteTransition(label = "perk_glow")
     val glowAlphaState = infiniteTransition.animateFloat(
         initialValue = if (isStuck) 0.4f else 0.05f,
@@ -65,7 +68,7 @@ fun PerkBar(
                 if (collectedPerks.isNotEmpty()) {
                     Modifier.drawBehind {
                         val glowAlpha = glowAlphaState.value
-                        val baseColor = Color(0xFFF06292)
+                        val baseColor = primaryColor
                         val cornerRadius = 32.dp.toPx()
 
                         val path = Path().apply {
@@ -118,7 +121,7 @@ fun PerkBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .animateContentSize()
-                .background(Color(0xFF1C1C24), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .background(surfaceColor, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .border(
                     1.dp,
                     Color.White.copy(alpha = 0.08f),

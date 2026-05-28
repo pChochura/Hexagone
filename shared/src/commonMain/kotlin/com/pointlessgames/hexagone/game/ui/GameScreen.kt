@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -120,7 +121,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
             .graphicsLayer { clip = false }
             .background(
                 Brush.verticalGradient(
-                    listOf(Color(0xFF1C1C24), Color(0xFF0A0A0E)),
+                    listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.background),
                 ),
             )
     ) {
@@ -224,7 +225,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
                     modifier = Modifier
                         .offset(y = (-10).dp + stuckBounce.dp)
                         .shadow(elevation = 12.dp, shape = RoundedCornerShape(8.dp))
-                        .background(Color(0xFFF06292), RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
                         .border(2.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                 ) {

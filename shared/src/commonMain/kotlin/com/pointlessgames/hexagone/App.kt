@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.remember
@@ -43,36 +44,36 @@ fun App() {
     val colors = DefaultColors.current
     MaterialTheme(
         colorScheme = MaterialTheme.colorScheme.copy(
-            primary = colors.ochre,
-            onPrimary = colors.beige,
-            primaryContainer = colors.rose,
-            onPrimaryContainer = colors.brown,
-
-            secondary = colors.rose,
-            onSecondary = colors.brown,
-
-            tertiary = colors.tan,
-            onTertiary = colors.brown,
-
-            background = colors.beige,
-            onBackground = colors.brown,
-
-            surface = colors.beige,
-            onSurface = colors.brown,
-
-            surfaceVariant = colors.tan,
-            surfaceContainerLow = colors.softCream,
-            surfaceContainer = colors.tan,
-            surfaceContainerHigh = colors.honeyOak,
-            surfaceContainerHighest = colors.rose,
-
-            onSurfaceVariant = colors.brown,
-
-            inverseSurface = colors.brown,
-            inverseOnSurface = colors.beige,
-            inversePrimary = colors.rose,
-
-            outline = colors.ochre,
+            primary = colors.pink,
+            secondary = colors.purple,
+            tertiary = colors.yellow,
+            background = colors.deepBlack,
+            surface = colors.darkBlue,
+            outline = colors.greyBlue,
+            outlineVariant = colors.lightBlueGrey,
+            onSurfaceVariant = colors.lightPurple,
+            secondaryContainer = colors.skyBlue,
+            surfaceContainerLowest = colors.tile1,
+            surfaceContainerLow = colors.tile2,
+            surfaceContainer = colors.tile4,
+            surfaceContainerHigh = colors.tile8,
+            surfaceContainerHighest = colors.tile16,
+            inversePrimary = colors.perkMove,
+            error = colors.perkRemove,
+            tertiaryContainer = colors.perkFusion,
+            primaryContainer = colors.perkChain,
+            onTertiaryContainer = colors.perkAdvance,
+            scrim = colors.surge,
+            inverseSurface = colors.overdrive,
+            surfaceBright = colors.zenith,
+            surfaceDim = colors.gold,
+            errorContainer = colors.orangeRed,
+            onPrimaryContainer = colors.deepPurple,
+            onPrimary = Color.White,
+            onSecondary = Color.White,
+            onTertiary = Color.Black,
+            onBackground = Color.White,
+            onSurface = Color.White,
         ),
         shapes = MaterialTheme.shapes.copy(
             small = RoundedCornerShape(DefaultCornerRadius.current.small),
@@ -102,6 +103,7 @@ fun App() {
         ),
     ) {
         Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
             contentWindowInsets = WindowInsets.systemBars,
         ) { innerPadding ->
             val spacing = DefaultSpacing.current

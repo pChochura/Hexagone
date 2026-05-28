@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -112,6 +113,7 @@ internal fun GameGridOverlay(
     onMergeAnimationFinished: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
     val finishedMergeCount = remember { mutableIntStateOf(0) }
@@ -295,13 +297,13 @@ internal fun GameGridOverlay(
                         )
                         val center =
                             Offset(targetOffset.x + itemWidth / 2, targetOffset.y + itemHeight / 2)
-                        val color = HexagonGridDefaults.getColorForValue(currentStep.resultValue)
+                        val color = HexagonGridDefaults.getColorForValue(currentStep.resultValue, colorScheme)
                         if (activeMergeStepIndex >= pendingMerge.steps.lastIndex) {
                             val onBoardPerks = onBoardPerksProvider()
                             val collected =
                                 onBoardPerks.find { it.x == pendingMerge.targetX && it.y == pendingMerge.targetY }
                             if (collected != null) {
-                                val perkColor = HexagonGridDefaults.getColorForPerk(collected.perk)
+                                val perkColor = HexagonGridDefaults.getColorForPerk(collected.perk, colorScheme)
                                 localParticles.addAll(
                                     List(20) {
                                         val angle = Random.nextFloat() * 2 * PI.toFloat();
@@ -492,6 +494,7 @@ internal fun GameGridOverlay(
                                     wiggleValue = if (isSelectable) wiggleState.value else 0f,
                                     stripeOffset = ghostStripeOffset.value,
                                     textMeasurer = textMeasurer,
+                                    colorScheme = colorScheme,
                                 )
                             }
                         }
@@ -518,6 +521,7 @@ internal fun GameGridOverlay(
                                     floatValue = floatState.value,
                                     stripeOffset = ghostStripeOffset.value,
                                     textMeasurer = textMeasurer,
+                                    colorScheme = colorScheme,
                                 )
                             }
                         }
@@ -534,6 +538,7 @@ internal fun GameGridOverlay(
                                     wiggleValue = if (isSelectable) wiggleState.value else 0f,
                                     stripeOffset = ghostStripeOffset.value,
                                     textMeasurer = textMeasurer,
+                                    colorScheme = colorScheme,
                                 )
                             }
                         }
@@ -649,6 +654,7 @@ private fun drawGhost(
     wiggleValue: Float,
     stripeOffset: Float,
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
+    colorScheme: androidx.compose.material3.ColorScheme,
 ) {
     val offset = animState.offset.value
     val scale = animState.scale.value
@@ -661,7 +667,7 @@ private fun drawGhost(
             rotate(wiggleValue, Offset(itemWidth / 2, itemHeight / 2))
         },
     ) {
-        val backgroundColor = HexagonGridDefaults.getColorForValue(preview.value).copy(alpha = 0.3f)
+        val backgroundColor = HexagonGridDefaults.getColorForValue(preview.value, colorScheme).copy(alpha = 0.3f)
         HexagonGridDefaults.drawHexagonPath(
             this,
             Size(itemWidth, itemHeight),
@@ -673,7 +679,7 @@ private fun drawGhost(
             HexagonGridDefaults.drawHexagonPath(
                 this,
                 Size(itemWidth, itemHeight),
-                Color(0xFFBB86FC).copy(alpha = alpha),
+                colorScheme.secondary.copy(alpha = alpha),
                 style = Stroke(width = 2.dp.toPx())
             )
         }
@@ -719,6 +725,7 @@ private fun drawHoverResult(
     floatValue: Float,
     stripeOffset: Float,
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
+    colorScheme: androidx.compose.material3.ColorScheme,
 ) {
     val targetOffset = HexagonGridDefaults.calculateOffset(
         merge.targetX,
@@ -736,7 +743,7 @@ private fun drawHoverResult(
             scale(s, s, Offset(itemWidth / 2, itemHeight / 2))
         },
     ) {
-        val backgroundColor = HexagonGridDefaults.getColorForValue(merge.finalValue)
+        val backgroundColor = HexagonGridDefaults.getColorForValue(merge.finalValue, colorScheme)
             .copy(alpha = 0.5f * progress * 0.7f)
         HexagonGridDefaults.drawHexagonPath(this, Size(itemWidth, itemHeight), backgroundColor)
 
@@ -914,7 +921,7 @@ private fun AnimatedGridHexagon(
 
     Hexagon(
         value = cell.value.toString(),
-        backgroundColor = HexagonGridDefaults.getColorForValue(cell.value),
+        backgroundColor = HexagonGridDefaults.getColorForValue(cell.value, MaterialTheme.colorScheme),
         isTactical = cell.isTactical,
         modifier = Modifier.size(
             with(density) { itemWidth.toDp() },
@@ -1091,8 +1098,8 @@ private fun SpecialScorePopup(popup: ScorePopup, onFinished: (Long) -> Unit, hor
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             if (popup.labelRes != null) {
                 val labelColor = when (popup.labelRes) {
-                    Res.string.label_tactician -> Color(0xFFBB86FC)
-                    Res.string.label_tactical_redemption, Res.string.label_redemption -> Color(0xFFFFD54F)
+                    Res.string.label_tactician -> MaterialTheme.colorScheme.secondary
+                    Res.string.label_tactical_redemption, Res.string.label_redemption -> MaterialTheme.colorScheme.tertiary
                     else -> popup.color
                 }
                 Text(

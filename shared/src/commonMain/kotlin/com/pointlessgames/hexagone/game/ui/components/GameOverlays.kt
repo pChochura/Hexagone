@@ -43,6 +43,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -129,6 +130,7 @@ fun GameOverlays(
     val confettiPieces = remember { androidx.compose.runtime.mutableStateListOf<ConfettiPiece>() }
     var hasSpawnedConfetti by remember(isGameOver) { mutableStateOf(false) }
 
+    val primaryColor = MaterialTheme.colorScheme.primary
     androidx.compose.runtime.LaunchedEffect(isNewBest) {
         if (isNewBest && !hasSpawnedConfetti) {
             repeat(60) {
@@ -142,7 +144,7 @@ fun GameOverlays(
                         vy = kotlin.math.sin(angle) * speed,
                         rotation = kotlin.random.Random.nextFloat() * 360f,
                         rotationSpeed = (-200..200).random().toFloat(),
-                        color = if (kotlin.random.Random.nextBoolean()) Color(0xFFF06292) else Color.White,
+                        color = if (kotlin.random.Random.nextBoolean()) primaryColor else Color.White,
                         life = 2.5f + kotlin.random.Random.nextFloat() * 2f,
                         size = 8f + kotlin.random.Random.nextFloat() * 8f,
                         flipSpeed = 3f + kotlin.random.Random.nextFloat() * 5f
@@ -324,10 +326,10 @@ private fun PerkSelectionDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF1C1C24), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .border(
                     2.dp,
-                    Color(0xFFF06292).copy(alpha = 0.2f),
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                     RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
                 )
                 .navigationBarsPadding()
@@ -349,7 +351,7 @@ private fun PerkSelectionDialog(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(Res.string.level_up_title),
-                        color = Color(0xFFF06292),
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Black,
                         fontSize = 32.sp,
                         textAlign = TextAlign.Center,
@@ -363,13 +365,13 @@ private fun PerkSelectionDialog(
                         Spacer(Modifier.width(12.dp))
                         Box(
                             modifier = Modifier
-                                .background(Color(0xFFF06292).copy(alpha = 0.2f), CircleShape)
-                                .border(1.dp, Color(0xFFF06292).copy(alpha = 0.5f), CircleShape)
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), CircleShape)
+                                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape)
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
                             Text(
                                 text = "+$pendingLevelUps",
-                                color = Color(0xFFF06292),
+                                color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp
                             )
@@ -516,11 +518,14 @@ private fun GameOverDialog(
         label = "max_piece_shift"
     )
 
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val surfaceColor = MaterialTheme.colorScheme.surface
+
     Box(
         modifier = Modifier
             .fillMaxWidth(0.9f)
             .drawBehind {
-                val baseColor = Color(0xFFF06292)
+                val baseColor = primaryColor
                 val cornerRadius = 32.dp.toPx()
                 val path = Path().apply {
                     addRoundRect(RoundRect(Rect(0f, 0f, size.width, size.height), cornerRadius, cornerRadius))
@@ -535,7 +540,7 @@ private fun GameOverDialog(
                     )
                 }
             }
-            .background(Color(0xFF1C1C24).copy(alpha = 0.96f), RoundedCornerShape(32.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f), RoundedCornerShape(32.dp))
             .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(32.dp))
             .padding(24.dp),
     ) {
@@ -592,7 +597,7 @@ private fun GameOverDialog(
                             textAlign = TextAlign.Center,
                             style = androidx.compose.ui.text.TextStyle(
                                 shadow = androidx.compose.ui.graphics.Shadow(
-                                    color = Color(0xFFF06292).copy(alpha = glowAlpha * 2f),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha * 2f),
                                     offset = Offset(0f, 0f),
                                     blurRadius = 30f
                                 )
@@ -609,7 +614,7 @@ private fun GameOverDialog(
                                         scaleY = badgeScale
                                         rotationZ = badgeRotation
                                     }
-                                    .background(Color(0xFFF06292), RoundedCornerShape(100.dp))
+                                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(100.dp))
                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                             ) {
                                 Text(
@@ -635,7 +640,8 @@ private fun GameOverDialog(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(contentAlignment = Alignment.Center) {
-                        val baseColor = HexagonGridDefaults.getColorForValue(highestValue)
+                        val colorScheme = MaterialTheme.colorScheme
+                        val baseColor = HexagonGridDefaults.getColorForValue(highestValue, colorScheme)
                         val shiftColor = Color(
                             (baseColor.red * 0.6f + 0.4f).coerceIn(0f, 1f),
                             (baseColor.green * 0.6f + 0.4f).coerceIn(0f, 1f),
@@ -706,8 +712,8 @@ private fun GameOverDialog(
 
 @Composable
 private fun LevelIcon() {
+    val color = MaterialTheme.colorScheme.primary
     Canvas(modifier = Modifier.size(20.dp)) {
-        val color = Color(0xFFF06292)
         val stroke = 2.dp.toPx()
         // Staircase shape
         drawLine(color, Offset(0f, size.height), Offset(size.width, 0f), stroke)
@@ -718,8 +724,8 @@ private fun LevelIcon() {
 
 @Composable
 private fun ComboIcon() {
+    val color = MaterialTheme.colorScheme.primary
     Canvas(modifier = Modifier.size(20.dp)) {
-        val color = Color(0xFFF06292)
         val stroke = 2.dp.toPx()
         // Lightning bolt / Flash shape
         val path = Path().apply {
@@ -737,8 +743,8 @@ private fun ComboIcon() {
 
 @Composable
 private fun MergeIcon() {
+    val color = MaterialTheme.colorScheme.primary
     Canvas(modifier = Modifier.size(20.dp)) {
-        val color = Color(0xFFF06292)
         val stroke = 1.5.dp.toPx()
         // Three merging circles
         drawCircle(color, radius = size.width / 4, center = Offset(size.width / 2, size.height / 3), style = Stroke(stroke))
@@ -820,7 +826,7 @@ private fun GameOverBottomActions(
                     },
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF06292),
+                    containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = Color.White
                 ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
@@ -863,7 +869,7 @@ private fun StatusDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF1C1C24), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .border(
                     1.dp,
                     Color.White.copy(alpha = 0.08f),
@@ -885,23 +891,24 @@ private fun StatusDialog(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(),
             ) {
+                val primaryColor = MaterialTheme.colorScheme.primary
                 Canvas(
                     modifier = Modifier
                         .size(48.dp)
-                        .border(1.dp, Color(0xFFF06292).copy(alpha = 0.3f), CircleShape)
+                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), CircleShape)
                         .padding(8.dp)
-                        .background(Color(0xFFF06292).copy(alpha = 0.1f), CircleShape),
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape),
                 ) {
                     val strokeWidth = 2.dp.toPx()
                     drawCircle(
-                        color = Color(0xFFF06292),
+                        color = primaryColor,
                         radius = size.minDimension / 2.5f,
                         style = Stroke(width = strokeWidth),
                     )
                     val radius = size.minDimension / 2.5f
                     val angle = 45f * (PI.toFloat() / 180f)
                     drawLine(
-                        color = Color(0xFFF06292),
+                        color = primaryColor,
                         start = center + Offset(cos(angle) * radius, sin(angle) * radius),
                         end = center - Offset(cos(angle) * radius, sin(angle) * radius),
                         strokeWidth = strokeWidth,
@@ -913,7 +920,7 @@ private fun StatusDialog(
                 Column {
                     Text(
                         text = if (isGameOver) stringResource(Res.string.game_over_title) else stringResource(Res.string.no_more_moves_title),
-                        color = Color(0xFFD1C4E9),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp,
                     )

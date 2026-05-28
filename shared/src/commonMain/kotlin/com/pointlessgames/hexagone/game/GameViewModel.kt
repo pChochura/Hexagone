@@ -13,6 +13,7 @@ import com.pointlessgames.hexagone.game.model.OnBoardPerk
 import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PreviewCell
+import com.pointlessgames.hexagone.ui.theme.Colors
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.label_bar_raised
 import hexagone.shared.generated.resources.label_cleanup
@@ -493,7 +494,7 @@ internal class GameViewModel(
                     )
                 }
                 persistBestScore(nextScore)
-                addScorePopup(preview.x, preview.y, finalBonus, Color(0xFF90A4AE), labelRes)
+                addScorePopup(preview.x, preview.y, finalBonus, Colors().greyBlue, labelRes)
                 finishPerkAction(Perk.REMOVE_TILE)
             }
 
@@ -555,9 +556,7 @@ internal class GameViewModel(
                 }
                 persistBestScore(nextScore)
                 val popupColor =
-                    if (barRaised) Color(0xFF4FC3F7) else if (isOnlyHighest) Color(0xFFF06292) else Color(
-                        0xFF90A4AE,
-                    )
+                    if (barRaised) Colors().skyBlue else if (isOnlyHighest) Colors().pink else Colors().greyBlue
                 addScorePopup(cell.x, cell.y, finalBonus, popupColor, labelRes)
                 finishPerkAction(Perk.REMOVE_TILE)
             }
@@ -782,11 +781,9 @@ internal class GameViewModel(
                 }
 
                 val popupColor = when (labelRes) {
-                    Res.string.label_tactical_redemption, Res.string.label_redemption -> Color(
-                        0xFFFFD54F,
-                    )
+                    Res.string.label_tactical_redemption, Res.string.label_redemption -> Colors().yellow
 
-                    Res.string.label_tactician -> Color(0xFFBB86FC)
+                    Res.string.label_tactician -> Colors().purple
                     else -> Color.White
                 }
 

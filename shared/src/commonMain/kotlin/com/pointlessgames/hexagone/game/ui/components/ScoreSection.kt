@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -140,6 +141,7 @@ fun ScoreSection(
             .padding(top = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val colorScheme = MaterialTheme.colorScheme
         // Top Header with Game Name and Icons
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -170,7 +172,7 @@ fun ScoreSection(
 
             Text(
                 text = stringResource(Res.string.app_name).uppercase(),
-                color = Color(0xFFC5CAE9),
+                color = MaterialTheme.colorScheme.outlineVariant,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 22.sp,
                 letterSpacing = 2.sp
@@ -212,7 +214,7 @@ fun ScoreSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min)
-                .background(Color(0xFF1C1C24), RoundedCornerShape(24.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
                 .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(24.dp))
                 .graphicsLayer { clip = false }, // Allow children (combo) to pop outside
         ) {
@@ -251,9 +253,9 @@ fun ScoreSection(
                         path = path,
                         brush = Brush.horizontalGradient(
                             listOf(
-                                Color(0xFF00E5FF).copy(alpha = 0.1f + 0.1f * waveIntensity.value),
-                                Color(0xFF7C4DFF).copy(alpha = 0.1f + 0.1f * waveIntensity.value),
-                                Color(0xFFF06292).copy(alpha = 0.1f + 0.1f * waveIntensity.value)
+                                colorScheme.scrim.copy(alpha = 0.1f + 0.1f * waveIntensity.value),
+                                colorScheme.onPrimaryContainer.copy(alpha = 0.1f + 0.1f * waveIntensity.value),
+                                colorScheme.primary.copy(alpha = 0.1f + 0.1f * waveIntensity.value)
                             )
                         )
                     )
@@ -307,7 +309,7 @@ fun ScoreSection(
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = stringResource(Res.string.level_label, level),
-                        color = Color(0xFFF06292).copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         letterSpacing = 1.sp
@@ -334,7 +336,7 @@ fun ScoreSection(
                     )
                     Text(
                         text = bestScore.toString(),
-                        color = Color(0xFFF06292).copy(alpha = 0.8f),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 16.sp,
                     )
@@ -381,15 +383,15 @@ fun ScoreSection(
                         
                         val colorFraction = ((targetCombo - 1) / 9f).coerceIn(0f, 1f)
                         val baseColor = lerp(
-                            Color(0xFFFFD700), // Yellow/Gold
-                            Color(0xFFFF3D00), // Intense Orange/Red
+                            MaterialTheme.colorScheme.surfaceDim, // Yellow/Gold
+                            MaterialTheme.colorScheme.errorContainer, // Intense Orange/Red
                             colorFraction
                         )
                         
                         val comboColor = when (tier) {
-                            Res.string.tier_surge -> Color(0xFF00E5FF)
-                            Res.string.tier_overdrive -> Color(0xFFFF00FF)
-                            Res.string.tier_zenith -> Color(0xFFFFFF00)
+                            Res.string.tier_surge -> MaterialTheme.colorScheme.scrim
+                            Res.string.tier_overdrive -> MaterialTheme.colorScheme.inverseSurface
+                            Res.string.tier_zenith -> MaterialTheme.colorScheme.surfaceBright
                             else -> baseColor
                         }
                         
@@ -444,7 +446,7 @@ fun ScoreSection(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = stringResource(Res.string.perk_active_label),
-                                color = Color(0xFFF06292),
+                                color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 10.sp,
                             )
@@ -471,9 +473,10 @@ fun ScoreSection(
                                 fontSize = 10.sp,
                             )
                             Spacer(Modifier.height(4.dp))
+                            val colorScheme = MaterialTheme.colorScheme
                             Hexagon(
                                 value = highestValue.toString(),
-                                backgroundColor = HexagonGridDefaults.getColorForValue(highestValue).copy(alpha = 0.2f),
+                                backgroundColor = HexagonGridDefaults.getColorForValue(highestValue, colorScheme).copy(alpha = 0.2f),
                                 isOutline = true,
                                 modifier = Modifier.size(28.dp).aspectRatio(1 / 0.866f),
                             )

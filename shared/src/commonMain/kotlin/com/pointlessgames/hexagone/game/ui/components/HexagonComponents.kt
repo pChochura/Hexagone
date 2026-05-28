@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -75,16 +77,16 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 object HexagonGridDefaults {
-    fun getColorForValue(value: Int): Color {
+    fun getColorForValue(value: Int, colorScheme: ColorScheme): Color {
         if (value <= 0) return Color.Transparent
         
         // Base signature colors from screenshot
         val baseColors = mapOf(
-            1 to Color(0xFF3BA9F3),
-            2 to Color(0xFF9345C4),
-            4 to Color(0xFFD63F7B),
-            8 to Color(0xFFF98E33),
-            16 to Color(0xFF4BC2E1)
+            1 to colorScheme.surfaceContainerLowest,
+            2 to colorScheme.surfaceContainerLow,
+            4 to colorScheme.surfaceContainer,
+            8 to colorScheme.surfaceContainerHigh,
+            16 to colorScheme.surfaceContainerHighest
         )
         
         baseColors[value]?.let { return it }
@@ -98,15 +100,15 @@ object HexagonGridDefaults {
         return Color.hsv(hue, saturation.coerceAtMost(1f), brightness.coerceAtMost(1f))
     }
 
-    fun getColorForPerk(perk: Perk): Color {
+    fun getColorForPerk(perk: Perk, colorScheme: ColorScheme): Color {
         return when (perk) {
-            Perk.UNDO -> Color(0xFF90A4AE)
-            Perk.MOVE_TILE -> Color(0xFF9575CD)
-            Perk.REMOVE_TILE -> Color(0xFFE57373)
-            Perk.FUSION -> Color(0xFFFFB74D)
-            Perk.SWAP_TILES -> Color(0xFF4FC3F7)
-            Perk.CHAIN_MERGE -> Color(0xFF81C784)
-            Perk.ADVANCE_QUEUE -> Color(0xFF4DB6AC)
+            Perk.UNDO -> colorScheme.outline
+            Perk.MOVE_TILE -> colorScheme.inversePrimary
+            Perk.REMOVE_TILE -> colorScheme.error
+            Perk.FUSION -> colorScheme.tertiaryContainer
+            Perk.SWAP_TILES -> colorScheme.secondaryContainer
+            Perk.CHAIN_MERGE -> colorScheme.primaryContainer
+            Perk.ADVANCE_QUEUE -> colorScheme.onTertiaryContainer
         }
     }
 
@@ -457,7 +459,7 @@ fun Hexagon(
                 } else if (isTactical) {
                     Modifier.border(
                         width = 2.dp,
-                        color = Color(0xFFBB86FC).copy(alpha = tacticalPulse?.value ?: 1f),
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = tacticalPulse?.value ?: 1f),
                         shape = FlatTopHexagonShape(),
                     )
                 } else Modifier
@@ -500,8 +502,9 @@ fun PerkButton(
     tooltipDescription: StringResource? = null,
     buttonSize: Dp = 54.dp
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     val perkColor = remember(perk, isEnabled) {
-        if (isEnabled) HexagonGridDefaults.getColorForPerk(perk) else Color.Gray
+        if (isEnabled) HexagonGridDefaults.getColorForPerk(perk, colorScheme) else Color.Gray
     }
     val isLegendary = perk.isLegendary
     val heightScale = 0.866f // Flat-top hexagon height/width ratio
@@ -579,7 +582,7 @@ fun PerkButton(
                             .offset(x = 6.dp, y = (-2).dp)
                             .size(20.dp)
                             .background(perkColor, CircleShape)
-                            .border(1.dp, Color(0xFF1C1C24), CircleShape),
+                            .border(1.dp, MaterialTheme.colorScheme.surface, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
