@@ -153,6 +153,7 @@ fun PerkBar(
                         count = count,
                         isActive = isActive,
                         isEnabled = isEnabled,
+                        tooltipDescription = perk.descriptionRes,
                         onClick = remember(onPerkClick, perk) { { onPerkClick(perk) } },
                         modifier = Modifier.padding(
                             start = if (index == 0) 16.dp else 6.dp,

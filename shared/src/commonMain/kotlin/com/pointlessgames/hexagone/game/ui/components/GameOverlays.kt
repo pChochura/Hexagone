@@ -10,6 +10,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -71,6 +72,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
+import com.pointlessgames.hexagone.ui.components.Position
+import com.pointlessgames.hexagone.ui.components.Tooltip
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.choose_your_perk
 import hexagone.shared.generated.resources.game_over_subtitle
@@ -78,7 +81,9 @@ import hexagone.shared.generated.resources.game_over_title
 import hexagone.shared.generated.resources.level_up_title
 import hexagone.shared.generated.resources.new_best_label
 import hexagone.shared.generated.resources.no_more_moves_title
+import hexagone.shared.generated.resources.perk_selection_hint
 import hexagone.shared.generated.resources.play_again_button
+import hexagone.shared.generated.resources.reroll_perks
 import hexagone.shared.generated.resources.restart_game_button
 import hexagone.shared.generated.resources.stat_level
 import hexagone.shared.generated.resources.stat_max_combo
@@ -286,6 +291,7 @@ fun GameOverlays(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PerkSelectionDialog(
     options: List<Perk>,
@@ -372,20 +378,25 @@ private fun PerkSelectionDialog(
                 }
 
                 if (canReroll) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .clickable { onRerollClicked() }
-                            .padding(8.dp),
-                        contentAlignment = Alignment.Center
+                    Tooltip(
+                        position = Position.BELOW,
+                        contentDescription = Res.string.reroll_perks,
+                        modifier = Modifier.align(Alignment.CenterEnd)
                     ) {
-                        Text(
-                            text = "🎲",
-                            fontSize = 22.sp,
-                            modifier = Modifier.graphicsLayer { alpha = 0.6f }
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .clickable { onRerollClicked() }
+                                .padding(8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "🎲",
+                                fontSize = 22.sp,
+                                modifier = Modifier.graphicsLayer { alpha = 0.6f }
+                            )
+                        }
                     }
                 }
             }
@@ -400,7 +411,7 @@ private fun PerkSelectionDialog(
                 textAlign = TextAlign.Center,
             )
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(48.dp))
 
             AnimatedContent(
                 targetState = options,
@@ -420,13 +431,21 @@ private fun PerkSelectionDialog(
                             perk = perk,
                             onClick = { onPerkSelected(perk) },
                             modifier = Modifier.weight(1f),
-                            showDescription = true,
-                            showDropRate = true,
+                            tooltipDescription = perk.descriptionRes,
                             buttonSize = 64.dp
                         )
                     }
                 }
             }
+
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = stringResource(Res.string.perk_selection_hint),
+                color = Color.White.copy(alpha = 0.4f),
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
@@ -921,6 +940,7 @@ private fun StatusDialog(
                             perk = perk,
                             onClick = { onUsePerk(perk) },
                             count = count,
+                            tooltipDescription = perk.descriptionRes,
                             buttonSize = 54.dp
                         )
                         Spacer(Modifier.width(12.dp))

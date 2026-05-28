@@ -6,6 +6,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -50,7 +51,11 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
+import com.pointlessgames.hexagone.ui.components.Position
+import com.pointlessgames.hexagone.ui.components.Tooltip
 import hexagone.shared.generated.resources.Res
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import hexagone.shared.generated.resources.perk_advance_queue_desc
 import hexagone.shared.generated.resources.perk_advance_queue_name
 import hexagone.shared.generated.resources.perk_chain_merge_desc
@@ -483,6 +488,7 @@ fun Hexagon(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PerkButton(
     perk: Perk,
@@ -491,8 +497,7 @@ fun PerkButton(
     count: Int? = null,
     isActive: Boolean = false,
     isEnabled: Boolean = true,
-    showDescription: Boolean = false,
-    showDropRate: Boolean = false,
+    tooltipDescription: StringResource? = null,
     buttonSize: Dp = 54.dp
 ) {
     val perkColor = remember(perk, isEnabled) {
@@ -507,119 +512,108 @@ fun PerkButton(
             .padding(horizontal = 2.dp)
             .graphicsLayer { alpha = if (isEnabled) 1f else 0.1f }
     ) {
-        Box(
-            modifier = Modifier.size(width = buttonSize, height = buttonSize * heightScale),
-            contentAlignment = Alignment.Center
-        ) {
-            // Legendary Glow
-            if (isLegendary && isEnabled) {
-                val infiniteTransition = rememberInfiniteTransition(label = "legendary_glow")
-                val glowAlpha = infiniteTransition.animateFloat(
-                    initialValue = 0.3f,
-                    targetValue = 0.8f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(1000),
-                        repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
-                    ),
-                    label = "glow"
-                )
+        val hexagonContent = @Composable {
+            Box(
+                modifier = Modifier.size(width = buttonSize, height = buttonSize * heightScale),
+                contentAlignment = Alignment.Center
+            ) {
+                // Legendary Glow
+                if (isLegendary && isEnabled) {
+                    val infiniteTransition = rememberInfiniteTransition(label = "legendary_glow")
+                    val glowAlpha = infiniteTransition.animateFloat(
+                        initialValue = 0.3f,
+                        targetValue = 0.8f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(1000),
+                            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+                        ),
+                        label = "glow"
+                    )
+                    
+                    Box(
+                        modifier = Modifier
+                            .size(width = buttonSize + 8.dp, height = (buttonSize + 8.dp) * heightScale)
+                            .clip(FlatTopHexagonShape())
+                            .drawBehind {
+                                drawRect(perkColor.copy(alpha = glowAlpha.value * 0.4f))
+                            }
+                    )
+                }
+
+                // Main Hexagon Body
+                val brush = remember<Brush>(isActive, perkColor) {
+                    Brush.verticalGradient(
+                        if (isActive) {
+                            listOf(perkColor, perkColor.copy(alpha = 0.7f))
+                        } else {
+                            listOf(perkColor.copy(alpha = 0.2f), perkColor.copy(alpha = 0.05f))
+                        }
+                    )
+                }
                 
                 Box(
                     modifier = Modifier
-                        .size(width = buttonSize + 8.dp, height = (buttonSize + 8.dp) * heightScale)
+                        .fillMaxSize()
                         .clip(FlatTopHexagonShape())
-                        .drawBehind {
-                            drawRect(perkColor.copy(alpha = glowAlpha.value * 0.4f))
-                        }
-                )
-            }
-
-            // Main Hexagon Body
-            val brush = remember<Brush>(isActive, perkColor) {
-                Brush.verticalGradient(
-                    if (isActive) {
-                        listOf(perkColor, perkColor.copy(alpha = 0.7f))
-                    } else {
-                        listOf(perkColor.copy(alpha = 0.2f), perkColor.copy(alpha = 0.05f))
-                    }
-                )
-            }
-            
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(FlatTopHexagonShape())
-                    .background(brush)
-                    .border(
-                        width = if (isActive) 2.dp else if (isLegendary) 2.dp else 1.dp,
-                        color = if (isActive) Color.White.copy(alpha = 0.5f) else if (isLegendary) perkColor else perkColor.copy(alpha = 0.3f),
-                        shape = FlatTopHexagonShape(),
-                    )
-                    .clickable(enabled = isEnabled, onClick = onClick),
-                contentAlignment = Alignment.Center
-            ) {
-                PerkIcon(
-                    perk = perk,
-                    modifier = Modifier.size(buttonSize * 0.45f),
-                    color = Color.White.copy(alpha = if (isActive) 1f else if (isEnabled) 0.7f else 0.3f)
-                )
-            }
-
-            // Badge counter
-            if (count != null) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = 6.dp, y = (-2).dp)
-                        .size(20.dp)
-                        .background(perkColor, CircleShape)
-                        .border(1.dp, Color(0xFF1C1C24), CircleShape),
+                        .background(brush)
+                        .border(
+                            width = if (isActive) 2.dp else if (isLegendary) 2.dp else 1.dp,
+                            color = if (isActive) Color.White.copy(alpha = 0.5f) else if (isLegendary) perkColor else perkColor.copy(alpha = 0.3f),
+                            shape = FlatTopHexagonShape(),
+                        )
+                        .clickable(enabled = isEnabled, onClick = onClick),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = count.toString(),
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Black
+                    PerkIcon(
+                        perk = perk,
+                        modifier = Modifier.size(buttonSize * 0.45f),
+                        color = Color.White.copy(alpha = if (isActive) 1f else if (isEnabled) 0.7f else 0.3f)
                     )
+                }
+
+                // Badge counter
+                if (count != null) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(x = 6.dp, y = (-2).dp)
+                            .size(20.dp)
+                            .background(perkColor, CircleShape)
+                            .border(1.dp, Color(0xFF1C1C24), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = count.toString(),
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
                 }
             }
         }
 
-        Spacer(Modifier.height(4.dp))
+        if (tooltipDescription != null) {
+            Tooltip(
+                position = Position.ABOVE,
+                contentDescription = tooltipDescription,
+                content = hexagonContent
+            )
+        } else {
+            hexagonContent()
+        }
+
+        Spacer(Modifier.height(12.dp))
 
         Text(
             text = stringResource(perk.displayNameRes),
             color = if (isActive) perkColor else Color.White.copy(alpha = 0.8f),
-            fontSize = if (showDescription) 12.sp else 8.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center,
-            lineHeight = 10.sp,
+            lineHeight = 11.sp,
             modifier = Modifier.width(buttonSize + 10.dp)
         )
-
-        if (showDropRate) {
-            val dropRate = (perk.baseWeight.toFloat() / Perk.entries.sumOf { it.baseWeight } * 100).toInt()
-            Text(
-                text = "$dropRate%",
-                color = if (isLegendary) perkColor else Color.White.copy(alpha = 0.4f),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-        }
-
-        if (showDescription) {
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = stringResource(perk.descriptionRes),
-                color = Color.White.copy(alpha = 0.5f),
-                fontSize = 9.sp,
-                textAlign = TextAlign.Center,
-                lineHeight = 11.sp,
-                modifier = Modifier.width(buttonSize + 20.dp)
-            )
-        }
     }
 }
 
