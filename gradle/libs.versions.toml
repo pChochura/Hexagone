@@ -22,7 +22,8 @@ compose-multiplatform-material3 = "1.9.0"
 androidx-activity = "1.13.0"
 androidx-lifecycle = "2.10.0"
 androidx-navigation3 = "1.1.1"
-androidx-room = "2.8.4"
+androidx-material = "1.14.0"
+androidx-splashscreen = "1.2.0"
 androidx-datastore = "1.2.1"
 androidx-compose-ui-tooling = "1.11.2"
 
@@ -44,6 +45,8 @@ androidx-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigat
 androidx-datastore = { module = "androidx.datastore:datastore-core", version.ref = "androidx-datastore" }
 androidx-datastore-prefs = { module = "androidx.datastore:datastore-preferences-core", version.ref = "androidx-datastore" }
 androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "androidx-compose-ui-tooling" }
+androidx-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "androidx-splashscreen" }
+androidx-material = { module = "com.google.android.material:material", version.ref = "androidx-material" }
 
 # Compose
 compose-mp-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
@@ -84,7 +87,3 @@ kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", versio
 # Compose
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
-
-# Room
-room = { id = "androidx.room", version.ref = "androidx-room" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
