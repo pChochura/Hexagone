@@ -4,6 +4,11 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.Spring.DampingRatioMediumBouncy
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BasicTooltipBox
 import androidx.compose.foundation.BasicTooltipDefaults
 import androidx.compose.foundation.BasicTooltipState
@@ -11,9 +16,12 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.MutatorMutex
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,11 +34,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionOnScreen
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.coroutineScope
@@ -54,19 +75,50 @@ fun Tooltip(
     Tooltip(
         position = position,
         tooltipContent = @Composable {
-            Text(
+            val primaryColor = MaterialTheme.colorScheme.primary
+            val cornerRadius = MaterialTheme.cornerRadius.small
+            Box(
                 modifier = Modifier
-                    .clip(MaterialTheme.shapes.small)
-                    .background(MaterialTheme.colorScheme.inverseSurface)
+                    .widthIn(max = 240.dp)
+                    .drawBehind {
+                        val strokeWidth = 2.dp.toPx()
+                        drawRoundRect(
+                            brush = Brush.verticalGradient(
+                                listOf(primaryColor.copy(alpha = 0.2f), Color.Transparent)
+                            ),
+                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx()),
+                            style = Stroke(width = strokeWidth * 2f)
+                        )
+                    }
+                    .background(
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        shape = RoundedCornerShape(cornerRadius)
+                    )
+                    .border(
+                        width = 1.dp,
+                        brush = Brush.verticalGradient(
+                            listOf(
+                                primaryColor.copy(alpha = 0.5f),
+                                primaryColor.copy(alpha = 0.1f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(cornerRadius)
+                    )
                     .padding(
                         horizontal = MaterialTheme.spacing.medium,
                         vertical = MaterialTheme.spacing.small,
+                    )
+            ) {
+                Text(
+                    text = stringResource(contentDescription),
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.2.sp
                     ),
-                text = stringResource(contentDescription),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.inverseOnSurface,
-                textAlign = TextAlign.Center,
-            )
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                )
+            }
         },
         state = state,
         modifier = modifier,
@@ -85,6 +137,10 @@ fun Tooltip(
     state: TooltipState = rememberTooltipState(isPersistent = true),
     content: @Composable () -> Unit,
 ) {
+    var anchorScreenPosition by remember { mutableStateOf(Offset.Zero) }
+    var anchorWidth by remember { mutableStateOf(0f) }
+    var anchorHeight by remember { mutableStateOf(0f) }
+
     BasicTooltipBox(
         modifier = modifier,
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
@@ -94,44 +150,97 @@ fun Tooltip(
             },
         ),
         tooltip = @Composable {
-            val alphaAnimatable = remember { Animatable(0f) }
-            val scaleAnimatable = remember { Animatable(0.4f) }
+            var tooltipScreenPosition by remember { mutableStateOf(Offset.Zero) }
+            var tooltipWidth by remember { mutableStateOf(0f) }
+            var tooltipHeight by remember { mutableStateOf(0f) }
+            var isReady by remember { mutableStateOf(false) }
 
-            LaunchedEffect(state.isHiding) {
+            val alphaAnimatable = remember { Animatable(0f) }
+            val scaleAnimatable = remember { Animatable(0f) }
+
+            val infiniteTransition = rememberInfiniteTransition(label = "tooltip_hover")
+            val hoverOffset by infiniteTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = if (position == Position.ABOVE) -2f else 2f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(2000),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "hover"
+            )
+
+            LaunchedEffect(state.isVisible, state.isHiding) {
                 if (state.isHiding) {
                     coroutineScope {
                         launch { alphaAnimatable.animateTo(0f, springSpec) }
-                        launch { scaleAnimatable.animateTo(0.4f, springSpec) }
+                        launch { scaleAnimatable.animateTo(0f, springSpec) }
                     }
                     state.markHidden()
-                } else {
+                    isReady = false
+                } else if (state.isVisible) {
                     launch { alphaAnimatable.animateTo(1f, springSpec) }
                     launch { scaleAnimatable.animateTo(1f, springSpec) }
                 }
             }
 
             Box(
-                modifier = Modifier.graphicsLayer {
-                    this.alpha = alphaAnimatable.value
-                    this.scaleX = scaleAnimatable.value
-                    this.scaleY = scaleAnimatable.value
-                    this.transformOrigin = when (position) {
-                        Position.ABOVE -> TransformOrigin(0.5f, 1f)
-                        Position.BELOW -> TransformOrigin(0.5f, 0f)
+                modifier = Modifier
+                    .onGloballyPositioned { 
+                        tooltipScreenPosition = it.positionOnScreen()
+                        tooltipWidth = it.size.width.toFloat()
+                        tooltipHeight = it.size.height.toFloat()
+                        if (tooltipWidth > 0 && anchorWidth > 0) {
+                            isReady = true
+                        }
                     }
-                },
+                    .graphicsLayer {
+                        this.alpha = alphaAnimatable.value
+                        this.scaleX = scaleAnimatable.value
+                        this.scaleY = scaleAnimatable.value
+                        this.translationY = hoverOffset
+
+                        if (isReady) {
+                            val anchorCenterX = anchorScreenPosition.x + anchorWidth / 2f
+                            val relativeX = (anchorCenterX - tooltipScreenPosition.x) / tooltipWidth
+                            
+                            val anchorCenterY = anchorScreenPosition.y + anchorHeight / 2f
+                            val tooltipCenterY = tooltipScreenPosition.y + tooltipHeight / 2f
+                            val isFlipped = tooltipCenterY > anchorCenterY
+                            
+                            val relativeY = if (isFlipped) 0f else 1f
+
+                            this.transformOrigin = TransformOrigin(
+                                pivotFractionX = relativeX.coerceIn(0f, 1f),
+                                pivotFractionY = relativeY
+                            )
+                        } else {
+                            this.transformOrigin = when (position) {
+                                Position.ABOVE -> TransformOrigin(0.5f, 1f)
+                                Position.BELOW -> TransformOrigin(0.5f, 0f)
+                            }
+                        }
+                    },
                 content = tooltipContent,
             )
         },
         state = state,
         focusable = false,
         enableUserInput = allowUserInput,
-        content = content,
+        content = {
+            Box(
+                modifier = Modifier.onGloballyPositioned {
+                    anchorScreenPosition = it.positionOnScreen()
+                    anchorWidth = it.size.width.toFloat()
+                    anchorHeight = it.size.height.toFloat()
+                },
+                content = { content() }
+            )
+        },
     )
 }
 
 private val springSpec =
-    spring(DampingRatioMediumBouncy, Spring.StiffnessLow, visibilityThreshold = 0.1f)
+    spring(0.7f, Spring.StiffnessMedium, visibilityThreshold = 0.01f)
 
 enum class Position { ABOVE, BELOW }
 

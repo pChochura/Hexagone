@@ -65,5 +65,5 @@
     <string name="perk_swap_tiles_desc">Wybierz dwie płytki, aby zamienić je miejscami.</string>
     <string name="perk_fusion_desc">Połącz wszystkie sąsiednie płytki w jedną potężną.</string>
     <string name="perk_chain_merge_desc">Twój następny ruch wywoła reakcje łańcuchowe.</string>
-    <string name="reroll_perks">Przelosuj wybór</string>
+    <string name="reroll_perks">Przelosuj wybór. Uwaga: Legendarne perki nie pojawią się w nowym wyborze.</string>
 </resources>
