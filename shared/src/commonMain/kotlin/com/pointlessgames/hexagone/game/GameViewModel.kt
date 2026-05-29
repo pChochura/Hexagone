@@ -351,6 +351,9 @@ internal class GameViewModel(
         val selectedId = state.selectedCellId
         val previewAtPos = state.preview.find { it.x == x && it.y == y }
 
+        val isTileOnlyPerk = perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES || perk == Perk.PATH_MERGE
+        if (isTileOnlyPerk && previewAtPos == null) return
+
         if (perk != null && perk != Perk.FUSION && perk != Perk.CHAIN_MERGE && previewAtPos != null) {
             if (selectedId == previewAtPos.id) {
                 _uiState.update { it.copy(selectedCellId = null) }
@@ -438,6 +441,9 @@ internal class GameViewModel(
         val ghostAtPos = state.preview.find { it.x == x && it.y == y }
 
         if (perk != null && selectedId != null && ghostAtPos?.id == selectedId) return
+
+        val isTileOnlyPerk = perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES || perk == Perk.PATH_MERGE
+        if (isTileOnlyPerk && ghostAtPos == null) return
 
         val merge = when (perk) {
             Perk.REMOVE_TILE -> {
@@ -742,6 +748,32 @@ internal class GameViewModel(
                     )
                 }
                 finishPerkAction(Perk.INCREMENT_TILE)
+            }
+
+            Perk.PATH_MERGE -> {
+                val merge = engine.calculatePathMerge(preview.x, preview.y, preview.value, state.grid)
+                if (merge != null) {
+                    saveState()
+                    val comboMultiplier = (state.combo + 1).coerceAtMost(12)
+                    val totalAddedScore = merge.baseScore * comboMultiplier
+
+                    _uiState.update { currentState ->
+                        val firstStep = merge.steps.first()
+                        currentState.copy(
+                            grid = currentState.grid.map { c ->
+                                if (firstStep.mergingCells.any { it.id == c.id }) c.copy(
+                                    x = preview.x,
+                                    y = preview.y,
+                                ) else c
+                            },
+                            preview = currentState.preview.filter { it.id != preview.id },
+                            pendingMerge = merge.copy(resultId = "preview_path_merge"),
+                            activeMergeStepIndex = 0,
+                            pendingMergeScore = totalAddedScore,
+                            isBusy = true,
+                        )
+                    }
+                }
             }
 
             else -> {}
