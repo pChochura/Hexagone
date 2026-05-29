@@ -192,6 +192,7 @@ internal class GameEngine(
             val neighborCoords = getNeighbors(current.x, current.y)
             grid.filter { cell ->
                 cell.value == targetValue &&
+                        !cell.id.startsWith("preview") &&
                         neighborCoords.any { it.first == cell.x && it.second == cell.y }
             }.forEach { queue.add(it) }
         }
@@ -610,8 +611,13 @@ internal class GameEngine(
             }
             Perk.PATH_MERGE -> {
                 grid.any { cell ->
+                    if (cell.id.startsWith("preview")) return@any false
                     val neighbors = getNeighbors(cell.x, cell.y)
-                    grid.any { n -> n.value == cell.value && neighbors.any { it.first == n.x && it.second == n.y } }
+                    grid.any { n -> 
+                        n.value == cell.value && 
+                        !n.id.startsWith("preview") &&
+                        neighbors.any { it.first == n.x && it.second == n.y } 
+                    }
                 }
             }
             Perk.ADVANCE_QUEUE -> {
