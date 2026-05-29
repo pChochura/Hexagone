@@ -468,12 +468,12 @@ internal class GameViewModel(
                 } else null
             }
             Perk.PATH_MERGE -> {
-                if (ghostAtPos == null) {
-                    engine.calculatePathMerge(x, y, state.grid)?.copy(
-                        resultId = "preview_path_merge",
-                        forceSolidIds = setOf("preview_path_merge")
-                    )
-                } else null
+                val merge = engine.calculatePathMerge(x, y, state.grid)
+                merge?.copy(
+                    resultId = "preview_path_merge",
+                    forceSolidIds = setOf("preview_path_merge"),
+                    previewValues = ghostAtPos?.let { mapOf(it.id to merge.finalValue) } ?: emptyMap()
+                )
             }
             Perk.MOVE_TILE, Perk.DUPLICATE_TILE -> {
                 if (selectedId != null && (ghostAtPos == null || selectedId != ghostAtPos.id)) {
@@ -537,10 +537,14 @@ internal class GameViewModel(
         if (perk != null && selectedId == cell.id) return
 
         val merge = when (perk) {
-            Perk.PATH_MERGE -> engine.calculatePathMerge(cell.x, cell.y, state.grid)?.copy(
-                resultId = "preview_path_merge",
-                forceSolidIds = setOf("preview_path_merge")
-            )
+            Perk.PATH_MERGE -> {
+                val m = engine.calculatePathMerge(cell.x, cell.y, state.grid)
+                m?.copy(
+                    resultId = "preview_path_merge",
+                    forceSolidIds = setOf("preview_path_merge"),
+                    previewValues = mapOf(cell.id to m.finalValue)
+                )
+            }
             Perk.REMOVE_TILE -> {
                 val baseCleanupScore = cell.value * 10
                 val currentMin = state.grid.minOfOrNull { it.value } ?: Int.MAX_VALUE

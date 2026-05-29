@@ -293,7 +293,6 @@ internal fun GameGridOverlay(
                     val isOverlapped = current != null && preview != null && current.targetX == preview.x && current.targetY == preview.y && (
                         current.resultId == "preview_move" || 
                         current.resultId == "preview_duplicate" || 
-                        current.resultId == "preview_path_merge" ||
                         current.steps.isNotEmpty()
                     )
                     launch { state.alpha.animateTo(if (isOverlapped) 0f else 1f, tween(200)) }
@@ -823,7 +822,10 @@ private fun drawHoverResult(
     val currentValue = currentCell?.value ?: currentPreview?.value ?: 0
     val isPlacement = merge.resultId.contains("move") || merge.resultId.contains("duplicate") || merge.resultId.contains("swap") || merge.resultId.contains("highlight")
 
-    if (merge.finalValue > 0 && (merge.finalValue != currentValue || isPlacement)) {
+    val shouldSkipHexagon = merge.resultId == "preview_move" ||
+            (merge.resultId == "preview_path_merge" && (currentCell != null || currentPreview != null))
+
+    if (merge.finalValue > 0 && (merge.finalValue != currentValue || isPlacement) && !shouldSkipHexagon) {
         val isForcedSolid = merge.forceSolidIds?.contains(merge.resultId) == true
 
         drawScope.withTransform(
