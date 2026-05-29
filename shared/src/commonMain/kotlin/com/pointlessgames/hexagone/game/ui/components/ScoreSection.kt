@@ -22,6 +22,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -99,7 +100,8 @@ fun ScoreSection(
     highestValue: Int,
     activePerk: Perk?,
     selectedCellId: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onLevelClick: () -> Unit = {}
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
@@ -316,7 +318,13 @@ fun ScoreSection(
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
-                        letterSpacing = 1.sp
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            onLevelClick()
+                        }
                     )
                 }
 

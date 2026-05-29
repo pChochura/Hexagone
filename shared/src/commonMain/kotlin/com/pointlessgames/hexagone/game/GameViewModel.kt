@@ -67,6 +67,9 @@ internal data class GameUiState(
     val perkSpawnCounter: Int = 0,
     val canReroll: Boolean = true,
     val availableChoices: Int = 0,
+    val isDebugMode: Boolean = false,
+    val debugSelectedValue: Int? = 1,
+    val debugAddAsGhost: Boolean = false,
 )
 
 @Immutable
@@ -1264,7 +1267,9 @@ internal class GameViewModel(
         }
 
         _uiState.update {
-            if (isPossible || hasPerkOptions) {
+            if (state.isDebugMode) {
+                it.copy(isStuck = false, isGameOver = false)
+            } else if (isPossible || hasPerkOptions) {
                 it.copy(isStuck = false, isGameOver = false)
             } else if (actionablePerks.isNotEmpty()) {
                 it.copy(isStuck = true, isGameOver = false)
@@ -1273,7 +1278,7 @@ internal class GameViewModel(
             }
         }
 
-        if (!isPossible && hasPerkOptions.not() && actionablePerks.isEmpty()) {
+        if (!isPossible && hasPerkOptions.not() && actionablePerks.isEmpty() && !state.isDebugMode) {
             viewModelScope.launch {
                 delay(1000)
                 _uiState.update { it.copy(isGameOver = true) }
@@ -1351,5 +1356,81 @@ internal class GameViewModel(
 
     fun onViewBoardToggled() {
         _uiState.update { it.copy(showGameOverBoard = !it.showGameOverBoard) }
+    }
+
+    fun setDebugSelectedValue(value: Int?) {
+        _uiState.update { it.copy(debugSelectedValue = value) }
+    }
+
+    fun toggleDebugMode() {
+        _uiState.update { it.copy(
+            isDebugMode = !it.isDebugMode,
+            isStuck = false,
+            isGameOver = false,
+            selectedCellId = null,
+            activePerk = null,
+            isBusy = false
+        ) }
+        
+        if (!_uiState.value.isDebugMode) {
+            if (_uiState.value.preview.isEmpty()) {
+                spawnFromQueue(_uiState.value.grid)
+            } else {
+                recalculateHints()
+                checkValidMoves()
+            }
+            persistState(getCurrentGameState())
+        } else {
+            recalculateHints()
+            checkValidMoves()
+        }
+    }
+
+    fun toggleDebugAddAsGhost() {
+        _uiState.update { it.copy(debugAddAsGhost = !it.debugAddAsGhost) }
+    }
+
+    fun onDebugCellClicked(x: Int, y: Int) {
+        val state = _uiState.value
+        val value = state.debugSelectedValue
+        val asGhost = state.debugAddAsGhost
+
+        _uiState.update { currentState ->
+            var updatedGrid = currentState.grid
+            var updatedPreview = currentState.preview
+
+            if (value == null) {
+                updatedGrid = updatedGrid.filterNot { it.x == x && it.y == y }
+                updatedPreview = updatedPreview.filterNot { it.x == x && it.y == y }
+            } else {
+                val existingGrid = updatedGrid.find { it.x == x && it.y == y }
+                val existingPreview = updatedPreview.find { it.x == x && it.y == y }
+
+                if (asGhost) {
+                    updatedGrid = updatedGrid.filterNot { it.x == x && it.y == y }
+                    if (existingPreview != null) {
+                        updatedPreview = updatedPreview.map { if (it.id == existingPreview.id) it.copy(value = value) else it }
+                    } else {
+                        updatedPreview = updatedPreview + engine.createPreviewCell(x, y, value)
+                    }
+                } else {
+                    updatedPreview = updatedPreview.filterNot { it.x == x && it.y == y }
+                    if (existingGrid != null) {
+                        updatedGrid = updatedGrid.map { if (it.id == existingGrid.id) it.copy(value = value) else it }
+                    } else {
+                        updatedGrid = updatedGrid + engine.createCell(x, y, value)
+                    }
+                }
+            }
+            currentState.copy(grid = updatedGrid, preview = updatedPreview)
+        }
+        recalculateHints()
+        checkValidMoves()
+        persistState(getCurrentGameState())
+    }
+
+    fun addPerkManually(perk: Perk) {
+        _uiState.update { it.copy(collectedPerks = it.collectedPerks + perk) }
+        persistState(getCurrentGameState())
     }
 }

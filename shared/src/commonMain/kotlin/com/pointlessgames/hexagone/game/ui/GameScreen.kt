@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.GameViewModel
+import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
@@ -63,6 +64,8 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val onPerkSelected = remember(viewModel) { viewModel::onPerkSelected }
     val onRestart = remember(viewModel) { viewModel::onRestartClicked }
     val onViewBoardToggle = remember(viewModel) { viewModel::onViewBoardToggled }
+    val onDebugToggle = remember(viewModel) { viewModel::toggleDebugMode }
+    val onDebugCellClick = remember(viewModel) { viewModel::onDebugCellClicked }
 
     val gridAlpha by animateFloatAsState(
         targetValue = if (uiState.isGameOver && !uiState.showGameOverBoard) 0.1f else 1f,
@@ -146,18 +149,21 @@ internal fun GameScreen(viewModel: GameViewModel) {
                     .padding(horizontal = MaterialTheme.spacing.large, vertical = MaterialTheme.spacing.small),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                ScoreSection(
-                    score = uiState.score,
-                    bestScore = uiState.bestScore,
-                    combo = uiState.combo,
-                    level = uiState.level,
-                    progress = viewModel.getLevelProgress(),
-                    highestValue = uiState.highestValue,
-                    activePerk = uiState.activePerk,
-                    selectedCellId = uiState.selectedCellId,
-                )
+                if (!uiState.isDebugMode) {
+                    ScoreSection(
+                        score = uiState.score,
+                        bestScore = uiState.bestScore,
+                        combo = uiState.combo,
+                        level = uiState.level,
+                        progress = viewModel.getLevelProgress(),
+                        highestValue = uiState.highestValue,
+                        activePerk = uiState.activePerk,
+                        selectedCellId = uiState.selectedCellId,
+                        onLevelClick = onDebugToggle
+                    )
 
-                Spacer(Modifier.weight(0.1f))
+                    Spacer(Modifier.weight(0.1f))
+                }
 
                 GameGridOverlay(
                     gridStateProvider = gridStateProvider,
@@ -173,21 +179,36 @@ internal fun GameScreen(viewModel: GameViewModel) {
                     pendingMergeScoreProvider = pendingMergeScoreProvider,
                     comboProvider = comboProvider,
                     effects = viewModel.effects,
-                    onEmptySpaceClick = onEmptySpaceClick,
-                    onEmptySpaceTouchDown = onEmptySpaceTouchDown,
+                    onEmptySpaceClick = if (uiState.isDebugMode) onDebugCellClick else onEmptySpaceClick,
+                    onEmptySpaceTouchDown = if (uiState.isDebugMode) { _, _ -> } else onEmptySpaceTouchDown,
                     onEmptySpaceTouchUp = onEmptySpaceTouchUp,
-                    onCellTouchDown = onCellTouchDown,
+                    onCellTouchDown = if (uiState.isDebugMode) { _ -> } else onCellTouchDown,
                     onCellTouchUp = onCellTouchUp,
-                    onCellClick = onCellClick,
+                    onCellClick = if (uiState.isDebugMode) { cell -> onDebugCellClick(cell.x, cell.y) } else onCellClick,
                     onMergeAnimationFinished = onMergeAnimationFinished,
                     modifier = Modifier.weight(1f, fill = false).fillMaxWidth(),
                 )
 
-                Spacer(Modifier.weight(0.1f))
+                if (!uiState.isDebugMode) {
+                    Spacer(Modifier.weight(0.1f))
+                }
             }
             
-            // Placeholder to keep space for PerkBar
-            Spacer(Modifier.height(MaterialTheme.spacing.immense))
+            if (!uiState.isDebugMode) {
+                // Placeholder to keep space for PerkBar
+                Spacer(Modifier.height(MaterialTheme.spacing.immense))
+            } else {
+                DebugOverlay(
+                    isVisible = true,
+                    selectedValue = uiState.debugSelectedValue,
+                    isGhostMode = uiState.debugAddAsGhost,
+                    onValueSelected = viewModel::setDebugSelectedValue,
+                    onGhostModeToggled = viewModel::toggleDebugAddAsGhost,
+                    onPerkClick = viewModel::addPerkManually,
+                    onClose = onDebugToggle,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
 
         // Dimming Layer (above board, below PerkBar)
@@ -214,55 +235,70 @@ internal fun GameScreen(viewModel: GameViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Bottom
         ) {
-            if (uiState.isStuck) {
-                Box(
-                    modifier = Modifier
-                        .offset(y = -MaterialTheme.spacing.semiMedium + stuckBounce.dp)
-                        .shadow(elevation = MaterialTheme.spacing.medium, shape = RoundedCornerShape(MaterialTheme.cornerRadius.small))
-                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(MaterialTheme.cornerRadius.small))
-                        .border(MaterialTheme.spacing.tiny, Color.White.copy(alpha = 0.5f), RoundedCornerShape(MaterialTheme.cornerRadius.small))
-                        .padding(horizontal = MaterialTheme.spacing.medium, vertical = MaterialTheme.spacing.semiSmall),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.no_moves_left_warning),
-                        color = Color.White,
-                        fontWeight = FontWeight.Black,
-                        fontSize = 11.sp,
-                        letterSpacing = 1.sp,
-                    )
+            if (!uiState.isDebugMode) {
+                if (uiState.isStuck) {
+                    Box(
+                        modifier = Modifier
+                            .offset(y = -MaterialTheme.spacing.semiMedium + stuckBounce.dp)
+                            .shadow(
+                                elevation = MaterialTheme.spacing.medium,
+                                shape = RoundedCornerShape(MaterialTheme.cornerRadius.small)
+                            )
+                            .background(
+                                MaterialTheme.colorScheme.primary,
+                                RoundedCornerShape(MaterialTheme.cornerRadius.small)
+                            )
+                            .border(
+                                MaterialTheme.spacing.tiny,
+                                Color.White.copy(alpha = 0.5f),
+                                RoundedCornerShape(MaterialTheme.cornerRadius.small)
+                            )
+                            .padding(
+                                horizontal = MaterialTheme.spacing.medium,
+                                vertical = MaterialTheme.spacing.semiSmall
+                            ),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.no_moves_left_warning),
+                            color = Color.White,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 11.sp,
+                            letterSpacing = 1.sp,
+                        )
+                    }
+                    Spacer(Modifier.height(MaterialTheme.spacing.medium))
                 }
-                Spacer(Modifier.height(MaterialTheme.spacing.medium))
+
+                PerkBar(
+                    collectedPerks = uiState.collectedPerks,
+                    activePerk = uiState.activePerk,
+                    isStuck = uiState.isStuck,
+                    onPerkClick = onPerkClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer { clip = false }
+                )
             }
-
-            PerkBar(
-                collectedPerks = uiState.collectedPerks,
-                activePerk = uiState.activePerk,
-                isStuck = uiState.isStuck,
-                onPerkClick = onPerkClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .graphicsLayer { clip = false }
-            )
         }
-    }
 
-    GameOverlays(
-        isGameOver = uiState.isGameOver,
-        scoreProvider = { uiState.score },
-        bestScore = uiState.bestScore,
-        level = uiState.level,
-        maxCombo = uiState.maxCombo,
-        totalMerges = uiState.totalMerges,
-        highestValue = uiState.highestValue,
-        showBoard = uiState.showGameOverBoard,
-        perkOptions = uiState.perkOptions,
-        pendingLevelUps = uiState.pendingLevelUps,
-        canReroll = uiState.canReroll,
-        onPerkSelected = onPerkSelected,
-        onRerollClicked = viewModel::onRerollClicked,
-        onRestart = onRestart,
-        onViewBoardToggle = onViewBoardToggle,
-        onShare = { /* TODO: Implement snapshot and share */ },
-        onLeaderboard = { /* TODO: Implement leaderboard */ }
-    )
+        GameOverlays(
+            isGameOver = uiState.isGameOver,
+            scoreProvider = { uiState.score },
+            bestScore = uiState.bestScore,
+            level = uiState.level,
+            maxCombo = uiState.maxCombo,
+            totalMerges = uiState.totalMerges,
+            highestValue = uiState.highestValue,
+            showBoard = uiState.showGameOverBoard,
+            perkOptions = uiState.perkOptions,
+            pendingLevelUps = uiState.pendingLevelUps,
+            canReroll = uiState.canReroll,
+            onPerkSelected = onPerkSelected,
+            onRerollClicked = viewModel::onRerollClicked,
+            onRestart = onRestart,
+            onViewBoardToggle = onViewBoardToggle,
+            onShare = { /* TODO: Implement snapshot and share */ },
+            onLeaderboard = { /* TODO: Implement leaderboard */ }
+        )
+    }
 }

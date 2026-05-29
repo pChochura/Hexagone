@@ -432,6 +432,10 @@ internal class GameEngine(
         return HexagonCell(id ?: "cell_${idCounter++}", x, y, value, isTactical)
     }
 
+    fun createPreviewCell(x: Int, y: Int, value: Int, id: String? = null, isTactical: Boolean = false): PreviewCell {
+        return PreviewCell(id ?: "preview_${previewIdCounter++}", x, y, value, 0, isTactical)
+    }
+
     fun syncCounters(grid: List<HexagonCell>, previews: List<PreviewCell>) {
         val cellIds = grid.mapNotNull { it.id.substringAfter("cell_").toIntOrNull() }
         idCounter = (cellIds.maxOrNull() ?: -1) + 1
