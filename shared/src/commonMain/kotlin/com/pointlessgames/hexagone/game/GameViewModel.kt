@@ -466,7 +466,7 @@ internal class GameViewModel(
                 } else null
             }
             Perk.PATH_MERGE -> {
-                if (ghostAtPos != null) engine.calculatePathMerge(x, y, ghostAtPos.value, state.grid)
+                if (ghostAtPos != null) null
                 else null
             }
             Perk.MOVE_TILE, Perk.DUPLICATE_TILE -> {
@@ -475,14 +475,16 @@ internal class GameViewModel(
                     if (source != null) {
                         val resultId = if (perk == Perk.MOVE_TILE) "preview_move" else "preview_duplicate"
                         val swaps = if (perk == Perk.MOVE_TILE) mapOf(selectedId to (x to y)) else null
-                        val forceSolid = if (perk == Perk.MOVE_TILE && source.isGhost) setOf(selectedId) else emptySet()
+                        val isSourceSolid = !source.isGhost
+                        val forceSolidIds = if (isSourceSolid) setOf(resultId) else emptySet()
+                        val forceGhostAtSource = if (perk == Perk.MOVE_TILE && source.isGhost) setOf(selectedId) else emptySet()
                         
                         MergeTransition(
                             targetX = x, targetY = y, steps = emptyList(), finalValue = source.value,
                             totalCells = 1, uniqueGroups = 0, baseScore = 0, resultId = resultId,
                             participatingIds = setOf(selectedId) + listOfNotNull(ghostAtPos?.id),
                             previewSwaps = swaps,
-                            forceSolidIds = forceSolid
+                            forceSolidIds = forceSolidIds + forceGhostAtSource,
                         )
                     } else null
                 } else if (ghostAtPos != null) {
@@ -539,7 +541,10 @@ internal class GameViewModel(
         val selectedId = state.selectedCellId
 
         val merge = when (perk) {
-            Perk.PATH_MERGE -> engine.calculatePathMerge(cell.x, cell.y, state.grid)
+            Perk.PATH_MERGE -> engine.calculatePathMerge(cell.x, cell.y, state.grid)?.copy(
+                resultId = "preview_path_merge",
+                forceSolidIds = setOf("preview_path_merge")
+            )
             Perk.REMOVE_TILE -> {
                 val baseCleanupScore = cell.value * 10
                 val currentMin = state.grid.minOfOrNull { it.value } ?: Int.MAX_VALUE
@@ -751,32 +756,6 @@ internal class GameViewModel(
                 finishPerkAction(Perk.INCREMENT_TILE)
             }
 
-            Perk.PATH_MERGE -> {
-                val merge = engine.calculatePathMerge(preview.x, preview.y, preview.value, state.grid)
-                if (merge != null) {
-                    saveState()
-                    val comboMultiplier = (state.combo + 1).coerceAtMost(12)
-                    val totalAddedScore = merge.baseScore * comboMultiplier
-
-                    _uiState.update { currentState ->
-                        val firstStep = merge.steps.first()
-                        currentState.copy(
-                            grid = currentState.grid.map { c ->
-                                if (firstStep.mergingCells.any { it.id == c.id }) c.copy(
-                                    x = preview.x,
-                                    y = preview.y,
-                                ) else c
-                            },
-                            preview = currentState.preview.filter { it.id != preview.id },
-                            pendingMerge = merge,
-                            activeMergeStepIndex = 0,
-                            pendingMergeScore = totalAddedScore,
-                            isBusy = true,
-                        )
-                    }
-                }
-            }
-
             else -> {}
         }
     }
@@ -820,7 +799,7 @@ internal class GameViewModel(
                                     y = cell.y,
                                 ) else c
                             },
-                            pendingMerge = merge,
+                            pendingMerge = merge.copy(resultId = "preview_path_merge"),
                             activeMergeStepIndex = 0,
                             pendingMergeScore = totalAddedScore,
                             isBusy = true,

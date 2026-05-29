@@ -290,11 +290,12 @@ internal fun GameGridOverlay(
             hoveredMergeState.collect { current ->
                 ghostAnimations.forEach { (id, state) ->
                     val preview = previewStateProvider().find { it.id == id }
-                    val isOverlapped =
-                        current != null && preview != null && current.targetX == preview.x && current.targetY == preview.y &&
-                                current.resultId != "preview_highlight_queue" && 
-                                !current.resultId.contains("swap") &&
-                                current.resultId != "preview_increment_queue" && !current.isRemoval
+                    val isOverlapped = current != null && preview != null && current.targetX == preview.x && current.targetY == preview.y && (
+                        current.resultId == "preview_move" || 
+                        current.resultId == "preview_duplicate" || 
+                        current.resultId == "preview_path_merge" ||
+                        current.steps.isNotEmpty()
+                    )
                     launch { state.alpha.animateTo(if (isOverlapped) 0f else 1f, tween(200)) }
                 }
             }
@@ -511,17 +512,7 @@ internal fun GameGridOverlay(
 
                         val isGhostSelectable = { preview: PreviewCell ->
                             when (activePerk) {
-                                Perk.PATH_MERGE -> {
-                                    val neighbors = gridStateProvider().filter { n ->
-                                        val coords = if (preview.x % 2 == 0) {
-                                            listOf(preview.x to preview.y - 1, preview.x to preview.y + 1, preview.x - 1 to preview.y - 1, preview.x - 1 to preview.y, preview.x + 1 to preview.y - 1, preview.x + 1 to preview.y)
-                                        } else {
-                                            listOf(preview.x to preview.y - 1, preview.x to preview.y + 1, preview.x - 1 to preview.y, preview.x - 1 to preview.y + 1, preview.x + 1 to preview.y, preview.x + 1 to preview.y + 1)
-                                        }
-                                        coords.any { it.first == n.x && it.second == n.y }
-                                    }
-                                    neighbors.any { it.value == preview.value }
-                                }
+                                Perk.PATH_MERGE -> false
                                 Perk.REMOVE_TILE, Perk.INCREMENT_TILE -> true
                                 Perk.SWAP_TILES -> selectedCellId != preview.id
                                 Perk.MOVE_TILE, Perk.DUPLICATE_TILE -> selectedCellId == null
@@ -833,6 +824,8 @@ private fun drawHoverResult(
     val isPlacement = merge.resultId.contains("move") || merge.resultId.contains("duplicate") || merge.resultId.contains("swap") || merge.resultId.contains("highlight")
 
     if (merge.finalValue > 0 && (merge.finalValue != currentValue || isPlacement)) {
+        val isForcedSolid = merge.forceSolidIds?.contains(merge.resultId) == true
+
         drawScope.withTransform(
             {
                 translate(targetOffset.x.toFloat(), targetOffset.y.toFloat())
@@ -841,17 +834,19 @@ private fun drawHoverResult(
             },
         ) {
             val backgroundColor = HexagonGridDefaults.getColorForValue(merge.finalValue, colorScheme)
-                .copy(alpha = 0.5f * progress * 0.7f)
+                .copy(alpha = (if (isForcedSolid) 0.8f else 0.5f) * progress * 0.7f)
             HexagonGridDefaults.drawHexagonPath(this, Size(itemWidth, itemHeight), backgroundColor)
 
-            clipPath(HexagonGridDefaults.getHexagonPath(Size(itemWidth, itemHeight))) {
-                HexagonGridDefaults.drawGhostStripes(
-                    this,
-                    Size(itemWidth, itemHeight),
-                    stripeOffset * drawScope.density,
-                    spacing,
-                    alpha = 0.15f * progress * 0.7f,
-                )
+            if (!isForcedSolid) {
+                clipPath(HexagonGridDefaults.getHexagonPath(Size(itemWidth, itemHeight))) {
+                    HexagonGridDefaults.drawGhostStripes(
+                        this,
+                        Size(itemWidth, itemHeight),
+                        stripeOffset * drawScope.density,
+                        spacing,
+                        alpha = 0.15f * progress * 0.7f,
+                    )
+                }
             }
 
             HexagonGridDefaults.drawHexagonPath(
