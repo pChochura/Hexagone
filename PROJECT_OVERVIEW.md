@@ -67,12 +67,14 @@ A merge occurs when 2+ tiles of the same value touch.
 The game calculates **Weighted Hints** for every empty tile and provides **Interactive Hover Previews** for tactical moves:
 *   **Look-Ahead**: Simulates the current move + the next 3 pieces in the queue.
 *   **Evaluation**: Assigns favorability (0.0 - 1.0) based on score, combo potential, and future board setup.
-*   **Perk Awareness**: Recalculates hints based on active perks (e.g., highlighting Fusion spots).
+*   **Perk Awareness**: Recalculates hints based on active perks (e.g., highlighting Fusion spots). **Path Merge** specifically preserves empty-space hints to allow tactical comparison with standard moves.
 *   **Interactive Hover Previews**:
     *   **Swap Preview**: Visually switches the positions of the selected tile and the hover target (board or queue) while maintaining their original identity (solid vs. ghost).
-    *   **Duplicate/Move Preview**: Shows a purely visual placement of the tile at the target location.
+    *   **Move Preview**: Shows a physical displacement of the selected tile to the target location without redundant overlays.
+    *   **Direct Value Preview**: Perks like **INCREMENT TILE** and **PATH MERGE** transform the value of the targeted tile directly to show the outcome.
     *   **Removal Preview**: Highlights the target tile with a subtle white border.
     *   **Ghost Animations**: Queue tiles smoothly animate to their preview positions during swap interactions.
+*   **Z-Index Prioritization**: Active, long-pressed, or moving tiles are dynamically layered on top of static elements to ensure visual clarity during interaction.
 *   **Visuals**: Subtle, dynamic dots that scale in size based on strategic value.
 
 ### Perk Economy
@@ -82,6 +84,7 @@ Perks are strategic tools collected via leveling up or on-board scavenge.
     *   **Rare** (Weight 50): ADVANCE QUEUE, SWAP TILES, DUPLICATE TILE, SKIP SPAWN.
     *   **Legendary** (Weight 20-5): FUSION, CHAIN MERGE, PATH MERGE (features a distinct pulsating aura).
 *   **Path Merge Constraint**: To ensure tactical clarity and prevent unintended chain reactions from the queue, the **PATH MERGE** perk explicitly ignores ghost (queue) tiles and only connects solid tiles already on the board.
+*   **Input Selection Guards**: Tile-targeted perks (**REMOVE**, **INCREMENT**, **SWAP**, **PATH MERGE**) automatically disable clicks on empty hexes to prevent accidental tile placement during tool use.
 *   **On-Board Spawning (Pity System)**:
     *   **Fairness**: A perk is guaranteed not to spawn for 8 turns, and guaranteed to spawn by 15 turns if the board has space.
     *   **Clutter Control**: Max 1 perk on board at any time.
@@ -98,6 +101,7 @@ Perks are strategic tools collected via leveling up or on-board scavenge.
 
 *   **Atmospheric Dimming**: Seamless full-screen focus shift during choice-heavy states (Level Up, Stuck).
 *   **Tactical Tooltip System**: Persistent, neon-bordered tooltips triggered by long-press. Features dynamic scale-up origin tracking (originate from anchor) and a breathing "hover" float animation.
+*   **Interaction Stability**: Long-press guards prevent redundant pulse animations or ghosting artifacts when interacting with already selected tiles.
 *   **Neon Bloom**: Contoured, multi-layered "neon" outlines and inner glows around active strategic areas (Perk Shelf, Result Card, Tooltips).
 *   **Design Tokens**: Fully semantic theme implementation using Material 3 color mapping and specialized design tokens for `Spacing`, `CornerRadius`, and `IconSize`.
 *   **Fluid HUD**: A liquid level progress bar with a wavy edge. "Splashes" with intensity and speed proportional to the points earned relative to the current level.
