@@ -74,7 +74,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
     )
 
     val stuckDimAlpha by animateFloatAsState(
-        targetValue = if (uiState.isStuck) 0.6f else 0f,
+        targetValue = if (uiState.isStuck && uiState.activePerk == null) 0.6f else 0f,
         animationSpec = tween(500),
         label = "stuck_dim_alpha",
     )
@@ -219,7 +219,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
                     .graphicsLayer { alpha = stuckDimAlpha }
                     .background(Color.Black)
                     .clickable(
-                        enabled = uiState.isStuck,
+                        enabled = uiState.isStuck && uiState.activePerk == null,
                         interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                         indication = null
                     ) { /* Consume board clicks while stuck */ }
@@ -236,7 +236,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
             verticalArrangement = Arrangement.Bottom
         ) {
             if (!uiState.isDebugMode) {
-                if (uiState.isStuck) {
+                if (uiState.isStuck && uiState.activePerk == null) {
                     Box(
                         modifier = Modifier
                             .offset(y = -MaterialTheme.spacing.semiMedium + stuckBounce.dp)
@@ -273,6 +273,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
                     collectedPerks = uiState.collectedPerks,
                     activePerk = uiState.activePerk,
                     isStuck = uiState.isStuck,
+                    stuckPerks = uiState.stuckPerks,
                     onPerkClick = onPerkClick,
                     modifier = Modifier
                         .fillMaxWidth()

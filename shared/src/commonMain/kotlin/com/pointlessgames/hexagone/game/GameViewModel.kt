@@ -53,6 +53,7 @@ internal data class GameUiState(
     val combo: Int = 0,
     val isBusy: Boolean = false,
     val isStuck: Boolean = false,
+    val stuckPerks: Set<Perk> = emptySet(),
     val isGameOver: Boolean = false,
     val collectedPerks: List<Perk> = emptyList(),
     val perkOptions: List<Perk> = emptyList(),
@@ -342,7 +343,7 @@ internal class GameViewModel(
 
     fun onEmptySpaceClicked(x: Int, y: Int) {
         val state = _uiState.value
-        if (state.pendingMerge != null || state.isBusy || state.isGameOver || state.isStuck || state.perkOptions.isNotEmpty()) return
+        if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
 
         saveState()
         _hoveredMerge.value = null
@@ -433,7 +434,7 @@ internal class GameViewModel(
 
     fun onEmptySpaceTouchDown(x: Int, y: Int) {
         val state = _uiState.value
-        if (state.pendingMerge != null || state.isBusy || state.isGameOver || state.isStuck || state.perkOptions.isNotEmpty()) return
+        if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
 
         val perk = state.activePerk
         val selectedId = state.selectedCellId
@@ -535,7 +536,7 @@ internal class GameViewModel(
 
     fun onCellTouchDown(cell: HexagonCell) {
         val state = _uiState.value
-        if (state.pendingMerge != null || state.isBusy || state.isGameOver || state.isStuck || state.perkOptions.isNotEmpty()) return
+        if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
 
         val perk = state.activePerk
         val selectedId = state.selectedCellId
@@ -689,7 +690,7 @@ internal class GameViewModel(
 
     fun onPreviewClicked(preview: PreviewCell) {
         val state = _uiState.value
-        if (state.pendingMerge != null || state.isBusy || state.isGameOver || state.isStuck || state.perkOptions.isNotEmpty()) return
+        if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
 
         when (val perk = state.activePerk) {
             Perk.MOVE_TILE -> {
@@ -756,7 +757,7 @@ internal class GameViewModel(
 
     fun onCellClicked(cell: HexagonCell) {
         val state = _uiState.value
-        if (state.pendingMerge != null || state.isBusy || state.isGameOver || state.isStuck || state.perkOptions.isNotEmpty()) return
+        if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
 
         when (val perk = state.activePerk) {
             Perk.MOVE_TILE -> {
@@ -923,7 +924,7 @@ internal class GameViewModel(
             return
         }
 
-        _uiState.update { it.copy(isStuck = false, isGameOver = false, selectedCellId = null) }
+        _uiState.update { it.copy(isGameOver = false, selectedCellId = null) }
         when (perk) {
             Perk.ADVANCE_QUEUE -> {
                 saveState()
@@ -1237,17 +1238,17 @@ internal class GameViewModel(
                 previews = state.preview,
                 previousState = stateHistory.lastOrNull()
             )
-        }
+        }.toSet()
 
         _uiState.update {
             if (state.isDebugMode) {
-                it.copy(isStuck = false, isGameOver = false)
+                it.copy(isStuck = false, isGameOver = false, stuckPerks = emptySet())
             } else if (isPossible || hasPerkOptions) {
-                it.copy(isStuck = false, isGameOver = false)
+                it.copy(isStuck = false, isGameOver = false, stuckPerks = emptySet())
             } else if (actionablePerks.isNotEmpty()) {
-                it.copy(isStuck = true, isGameOver = false)
+                it.copy(isStuck = true, isGameOver = false, stuckPerks = actionablePerks)
             } else {
-                it.copy(isStuck = false)
+                it.copy(isStuck = false, stuckPerks = emptySet())
             }
         }
 

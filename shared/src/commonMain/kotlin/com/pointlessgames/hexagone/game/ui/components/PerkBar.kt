@@ -47,6 +47,7 @@ fun PerkBar(
     collectedPerks: List<Perk>,
     activePerk: Perk?,
     isStuck: Boolean,
+    stuckPerks: Set<Perk>,
     onPerkClick: (Perk) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -153,7 +154,7 @@ fun PerkBar(
                 distinctPerks.forEachIndexed { index, perk ->
                     val count = remember(collectedPerks, perk) { collectedPerks.count { it == perk } }
                     val isActive = activePerk == perk
-                    val isEnabled = !isStuck || perk.canSaveFromStuck
+                    val isEnabled = !isStuck || stuckPerks.contains(perk)
 
                     PerkButton(
                         perk = perk,
