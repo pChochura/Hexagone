@@ -66,6 +66,7 @@ internal data class GameUiState(
     val reachedComboTiers: Set<ComboTier> = emptySet(),
     val perkSpawnCounter: Int = 0,
     val canReroll: Boolean = true,
+    val availableChoices: Int = 0,
 )
 
 @Immutable
@@ -120,6 +121,7 @@ internal data class GameState(
     val canReroll: Boolean,
     val sessionBestScore: Int,
     val isStuck: Boolean = false,
+    val availableChoices: Int = 0,
 )
 
 internal class GameViewModel(
@@ -173,6 +175,7 @@ internal class GameViewModel(
                             bestScore = savedState.sessionBestScore,
                             mergeHintsEnabled = hintsEnabled,
                             isStuck = savedState.isStuck,
+                            availableChoices = savedState.availableChoices,
                         )
                     }
                     absoluteBestScore = best
@@ -228,9 +231,22 @@ internal class GameViewModel(
 
     private fun saveState() {
         val currentState = getCurrentGameState()
-        stateHistory.add(currentState)
+        val choices = engine.countPossibleMoves(currentState.grid) +
+                currentState.collectedPerks.count { perk ->
+                    engine.canPerkResolveStuck(
+                        perk = perk,
+                        grid = currentState.grid,
+                        previews = currentState.preview,
+                        previousState = stateHistory.lastOrNull()
+                    )
+                } +
+                (if (currentState.perkOptions.isNotEmpty()) 1 else 0)
+
+        val stateToSave = currentState.copy(availableChoices = choices)
+
+        stateHistory.add(stateToSave)
         if (stateHistory.size > 10) stateHistory.removeAt(0)
-        persistState(currentState)
+        persistState(stateToSave)
     }
 
     private fun getCurrentGameState(): GameState {
@@ -253,6 +269,7 @@ internal class GameViewModel(
             canReroll = state.canReroll,
             sessionBestScore = state.bestScore,
             isStuck = state.isStuck,
+            availableChoices = state.availableChoices,
         )
     }
 
@@ -1240,7 +1257,7 @@ internal class GameViewModel(
                 perk = perk,
                 grid = state.grid,
                 previews = state.preview,
-                previousStateNotStuck = stateHistory.lastOrNull()?.let { !it.isStuck } ?: false
+                previousState = stateHistory.lastOrNull()
             )
         }
 

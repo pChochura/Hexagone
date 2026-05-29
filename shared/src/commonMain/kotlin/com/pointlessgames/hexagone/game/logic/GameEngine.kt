@@ -10,7 +10,7 @@ import com.pointlessgames.hexagone.game.model.PreviewCell
 import kotlin.math.pow
 import kotlin.random.Random
 
-class GameEngine(
+internal class GameEngine(
     val columns: Int = 5,
     val rows: Int = 4
 ) {
@@ -408,17 +408,24 @@ class GameEngine(
     }
 
     fun isMovePossible(grid: List<HexagonCell>): Boolean {
+        return countPossibleMoves(grid) > 0
+    }
+
+    fun countPossibleMoves(grid: List<HexagonCell>): Int {
         val occupied = grid.map { it.x to it.y }.toSet()
+        var possibleMoves = 0
         for (y in 0 until rows) {
             for (x in 0 until columns) {
                 if (x to y !in occupied) {
                     val neighbors = getNeighbors(x, y)
                     val neighborCells = grid.filter { cell -> neighbors.any { it.first == cell.x && it.second == cell.y } }
-                    if (neighborCells.groupBy { it.value }.any { it.value.size >= 2 }) return true
+                    if (neighborCells.groupBy { it.value }.any { it.value.size >= 2 }) {
+                        possibleMoves++
+                    }
                 }
             }
         }
-        return false
+        return possibleMoves
     }
 
     fun createCell(x: Int, y: Int, value: Int, id: String? = null, isTactical: Boolean = false): HexagonCell {
@@ -527,10 +534,10 @@ class GameEngine(
         perk: Perk,
         grid: List<HexagonCell>,
         previews: List<PreviewCell>,
-        previousStateNotStuck: Boolean
+        previousState: com.pointlessgames.hexagone.game.GameState?
     ): Boolean {
         return when (perk) {
-            Perk.UNDO -> previousStateNotStuck
+            Perk.UNDO -> previousState != null && !previousState.isStuck && previousState.availableChoices > 1
             Perk.REMOVE_TILE -> grid.isNotEmpty()
             Perk.MOVE_TILE -> {
                 val occupied = grid.map { it.x to it.y }.toSet()
