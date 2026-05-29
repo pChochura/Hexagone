@@ -111,7 +111,10 @@ Perks are strategic tools collected via leveling up or on-board scavenge.
     *   **Queue Indicator**: A badge showing the number of pending level-up rewards.
     *   **Perk Selection**: Breathable, simplified layout focusing on icon and name; detailed descriptions and "Cursed Reroll" penalties are moved to persistent tooltips.
     *   **Perk Refresh**: Uses `AnimatedContent` to scale/fade perks when selecting multiple rewards in sequence.
-*   **Emergency Mode**: When stuck, the HUD displays a floating, bouncing tooltip and faster shelf pulse to guide players toward using a perk.
+*   **Emergency Mode**: When stuck (no valid moves possible), the HUD displays a floating, bouncing tooltip and faster shelf pulse.
+    *   **Dynamic Solution Filtering**: The system identifies specific perks that can resolve the current board state. Only these "solution" perks are enabled in the shelf during the stuck state.
+    *   **State Persistence**: The emergency mode remains active even after selecting a perk, preventing switching to non-resolving tools until a successful move is executed.
+    *   **Adaptive HUD**: Background dimming and warnings are temporarily suppressed when a perk is active to ensure full board visibility for strategic execution.
 *   **Interactive Result Card**: Floating frosted glass overlay with animated score count-ups, detailed stats (merges, max combo, highest tile), and a "View Board" peek mode.
 *   **Localization**: Full multi-language support (English, Polish) using **Compose Resources**. All strings are externalized to `strings.xml`.
 
