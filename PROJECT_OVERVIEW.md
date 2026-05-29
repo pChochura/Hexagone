@@ -51,6 +51,8 @@ A merge occurs when 2+ tiles of the same value touch.
 ### Scoring & Combos
 *   **Sequential Merges**: Multi-group merges happen in steps (largest first) to build visual momentum and sold impact.
 *   **Combo System**: A multiplier that builds with every group merge. Clamped at **x12** for internal scoring to prevent economy inflation.
+*   **Tactical Multiplier**: Tiles marked as **Tactical** (generated via certain perks or chain reactions) grant a **1.5x Base Score bonus** when merged.
+*   **Redemption Bonus**: If a move's score exceeds the previous turn's score, a **50% Redemption Bonus** is applied to the difference, rewarding escalating momentum.
 *   **Tiered Milestones (Overdrive)**: Crossing specific thresholds grants permanent rewards:
     *   **SURGE (x11)**: +1 Random Rare Perk.
     *   **OVERDRIVE (x21)**: +1 Random Legendary Perk.
@@ -79,6 +81,7 @@ Perks are strategic tools collected via leveling up or on-board scavenge.
     *   **Common** (Weight 100-80): UNDO, MOVE TILE, REMOVE TILE, INCREMENT TILE.
     *   **Rare** (Weight 50): ADVANCE QUEUE, SWAP TILES, DUPLICATE TILE, SKIP SPAWN.
     *   **Legendary** (Weight 20-5): FUSION, CHAIN MERGE, PATH MERGE (features a distinct pulsating aura).
+*   **Path Merge Constraint**: To ensure tactical clarity and prevent unintended chain reactions from the queue, the **PATH MERGE** perk explicitly ignores ghost (queue) tiles and only connects solid tiles already on the board.
 *   **On-Board Spawning (Pity System)**:
     *   **Fairness**: A perk is guaranteed not to spawn for 8 turns, and guaranteed to spawn by 15 turns if the board has space.
     *   **Clutter Control**: Max 1 perk on board at any time.
@@ -99,6 +102,7 @@ Perks are strategic tools collected via leveling up or on-board scavenge.
 *   **Design Tokens**: Fully semantic theme implementation using Material 3 color mapping and specialized design tokens for `Spacing`, `CornerRadius`, and `IconSize`.
 *   **Fluid HUD**: A liquid level progress bar with a wavy edge. "Splashes" with intensity and speed proportional to the points earned relative to the current level.
 *   **Stable Popup Stacking**: Popups (Score/Perks) group by **grid coordinates** and use **deterministic ID sorting** for stable horizontal offsets, preventing layout jitter during rapid merges.
+*   **Tactical & Redemption Labels**: Special merges trigger stylized labels ("TACTICIAN", "REDEMPTION") above the score popup, colored based on the bonus type (Secondary for Tactical, Tertiary for Redemption).
 *   **Dynamic Level Up**: 
     *   **Queue Indicator**: A badge showing the number of pending level-up rewards.
     *   **Perk Selection**: Breathable, simplified layout focusing on icon and name; detailed descriptions and "Cursed Reroll" penalties are moved to persistent tooltips.
