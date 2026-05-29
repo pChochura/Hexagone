@@ -182,6 +182,7 @@ internal class GameViewModel(
                     absoluteBestScore = maxOf(best, savedState.score)
                     lastLevel = savedState.level
                     updateLevel()
+                    engine.syncCounters(savedState.grid, savedState.preview)
                     checkValidMoves()
                 } catch (_: Exception) {
                     _uiState.update { it.copy(bestScore = best, mergeHintsEnabled = hintsEnabled) }
@@ -519,8 +520,7 @@ internal class GameViewModel(
                 if (perk == Perk.CHAIN_MERGE) {
                     engine.simulateChainMerge(x, y, state.grid, state.combo)
                 } else {
-                    val ghostAtPos = state.preview.find { it.x == x && it.y == y }
-                    engine.calculateMerge(x, y, state.grid, placedValue = ghostAtPos?.value)
+                    engine.calculateMerge(x, y, state.grid)
                 }
             }
             else -> null
@@ -589,6 +589,7 @@ internal class GameViewModel(
                     )
                 }
             }
+            null -> null
             else -> {
                 MergeTransition(
                     targetX = cell.x, targetY = cell.y, steps = emptyList(), finalValue = cell.value,
@@ -1018,6 +1019,7 @@ internal class GameViewModel(
         lastLevel = 1
         lastProcessedMergeId = null
         lastProcessedStepIndex = -1
+        engine.syncCounters(emptyList(), emptyList())
         val initialGrid = engine.generateInitialGrid()
         val initialPreviews = engine.pickRandomPreviews(initialGrid, emptyList(), emptyList(), 3)
         _uiState.value = GameUiState(

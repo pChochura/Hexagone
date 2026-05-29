@@ -432,6 +432,14 @@ internal class GameEngine(
         return HexagonCell(id ?: "cell_${idCounter++}", x, y, value, isTactical)
     }
 
+    fun syncCounters(grid: List<HexagonCell>, previews: List<PreviewCell>) {
+        val cellIds = grid.mapNotNull { it.id.substringAfter("cell_").toIntOrNull() }
+        idCounter = (cellIds.maxOrNull() ?: -1) + 1
+
+        val previewIds = previews.mapNotNull { it.id.substringAfter("preview_").toIntOrNull() }
+        previewIdCounter = (previewIds.maxOrNull() ?: -1) + 1
+    }
+
     fun calculateLevel(score: Int): Int {
         var lvl = 1
         // Quadratic threshold: 50 * (level-1)^2
