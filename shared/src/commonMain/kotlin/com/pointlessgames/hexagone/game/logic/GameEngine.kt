@@ -1,5 +1,6 @@
 package com.pointlessgames.hexagone.game.logic
 
+import com.pointlessgames.hexagone.game.model.GameState
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeHint
 import com.pointlessgames.hexagone.game.model.MergeStep
@@ -545,7 +546,7 @@ internal class GameEngine(
         perk: Perk,
         grid: List<HexagonCell>,
         previews: List<PreviewCell>,
-        previousState: com.pointlessgames.hexagone.game.GameState?
+        previousState: GameState?
     ): Boolean {
         return when (perk) {
             Perk.UNDO -> previousState != null && !previousState.isStuck && previousState.availableChoices > 1

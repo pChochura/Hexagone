@@ -92,6 +92,7 @@ import kotlin.math.sin
 
 @Composable
 fun ScoreSection(
+    modifier: Modifier = Modifier,
     score: Int,
     bestScore: Int,
     combo: Int,
@@ -100,7 +101,6 @@ fun ScoreSection(
     highestValue: Int,
     activePerk: Perk?,
     selectedCellId: String?,
-    modifier: Modifier = Modifier,
     onLevelClick: () -> Unit = {}
 ) {
     val animatedProgress by animateFloatAsState(

@@ -50,7 +50,10 @@ import hexagone.shared.generated.resources.no_moves_left_warning
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun GameScreen(viewModel: GameViewModel) {
+internal fun GameScreen(
+    modifier: Modifier = Modifier,
+    viewModel: GameViewModel,
+) {
     val uiState by viewModel.uiState.collectAsState()
 
     val onEmptySpaceClick = remember(viewModel) { viewModel::onEmptySpaceClicked }
@@ -122,7 +125,7 @@ internal fun GameScreen(viewModel: GameViewModel) {
     val selectedCellIdProvider = remember { { selectedCellIdState.value } }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .graphicsLayer { clip = false }
             .background(

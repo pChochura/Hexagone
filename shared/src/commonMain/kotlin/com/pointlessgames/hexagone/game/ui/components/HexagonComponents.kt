@@ -464,10 +464,10 @@ val Perk.descriptionRes get() = when(this) {
 
 @Composable
 fun Hexagon(
+    modifier: Modifier = Modifier,
     value: String? = null,
     backgroundColor: Color = Color.Transparent,
     perk: Perk? = null,
-    modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     isOutline: Boolean = false,
     isGhost: Boolean = false,
@@ -585,9 +585,9 @@ fun Hexagon(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PerkButton(
+    modifier: Modifier = Modifier,
     perk: Perk,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
     count: Int? = null,
     isActive: Boolean = false,
     isEnabled: Boolean = true,
@@ -715,8 +715,8 @@ fun PerkButton(
 
 @Composable
 fun PerkIcon(
-    perk: Perk?,
     modifier: Modifier = Modifier,
+    perk: Perk?,
     color: Color = Color.White
 ) {
     val spacing = MaterialTheme.spacing
@@ -733,9 +733,9 @@ fun PerkIcon(
 
 @Composable
 fun HexagonGrid(
+    modifier: Modifier = Modifier,
     columns: Int,
     rows: Int,
-    modifier: Modifier = Modifier,
     itemGap: Dp = MaterialTheme.spacing.tiny,
     outlineContent: @Composable (col: Int, row: Int) -> Unit = { _, _ -> },
     content: @Composable () -> Unit = {},

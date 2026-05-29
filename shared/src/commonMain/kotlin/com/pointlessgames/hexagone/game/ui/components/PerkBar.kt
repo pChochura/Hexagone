@@ -44,12 +44,12 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PerkBar(
+    modifier: Modifier = Modifier,
     collectedPerks: List<Perk>,
     activePerk: Perk?,
     isStuck: Boolean,
     stuckPerks: Set<Perk>,
     onPerkClick: (Perk) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val surfaceColor = MaterialTheme.colorScheme.surface

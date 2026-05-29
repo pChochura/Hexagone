@@ -6,6 +6,108 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.StringResource
 
 @Immutable
+data class GameItem(
+    val id: String,
+    val x: Int,
+    val y: Int,
+    val value: Int,
+    val isGhost: Boolean
+)
+
+@Immutable
+data class GameUiState(
+    val grid: List<HexagonCell> = emptyList(),
+    val mergeHints: List<MergeHint> = emptyList(),
+    val onBoardPerks: List<OnBoardPerk> = emptyList(),
+    val preview: List<PreviewCell> = emptyList(),
+    val pendingMerge: MergeTransition? = null,
+    val activeMergeStepIndex: Int = 0,
+    val pendingMergeScore: Int = 0,
+    val hoveredMerge: MergeTransition? = null,
+    val score: Int = 0,
+    val bestScore: Int = 0,
+    val level: Int = 1,
+    val levelProgress: Float = 0f,
+    val highestValue: Int = 1,
+    val combo: Int = 0,
+    val isBusy: Boolean = false,
+    val isStuck: Boolean = false,
+    val stuckPerks: Set<Perk> = emptySet(),
+    val isGameOver: Boolean = false,
+    val collectedPerks: List<Perk> = emptyList(),
+    val perkOptions: List<Perk> = emptyList(),
+    val pendingLevelUps: Int = 0,
+    val activePerk: Perk? = null,
+    val selectedCellId: String? = null,
+    val mergeHintsEnabled: Boolean = true,
+    val maxCombo: Int = 0,
+    val totalMerges: Int = 0,
+    val showGameOverBoard: Boolean = false,
+    val reachedComboTiers: Set<ComboTier> = emptySet(),
+    val perkSpawnCounter: Int = 0,
+    val canReroll: Boolean = true,
+    val availableChoices: Int = 0,
+    val isDebugMode: Boolean = false,
+    val debugSelectedValue: Int? = 1,
+    val debugAddAsGhost: Boolean = false,
+)
+
+@Immutable
+data class PotentialMerge(
+    val targetX: Int,
+    val targetY: Int,
+    val finalValue: Int,
+    val baseScore: Int,
+    val participatingIds: Set<String>,
+)
+
+sealed interface GameEffect {
+    data class Particles(val particles: List<Particle>) : GameEffect
+    data class ScorePopup(
+        val gridX: Int,
+        val gridY: Int,
+        val score: Int,
+        val color: Color,
+        val labelRes: StringResource? = null,
+    ) : GameEffect
+
+    data class PerkPopup(
+        val gridX: Int,
+        val gridY: Int,
+        val perk: Perk,
+    ) : GameEffect
+}
+
+@Serializable
+enum class ComboTier(val threshold: Int) {
+    SURGE(11),
+    OVERDRIVE(21),
+    ZENITH(31)
+}
+
+@Serializable
+data class GameState(
+    val grid: List<HexagonCell>,
+    val preview: List<PreviewCell>,
+    val score: Int,
+    val level: Int,
+    val highestValue: Int,
+    val combo: Int,
+    val collectedPerks: List<Perk>,
+    val maxCombo: Int,
+    val totalMerges: Int,
+    val onBoardPerks: List<OnBoardPerk>,
+    val pendingLevelUps: Int,
+    val perkSpawnCounter: Int,
+    val reachedComboTiers: Set<ComboTier>,
+    val perkOptions: List<Perk>,
+    val canReroll: Boolean,
+    val sessionBestScore: Int,
+    val isStuck: Boolean = false,
+    val availableChoices: Int = 0,
+)
+
+@Immutable
 interface GridPopup {
     val id: Long
     val x: Float

@@ -24,6 +24,7 @@ import com.pointlessgames.hexagone.ui.theme.spacing
 
 @Composable
 internal fun DebugOverlay(
+    modifier: Modifier = Modifier,
     isVisible: Boolean,
     selectedValue: Int?,
     isGhostMode: Boolean,
@@ -31,7 +32,6 @@ internal fun DebugOverlay(
     onGhostModeToggled: () -> Unit,
     onPerkClick: (Perk) -> Unit,
     onClose: () -> Unit,
-    modifier: Modifier = Modifier
 ) {
     if (!isVisible) return
 
@@ -127,7 +127,7 @@ internal fun DebugOverlay(
                         .clickable { onPerkClick(perk) },
                     contentAlignment = Alignment.Center
                 ) {
-                    PerkIcon(perk, modifier = Modifier.size(22.dp), color = Color.White)
+                    PerkIcon(modifier = Modifier.size(22.dp), perk = perk, color = Color.White)
                 }
             }
         }
