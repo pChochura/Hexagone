@@ -437,6 +437,8 @@ internal class GameViewModel(
         val selectedId = state.selectedCellId
         val ghostAtPos = state.preview.find { it.x == x && it.y == y }
 
+        if (perk != null && selectedId != null && ghostAtPos?.id == selectedId) return
+
         val merge = when (perk) {
             Perk.REMOVE_TILE -> {
                 if (ghostAtPos != null) {
@@ -466,8 +468,12 @@ internal class GameViewModel(
                 } else null
             }
             Perk.PATH_MERGE -> {
-                if (ghostAtPos != null) null
-                else null
+                if (ghostAtPos == null) {
+                    engine.calculatePathMerge(x, y, state.grid)?.copy(
+                        resultId = "preview_path_merge",
+                        forceSolidIds = setOf("preview_path_merge")
+                    )
+                } else null
             }
             Perk.MOVE_TILE, Perk.DUPLICATE_TILE -> {
                 if (selectedId != null && (ghostAtPos == null || selectedId != ghostAtPos.id)) {
@@ -487,12 +493,6 @@ internal class GameViewModel(
                             forceSolidIds = forceSolidIds + forceGhostAtSource,
                         )
                     } else null
-                } else if (ghostAtPos != null) {
-                    MergeTransition(
-                        targetX = x, targetY = y, steps = emptyList(), finalValue = ghostAtPos.value,
-                        totalCells = 1, uniqueGroups = 0, baseScore = 0, resultId = "preview_highlight_queue",
-                        participatingIds = setOf(ghostAtPos.id)
-                    )
                 } else null
             }
             Perk.SWAP_TILES -> {
@@ -512,12 +512,6 @@ internal class GameViewModel(
                             participatingIds = setOf(source.id, target.id),
                         )
                     } else null
-                } else if (ghostAtPos != null) {
-                    MergeTransition(
-                        targetX = x, targetY = y, steps = emptyList(), finalValue = ghostAtPos.value,
-                        totalCells = 1, uniqueGroups = 0, baseScore = 0, resultId = "preview_highlight_queue",
-                        participatingIds = setOf(ghostAtPos.id)
-                    )
                 } else null
             }
             Perk.FUSION -> engine.calculateFusion(x, y, state.grid)
@@ -539,6 +533,8 @@ internal class GameViewModel(
 
         val perk = state.activePerk
         val selectedId = state.selectedCellId
+
+        if (perk != null && selectedId == cell.id) return
 
         val merge = when (perk) {
             Perk.PATH_MERGE -> engine.calculatePathMerge(cell.x, cell.y, state.grid)?.copy(
@@ -589,22 +585,10 @@ internal class GameViewModel(
                             participatingIds = setOf(source.id, target.id),
                         )
                     } else null
-                } else {
-                    MergeTransition(
-                        targetX = cell.x, targetY = cell.y, steps = emptyList(), finalValue = cell.value,
-                        totalCells = 1, uniqueGroups = 0, baseScore = 0, resultId = "preview_highlight",
-                        participatingIds = setOf(cell.id)
-                    )
-                }
+                } else null
             }
             null -> null
-            else -> {
-                MergeTransition(
-                    targetX = cell.x, targetY = cell.y, steps = emptyList(), finalValue = cell.value,
-                    totalCells = 1, uniqueGroups = 0, baseScore = 0, resultId = "preview_highlight",
-                    participatingIds = setOf(cell.id)
-                )
-            }
+            else -> null
         }
         _hoveredMerge.value = merge
     }
