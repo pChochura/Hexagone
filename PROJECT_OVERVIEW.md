@@ -61,19 +61,24 @@ A merge occurs when 2+ tiles of the same value touch.
 
 ## 3. Strategic Features
 
-### Predictive Hint System
-The game calculates **Weighted Hints** for every empty tile:
+### Predictive Hint System & Hover Previews
+The game calculates **Weighted Hints** for every empty tile and provides **Interactive Hover Previews** for tactical moves:
 *   **Look-Ahead**: Simulates the current move + the next 3 pieces in the queue.
 *   **Evaluation**: Assigns favorability (0.0 - 1.0) based on score, combo potential, and future board setup.
 *   **Perk Awareness**: Recalculates hints based on active perks (e.g., highlighting Fusion spots).
+*   **Interactive Hover Previews**:
+    *   **Swap Preview**: Visually switches the positions of the selected tile and the hover target (board or queue) while maintaining their original identity (solid vs. ghost).
+    *   **Duplicate/Move Preview**: Shows a purely visual placement of the tile at the target location.
+    *   **Removal Preview**: Highlights the target tile with a subtle white border.
+    *   **Ghost Animations**: Queue tiles smoothly animate to their preview positions during swap interactions.
 *   **Visuals**: Subtle, dynamic dots that scale in size based on strategic value.
 
 ### Perk Economy
 Perks are strategic tools collected via leveling up or on-board scavenge.
 *   **Rarity Weights**: 
-    *   **Common** (Weight 100-80): UNDO, MOVE TILE, REMOVE TILE.
-    *   **Rare** (Weight 50): ADVANCE QUEUE, SWAP TILES.
-    *   **Legendary** (Weight 20): FUSION, CHAIN MERGE (features a distinct pulsating aura).
+    *   **Common** (Weight 100-80): UNDO, MOVE TILE, REMOVE TILE, INCREMENT TILE.
+    *   **Rare** (Weight 50): ADVANCE QUEUE, SWAP TILES, DUPLICATE TILE, SKIP SPAWN.
+    *   **Legendary** (Weight 20-5): FUSION, CHAIN MERGE, PATH MERGE (features a distinct pulsating aura).
 *   **On-Board Spawning (Pity System)**:
     *   **Fairness**: A perk is guaranteed not to spawn for 8 turns, and guaranteed to spawn by 15 turns if the board has space.
     *   **Clutter Control**: Max 1 perk on board at any time.
