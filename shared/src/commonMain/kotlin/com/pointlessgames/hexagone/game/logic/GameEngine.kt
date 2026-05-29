@@ -271,8 +271,6 @@ internal class GameEngine(
                 if (x to y !in occupied) {
                     val merge = if (activePerk == Perk.FUSION) {
                         calculateFusion(x, y, grid)
-                    } else if (activePerk == Perk.PATH_MERGE) {
-                        calculatePathMerge(x, y, grid)
                     } else {
                         calculateMerge(x, y, grid)
                     }
