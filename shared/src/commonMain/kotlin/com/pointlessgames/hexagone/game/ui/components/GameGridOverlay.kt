@@ -525,7 +525,7 @@ internal fun GameGridOverlay(
                                 (it.targetX == preview.x && it.targetY == preview.y) ||
                                 it.participatingIds?.contains(preview.id) == true
                             } == true
-                            if (animState.offset.value == animState.offset.targetValue && selectedCellId != preview.id) {
+                            if (animState.offset.value == animState.offset.targetValue && selectedCellId != preview.id && !isHovered) {
                                 drawGhost(
                                     drawScope = this,
                                     preview = preview,
@@ -591,7 +591,7 @@ internal fun GameGridOverlay(
                                 (it.targetX == preview.x && it.targetY == preview.y) ||
                                 it.participatingIds?.contains(preview.id) == true
                             } == true
-                            if (animState.offset.value != animState.offset.targetValue || selectedCellId == preview.id) {
+                            if (animState.offset.value != animState.offset.targetValue || selectedCellId == preview.id || isHovered) {
                                 drawGhost(
                                     drawScope = this,
                                     preview = preview,
@@ -1020,6 +1020,7 @@ private fun AnimatedGridHexagon(
     )
 
     val isHoveredState = remember { mutableStateOf(false) }
+    val isTargetHovered = remember { mutableStateOf(false) }
     LaunchedEffect(hoveredMergeState) {
         hoveredMergeState.collect { current ->
             isHoveredState.value = current != null && (
@@ -1027,6 +1028,7 @@ private fun AnimatedGridHexagon(
                         current.participatingIds?.contains(cell.id) == true ||
                         current.steps.any { step -> step.mergingCells.any { it.id == cell.id } }
             )
+            isTargetHovered.value = current != null && current.targetX == cell.x && current.targetY == cell.y
         }
     }
 
@@ -1034,6 +1036,11 @@ private fun AnimatedGridHexagon(
     val selectedCellId = selectedCellIdProvider()
     val activePerk = activePerkProvider()
     val isSelected = selectedCellId == cell.id
+    val pendingMerge = pendingMergeProvider()
+    val activeMergeStepIndex = activeMergeStepIndexProvider()
+    val currentStep = pendingMerge?.steps?.getOrNull(activeMergeStepIndex)
+    val isMergingLocal = currentStep?.mergingCells?.any { it.id == cell.id } == true
+    val isTargetMerging = pendingMerge != null && pendingMerge.targetX == cell.x && pendingMerge.targetY == cell.y
 
     val isSelectableLocal = remember(activePerk, cell.id, gridStateProvider(), selectedCellId) {
         when (activePerk) {
@@ -1072,15 +1079,16 @@ private fun AnimatedGridHexagon(
             .layout { measurable, constraints ->
                 val placeable = measurable.measure(constraints)
                 layout(placeable.width, placeable.height) {
-                    val selectedCellId = selectedCellIdProvider()
-                    val pendingMerge = pendingMergeProvider()
-                    val activeMergeStepIndex = activeMergeStepIndexProvider()
-                    val currentStep = pendingMerge?.steps?.getOrNull(activeMergeStepIndex)
-                    val isMergingLocal = currentStep?.mergingCells?.any { it.id == cell.id } == true
-
                     placeable.place(
                         animatedOffset,
-                        zIndex = if (selectedCellId == cell.id || isMergingLocal || animatedOffset != targetOffset) 8f else if (isHoveredState.value) 6f else 2f,
+                        zIndex = when {
+                            selectedCellId == cell.id || animatedOffset != targetOffset -> 12f
+                            isTargetMerging -> 11f
+                            isMergingLocal -> 10f
+                            isTargetHovered.value -> 9f
+                            isHoveredState.value -> 6f
+                            else -> 2f
+                        },
                     )
                 }
             }
