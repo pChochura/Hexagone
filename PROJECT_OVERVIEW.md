@@ -49,6 +49,7 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 
 ### The Merge Formula
 A merge occurs when 2+ tiles of the same value touch.
+*   **Solid Only**: Only solid tiles participate in merges. Ghost tiles (previews) are ignored by the merge engine until they are solidified.
 *   **Final Value**: $V_{max} + n - k$
     *   `Vmax`: Highest value in the group.
     *   `n`: Total number of tiles.
@@ -70,6 +71,7 @@ A merge occurs when 2+ tiles of the same value touch.
 
 ### Predictive Hint System & Hover Previews
 The game calculates **Weighted Hints** and provides **Interactive Hover Previews**:
+*   **Merge Isolation**: Hovering over or clicking a "ghost" tile at its preview position will not trigger a merge, as ghost tiles are excluded from all merge calculations.
 *   **Look-Ahead**: Simulates the current move + the next 3 pieces in the queue.
 *   **Interactive Previews**: Visually simulates Swaps, Moves, and direct Value changes (Increment/Fusion) before commitment.
 *   **Z-Index Prioritization**: Moving or selected tiles are dynamically layered on top.
