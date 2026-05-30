@@ -545,42 +545,17 @@ internal class GameViewModel(
 
         val updatedPreview = state.preview.filterNot { (it.id == selectedId || (it.x == x && it.y == y)) }
 
-        val merge = engine.calculateMerge(x, y, updatedGrid)
-        if (merge != null) {
-            val comboMultiplier = (state.combo + 1).coerceAtMost(12)
-            val totalAddedScore = merge.baseScore * comboMultiplier
-
-            _uiState.update { currentState ->
-                val firstStep = merge.steps.first()
-                currentState.copy(
-                    grid = updatedGrid.map { cell ->
-                        if (firstStep.mergingCells.any { it.id == cell.id }) cell.copy(x = x, y = y) else cell
-                    },
-                    preview = updatedPreview,
-                    collectedPerks = currentState.collectedPerks + listOfNotNull(collectedPerk),
-                    onBoardPerks = currentState.onBoardPerks.filterNot { it.x == x && it.y == y },
-                    pendingMerge = merge,
-                    activeMergeStepIndex = 0,
-                    pendingMergeScore = totalAddedScore,
-                    isBusy = true,
-                    activePerk = null,
-                    selectedCellId = null
-                )
-            }
-            consumePerk(Perk.MOVE_TILE)
-        } else {
-            _uiState.update { currentState ->
-                currentState.copy(
-                    grid = updatedGrid,
-                    preview = updatedPreview,
-                    collectedPerks = currentState.collectedPerks + listOfNotNull(collectedPerk),
-                    onBoardPerks = currentState.onBoardPerks.filterNot { it.x == x && it.y == y },
-                    activePerk = null,
-                    selectedCellId = null
-                )
-            }
-            finishPerkAction(Perk.MOVE_TILE)
+        _uiState.update { currentState ->
+            currentState.copy(
+                grid = updatedGrid,
+                preview = updatedPreview,
+                collectedPerks = currentState.collectedPerks + listOfNotNull(collectedPerk),
+                onBoardPerks = currentState.onBoardPerks.filterNot { it.x == x && it.y == y },
+                activePerk = null,
+                selectedCellId = null
+            )
         }
+        finishPerkAction(Perk.MOVE_TILE)
     }
 
     private fun duplicateTile(selectedId: String, x: Int, y: Int) {
@@ -598,42 +573,17 @@ internal class GameViewModel(
         val updatedGrid = state.grid + engine.createCell(x, y, value, isTactical = true)
         val updatedPreview = state.preview.filterNot { it.x == x && it.y == y }
 
-        val merge = engine.calculateMerge(x, y, updatedGrid)
-        if (merge != null) {
-            val comboMultiplier = (state.combo + 1).coerceAtMost(12)
-            val totalAddedScore = merge.baseScore * comboMultiplier
-
-            _uiState.update { currentState ->
-                val firstStep = merge.steps.first()
-                currentState.copy(
-                    grid = updatedGrid.map { cell ->
-                        if (firstStep.mergingCells.any { it.id == cell.id }) cell.copy(x = x, y = y) else cell
-                    },
-                    preview = updatedPreview,
-                    collectedPerks = currentState.collectedPerks + listOfNotNull(collectedPerk),
-                    onBoardPerks = currentState.onBoardPerks.filterNot { it.x == x && it.y == y },
-                    pendingMerge = merge,
-                    activeMergeStepIndex = 0,
-                    pendingMergeScore = totalAddedScore,
-                    isBusy = true,
-                    activePerk = null,
-                    selectedCellId = null
-                )
-            }
-            consumePerk(Perk.DUPLICATE_TILE)
-        } else {
-            _uiState.update { currentState ->
-                currentState.copy(
-                    grid = updatedGrid,
-                    preview = updatedPreview,
-                    collectedPerks = currentState.collectedPerks + listOfNotNull(collectedPerk),
-                    onBoardPerks = currentState.onBoardPerks.filterNot { it.x == x && it.y == y },
-                    activePerk = null,
-                    selectedCellId = null
-                )
-            }
-            finishPerkAction(Perk.DUPLICATE_TILE)
+        _uiState.update { currentState ->
+            currentState.copy(
+                grid = updatedGrid,
+                preview = updatedPreview,
+                collectedPerks = currentState.collectedPerks + listOfNotNull(collectedPerk),
+                onBoardPerks = currentState.onBoardPerks.filterNot { it.x == x && it.y == y },
+                activePerk = null,
+                selectedCellId = null
+            )
         }
+        finishPerkAction(Perk.DUPLICATE_TILE)
     }
 
     private fun calculateBarRaisedBonus(
