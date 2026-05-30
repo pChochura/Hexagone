@@ -111,7 +111,7 @@ internal class GameEngine(
         return cells.sumOf { it.value } + n * n - n
     }
 
-    fun calculateMerge(x: Int, y: Int, grid: List<HexagonCell>, placedValue: Int? = null): MergeTransition? {
+    fun calculateMerge(x: Int, y: Int, grid: List<HexagonCell>): MergeTransition? {
         val neighborCoords = getNeighbors(x, y)
         val neighborCells = grid.filter { cell ->
             neighborCoords.any { it.first == cell.x && it.second == cell.y }
@@ -122,11 +122,10 @@ internal class GameEngine(
         // Group neighbors by value
         val groups = neighborCells.groupBy { it.value }.toMutableMap()
 
-        // If there's a center cell OR a placed value, add it to the corresponding group
-        val effectiveValue = centerCell?.value ?: placedValue
-        effectiveValue?.let { v ->
-            val group = groups[v] ?: emptyList()
-            groups[v] = group + (centerCell ?: createCell(x, y, v, id = "placed_temp"))
+        // If there's a center cell, add it to the corresponding group
+        centerCell?.let { cell ->
+            val group = groups[cell.value] ?: emptyList()
+            groups[cell.value] = group + cell
         }
 
         // A merge happens if any group has at least 2 cells total
@@ -270,11 +269,10 @@ internal class GameEngine(
         for (y in 0 until rows) {
             for (x in 0 until columns) {
                 if (x to y !in occupied) {
-                    val previewAtPos = previews.find { it.x == x && it.y == y }
                     val merge = if (activePerk == Perk.FUSION) {
                         calculateFusion(x, y, grid)
                     } else {
-                        calculateMerge(x, y, grid, previewAtPos?.value)
+                        calculateMerge(x, y, grid)
                     }
 
                     if (merge != null) {
@@ -349,8 +347,8 @@ internal class GameEngine(
         }
     }
 
-    fun simulateChainMerge(x: Int, y: Int, grid: List<HexagonCell>, combo: Int, placedValue: Int? = null): MergeTransition? {
-        var merge = calculateMerge(x, y, grid, placedValue) ?: return null
+    fun simulateChainMerge(x: Int, y: Int, grid: List<HexagonCell>, combo: Int): MergeTransition? {
+        var merge = calculateMerge(x, y, grid) ?: return null
         var totalScore = merge.baseScore * (combo + 1)
         var finalValue = merge.finalValue
         var currentGrid = grid.filter { cell ->

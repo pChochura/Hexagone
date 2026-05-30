@@ -307,7 +307,7 @@ internal class GameViewModel(
         val merge = if (perk == Perk.FUSION) {
             engine.calculateFusion(x, y, state.grid)
         } else {
-            engine.calculateMerge(x, y, state.grid, previewAtPos?.value)
+            engine.calculateMerge(x, y, state.grid)
         }
 
         if (merge != null) {
@@ -442,9 +442,9 @@ internal class GameViewModel(
             Perk.FUSION -> engine.calculateFusion(x, y, state.grid)
             null, Perk.CHAIN_MERGE, Perk.SKIP_SPAWN -> {
                 if (perk == Perk.CHAIN_MERGE) {
-                    engine.simulateChainMerge(x, y, state.grid, state.combo, ghostAtPos?.value)
+                    engine.simulateChainMerge(x, y, state.grid, state.combo)
                 } else {
-                    engine.calculateMerge(x, y, state.grid, ghostAtPos?.value)
+                    engine.calculateMerge(x, y, state.grid)
                 }
             }
             else -> null
