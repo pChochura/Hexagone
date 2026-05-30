@@ -21,8 +21,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,10 +59,20 @@ fun PerkBar(
     val counts = remember(collectedPerks) { collectedPerks.groupingBy { it }.eachCount() }
     
     // We use a separate state to track which perk is currently "popping"
+    var isFirstRun by remember { mutableStateOf(true) }
     val previousCounts = remember { mutableMapOf<Perk, Int>() }
     val animationStates = remember { mutableStateMapOf<Perk, Animatable<Float, AnimationVector1D>>() }
 
     LaunchedEffect(counts) {
+        if (isFirstRun) {
+            previousCounts.clear()
+            previousCounts.putAll(counts)
+            if (counts.isNotEmpty()) {
+                isFirstRun = false
+            }
+            return@LaunchedEffect
+        }
+
         counts.forEach { (perk, count) ->
             val prevCount = previousCounts[perk] ?: 0
             if (count > prevCount) {
