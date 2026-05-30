@@ -76,6 +76,10 @@ The game calculates **Weighted Hints** and provides **Interactive Hover Previews
 
 ### Perk Economy
 *   **Rarity Weights**: Common (Undo, Move, Remove, Increment), Rare (Advance, Swap, Duplicate, Skip), Legendary (Fusion, Chain Merge, Path Merge).
+*   **Behavioral Rules**:
+    *   **Move & Duplicate**: These actions are "positional only." They do not trigger automatic merges, allowing for strategic setup and combo preparation.
+    *   **Lifespan Stability**: Strategic perks like `Advance Queue` and `Skip Spawn` do not progress the "organic" board state. On-board perks only decrement their lifespan during standard turn progression (i.e., when a regular piece is placed from the queue).
+    *   **Skip Spawn Versatility**: The `Skip Spawn` perk allows placing a tile on any valid empty cell, including those currently occupied by "ghost" previews from the queue.
 *   **Stacked Storage**: Perks of the same type stack in the shelf, displaying a total count.
 *   **On-Board Spawning (Pity System)**: Guaranteed spawning between 8 and 15 turns if the board has space, avoiding "ghost" positions.
 
