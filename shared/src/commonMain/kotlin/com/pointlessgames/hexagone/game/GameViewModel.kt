@@ -1203,11 +1203,7 @@ internal class GameViewModel(
                 )
             }
             if (activePerk == Perk.SKIP_SPAWN) {
-                consumePerk(Perk.SKIP_SPAWN)
-                _uiState.update { it.copy(isBusy = false) }
-                updateLevel()
-                checkValidMoves()
-                persistState(getCurrentGameState())
+                spawnFromQueue(_uiState.value.grid, decrementLifespan = false, skipSpawn = true)
             } else {
                 spawnFromQueue(_uiState.value.grid)
             }
@@ -1273,21 +1269,32 @@ internal class GameViewModel(
         recalculateHints()
     }
 
-    private fun spawnFromQueue(currentState: List<HexagonCell>, decrementLifespan: Boolean = true) {
+    private fun spawnFromQueue(
+        currentState: List<HexagonCell>,
+        decrementLifespan: Boolean = true,
+        skipSpawn: Boolean = false
+    ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isBusy = true) }
             val gridWithoutTactical = engine.decrementTacticalFlags(currentState)
             val currentPerks = _uiState.value.onBoardPerks
-            val (newState, newPreviews, perksAfterSpawn) = engine.spawnFromQueue(
-                gridWithoutTactical,
-                _uiState.value.preview,
-                currentPerks,
-            )
+            
+            val (newState, newPreviews, perksAfterSpawn) = if (skipSpawn) {
+                Triple(gridWithoutTactical, _uiState.value.preview, currentPerks)
+            } else {
+                engine.spawnFromQueue(
+                    gridWithoutTactical,
+                    _uiState.value.preview,
+                    currentPerks,
+                )
+            }
+            
             val updatedPerks = if (decrementLifespan) {
                 engine.updateOnBoardPerks(perksAfterSpawn)
             } else {
                 perksAfterSpawn
             }
+
             val (nextPerks, nextCounter) = engine.trySpawnPerkOnBoard(
                 newState,
                 newPreviews,
