@@ -1,5 +1,7 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.compose.internal.utils.getLocalProperty
+import com.codingfeline.buildkonfig.compiler.FieldSpec
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -7,6 +9,19 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.buildKonfig)
+}
+
+buildkonfig {
+    packageName = "com.pointlessgames.hexagone"
+
+    val supabaseUrl = getLocalProperty("SUPABASE_URL") ?: ""
+    val supabaseKey = getLocalProperty("SUPABASE_KEY") ?: ""
+
+    defaultConfigs {
+        buildConfigField(FieldSpec.Type.STRING, "SUPABASE_URL", supabaseUrl)
+        buildConfigField(FieldSpec.Type.STRING, "SUPABASE_KEY", supabaseKey)
+    }
 }
 
 kotlin {
@@ -43,6 +58,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.koin.android)
             implementation(libs.androidx.compose.ui.tooling)
+            implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
             implementation(libs.compose.mp.runtime)
@@ -71,6 +87,13 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
             implementation(libs.gadulka)
+
+            implementation(libs.supabase.postgrest)
+            implementation(libs.supabase.auth)
+            implementation(libs.ktor.client.core)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)

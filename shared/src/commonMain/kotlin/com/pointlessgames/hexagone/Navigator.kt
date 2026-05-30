@@ -25,6 +25,12 @@ internal sealed interface Route : NavKey {
 
     @Serializable
     data object Game : Route
+
+    @Serializable
+    data object Onboarding : Route
+
+    @Serializable
+    data object Leaderboard : Route
 }
 
 private val navigationConfig = SavedStateConfiguration {
@@ -32,6 +38,8 @@ private val navigationConfig = SavedStateConfiguration {
         polymorphic(NavKey::class) {
             subclass(Route.Start::class, Route.Start.serializer())
             subclass(Route.Game::class, Route.Game.serializer())
+            subclass(Route.Onboarding::class, Route.Onboarding.serializer())
+            subclass(Route.Leaderboard::class, Route.Leaderboard.serializer())
         }
     }
 }
@@ -75,6 +83,15 @@ internal fun Navigator(
 }
 
 internal class Navigator(private val backStack: NavBackStack<NavKey>) {
+    fun navigateTo(route: Route) {
+        backStack.add(route)
+    }
+
+    fun pop() {
+        if (backStack.size > 1) {
+            backStack.removeAt(backStack.size - 1)
+        }
+    }
 }
 
 internal val LocalNavigator: ProvidableCompositionLocal<Navigator> =

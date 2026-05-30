@@ -3,6 +3,7 @@ package com.pointlessgames.hexagone.game
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pointlessgames.hexagone.data.LeaderboardRepository
 import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.game.logic.GameEngine
 import com.pointlessgames.hexagone.game.model.HexagonCell
@@ -34,6 +35,7 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.StringResource
 
 import com.pointlessgames.hexagone.game.model.ComboTier
+import com.pointlessgames.hexagone.game.model.DetailedGameResult
 import com.pointlessgames.hexagone.game.model.GameEffect
 import com.pointlessgames.hexagone.game.model.GameItem
 import com.pointlessgames.hexagone.game.model.GameState
@@ -43,6 +45,7 @@ import com.pointlessgames.hexagone.game.model.PotentialMerge
 
 internal class GameViewModel(
     private val settingsRepository: SettingsRepository,
+    private val leaderboardRepository: LeaderboardRepository,
 ) : ViewModel() {
 
     private val engine = GameEngine()
@@ -106,6 +109,7 @@ internal class GameViewModel(
                             mergeHintsEnabled = hintsEnabled,
                             isStuck = savedState.isStuck,
                             availableChoices = savedState.availableChoices,
+                            perksUsedTracking = savedState.perksUsedTracking,
                         )
                     }
                     absoluteBestScore = best
@@ -195,6 +199,7 @@ internal class GameViewModel(
             sessionBestScore = state.bestScore,
             isStuck = state.isStuck,
             availableChoices = state.availableChoices,
+            perksUsedTracking = state.perksUsedTracking,
         )
     }
 
@@ -864,7 +869,9 @@ internal class GameViewModel(
             if (perkIndex != -1) {
                 val newList = state.collectedPerks.toMutableList()
                 newList.removeAt(perkIndex)
-                state.copy(collectedPerks = newList)
+                val newTracking = state.perksUsedTracking.toMutableMap()
+                newTracking[perk] = (newTracking[perk] ?: 0) + 1
+                state.copy(collectedPerks = newList, perksUsedTracking = newTracking)
             } else state
         }
     }
@@ -1264,6 +1271,18 @@ internal class GameViewModel(
                 delay(1000)
                 _uiState.update { it.copy(isGameOver = true) }
                 settingsRepository.setGameState(null)
+                
+                val finalResult = DetailedGameResult(
+                    score = state.score,
+                    maxCombo = state.maxCombo,
+                    maxPiece = state.highestValue,
+                    totalMerges = state.totalMerges,
+                    level = state.level,
+                    perksUsed = state.perksUsedTracking,
+                    perksAvailable = state.collectedPerks,
+                    region = settingsRepository.getPlayerRegion() ?: "Global"
+                )
+                leaderboardRepository.submitResult(finalResult)
             }
         }
         recalculateHints()

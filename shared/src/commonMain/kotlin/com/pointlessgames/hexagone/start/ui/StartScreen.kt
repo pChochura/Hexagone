@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pointlessgames.hexagone.LocalNavigator
+import com.pointlessgames.hexagone.Route
 import com.pointlessgames.hexagone.start.StartViewModel
 import com.pointlessgames.hexagone.ui.LocalInnerPadding
 import com.pointlessgames.hexagone.ui.TiltedRoundedCornersShape
@@ -35,8 +36,10 @@ import hexagone.shared.generated.resources.continue_where_you_left_off
 import hexagone.shared.generated.resources.go_to_daily_challenge
 import hexagone.shared.generated.resources.go_to_level_creator
 import hexagone.shared.generated.resources.icon_calendar
+import hexagone.shared.generated.resources.icon_magic
 import hexagone.shared.generated.resources.icon_play
 import hexagone.shared.generated.resources.icon_wrench
+import hexagone.shared.generated.resources.leaderboard_title
 import hexagone.shared.generated.resources.start_game
 import org.jetbrains.compose.resources.stringResource
 
@@ -59,6 +62,22 @@ internal fun StartScreen(
     ) {
         Logo()
 
+        ShapeButton(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(spacing.medium),
+            size = iconsSizes.large,
+            iconSize = iconsSizes.small,
+            icon = Res.drawable.icon_magic,
+            contentDescription = Res.string.leaderboard_title,
+            defaultShape = TiltedRoundedCornersShape(0f, cornerRadius.small),
+            pressedShape = TiltedRoundedCornersShape(0f, cornerRadius.medium),
+            defaultBackgroundColor = MaterialTheme.colorScheme.surface,
+            pressedBackgroundColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            onClick = { navigator.navigateTo(Route.Leaderboard) },
+        )
+
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -76,7 +95,7 @@ internal fun StartScreen(
                 defaultBackgroundColor = MaterialTheme.colorScheme.primary,
                 pressedBackgroundColor = MaterialTheme.colorScheme.secondary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                onClick = {},
+                onClick = { navigator.navigateTo(Route.Game) },
             )
 
             Text(

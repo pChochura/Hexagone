@@ -37,6 +37,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pointlessgames.hexagone.LocalNavigator
+import com.pointlessgames.hexagone.Route
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
@@ -54,6 +56,7 @@ internal fun GameScreen(
     modifier: Modifier = Modifier,
     viewModel: GameViewModel,
 ) {
+    val navigator = LocalNavigator.current
     val uiState by viewModel.uiState.collectAsState()
 
     val onEmptySpaceClick = remember(viewModel) { viewModel::onEmptySpaceClicked }
@@ -302,7 +305,7 @@ internal fun GameScreen(
             onRestart = onRestart,
             onViewBoardToggle = onViewBoardToggle,
             onShare = { /* TODO: Implement snapshot and share */ },
-            onLeaderboard = { /* TODO: Implement leaderboard */ }
+            onLeaderboard = { navigator.navigateTo(Route.Leaderboard) }
         )
     }
 }

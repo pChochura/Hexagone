@@ -2,6 +2,7 @@ package com.pointlessgames.hexagone.game.model
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.StringResource
 
@@ -50,6 +51,7 @@ data class GameUiState(
     val isDebugMode: Boolean = false,
     val debugSelectedValue: Int? = 1,
     val debugAddAsGhost: Boolean = false,
+    val perksUsedTracking: Map<Perk, Int> = emptyMap(),
 )
 
 @Immutable
@@ -105,6 +107,36 @@ data class GameState(
     val sessionBestScore: Int,
     val isStuck: Boolean = false,
     val availableChoices: Int = 0,
+    val perksUsedTracking: Map<Perk, Int> = emptyMap(),
+)
+
+@Serializable
+data class DetailedGameResult(
+    @SerialName("profile_id")
+    val profileId: String? = null,
+    val score: Int,
+    @SerialName("max_combo")
+    val maxCombo: Int,
+    @SerialName("max_piece")
+    val maxPiece: Int,
+    @SerialName("total_merges")
+    val totalMerges: Int,
+    val level: Int,
+    @SerialName("perks_used")
+    val perksUsed: Map<Perk, Int>,
+    @SerialName("perks_available")
+    val perksAvailable: List<Perk>,
+    val region: String,
+    val username: String? = null
+)
+
+@Serializable
+data class PlayerProfile(
+    val id: String,
+    val username: String,
+    val region: String,
+    @SerialName("best_score")
+    val bestScore: Int = 0
 )
 
 @Immutable

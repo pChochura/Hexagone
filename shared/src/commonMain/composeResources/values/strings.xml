@@ -117,4 +117,21 @@
     <string name="tutorial_2">The adjacent tile will change color</string>
     <string name="tutorial_3">Paint the empty tiles across</string>
     <string name="tutorial_4">Move only onto a tile with a different color</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">WELCOME</string>
+    <string name="onboarding_subtitle">Enter your username to start your journey.</string>
+    <string name="onboarding_username_placeholder">Username</string>
+    <string name="onboarding_submit">START</string>
+    <string name="onboarding_error_empty">Username cannot be empty</string>
+
+    <!-- Leaderboard -->
+    <string name="leaderboard_title">LEADERBOARD</string>
+    <string name="leaderboard_global">GLOBAL</string>
+    <string name="leaderboard_regional">REGIONAL</string>
+    <string name="leaderboard_rank">RANK</string>
+    <string name="leaderboard_name">NAME</string>
+    <string name="leaderboard_score">SCORE</string>
+    <string name="leaderboard_max_piece">MAX PIECE</string>
+    <string name="leaderboard_empty">No scores yet. Be the first!</string>
 </resources>

@@ -12,6 +12,7 @@ kotlin-coroutines = "1.11.0"
 kotlin-immutable = "0.4.0"
 kotlin-datetime = "0.8.0"
 ksp = "2.3.6"
+buildKonfig = "0.21.2"
 
 # Compose
 compose-multiplatform = "1.11.0"
@@ -30,9 +31,21 @@ androidx-compose-ui-tooling = "1.11.2"
 # Koin
 koin = "4.2.1"
 
+# Supabase
+supabase-bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "supabase" }
+supabase-postgrest = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
+supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+
 # Misc
 android-version-git = "0.4.14"
 gadulka = "1.13.0"
+
+# Supabase
+supabase = "3.6.0"
+ktor = "3.5.0"
 
 [libraries]
 # AndroidX
@@ -69,6 +82,13 @@ kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-
 kotlinx-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlin-immutable" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlin-datetime" }
 
+# Supabase
+supabase-postgrest = { module = "io.github.jan-tennert.supabase:postgrest-kt", version.ref = "supabase" }
+supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt", version.ref = "supabase" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+
 # Misc
 gadulka = { module = "eu.iamkonstantin.kotlin:gadulka", version.ref = "gadulka" }
 
@@ -87,3 +107,4 @@ kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", versio
 # Compose
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+buildKonfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildKonfig" }
