@@ -884,6 +884,7 @@ internal class GameViewModel(
                 canReroll = true,
             )
         }
+        recalculateHints()
         checkValidMoves()
         persistState(getCurrentGameState())
     }
