@@ -6,28 +6,35 @@
 
 ## 1. Project Structure
 
-The project is structured as a Kotlin Multiplatform (KMP) application with a shared logic module and platform-specific entry points.
+The project follows a modular Kotlin Multiplatform (KMP) architecture, prioritizing separation of concerns and Compose best practices (State Hoisting, Slot-based APIs).
 
 ### Key Directory Map
 ```text
 shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 ├── data/
-│   └── SettingsRepository.kt     # Game State, High Score & DataStore persistence
+│   └── SettingsRepository.kt     # Game State & DataStore persistence
 ├── di/
 │   └── AppModule.kt              # Koin Dependency Injection
 ├── game/
 │   ├── logic/
 │   │   └── GameEngine.kt         # Core math: neighbors, merges, hints, scoring
 │   ├── model/
-│   │   └── HexagonCell.kt        # Data Models: Perk, MergeStep, Hint, Particle
+│   │   ├── GameModels.kt         # Domain Models: Perk, GameUiState, MergeTransition
+│   │   └── UIModels.kt           # UI-specific state: Particles, Animation states
 │   ├── ui/
-│   │   ├── GameScreen.kt         # Root UI Layout and layering
+│   │   ├── GameScreen.kt         # Root UI Layout
 │   │   └── components/
-│   │       ├── GameGridOverlay.kt # The Grid: animations, gestures, rendering
-│   │       ├── ScoreSection.kt    # The HUD: wavy progress, combo pops
-│   │       ├── PerkBar.kt         # The Shelf: scrollable tool selection
-│   │       └── GameOverlays.kt    # Overlays: Level Up, Stuck, Result Card
-│   └── GameViewModel.kt          # Orchestrator: Turn logic, animation loops
+│   │       ├── PopupsLayer.kt     # Stable HUD notifications (sequential IDs)
+│   │       ├── GridDrawing.kt     # Optimized DrawScope rendering logic
+│   │       ├── GameGridOverlay.kt # Grid orchestrator & gesture handling
+│   │       ├── ScoreSection.kt    # HUD: liquid progress & combo indicators
+│   │       ├── PerkBar.kt         # Strategic tool selection shelf
+│   │       └── GameOverlays.kt    # Dialog orchestration (Level Up, Game Over)
+│   ├── GameViewModel.kt          # Orchestrator: Turn logic & animation loops
+│   └── DebugDelegate.kt          # Isolated developer tools & state manipulation
+├── ui/
+│   └── theme/
+│       └── Theme.kt              # Centralized "Glowing Hardware" Design System
 └── utils/
     └── Animation.kt              # Idiomatic Compose animation helpers
 ```
@@ -50,81 +57,40 @@ A merge occurs when 2+ tiles of the same value touch.
 
 ### Scoring & Combos
 *   **Sequential Merges**: Multi-group merges happen in steps (largest first) to build visual momentum and sold impact.
-*   **Combo System**: A multiplier that builds with every group merge. Clamped at **x12** for internal scoring to prevent economy inflation.
-*   **Tactical Multiplier**: Tiles marked as **Tactical** (generated via certain perks or chain reactions) grant a **1.5x Base Score bonus** when merged.
-*   **Redemption Bonus**: If a move's score exceeds the previous turn's score, a **50% Redemption Bonus** is applied to the difference, rewarding escalating momentum.
-*   **Tiered Milestones (Overdrive)**: Crossing specific thresholds grants permanent rewards:
-    *   **SURGE (x11)**: +1 Random Rare Perk.
-    *   **OVERDRIVE (x21)**: +1 Random Legendary Perk.
-    *   **ZENITH (x31)**: +1 Legendary Perk & Board-wide +1 value upgrade.
-*   **Combo UI**: A cinematic "slam" animation located to the **left of the score box**. Morphs from **Yellow to Red** to **Tier Colors** (Cyan/Pink/Gold) with a character-accurate glyph shadow and 3-5s slow-fade settle.
+*   **Combo System**: A multiplier that builds with every group merge. Clamped at **x12** for internal scoring.
+*   **Tactical Multiplier**: Tiles marked as **Tactical** (generated via certain perks or chain reactions) grant a **1.5x Base Score bonus**.
+*   **Redemption Bonus**: If a move's score exceeds the previous turn's score, a **50% Redemption Bonus** is applied to the difference.
 
 ---
 
 ## 3. Strategic Features
 
 ### Predictive Hint System & Hover Previews
-The game calculates **Weighted Hints** for every empty tile and provides **Interactive Hover Previews** for tactical moves:
+The game calculates **Weighted Hints** and provides **Interactive Hover Previews**:
 *   **Look-Ahead**: Simulates the current move + the next 3 pieces in the queue.
-*   **Evaluation**: Assigns favorability (0.0 - 1.0) based on score, combo potential, and future board setup.
-*   **Perk Awareness**: Recalculates hints based on active perks (e.g., highlighting Fusion spots). **Path Merge** specifically preserves empty-space hints to allow tactical comparison with standard moves.
-*   **Interactive Hover Previews**:
-    *   **Swap Preview**: Visually switches the positions of the selected tile and the hover target (board or queue) while maintaining their original identity (solid vs. ghost).
-    *   **Move Preview**: Shows a physical displacement of the selected tile to the target location without redundant overlays.
-    *   **Direct Value Preview**: Perks like **INCREMENT TILE** and **PATH MERGE** transform the value of the targeted tile directly to show the outcome.
-    *   **Removal Preview**: Highlights the target tile with a subtle white border.
-    *   **Ghost Animations**: Queue tiles smoothly animate to their preview positions during swap interactions.
-*   **Z-Index Prioritization**: Active, long-pressed, or moving tiles are dynamically layered on top of static elements to ensure visual clarity during interaction.
-*   **Visuals**: Subtle, dynamic dots that scale in size based on strategic value.
+*   **Interactive Previews**: Visually simulates Swaps, Moves, and direct Value changes (Increment/Fusion) before the player commits.
+*   **Z-Index Prioritization**: Moving or selected tiles are dynamically layered on top of static elements during interactions.
 
 ### Perk Economy
-Perks are strategic tools collected via leveling up or on-board scavenge.
-*   **Rarity Weights**: 
-    *   **Common** (Weight 100-80): UNDO, MOVE TILE, REMOVE TILE, INCREMENT TILE.
-    *   **Rare** (Weight 50): ADVANCE QUEUE, SWAP TILES, DUPLICATE TILE, SKIP SPAWN.
-    *   **Legendary** (Weight 20-5): FUSION, CHAIN MERGE, PATH MERGE (features a distinct pulsating aura).
-*   **Path Merge Constraint**: To ensure tactical clarity and prevent unintended chain reactions from the queue, the **PATH MERGE** perk explicitly ignores ghost (queue) tiles and only connects solid tiles already on the board.
-*   **Input Selection Guards**: Tile-targeted perks (**REMOVE**, **INCREMENT**, **SWAP**, **PATH MERGE**) automatically disable clicks on empty hexes to prevent accidental tile placement during tool use.
-*   **On-Board Spawning (Pity System)**:
-    *   **Fairness**: A perk is guaranteed not to spawn for 8 turns, and guaranteed to spawn by 15 turns if the board has space.
-    *   **Clutter Control**: Max 1 perk on board at any time.
-    *   **Ghost Priority**: Spawns prioritize empty positions not occupied by upcoming queue pieces (ghosts).
-*   **Collection Logic**:
-    *   **Player Collection**: Perks are captured by triggering a **merge**, **fusion**, or moving a tile onto the perk position.
-    *   **Queue Solidification**: If a queue piece lands on a perk position, the perk is deleted (not collected).
-*   **Weighted Lifespan**: Common perks last 3 turns, Rare 2 turns, and Legendary must be captured in exactly 1 turn.
-*   **Cursed Reroll**: Once per level-up choice, the player can reroll the selection. **Penalty**: Legendary perks are removed from the generation pool for that specific roll (guarantees Common/Rare).
+*   **Rarity Weights**: Common (Undo, Move, Remove, Increment), Rare (Advance, Swap, Duplicate, Skip), Legendary (Fusion, Chain Merge, Path Merge).
+*   **On-Board Spawning (Pity System)**: Guaranteed spawning between 8 and 15 turns if the board has space. Spawns avoid "ghost" positions (where queue pieces will land).
+*   **Cursed Reroll**: Once per level-up, the player can reroll the selection at the cost of removing Legendary perks from that specific pool.
 
 ---
 
 ## 4. UI & Visual Identity
 
-*   **Atmospheric Dimming**: Seamless full-screen focus shift during choice-heavy states (Level Up, Stuck).
-*   **Tactical Tooltip System**: Persistent, neon-bordered tooltips triggered by long-press. Features dynamic scale-up origin tracking (originate from anchor) and a breathing "hover" float animation.
-*   **Interaction Stability**: Long-press guards prevent redundant pulse animations or ghosting artifacts when interacting with already selected tiles.
-*   **Neon Bloom**: Contoured, multi-layered "neon" outlines and inner glows around active strategic areas (Perk Shelf, Result Card, Tooltips).
-*   **Design Tokens**: Fully semantic theme implementation using Material 3 color mapping and specialized design tokens for `Spacing`, `CornerRadius`, and `IconSize`.
-*   **Fluid HUD**: A liquid level progress bar with a wavy edge. "Splashes" with intensity and speed proportional to the points earned relative to the current level.
-*   **Stable Popup Stacking**: Popups (Score/Perks) group by **grid coordinates** and use **deterministic ID sorting** for stable horizontal offsets, preventing layout jitter during rapid merges.
-*   **Tactical & Redemption Labels**: Special merges trigger stylized labels ("TACTICIAN", "REDEMPTION") above the score popup, colored based on the bonus type (Secondary for Tactical, Tertiary for Redemption).
-*   **Dynamic Level Up**: 
-    *   **Queue Indicator**: A badge showing the number of pending level-up rewards.
-    *   **Perk Selection**: Breathable, simplified layout focusing on icon and name; detailed descriptions and "Cursed Reroll" penalties are moved to persistent tooltips.
-    *   **Perk Refresh**: Uses `AnimatedContent` to scale/fade perks when selecting multiple rewards in sequence.
-*   **Emergency Mode**: When stuck (no valid moves possible), the HUD displays a floating, bouncing tooltip and faster shelf pulse.
-    *   **Dynamic Solution Filtering**: The system identifies specific perks that can resolve the current board state. Only these "solution" perks are enabled in the shelf during the stuck state.
-    *   **State Persistence**: The emergency mode remains active even after selecting a perk, preventing switching to non-resolving tools until a successful move is executed.
-    *   **Adaptive HUD**: Background dimming and warnings are temporarily suppressed when a perk is active to ensure full board visibility for strategic execution.
-*   **Interactive Result Card**: Floating frosted glass overlay with animated score count-ups, detailed stats (merges, max combo, highest tile), and a "View Board" peek mode.
-*   **Localization**: Full multi-language support (English, Polish) using **Compose Resources**. All strings are externalized to `strings.xml`.
+*   **Design System**: Fully centralized in `HexagoneTheme`, mapping Material 3 roles to custom "Glowing Hardware" tokens (`Spacing`, `CornerRadius`, `IconSize`).
+*   **Stable Popups**: Score and Perk notifications use **sequential IDs** and pre-calculated group offsets to prevent layout jitter and ensure animation stability.
+*   **Liquid HUD**: A progress bar with a dynamic wavy edge that "splashes" based on point intensity.
+*   **Emergency Mode**: When stuck, the system identifies specific perks that can resolve the state and enables only those "solution" perks in the shelf.
+*   **Debug Layer**: A dedicated `DebugDelegate` allows real-time manipulation of tile values, perk spawning, and state forcing without polluting the main game logic.
 
 ---
 
 ## 5. Development Guidelines
-1.  **State Atomicity**: Use `_uiState.update { ... }` for all gameplay changes to ensure consistency.
-2.  **Interaction Locking**: Check `isBusy` and `pendingMerge` to block gestures during animations.
-3.  **No Delays for UI**: Use `finishedListener` callbacks and `LaunchedEffect(state)` for reliable animation sequencing.
-4.  **State Persistence**: Game state is automatically serialized via `kotlinx.serialization` and saved to `DataStore` after every significant move or state change. This allows users to resume progress across app restarts.
-5.  **Score Tracking**: The system distinguishes between the **Historical Best** (saved to disk) and the **Session Best** (score at game start) to provide clear progress comparison during play.
-6.  **Level Choice Queueing**: Multiple level-ups are queued. Use `perkSpawnCounter` to track turns between on-board spawns.
-7.  **Ghost/Perk Interactions**: Always clean up overlapping ghosts or perks when a tile occupies a hex to maintain board clarity.
+1.  **Modular UI**: Keep composables small and focused. Use `Modifier` as the first parameter and prefer slot-based APIs for layouts.
+2.  **State Atomicity**: Use `_uiState.update { ... }` for all gameplay changes to ensure consistency across observers.
+3.  **Stability Guards**: Use stable keys (`key(id)`) for all dynamic list items (Popups, Particles, Grid Cells) to prevent unnecessary recompositions.
+4.  **Interaction Locking**: Check `isBusy` and `pendingMerge` flags to prevent input conflicts during animations.
+5.  **State Persistence**: Game state is serialized via `kotlinx.serialization` and persisted to `DataStore` after every significant move, supporting cross-session play.
