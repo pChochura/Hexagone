@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -101,6 +102,7 @@ internal fun GameGridOverlay(
     val localParticles = remember { mutableStateListOf<Particle>() }
     val localScorePopups = remember { mutableStateListOf<ScorePopup>() }
     val localPerkPopups = remember { mutableStateListOf<PerkPopup>() }
+    var popupIdCounter by remember { mutableStateOf(0L) }
 
     val hoverProgress = remember { Animatable(0f) }
     val activeHoverMerge = remember { mutableStateOf<MergeTransition?>(null) }
@@ -190,7 +192,7 @@ internal fun GameGridOverlay(
                         val centerY = offset.y + itemHeight / 2
                         localScorePopups.add(
                             ScorePopup(
-                                Random.nextLong(),
+                                popupIdCounter++,
                                 centerX,
                                 centerY,
                                 effect.gridX,
@@ -215,7 +217,7 @@ internal fun GameGridOverlay(
                         val centerY = offset.y + itemHeight / 2
                         localPerkPopups.add(
                             PerkPopup(
-                                Random.nextLong(),
+                                popupIdCounter++,
                                 centerX,
                                 centerY,
                                 effect.gridX,

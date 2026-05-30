@@ -55,48 +55,59 @@ internal fun PopupsLayer(
     val density = LocalDensity.current
     val popupSpacing = with(density) { spacing.massive.toPx() }
 
+    // Combine all tactical/special popups to group them by position
     val tacticalPopups = perkPopups + scorePopups.filter { it.labelRes != null }
     val standardPopups = scorePopups.filter { it.labelRes == null }
 
-    val tacticalGroups = tacticalPopups.groupBy {
-        it.gridX to it.gridY
+    // Group and calculate offsets once to ensure stability
+    val positionedPopups = remember(tacticalPopups, standardPopups, popupSpacing) {
+        val list = mutableListOf<PositionedPopup>()
+        
+        // Handle tactical groups
+        tacticalPopups.groupBy { it.gridX to it.gridY }
+            .forEach { (_, groupItems) ->
+                val sortedItems = groupItems.sortedBy { it.id }
+                val total = sortedItems.size
+                sortedItems.forEachIndexed { index, item ->
+                    val offset = if (total > 1) {
+                        val totalWidth = (total - 1) * popupSpacing
+                        -totalWidth / 2 + index * popupSpacing
+                    } else 0f
+                    list.add(PositionedPopup(item, offset))
+                }
+            }
+            
+        // Handle standard popups
+        standardPopups.forEach { item ->
+            list.add(PositionedPopup(item, 0f))
+        }
+        list
     }
 
-    tacticalGroups.forEach { (_, groupItems) ->
-        val sortedItems = groupItems.sortedBy { it.id }
-        val total = sortedItems.size
-        
-        sortedItems.forEachIndexed { index, item ->
-            key(item.id) {
-                val horizontalOffset = if (total > 1) {
-                    val totalWidth = (total - 1) * popupSpacing
-                    -totalWidth / 2 + index * popupSpacing
-                } else 0f
+    positionedPopups.forEach { (item, targetOffset) ->
+        key(item.id) {
+            val animOffset by animateFloatAsState(
+                targetValue = targetOffset,
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                label = "popup_slide"
+            )
 
-                val animOffset by animateFloatAsState(
-                    targetValue = horizontalOffset,
-                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                    label = "popup_slide"
-                )
-
-                when (item) {
-                    is ScorePopup -> {
-                        ScorePopupItem(item, onScoreFinished, animOffset, containerWidth, spacing)
-                    }
-                    is PerkPopup -> {
-                        PerkPopItem(item, onPerkFinished, animOffset, containerWidth, spacing)
-                    }
+            when (item) {
+                is ScorePopup -> {
+                    ScorePopupItem(item, onScoreFinished, animOffset, containerWidth, spacing)
+                }
+                is PerkPopup -> {
+                    PerkPopItem(item, onPerkFinished, animOffset, containerWidth, spacing)
                 }
             }
         }
     }
-
-    standardPopups.forEach { item ->
-        key(item.id) {
-            ScorePopupItem(item, onScoreFinished, 0f, containerWidth, spacing)
-        }
-    }
 }
+
+private data class PositionedPopup(
+    val item: com.pointlessgames.hexagone.game.model.GridPopup,
+    val horizontalOffset: Float
+)
 
 @Composable
 internal fun ScorePopupItem(
