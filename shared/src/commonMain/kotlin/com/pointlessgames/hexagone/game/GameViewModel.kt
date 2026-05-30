@@ -276,7 +276,7 @@ internal class GameViewModel(
         val isTileOnlyPerk = perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES
         if (isTileOnlyPerk && previewAtPos == null) return
 
-        if (perk != null && perk != Perk.FUSION && perk != Perk.CHAIN_MERGE && previewAtPos != null) {
+        if (perk != null && perk != Perk.FUSION && perk != Perk.CHAIN_MERGE && perk != Perk.SKIP_SPAWN && previewAtPos != null) {
             if (selectedId == previewAtPos.id) {
                 _uiState.update { it.copy(selectedCellId = null) }
                 return
@@ -302,7 +302,7 @@ internal class GameViewModel(
         val merge = if (perk == Perk.FUSION) {
             engine.calculateFusion(x, y, state.grid)
         } else {
-            engine.calculateMerge(x, y, state.grid)
+            engine.calculateMerge(x, y, state.grid, previewAtPos?.value)
         }
 
         if (merge != null) {
@@ -437,9 +437,9 @@ internal class GameViewModel(
             Perk.FUSION -> engine.calculateFusion(x, y, state.grid)
             null, Perk.CHAIN_MERGE, Perk.SKIP_SPAWN -> {
                 if (perk == Perk.CHAIN_MERGE) {
-                    engine.simulateChainMerge(x, y, state.grid, state.combo)
+                    engine.simulateChainMerge(x, y, state.grid, state.combo, ghostAtPos?.value)
                 } else {
-                    engine.calculateMerge(x, y, state.grid)
+                    engine.calculateMerge(x, y, state.grid, ghostAtPos?.value)
                 }
             }
             else -> null

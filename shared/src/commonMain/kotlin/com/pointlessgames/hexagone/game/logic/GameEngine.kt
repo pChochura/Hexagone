@@ -270,10 +270,11 @@ internal class GameEngine(
         for (y in 0 until rows) {
             for (x in 0 until columns) {
                 if (x to y !in occupied) {
+                    val previewAtPos = previews.find { it.x == x && it.y == y }
                     val merge = if (activePerk == Perk.FUSION) {
                         calculateFusion(x, y, grid)
                     } else {
-                        calculateMerge(x, y, grid)
+                        calculateMerge(x, y, grid, previewAtPos?.value)
                     }
 
                     if (merge != null) {
@@ -348,8 +349,8 @@ internal class GameEngine(
         }
     }
 
-    fun simulateChainMerge(x: Int, y: Int, grid: List<HexagonCell>, combo: Int): MergeTransition? {
-        var merge = calculateMerge(x, y, grid) ?: return null
+    fun simulateChainMerge(x: Int, y: Int, grid: List<HexagonCell>, combo: Int, placedValue: Int? = null): MergeTransition? {
+        var merge = calculateMerge(x, y, grid, placedValue) ?: return null
         var totalScore = merge.baseScore * (combo + 1)
         var finalValue = merge.finalValue
         var currentGrid = grid.filter { cell ->
