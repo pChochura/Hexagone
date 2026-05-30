@@ -28,7 +28,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
+import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
+import com.pointlessgames.hexagone.leaderboard.ui.LeaderboardDialog
+import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -38,7 +43,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.LocalNavigator
-import com.pointlessgames.hexagone.Route
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
@@ -56,8 +60,10 @@ internal fun GameScreen(
     modifier: Modifier = Modifier,
     viewModel: GameViewModel,
 ) {
-    val navigator = LocalNavigator.current
     val uiState by viewModel.uiState.collectAsState()
+
+    var showLeaderboard by remember { mutableStateOf(false) }
+    val leaderboardViewModel: LeaderboardViewModel = koinViewModel()
 
     val onEmptySpaceClick = remember(viewModel) { viewModel::onEmptySpaceClicked }
     val onEmptySpaceTouchDown = remember(viewModel) { viewModel::onEmptySpaceTouchDown }
@@ -165,7 +171,8 @@ internal fun GameScreen(
                         highestValue = uiState.highestValue,
                         activePerk = uiState.activePerk,
                         selectedCellId = uiState.selectedCellId,
-                        onLevelClick = onDebugToggle
+                        onLevelClick = onDebugToggle,
+                        onLeaderboardClick = { showLeaderboard = true }
                     )
 
                     Spacer(Modifier.weight(0.1f))
@@ -305,7 +312,14 @@ internal fun GameScreen(
             onRestart = onRestart,
             onViewBoardToggle = onViewBoardToggle,
             onShare = { /* TODO: Implement snapshot and share */ },
-            onLeaderboard = { navigator.navigateTo(Route.Leaderboard) }
+            onLeaderboard = { showLeaderboard = true }
         )
+
+        if (showLeaderboard) {
+            LeaderboardDialog(
+                viewModel = leaderboardViewModel,
+                onDismiss = { showLeaderboard = false }
+            )
+        }
     }
 }

@@ -24,6 +24,9 @@ internal class LeaderboardViewModel(
         val filter: Filter = Filter.Global,
         val playerRegion: String? = null,
         val error: String? = null,
+        val playerName: String? = null,
+        val onboardingName: String = "",
+        val isCreatingProfile: Boolean = false,
     )
 
     enum class Filter {
@@ -31,14 +34,42 @@ internal class LeaderboardViewModel(
     }
 
     init {
-        loadPlayerRegion()
+        loadPlayerInfo()
         loadRankings()
     }
 
-    private fun loadPlayerRegion() {
+    private fun loadPlayerInfo() {
         viewModelScope.launch {
             val region = settingsRepository.getPlayerRegion()
-            _uiState.value = _uiState.value.copy(playerRegion = region)
+            val name = settingsRepository.getPlayerName()
+            _uiState.value = _uiState.value.copy(playerRegion = region, playerName = name)
+        }
+    }
+
+    fun onOnboardingNameChanged(name: String) {
+        _uiState.value = _uiState.value.copy(onboardingName = name, error = null)
+    }
+
+    fun onCreateProfile() {
+        val name = _uiState.value.onboardingName.trim()
+        if (name.isEmpty()) {
+            _uiState.value = _uiState.value.copy(error = "Username cannot be empty")
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isCreatingProfile = true, error = null)
+            try {
+                val profile = leaderboardRepository.createProfile(name, "Global")
+                _uiState.value = _uiState.value.copy(
+                    isCreatingProfile = false,
+                    playerName = profile.username,
+                    playerRegion = profile.region
+                )
+                loadRankings()
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isCreatingProfile = false, error = e.message ?: "Unknown error")
+            }
         }
     }
 

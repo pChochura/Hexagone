@@ -101,7 +101,8 @@ fun ScoreSection(
     highestValue: Int,
     activePerk: Perk?,
     selectedCellId: String?,
-    onLevelClick: () -> Unit = {}
+    onLevelClick: () -> Unit = {},
+    onLeaderboardClick: () -> Unit = {}
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
@@ -154,7 +155,7 @@ fun ScoreSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { /* TODO */ }) {
+            IconButton(onClick = onLeaderboardClick) {
                 Canvas(modifier = Modifier.size(spacing.extraLarge)) {
                     val barWidth = size.width * 0.2f
                     val gap = size.width * 0.1f

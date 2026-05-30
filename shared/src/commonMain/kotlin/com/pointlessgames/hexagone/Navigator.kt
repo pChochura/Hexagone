@@ -21,25 +21,13 @@ import org.koin.core.annotation.KoinExperimentalAPI
 
 internal sealed interface Route : NavKey {
     @Serializable
-    data object Start : Route
-
-    @Serializable
     data object Game : Route
-
-    @Serializable
-    data object Onboarding : Route
-
-    @Serializable
-    data object Leaderboard : Route
 }
 
 private val navigationConfig = SavedStateConfiguration {
     serializersModule = SerializersModule {
         polymorphic(NavKey::class) {
-            subclass(Route.Start::class, Route.Start.serializer())
             subclass(Route.Game::class, Route.Game.serializer())
-            subclass(Route.Onboarding::class, Route.Onboarding.serializer())
-            subclass(Route.Leaderboard::class, Route.Leaderboard.serializer())
         }
     }
 }

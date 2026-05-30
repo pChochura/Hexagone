@@ -16,7 +16,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.ui.LocalInnerPadding
 import com.pointlessgames.hexagone.ui.theme.HexagoneTheme
 import com.pointlessgames.hexagone.ui.theme.LocalCornerRadius
@@ -31,7 +30,6 @@ import com.pointlessgames.hexagone.utils.plus
 import eu.iamkonstantin.kotlin.gadulka.GadulkaPlayer
 import eu.iamkonstantin.kotlin.gadulka.rememberGadulkaState
 import org.koin.compose.KoinContext
-import org.koin.compose.koinInject
 
 @Composable
 @Preview
@@ -47,12 +45,10 @@ fun App(modifier: Modifier = Modifier) {
                 val cornerRadius = MaterialTheme.cornerRadius
                 val iconsSize = MaterialTheme.iconsSize
 
-                val settingsRepository: SettingsRepository = koinInject()
                 var startingRoute by remember { mutableStateOf<Route?>(null) }
 
                 LaunchedEffect(Unit) {
-                    val name = settingsRepository.getPlayerName()
-                    startingRoute = if (name == null) Route.Onboarding else Route.Start
+                    startingRoute = Route.Game
                 }
 
                 CompositionLocalProvider(
