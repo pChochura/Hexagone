@@ -883,7 +883,7 @@ internal class GameViewModel(
             Perk.ADVANCE_QUEUE -> {
                 saveState()
                 consumePerk(Perk.ADVANCE_QUEUE)
-                spawnFromQueue(_uiState.value.grid)
+                spawnFromQueue(_uiState.value.grid, decrementLifespan = false)
             }
 
             Perk.UNDO -> {
@@ -1273,7 +1273,7 @@ internal class GameViewModel(
         recalculateHints()
     }
 
-    private fun spawnFromQueue(currentState: List<HexagonCell>) {
+    private fun spawnFromQueue(currentState: List<HexagonCell>, decrementLifespan: Boolean = true) {
         viewModelScope.launch {
             _uiState.update { it.copy(isBusy = true) }
             val gridWithoutTactical = engine.decrementTacticalFlags(currentState)
@@ -1283,7 +1283,11 @@ internal class GameViewModel(
                 _uiState.value.preview,
                 currentPerks,
             )
-            val updatedPerks = engine.updateOnBoardPerks(perksAfterSpawn)
+            val updatedPerks = if (decrementLifespan) {
+                engine.updateOnBoardPerks(perksAfterSpawn)
+            } else {
+                perksAfterSpawn
+            }
             val (nextPerks, nextCounter) = engine.trySpawnPerkOnBoard(
                 newState,
                 newPreviews,
