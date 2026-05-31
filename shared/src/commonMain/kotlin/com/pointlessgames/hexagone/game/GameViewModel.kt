@@ -1144,10 +1144,8 @@ internal class GameViewModel(
         if (merge.resultId == "preview_path_merge") {
             return maxOf(0, merge.totalCells - 1)
         }
-        return if (merge.uniqueGroups > 1 || currentState.activePerk == Perk.CHAIN_MERGE) {
+        return if (merge.uniqueGroups > 1 || currentState.activePerk == Perk.CHAIN_MERGE || currentState.activePerk == Perk.FUSION) {
             currentState.combo + (if (currentState.activePerk == Perk.CHAIN_MERGE) 1 else 0) + (merge.uniqueGroups - 1)
-        } else if (currentState.activePerk == Perk.FUSION) {
-            currentState.combo
         } else {
             0
         }

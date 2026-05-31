@@ -232,10 +232,31 @@ internal class GameEngine(
         val allCells = neighborCells + listOfNotNull(centerCell)
 
         if (allCells.isNotEmpty()) {
-            val vMax = allCells.maxOf { it.value }
-            val n = allCells.size
-            val k = allCells.distinctBy { it.value }.size
-            val newValue = vMax + n - 1
+            val groups = allCells.groupBy { it.value }
+            val sortedValues = groups.keys.sortedDescending()
+
+            val steps = mutableListOf<MergeStep>()
+            var currentCenterValue = 0
+            var totalCells = 0
+
+            sortedValues.forEachIndexed { index, value ->
+                val groupCells = groups[value]!!
+                val mergingNeighbors = groupCells.filter { it.id != (centerCell?.id ?: "placed_temp") }
+
+                if (index == 0) {
+                    currentCenterValue = value + groupCells.size - 1
+                    if (mergingNeighbors.isNotEmpty()) {
+                        steps.add(MergeStep(mergingNeighbors, currentCenterValue))
+                    }
+                    totalCells += groupCells.size
+                } else {
+                    val n = groupCells.size + 1
+                    currentCenterValue = maxOf(currentCenterValue, value) + n - 1
+                    steps.add(MergeStep(groupCells, currentCenterValue))
+                    totalCells += groupCells.size
+                }
+            }
+
             var baseScore = calculateBaseScore(allCells)
             if (allCells.any { it.isTactical }) {
                 baseScore = (baseScore * 1.5).toInt()
@@ -244,10 +265,10 @@ internal class GameEngine(
             return MergeTransition(
                 targetX = x,
                 targetY = y,
-                steps = listOf(MergeStep(neighborCells, newValue)),
-                finalValue = newValue,
-                totalCells = n,
-                uniqueGroups = k,
+                steps = steps.ifEmpty { listOf(MergeStep(emptyList(), currentCenterValue)) },
+                finalValue = currentCenterValue,
+                totalCells = allCells.size,
+                uniqueGroups = sortedValues.size,
                 baseScore = baseScore,
                 resultId = "cell_${idCounter++}",
                 isTactical = allCells.any { it.isTactical },
