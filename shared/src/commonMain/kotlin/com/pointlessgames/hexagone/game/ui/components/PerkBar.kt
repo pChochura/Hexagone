@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -132,11 +133,11 @@ fun PerkBar(
                     )
                     .clip(RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge))
                     .navigationBarsPadding(),
-                contentPadding = PaddingValues(spacing.large),
-                horizontalArrangement = Arrangement.Center,
+                contentPadding = PaddingValues(horizontal = spacing.large, vertical = spacing.medium),
+                horizontalArrangement = Arrangement.spacedBy(spacing.medium, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                itemsIndexed(distinctPerks, key = { _, perk -> perk.name }) { _, perk ->
+                items(distinctPerks, key = { it.name }) { perk ->
                     val isActive = activePerk == perk
                     val isEnabled = !isStuck || stuckPerks.contains(perk)
                     val count = counts[perk] ?: 0
@@ -150,8 +151,6 @@ fun PerkBar(
                         tooltipDescription = perk.descriptionRes,
                         onClick = { onPerkClick(perk) },
                         modifier = Modifier
-                            .animateItem()
-                            .padding(horizontal = spacing.semiSmall)
                             .graphicsLayer {
                                 scaleX = scale
                                 scaleY = scale

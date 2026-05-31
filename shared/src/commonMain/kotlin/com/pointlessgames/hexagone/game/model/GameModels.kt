@@ -52,7 +52,18 @@ data class GameUiState(
     val debugSelectedValue: Int? = 1,
     val debugAddAsGhost: Boolean = false,
     val perksUsedTracking: Map<Perk, Int> = emptyMap(),
-)
+) {
+    fun consumePerk(perk: Perk): GameUiState {
+        val perkIndex = collectedPerks.indexOf(perk)
+        return if (perkIndex != -1) {
+            val newList = collectedPerks.toMutableList().apply { removeAt(perkIndex) }
+            val newTracking = perksUsedTracking.toMutableMap().apply {
+                this[perk] = (this[perk] ?: 0) + 1
+            }
+            copy(collectedPerks = newList, perksUsedTracking = newTracking)
+        } else this
+    }
+}
 
 @Immutable
 data class PotentialMerge(
