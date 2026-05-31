@@ -281,6 +281,8 @@ internal class GameViewModel(
         val isTileOnlyPerk = perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES
         if (isTileOnlyPerk && previewAtPos == null) return
 
+        if (perk == Perk.PATH_MERGE) return
+
         if (perk != null && perk != Perk.FUSION && perk != Perk.CHAIN_MERGE && perk != Perk.SKIP_SPAWN && previewAtPos != null) {
             if (selectedId == previewAtPos.id) {
                 _uiState.update { it.copy(selectedCellId = null) }
@@ -1139,6 +1141,9 @@ internal class GameViewModel(
     }
 
     private fun calculateFinalCombo(merge: MergeTransition, currentState: GameUiState): Int {
+        if (merge.resultId == "preview_path_merge") {
+            return maxOf(0, merge.totalCells - 1)
+        }
         return if (merge.uniqueGroups > 1 || currentState.activePerk == Perk.CHAIN_MERGE) {
             currentState.combo + (if (currentState.activePerk == Perk.CHAIN_MERGE) 1 else 0) + (merge.uniqueGroups - 1)
         } else if (currentState.activePerk == Perk.FUSION) {
