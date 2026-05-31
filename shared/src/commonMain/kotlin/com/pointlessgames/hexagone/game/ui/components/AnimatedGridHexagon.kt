@@ -32,25 +32,24 @@ import androidx.compose.ui.unit.IntOffset
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.Perk
-import com.pointlessgames.hexagone.ui.theme.spacing
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 internal fun AnimatedGridHexagon(
     modifier: Modifier = Modifier,
-    cell: HexagonCell, 
-    cellWidth: Float, 
-    cellHeight: Float, 
+    cell: HexagonCell,
+    cellWidth: Float,
+    cellHeight: Float,
     gapPx: Float,
     moveAnimationSpec: AnimationSpec<IntOffset>,
     gridStateProvider: () -> List<HexagonCell>,
-    selectedCellIdProvider: () -> String?, 
+    selectedCellIdProvider: () -> String?,
     activePerkProvider: () -> Perk?,
-    pendingMergeProvider: () -> MergeTransition?, 
+    pendingMergeProvider: () -> MergeTransition?,
     activeMergeStepIndexProvider: () -> Int,
     hoveredMergeState: StateFlow<MergeTransition?>,
-    density: Density, 
-    itemWidth: Float, 
+    density: Density,
+    itemWidth: Float,
     itemHeight: Float,
     onAnimationFinished: () -> Unit,
     spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
@@ -75,7 +74,15 @@ internal fun AnimatedGridHexagon(
         cellWidth,
         cellHeight,
         gapPx,
-    ) { HexagonGridDefaults.calculateOffset(visualPos.first, visualPos.second, cellWidth, cellHeight, gapPx) }
+    ) {
+        HexagonGridDefaults.calculateOffset(
+            visualPos.first,
+            visualPos.second,
+            cellWidth,
+            cellHeight,
+            gapPx,
+        )
+    }
     val animatedOffset by animateIntOffsetAsState(
         targetOffset,
         moveAnimationSpec,
@@ -106,11 +113,12 @@ internal fun AnimatedGridHexagon(
     LaunchedEffect(hoveredMergeState) {
         hoveredMergeState.collect { current ->
             isHoveredState.value = current != null && (
-                (current.targetX == cell.x && current.targetY == cell.y) ||
-                        current.participatingIds?.contains(cell.id) == true ||
-                        current.steps.any { step -> step.mergingCells.any { it.id == cell.id } }
-            )
-            isTargetHovered.value = current != null && current.targetX == cell.x && current.targetY == cell.y
+                    (current.targetX == cell.x && current.targetY == cell.y) ||
+                            current.participatingIds?.contains(cell.id) == true ||
+                            current.steps.any { step -> step.mergingCells.any { it.id == cell.id } }
+                    )
+            isTargetHovered.value =
+                current != null && current.targetX == cell.x && current.targetY == cell.y
         }
     }
 
@@ -122,21 +130,37 @@ internal fun AnimatedGridHexagon(
     val activeMergeStepIndex = activeMergeStepIndexProvider()
     val currentStep = pendingMerge?.steps?.getOrNull(activeMergeStepIndex)
     val isMergingLocal = currentStep?.mergingCells?.any { it.id == cell.id } == true
-    val isTargetMerging = pendingMerge != null && pendingMerge.targetX == cell.x && pendingMerge.targetY == cell.y
+    val isTargetMerging =
+        pendingMerge != null && pendingMerge.targetX == cell.x && pendingMerge.targetY == cell.y
 
     val isSelectableLocal = remember(activePerk, cell.id, gridStateProvider(), selectedCellId) {
         when (activePerk) {
             Perk.PATH_MERGE -> {
                 val neighbors = gridStateProvider().filter { n ->
                     val coords = if (cell.x % 2 == 0) {
-                        listOf(cell.x to cell.y - 1, cell.x to cell.y + 1, cell.x - 1 to cell.y - 1, cell.x - 1 to cell.y, cell.x + 1 to cell.y - 1, cell.x + 1 to cell.y)
+                        listOf(
+                            cell.x to cell.y - 1,
+                            cell.x to cell.y + 1,
+                            cell.x - 1 to cell.y - 1,
+                            cell.x - 1 to cell.y,
+                            cell.x + 1 to cell.y - 1,
+                            cell.x + 1 to cell.y,
+                        )
                     } else {
-                        listOf(cell.x to cell.y - 1, cell.x to cell.y + 1, cell.x - 1 to cell.y, cell.x - 1 to cell.y + 1, cell.x + 1 to cell.y, cell.x + 1 to cell.y + 1)
+                        listOf(
+                            cell.x to cell.y - 1,
+                            cell.x to cell.y + 1,
+                            cell.x - 1 to cell.y,
+                            cell.x - 1 to cell.y + 1,
+                            cell.x + 1 to cell.y,
+                            cell.x + 1 to cell.y + 1,
+                        )
                     }
                     coords.any { it.first == n.x && it.second == n.y }
                 }
                 neighbors.any { it.value == cell.value }
             }
+
             Perk.REMOVE_TILE, Perk.INCREMENT_TILE -> true
             Perk.SWAP_TILES -> selectedCellId != cell.id
             Perk.MOVE_TILE, Perk.DUPLICATE_TILE -> selectedCellId == null
@@ -144,14 +168,17 @@ internal fun AnimatedGridHexagon(
         }
     }
 
-    val visualValue = currentHoverMerge?.previewValues?.get(cell.id) ?: if (currentHoverMerge?.targetX == cell.x && currentHoverMerge?.targetY == cell.y && currentHoverMerge?.finalValue != 0) currentHoverMerge?.finalValue else cell.value
+    val visualValue = currentHoverMerge?.previewValues?.get(cell.id)
+        ?: if (currentHoverMerge?.targetX == cell.x && currentHoverMerge.targetY == cell.y && currentHoverMerge.finalValue != 0) currentHoverMerge.finalValue else cell.value
 
     val isGhostedInPreview = currentHoverMerge?.forceGhostIds?.contains(cell.id) == true
 
     Hexagon(
         value = visualValue.toString(),
-        backgroundColor = HexagonGridDefaults.getColorForValue(visualValue!!, MaterialTheme.colorScheme)
-            .let { if (isGhostedInPreview) it.copy(alpha = 0.3f) else it },
+        backgroundColor = HexagonGridDefaults.getColorForValue(
+            visualValue,
+            MaterialTheme.colorScheme,
+        ).let { if (isGhostedInPreview) it.copy(alpha = 0.3f) else it },
         isTactical = cell.isTactical,
         isGhost = isGhostedInPreview,
         modifier = modifier.size(
@@ -191,7 +218,8 @@ internal fun AnimatedGridHexagon(
                     if (outline is Outline.Generic) {
                         val selectedCellId = selectedCellIdProvider()
                         val isSelectedLocal = selectedCellId == cell.id
-                        val borderColor = if (isSelectedLocal) Color.White else Color.White.copy(alpha = 0.5f)
+                        val borderColor =
+                            if (isSelectedLocal) Color.White else Color.White.copy(alpha = 0.5f)
                         drawPath(
                             outline.path,
                             borderColor,
@@ -206,6 +234,6 @@ internal fun AnimatedGridHexagon(
                     Color.White,
                     FlatTopHexagonShape(),
                 ) else Modifier,
-            )
+            ),
     )
 }

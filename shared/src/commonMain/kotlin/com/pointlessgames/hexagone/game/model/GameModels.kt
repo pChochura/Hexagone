@@ -52,6 +52,7 @@ data class GameUiState(
     val debugSelectedValue: Int? = 1,
     val debugAddAsGhost: Boolean = false,
     val perksUsedTracking: Map<Perk, Int> = emptyMap(),
+    val pendingResult: DetailedGameResult? = null,
 ) {
     fun consumePerk(perk: Perk): GameUiState {
         val perkIndex = collectedPerks.indexOf(perk)

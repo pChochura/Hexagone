@@ -1,6 +1,5 @@
 package com.pointlessgames.hexagone
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.MaterialTheme
@@ -16,7 +15,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.pointlessgames.hexagone.ui.LocalInnerPadding
 import com.pointlessgames.hexagone.ui.theme.HexagoneTheme
 import com.pointlessgames.hexagone.ui.theme.LocalCornerRadius
 import com.pointlessgames.hexagone.ui.theme.LocalIconsSize
@@ -26,44 +24,37 @@ import com.pointlessgames.hexagone.ui.theme.iconsSize
 import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.utils.LocalResultEventBus
 import com.pointlessgames.hexagone.utils.ResultEventBus
-import com.pointlessgames.hexagone.utils.plus
 import eu.iamkonstantin.kotlin.gadulka.GadulkaPlayer
 import eu.iamkonstantin.kotlin.gadulka.rememberGadulkaState
-import org.koin.compose.KoinContext
 
 @Composable
 @Preview
 fun App(modifier: Modifier = Modifier) {
-    KoinContext {
-        HexagoneTheme {
-            Scaffold(
-                modifier = modifier,
-                containerColor = MaterialTheme.colorScheme.background,
-                contentWindowInsets = WindowInsets.systemBars,
-            ) { innerPadding ->
-                val spacing = MaterialTheme.spacing
-                val cornerRadius = MaterialTheme.cornerRadius
-                val iconsSize = MaterialTheme.iconsSize
+    HexagoneTheme {
+        Scaffold(
+            modifier = modifier,
+            containerColor = MaterialTheme.colorScheme.background,
+            contentWindowInsets = WindowInsets.systemBars,
+        ) {
+            val spacing = MaterialTheme.spacing
+            val cornerRadius = MaterialTheme.cornerRadius
+            val iconsSize = MaterialTheme.iconsSize
 
-                var startingRoute by remember { mutableStateOf<Route?>(null) }
+            var startingRoute by remember { mutableStateOf<Route?>(null) }
 
-                LaunchedEffect(Unit) {
-                    startingRoute = Route.Game
-                }
+            LaunchedEffect(Unit) {
+                startingRoute = Route.Game
+            }
 
-                CompositionLocalProvider(
-                    LocalSpacing provides spacing,
-                    LocalCornerRadius provides cornerRadius,
-                    LocalIconsSize provides iconsSize,
-                    LocalInnerPadding provides remember {
-                        PaddingValues(spacing.extraLarge) + innerPadding
-                    },
-                    LocalMediaPlayer provides rememberGadulkaState(),
-                    LocalResultEventBus provides remember { ResultEventBus() },
-                ) {
-                    startingRoute?.let {
-                        Navigator(it)
-                    }
+            CompositionLocalProvider(
+                LocalSpacing provides spacing,
+                LocalCornerRadius provides cornerRadius,
+                LocalIconsSize provides iconsSize,
+                LocalMediaPlayer provides rememberGadulkaState(),
+                LocalResultEventBus provides remember { ResultEventBus() },
+            ) {
+                startingRoute?.let {
+                    Navigator(it)
                 }
             }
         }

@@ -41,6 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.ConfettiPiece
 import com.pointlessgames.hexagone.game.model.Perk
+import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
+import com.pointlessgames.hexagone.leaderboard.ui.LeaderboardOverlay
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
@@ -54,7 +56,7 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 @Composable
-fun GameOverlays(
+internal fun GameOverlays(
     modifier: Modifier = Modifier,
     isGameOver: Boolean,
     scoreProvider: () -> Int,
@@ -73,10 +75,13 @@ fun GameOverlays(
     onViewBoardToggle: () -> Unit,
     onShare: () -> Unit,
     onLeaderboard: () -> Unit,
+    showLeaderboard: Boolean,
+    onLeaderboardDismiss: () -> Unit,
+    leaderboardViewModel: LeaderboardViewModel,
 ) {
-    val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver
+    val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver || showLeaderboard
     val dimAlphaState = animateFloatAsState(
-        targetValue = if (isAnyOverlayVisible && !showBoard) 0.5f else 0f,
+        targetValue = if (showLeaderboard) 0.85f else if (isAnyOverlayVisible && !showBoard) 0.6f else 0f,
         animationSpec = tween(500),
         label = "dim_alpha"
     )
@@ -150,7 +155,9 @@ fun GameOverlays(
                         enabled = isAnyOverlayVisible && !showBoard,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
-                    ) { /* Consume clicks */ }
+                    ) { 
+                        if (showLeaderboard) onLeaderboardDismiss()
+                    }
             )
 
             AnimatedVisibility(
@@ -182,6 +189,18 @@ fun GameOverlays(
                     totalMerges = totalMerges,
                     highestValue = highestValue,
                     onViewBoard = onViewBoardToggle
+                )
+            }
+
+            AnimatedVisibility(
+                visible = showLeaderboard && !showBoard,
+                enter = fadeIn(tween(800)) + slideInVertically(initialOffsetY = { -it / 8 }),
+                exit = fadeOut(tween(400)) + scaleOut(targetScale = 0.9f),
+                modifier = Modifier.align(Alignment.Center)
+            ) {
+                LeaderboardOverlay(
+                    viewModel = leaderboardViewModel,
+                    onDismiss = onLeaderboardDismiss
                 )
             }
 

@@ -27,12 +27,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
-import com.pointlessgames.hexagone.leaderboard.ui.LeaderboardDialog
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -42,7 +42,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.pointlessgames.hexagone.LocalNavigator
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
@@ -51,6 +50,7 @@ import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.utils.BackHandler
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.no_moves_left_warning
 import org.jetbrains.compose.resources.stringResource
@@ -64,6 +64,10 @@ internal fun GameScreen(
 
     var showLeaderboard by remember { mutableStateOf(false) }
     val leaderboardViewModel: LeaderboardViewModel = koinViewModel()
+
+    BackHandler(enabled = showLeaderboard) {
+        showLeaderboard = false
+    }
 
     val onEmptySpaceClick = remember(viewModel) { viewModel::onEmptySpaceClicked }
     val onEmptySpaceTouchDown = remember(viewModel) { viewModel::onEmptySpaceTouchDown }
@@ -132,6 +136,13 @@ internal fun GameScreen(
     val comboProvider = remember { { comboState.value } }
     val activePerkProvider = remember { { activePerkState.value } }
     val selectedCellIdProvider = remember { { selectedCellIdState.value } }
+
+    LaunchedEffect(uiState.pendingResult) {
+        if (uiState.pendingResult != null) {
+            leaderboardViewModel.setPendingResult(uiState.pendingResult)
+            showLeaderboard = true
+        }
+    }
 
     Box(
         modifier = modifier
@@ -312,14 +323,10 @@ internal fun GameScreen(
             onRestart = onRestart,
             onViewBoardToggle = onViewBoardToggle,
             onShare = { /* TODO: Implement snapshot and share */ },
-            onLeaderboard = { showLeaderboard = true }
+            onLeaderboard = { showLeaderboard = true },
+            showLeaderboard = showLeaderboard,
+            onLeaderboardDismiss = { showLeaderboard = false },
+            leaderboardViewModel = leaderboardViewModel
         )
-
-        if (showLeaderboard) {
-            LeaderboardDialog(
-                viewModel = leaderboardViewModel,
-                onDismiss = { showLeaderboard = false }
-            )
-        }
     }
 }

@@ -27,6 +27,7 @@ internal class LeaderboardViewModel(
         val playerName: String? = null,
         val onboardingName: String = "",
         val isCreatingProfile: Boolean = false,
+        val pendingResult: DetailedGameResult? = null,
     )
 
     enum class Filter {
@@ -61,16 +62,26 @@ internal class LeaderboardViewModel(
             _uiState.value = _uiState.value.copy(isCreatingProfile = true, error = null)
             try {
                 val profile = leaderboardRepository.createProfile(name, "Global")
+                val pendingResult = _uiState.value.pendingResult
+                if (pendingResult != null) {
+                    leaderboardRepository.submitResult(pendingResult)
+                }
+
                 _uiState.value = _uiState.value.copy(
                     isCreatingProfile = false,
                     playerName = profile.username,
-                    playerRegion = profile.region
+                    playerRegion = profile.region,
+                    pendingResult = null
                 )
                 loadRankings()
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isCreatingProfile = false, error = e.message ?: "Unknown error")
             }
         }
+    }
+
+    fun setPendingResult(result: DetailedGameResult?) {
+        _uiState.value = _uiState.value.copy(pendingResult = result)
     }
 
     fun loadRankings() {

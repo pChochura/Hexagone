@@ -6,12 +6,18 @@ import androidx.lifecycle.viewModelScope
 import com.pointlessgames.hexagone.data.LeaderboardRepository
 import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.game.logic.GameEngine
+import com.pointlessgames.hexagone.game.model.ComboTier
+import com.pointlessgames.hexagone.game.model.DetailedGameResult
+import com.pointlessgames.hexagone.game.model.GameEffect
+import com.pointlessgames.hexagone.game.model.GameItem
+import com.pointlessgames.hexagone.game.model.GameState
+import com.pointlessgames.hexagone.game.model.GameUiState
 import com.pointlessgames.hexagone.game.model.HexagonCell
-import com.pointlessgames.hexagone.game.model.MergeHint
+import com.pointlessgames.hexagone.game.model.MergeStep
 import com.pointlessgames.hexagone.game.model.MergeTransition
-import com.pointlessgames.hexagone.game.model.OnBoardPerk
 import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
+import com.pointlessgames.hexagone.game.model.PotentialMerge
 import com.pointlessgames.hexagone.game.model.PreviewCell
 import com.pointlessgames.hexagone.ui.theme.Colors
 import hexagone.shared.generated.resources.Res
@@ -33,15 +39,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.StringResource
-
-import com.pointlessgames.hexagone.game.model.ComboTier
-import com.pointlessgames.hexagone.game.model.DetailedGameResult
-import com.pointlessgames.hexagone.game.model.GameEffect
-import com.pointlessgames.hexagone.game.model.GameItem
-import com.pointlessgames.hexagone.game.model.GameState
-import com.pointlessgames.hexagone.game.model.GameUiState
-import com.pointlessgames.hexagone.game.model.MergeStep
-import com.pointlessgames.hexagone.game.model.PotentialMerge
 
 internal class GameViewModel(
     private val settingsRepository: SettingsRepository,
@@ -69,7 +66,7 @@ internal class GameViewModel(
         },
         onSpawnRequested = {
             spawnFromQueue(_uiState.value.grid)
-        }
+        },
     )
 
     private var lastLevel = 1
@@ -166,7 +163,7 @@ internal class GameViewModel(
                         perk = perk,
                         grid = currentState.grid,
                         previews = currentState.preview,
-                        previousState = stateHistory.lastOrNull()
+                        previousState = stateHistory.lastOrNull(),
                     )
                 } +
                 (if (currentState.perkOptions.isNotEmpty()) 1 else 0)
@@ -278,7 +275,8 @@ internal class GameViewModel(
         val previewAtPos = state.preview.find { it.x == x && it.y == y }
 
         if (perk == Perk.PATH_MERGE) return
-        val isTileOnlyPerk = perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES
+        val isTileOnlyPerk =
+            perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES
         if (isTileOnlyPerk && previewAtPos == null) return
 
         if (perk == Perk.PATH_MERGE) return
@@ -349,7 +347,8 @@ internal class GameViewModel(
     private fun getGameItem(id: String): GameItem? {
         val state = _uiState.value
         state.grid.find { it.id == id }?.let { return GameItem(it.id, it.x, it.y, it.value, false) }
-        state.preview.find { it.id == id }?.let { return GameItem(it.id, it.x, it.y, it.value, true) }
+        state.preview.find { it.id == id }
+            ?.let { return GameItem(it.id, it.x, it.y, it.value, true) }
         return null
     }
 
@@ -364,7 +363,8 @@ internal class GameViewModel(
         if (perk != null && selectedId != null && ghostAtPos?.id == selectedId) return
 
         if (perk == Perk.PATH_MERGE) return
-        val isTileOnlyPerk = perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES
+        val isTileOnlyPerk =
+            perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES
         if (isTileOnlyPerk && ghostAtPos == null) return
 
         val merge = when (perk) {
@@ -372,51 +372,80 @@ internal class GameViewModel(
                 if (ghostAtPos != null) {
                     val baseCleanupScore = ghostAtPos.value * 10
                     val nextPreview = state.preview.filter { it.id != ghostAtPos.id }
-                    val barRaisedBonus = calculateBarRaisedBonus(state.grid, state.preview, state.grid, nextPreview)
+                    val barRaisedBonus =
+                        calculateBarRaisedBonus(state.grid, state.preview, state.grid, nextPreview)
                     val finalBonus = baseCleanupScore + barRaisedBonus
-                    
+
                     MergeTransition(
-                        targetX = x, targetY = y, steps = emptyList(), finalValue = 0,
-                        totalCells = 1, uniqueGroups = 0, baseScore = finalBonus, resultId = "preview_remove_queue",
-                        isRemoval = true, participatingIds = setOf(ghostAtPos.id)
+                        targetX = x,
+                        targetY = y,
+                        steps = emptyList(),
+                        finalValue = 0,
+                        totalCells = 1,
+                        uniqueGroups = 0,
+                        baseScore = finalBonus,
+                        resultId = "preview_remove_queue",
+                        isRemoval = true,
+                        participatingIds = setOf(ghostAtPos.id),
                     )
                 } else null
             }
+
             Perk.INCREMENT_TILE -> {
                 if (ghostAtPos != null) {
                     val nextValue = ghostAtPos.value + 1
-                    val nextPreview = state.preview.map { if (it.id == ghostAtPos.id) it.copy(value = nextValue) else it }
-                    val barRaisedBonus = calculateBarRaisedBonus(state.grid, state.preview, state.grid, nextPreview)
-                    
+                    val nextPreview =
+                        state.preview.map { if (it.id == ghostAtPos.id) it.copy(value = nextValue) else it }
+                    val barRaisedBonus =
+                        calculateBarRaisedBonus(state.grid, state.preview, state.grid, nextPreview)
+
                     MergeTransition(
-                        targetX = x, targetY = y, steps = emptyList(), finalValue = 0,
-                        totalCells = 1, uniqueGroups = 0, baseScore = barRaisedBonus, resultId = "preview_increment_queue",
+                        targetX = x,
+                        targetY = y,
+                        steps = emptyList(),
+                        finalValue = 0,
+                        totalCells = 1,
+                        uniqueGroups = 0,
+                        baseScore = barRaisedBonus,
+                        resultId = "preview_increment_queue",
                         participatingIds = setOf(ghostAtPos.id),
-                        previewValues = mapOf(ghostAtPos.id to nextValue)
+                        previewValues = mapOf(ghostAtPos.id to nextValue),
                     )
                 } else null
             }
+
             Perk.PATH_MERGE -> {
                 val merge = engine.calculatePathMerge(x, y, state.grid)
                 merge?.copy(
                     resultId = "preview_path_merge",
                     forceSolidIds = setOf("preview_path_merge"),
-                    previewValues = ghostAtPos?.let { mapOf(it.id to merge.finalValue) } ?: emptyMap()
+                    previewValues = ghostAtPos?.let { mapOf(it.id to merge.finalValue) }
+                        ?: emptyMap(),
                 )
             }
+
             Perk.MOVE_TILE, Perk.DUPLICATE_TILE -> {
                 if (selectedId != null && (ghostAtPos == null || selectedId != ghostAtPos.id)) {
                     val source = getGameItem(selectedId)
                     if (source != null) {
-                        val resultId = if (perk == Perk.MOVE_TILE) "preview_move" else "preview_duplicate"
-                        val swaps = if (perk == Perk.MOVE_TILE) mapOf(selectedId to (x to y)) else null
+                        val resultId =
+                            if (perk == Perk.MOVE_TILE) "preview_move" else "preview_duplicate"
+                        val swaps =
+                            if (perk == Perk.MOVE_TILE) mapOf(selectedId to (x to y)) else null
                         val isSourceSolid = !source.isGhost
                         val forceSolidIds = if (isSourceSolid) setOf(resultId) else emptySet()
-                        val forceGhostAtSource = if (perk == Perk.MOVE_TILE && source.isGhost) setOf(selectedId) else emptySet()
-                        
+                        val forceGhostAtSource =
+                            if (perk == Perk.MOVE_TILE && source.isGhost) setOf(selectedId) else emptySet()
+
                         MergeTransition(
-                            targetX = x, targetY = y, steps = emptyList(), finalValue = source.value,
-                            totalCells = 1, uniqueGroups = 0, baseScore = 0, resultId = resultId,
+                            targetX = x,
+                            targetY = y,
+                            steps = emptyList(),
+                            finalValue = source.value,
+                            totalCells = 1,
+                            uniqueGroups = 0,
+                            baseScore = 0,
+                            resultId = resultId,
                             participatingIds = setOf(selectedId) + listOfNotNull(ghostAtPos?.id),
                             previewSwaps = swaps,
                             forceSolidIds = forceSolidIds + forceGhostAtSource,
@@ -424,6 +453,7 @@ internal class GameViewModel(
                     } else null
                 } else null
             }
+
             Perk.SWAP_TILES -> {
                 if (selectedId != null && ghostAtPos != null && selectedId != ghostAtPos.id) {
                     val source = getGameItem(selectedId)
@@ -431,18 +461,25 @@ internal class GameViewModel(
                     if (source != null) {
                         val swaps = mapOf(
                             source.id to (target.x to target.y),
-                            target.id to (source.x to source.y)
+                            target.id to (source.x to source.y),
                         )
 
                         MergeTransition(
-                            targetX = x, targetY = y, steps = emptyList(), finalValue = 0,
-                            totalCells = 1, uniqueGroups = 0, baseScore = 0, resultId = "preview_swap",
+                            targetX = x,
+                            targetY = y,
+                            steps = emptyList(),
+                            finalValue = 0,
+                            totalCells = 1,
+                            uniqueGroups = 0,
+                            baseScore = 0,
+                            resultId = "preview_swap",
                             previewSwaps = swaps,
                             participatingIds = setOf(source.id, target.id),
                         )
                     } else null
                 } else null
             }
+
             Perk.FUSION -> engine.calculateFusion(x, y, state.grid)
             null, Perk.CHAIN_MERGE, Perk.SKIP_SPAWN -> {
                 if (perk == Perk.CHAIN_MERGE) {
@@ -451,6 +488,7 @@ internal class GameViewModel(
                     engine.calculateMerge(x, y, state.grid)
                 }
             }
+
             else -> null
         }
         _hoveredMerge.value = merge
@@ -471,34 +509,53 @@ internal class GameViewModel(
                 m?.copy(
                     resultId = "preview_path_merge",
                     forceSolidIds = setOf("preview_path_merge"),
-                    previewValues = mapOf(cell.id to m.finalValue)
+                    previewValues = mapOf(cell.id to m.finalValue),
                 )
             }
+
             Perk.REMOVE_TILE -> {
                 val baseCleanupScore = cell.value * 10
                 val nextGrid = state.grid.filter { it.id != cell.id }
-                val barRaisedBonus = calculateBarRaisedBonus(state.grid, state.preview, nextGrid, state.preview)
+                val barRaisedBonus =
+                    calculateBarRaisedBonus(state.grid, state.preview, nextGrid, state.preview)
                 val sacrificeBonus = calculateSacrificeBonus(state.grid, cell)
                 val finalBonus = baseCleanupScore + barRaisedBonus + sacrificeBonus
 
                 MergeTransition(
-                    targetX = cell.x, targetY = cell.y, steps = emptyList(), finalValue = 0,
-                    totalCells = 1, uniqueGroups = 0, baseScore = finalBonus, resultId = "preview_remove",
-                    isRemoval = true, participatingIds = setOf(cell.id)
+                    targetX = cell.x,
+                    targetY = cell.y,
+                    steps = emptyList(),
+                    finalValue = 0,
+                    totalCells = 1,
+                    uniqueGroups = 0,
+                    baseScore = finalBonus,
+                    resultId = "preview_remove",
+                    isRemoval = true,
+                    participatingIds = setOf(cell.id),
                 )
             }
+
             Perk.INCREMENT_TILE -> {
                 val nextValue = cell.value + 1
-                val nextGrid = state.grid.map { if (it.id == cell.id) it.copy(value = nextValue) else it }
-                val barRaisedBonus = calculateBarRaisedBonus(state.grid, state.preview, nextGrid, state.preview)
-                
+                val nextGrid =
+                    state.grid.map { if (it.id == cell.id) it.copy(value = nextValue) else it }
+                val barRaisedBonus =
+                    calculateBarRaisedBonus(state.grid, state.preview, nextGrid, state.preview)
+
                 MergeTransition(
-                    targetX = cell.x, targetY = cell.y, steps = emptyList(), finalValue = 0,
-                    totalCells = 1, uniqueGroups = 0, baseScore = barRaisedBonus, resultId = "preview_increment",
+                    targetX = cell.x,
+                    targetY = cell.y,
+                    steps = emptyList(),
+                    finalValue = 0,
+                    totalCells = 1,
+                    uniqueGroups = 0,
+                    baseScore = barRaisedBonus,
+                    resultId = "preview_increment",
                     participatingIds = setOf(cell.id),
-                    previewValues = mapOf(cell.id to nextValue)
+                    previewValues = mapOf(cell.id to nextValue),
                 )
             }
+
             Perk.SWAP_TILES -> {
                 if (selectedId != null && selectedId != cell.id) {
                     val source = getGameItem(selectedId)
@@ -506,18 +563,25 @@ internal class GameViewModel(
                     if (source != null) {
                         val swaps = mapOf(
                             source.id to (target.x to target.y),
-                            target.id to (source.x to source.y)
+                            target.id to (source.x to source.y),
                         )
 
                         MergeTransition(
-                            targetX = cell.x, targetY = cell.y, steps = emptyList(), finalValue = 0,
-                            totalCells = 1, uniqueGroups = 0, baseScore = 0, resultId = "preview_swap",
+                            targetX = cell.x,
+                            targetY = cell.y,
+                            steps = emptyList(),
+                            finalValue = 0,
+                            totalCells = 1,
+                            uniqueGroups = 0,
+                            baseScore = 0,
+                            resultId = "preview_swap",
                             previewSwaps = swaps,
                             participatingIds = setOf(source.id, target.id),
                         )
                     } else null
                 } else null
             }
+
             null -> null
             else -> null
         }
@@ -552,7 +616,8 @@ internal class GameViewModel(
                 currentState.grid + engine.createCell(x, y, value, isTactical = true)
             }
 
-            val updatedPreview = currentState.preview.filterNot { (it.id == selectedId || (it.x == x && it.y == y)) }
+            val updatedPreview =
+                currentState.preview.filterNot { (it.id == selectedId || (it.x == x && it.y == y)) }
 
             currentState.copy(
                 grid = updatedGrid,
@@ -593,26 +658,28 @@ internal class GameViewModel(
         oldGrid: List<HexagonCell>,
         oldPreview: List<PreviewCell>,
         newGrid: List<HexagonCell>,
-        newPreview: List<PreviewCell>
+        newPreview: List<PreviewCell>,
     ): Int {
-        val oldMin = (oldGrid.map { it.value } + oldPreview.map { it.value }).minOrNull() ?: return 0
-        val newMin = (newGrid.map { it.value } + newPreview.map { it.value }).minOrNull() ?: return 0
+        val oldMin =
+            (oldGrid.map { it.value } + oldPreview.map { it.value }).minOrNull() ?: return 0
+        val newMin =
+            (newGrid.map { it.value } + newPreview.map { it.value }).minOrNull() ?: return 0
         return if (newMin > oldMin) oldMin * 50 else 0
     }
 
     private fun calculateSacrificeBonus(
         grid: List<HexagonCell>,
-        removedCell: HexagonCell
+        removedCell: HexagonCell,
     ): Int {
-        val isOnlyHighest = grid.count { it.value == removedCell.value } == 1 && 
+        val isOnlyHighest = grid.count { it.value == removedCell.value } == 1 &&
                 grid.all { it.value <= removedCell.value }
-        
+
         if (!isOnlyHighest) return 0
-        
+
         val sortedValues = grid.map { it.value }.distinct().sortedDescending()
         val secondHighest = if (sortedValues.size > 1) sortedValues[1] else 0
         val diff = removedCell.value - secondHighest
-        
+
         return (removedCell.value * 75) + (diff * 150)
     }
 
@@ -645,21 +712,29 @@ internal class GameViewModel(
             Perk.REMOVE_TILE -> {
                 saveState()
                 _uiState.update { currentState ->
-                    val preview = currentState.preview.find { it.id == preview.id } ?: return@update currentState
+                    val preview = currentState.preview.find { it.id == preview.id }
+                        ?: return@update currentState
                     val baseCleanupScore = preview.value * 10
                     val nextPreview = currentState.preview.filter { it.id != preview.id }
 
-                    val barRaisedBonus = calculateBarRaisedBonus(currentState.grid, currentState.preview, currentState.grid, nextPreview)
+                    val barRaisedBonus = calculateBarRaisedBonus(
+                        currentState.grid,
+                        currentState.preview,
+                        currentState.grid,
+                        nextPreview,
+                    )
                     val finalBonus = baseCleanupScore + barRaisedBonus
-                    val labelRes = if (barRaisedBonus > 0) Res.string.label_bar_raised else Res.string.label_cleanup
+                    val labelRes =
+                        if (barRaisedBonus > 0) Res.string.label_bar_raised else Res.string.label_cleanup
 
                     val nextScore = currentState.score + finalBonus
                     viewModelScope.launch {
                         persistBestScore(nextScore)
-                        val popupColor = if (barRaisedBonus > 0) Colors().skyBlue else Colors().greyBlue
+                        val popupColor =
+                            if (barRaisedBonus > 0) Colors().skyBlue else Colors().greyBlue
                         addScorePopup(preview.x, preview.y, finalBonus, popupColor, labelRes)
                     }
-                    
+
                     currentState.copy(
                         preview = nextPreview,
                         score = nextScore,
@@ -680,24 +755,41 @@ internal class GameViewModel(
             Perk.INCREMENT_TILE -> {
                 saveState()
                 _uiState.update { currentState ->
-                    val previewToUpdate = currentState.preview.find { it.id == preview.id } ?: return@update currentState
+                    val previewToUpdate = currentState.preview.find { it.id == preview.id }
+                        ?: return@update currentState
                     val nextPreview = currentState.preview.map {
-                        if (it.id == previewToUpdate.id) it.copy(value = it.value + 1, isTactical = true) else it
+                        if (it.id == previewToUpdate.id) it.copy(
+                            value = it.value + 1,
+                            isTactical = true,
+                        ) else it
                     }
-                    val barRaisedBonus = calculateBarRaisedBonus(currentState.grid, currentState.preview, currentState.grid, nextPreview)
-                    
+                    val barRaisedBonus = calculateBarRaisedBonus(
+                        currentState.grid,
+                        currentState.preview,
+                        currentState.grid,
+                        nextPreview,
+                    )
+
                     if (barRaisedBonus > 0) {
                         val nextScore = currentState.score + barRaisedBonus
                         viewModelScope.launch {
                             persistBestScore(nextScore)
-                            addScorePopup(previewToUpdate.x, previewToUpdate.y, barRaisedBonus, Colors().skyBlue, Res.string.label_bar_raised)
+                            addScorePopup(
+                                previewToUpdate.x,
+                                previewToUpdate.y,
+                                barRaisedBonus,
+                                Colors().skyBlue,
+                                Res.string.label_bar_raised,
+                            )
                         }
                         currentState.copy(
                             preview = nextPreview,
                             score = nextScore,
-                        ).consumePerk(Perk.INCREMENT_TILE).copy(activePerk = null, selectedCellId = null)
+                        ).consumePerk(Perk.INCREMENT_TILE)
+                            .copy(activePerk = null, selectedCellId = null)
                     } else {
-                        currentState.copy(preview = nextPreview).consumePerk(Perk.INCREMENT_TILE).copy(activePerk = null, selectedCellId = null)
+                        currentState.copy(preview = nextPreview).consumePerk(Perk.INCREMENT_TILE)
+                            .copy(activePerk = null, selectedCellId = null)
                     }
                 }
                 finalizeAction()
@@ -723,23 +815,40 @@ internal class GameViewModel(
             Perk.INCREMENT_TILE -> {
                 saveState()
                 _uiState.update { currentState ->
-                    val cellToUpdate = currentState.grid.find { it.id == cell.id } ?: return@update currentState
+                    val cellToUpdate =
+                        currentState.grid.find { it.id == cell.id } ?: return@update currentState
                     val nextGrid = currentState.grid.map {
-                        if (it.id == cellToUpdate.id) it.copy(value = it.value + 1, isTactical = true) else it
+                        if (it.id == cellToUpdate.id) it.copy(
+                            value = it.value + 1,
+                            isTactical = true,
+                        ) else it
                     }
-                    val barRaisedBonus = calculateBarRaisedBonus(currentState.grid, currentState.preview, nextGrid, currentState.preview)
+                    val barRaisedBonus = calculateBarRaisedBonus(
+                        currentState.grid,
+                        currentState.preview,
+                        nextGrid,
+                        currentState.preview,
+                    )
                     if (barRaisedBonus > 0) {
                         val nextScore = currentState.score + barRaisedBonus
                         viewModelScope.launch {
                             persistBestScore(nextScore)
-                            addScorePopup(cellToUpdate.x, cellToUpdate.y, barRaisedBonus, Colors().skyBlue, Res.string.label_bar_raised)
+                            addScorePopup(
+                                cellToUpdate.x,
+                                cellToUpdate.y,
+                                barRaisedBonus,
+                                Colors().skyBlue,
+                                Res.string.label_bar_raised,
+                            )
                         }
                         currentState.copy(
                             grid = nextGrid,
-                            score = nextScore
-                        ).consumePerk(Perk.INCREMENT_TILE).copy(activePerk = null, selectedCellId = null)
+                            score = nextScore,
+                        ).consumePerk(Perk.INCREMENT_TILE)
+                            .copy(activePerk = null, selectedCellId = null)
                     } else {
-                        currentState.copy(grid = nextGrid).consumePerk(Perk.INCREMENT_TILE).copy(activePerk = null, selectedCellId = null)
+                        currentState.copy(grid = nextGrid).consumePerk(Perk.INCREMENT_TILE)
+                            .copy(activePerk = null, selectedCellId = null)
                     }
                 }
                 finalizeAction()
@@ -773,11 +882,17 @@ internal class GameViewModel(
             Perk.REMOVE_TILE -> {
                 saveState()
                 _uiState.update { currentState ->
-                    val cellToRemove = currentState.grid.find { it.id == cell.id } ?: return@update currentState
+                    val cellToRemove =
+                        currentState.grid.find { it.id == cell.id } ?: return@update currentState
                     val baseCleanupScore = cellToRemove.value * 10
                     val nextGrid = currentState.grid.filter { it.id != cellToRemove.id }
 
-                    val barRaisedBonus = calculateBarRaisedBonus(currentState.grid, currentState.preview, nextGrid, currentState.preview)
+                    val barRaisedBonus = calculateBarRaisedBonus(
+                        currentState.grid,
+                        currentState.preview,
+                        nextGrid,
+                        currentState.preview,
+                    )
                     val sacrificeBonus = calculateSacrificeBonus(currentState.grid, cellToRemove)
 
                     val finalBonus = baseCleanupScore + barRaisedBonus + sacrificeBonus
@@ -800,9 +915,15 @@ internal class GameViewModel(
                             sacrificeBonus > 0 -> Colors().pink
                             else -> Colors().greyBlue
                         }
-                        addScorePopup(cellToRemove.x, cellToRemove.y, finalBonus, popupColor, labelRes)
+                        addScorePopup(
+                            cellToRemove.x,
+                            cellToRemove.y,
+                            finalBonus,
+                            popupColor,
+                            labelRes,
+                        )
                     }
-                    
+
                     currentState.copy(
                         grid = nextGrid,
                         score = nextScore,
@@ -829,8 +950,10 @@ internal class GameViewModel(
 
     private fun swapTiles(id1: String, id2: String) {
         _uiState.update { currentState ->
-            val item1 = currentState.grid.find { it.id == id1 } ?: currentState.preview.find { it.id == id1 }
-            val item2 = currentState.grid.find { it.id == id2 } ?: currentState.preview.find { it.id == id2 }
+            val item1 = currentState.grid.find { it.id == id1 }
+                ?: currentState.preview.find { it.id == id1 }
+            val item2 = currentState.grid.find { it.id == id2 }
+                ?: currentState.preview.find { it.id == id2 }
 
             if (item1 == null || item2 == null) return@update currentState
 
@@ -867,7 +990,10 @@ internal class GameViewModel(
             currentState.copy(
                 grid = updatedGrid,
                 preview = updatedPreview,
-                collectedPerks = currentState.collectedPerks + listOfNotNull(collectedPerkAt1, collectedPerkAt2),
+                collectedPerks = currentState.collectedPerks + listOfNotNull(
+                    collectedPerkAt1,
+                    collectedPerkAt2,
+                ),
                 onBoardPerks = currentState.onBoardPerks.filterNot { (it.x == x1 && it.y == y1) || (it.x == x2 && it.y == y2) },
             ).consumePerk(Perk.SWAP_TILES).copy(activePerk = null, selectedCellId = null)
         }
@@ -885,27 +1011,41 @@ internal class GameViewModel(
         when (perk) {
             Perk.ADVANCE_QUEUE -> {
                 saveState()
-                _uiState.update { 
-                    it.consumePerk(Perk.ADVANCE_QUEUE).copy(isGameOver = false, activePerk = null, selectedCellId = null) 
+                _uiState.update {
+                    it.consumePerk(Perk.ADVANCE_QUEUE)
+                        .copy(isGameOver = false, activePerk = null, selectedCellId = null)
                 }
                 spawnFromQueue(_uiState.value.grid, decrementLifespan = false)
             }
 
             Perk.UNDO -> {
                 if (undoLastMove()) {
-                    _uiState.update { 
-                        it.consumePerk(Perk.UNDO).copy(isGameOver = false, activePerk = null, selectedCellId = null) 
+                    _uiState.update {
+                        it.consumePerk(Perk.UNDO)
+                            .copy(isGameOver = false, activePerk = null, selectedCellId = null)
                     }
                     persistState(getCurrentGameState())
                 }
             }
 
             Perk.SKIP_SPAWN -> {
-                _uiState.update { it.copy(isGameOver = false, activePerk = Perk.SKIP_SPAWN, selectedCellId = null) }
+                _uiState.update {
+                    it.copy(
+                        isGameOver = false,
+                        activePerk = Perk.SKIP_SPAWN,
+                        selectedCellId = null,
+                    )
+                }
             }
 
             else -> {
-                _uiState.update { it.copy(isGameOver = false, activePerk = perk, selectedCellId = null) }
+                _uiState.update {
+                    it.copy(
+                        isGameOver = false,
+                        activePerk = perk,
+                        selectedCellId = null,
+                    )
+                }
             }
         }
         recalculateHints()
@@ -1010,7 +1150,7 @@ internal class GameViewModel(
     private fun calculateStateAfterStep(
         currentState: GameUiState,
         merge: MergeTransition,
-        currentStep: MergeStep
+        currentStep: MergeStep,
     ): List<HexagonCell> {
         return currentState.grid.filter { cell ->
             currentStep.mergingCells.none { it.id == cell.id } && (cell.x != merge.targetX || cell.y != merge.targetY)
@@ -1025,16 +1165,16 @@ internal class GameViewModel(
     private suspend fun processFinalStep(
         merge: MergeTransition,
         currentState: GameUiState,
-        stateAfterStep: List<HexagonCell>
+        stateAfterStep: List<HexagonCell>,
     ) {
         val totalAddedScore = currentState.pendingMergeScore
         val redemptionBonus = calculateRedemptionBonus(totalAddedScore)
-        
+
         val barRaisedBonus = calculateBarRaisedBonus(
             currentState.grid,
             currentState.preview,
             stateAfterStep,
-            currentState.preview.filter { it.x != merge.targetX || it.y != merge.targetY }
+            currentState.preview.filter { it.x != merge.targetX || it.y != merge.targetY },
         )
         val combinedScore = totalAddedScore + redemptionBonus + barRaisedBonus
 
@@ -1112,7 +1252,7 @@ internal class GameViewModel(
         merge: MergeTransition,
         combinedScore: Int,
         redemptionBonus: Int,
-        barRaised: Boolean = false
+        barRaised: Boolean = false,
     ) {
         val labelRes = when {
             redemptionBonus > 0 && barRaised -> Res.string.label_tactical_redemption // TODO: Need a "Bar Raised + Redemption" label? 
@@ -1153,7 +1293,7 @@ internal class GameViewModel(
 
     private fun handleTierRewards(
         finalCombo: Int,
-        currentState: GameUiState
+        currentState: GameUiState,
     ): Pair<Set<ComboTier>, List<Perk>> {
         val newReachedTiers = mutableSetOf<ComboTier>()
         val newlyEarnedPerks = mutableListOf<Perk>()
@@ -1205,14 +1345,15 @@ internal class GameViewModel(
             _uiState.update { state ->
                 val activePerk = state.activePerk
                 // Only consume the perk if it's one that triggers merges and was active
-                val shouldConsume = activePerk == Perk.CHAIN_MERGE || activePerk == Perk.PATH_MERGE || activePerk == Perk.SKIP_SPAWN
-                
-                val nextState = if (shouldConsume && activePerk != null) {
+                val shouldConsume =
+                    activePerk == Perk.CHAIN_MERGE || activePerk == Perk.PATH_MERGE || activePerk == Perk.SKIP_SPAWN
+
+                val nextState = if (shouldConsume) {
                     state.consumePerk(activePerk)
                 } else {
                     state
                 }
-                
+
                 nextState.copy(activePerk = null)
             }
 
@@ -1227,7 +1368,7 @@ internal class GameViewModel(
     private suspend fun processNextStep(
         merge: MergeTransition,
         stepIndex: Int,
-        stateAfterStep: List<HexagonCell>
+        stateAfterStep: List<HexagonCell>,
     ) {
         delay(100) // Artificial delay between sequential group merges
         val nextStep = merge.steps[stepIndex + 1]
@@ -1251,13 +1392,13 @@ internal class GameViewModel(
         val state = _uiState.value
         val isPossible = engine.isMovePossible(state.grid)
         val hasPerkOptions = state.perkOptions.isNotEmpty()
-        
+
         val actionablePerks = state.collectedPerks.filter { perk ->
             engine.canPerkResolveStuck(
                 perk = perk,
                 grid = state.grid,
                 previews = state.preview,
-                previousState = stateHistory.lastOrNull()
+                previousState = stateHistory.lastOrNull(),
             )
         }.toSet()
 
@@ -1276,9 +1417,6 @@ internal class GameViewModel(
         if (!isPossible && hasPerkOptions.not() && actionablePerks.isEmpty() && !state.isDebugMode) {
             viewModelScope.launch {
                 delay(1000)
-                _uiState.update { it.copy(isGameOver = true) }
-                settingsRepository.setGameState(null)
-                
                 val finalResult = DetailedGameResult(
                     score = state.score,
                     maxCombo = state.maxCombo,
@@ -1287,9 +1425,16 @@ internal class GameViewModel(
                     level = state.level,
                     perksUsed = state.perksUsedTracking,
                     perksAvailable = state.collectedPerks,
-                    region = settingsRepository.getPlayerRegion() ?: "Global"
+                    region = settingsRepository.getPlayerRegion() ?: "Global",
                 )
-                leaderboardRepository.submitResult(finalResult)
+
+                val playerName = settingsRepository.getPlayerName()
+                _uiState.update { it.copy(isGameOver = true, pendingResult = if (playerName == null) finalResult else null) }
+                settingsRepository.setGameState(null)
+
+                if (playerName != null) {
+                    leaderboardRepository.submitResult(finalResult)
+                }
             }
         }
         recalculateHints()
@@ -1298,13 +1443,13 @@ internal class GameViewModel(
     private fun spawnFromQueue(
         currentState: List<HexagonCell>,
         decrementLifespan: Boolean = true,
-        skipSpawn: Boolean = false
+        skipSpawn: Boolean = false,
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isBusy = true) }
             val gridWithoutTactical = engine.decrementTacticalFlags(currentState)
             val currentPerks = _uiState.value.onBoardPerks
-            
+
             val (newState, newPreviews, perksAfterSpawn) = if (skipSpawn) {
                 Triple(gridWithoutTactical, _uiState.value.preview, currentPerks)
             } else {
@@ -1314,7 +1459,7 @@ internal class GameViewModel(
                     currentPerks,
                 )
             }
-            
+
             val updatedPerks = if (decrementLifespan) {
                 engine.updateOnBoardPerks(perksAfterSpawn)
             } else {
