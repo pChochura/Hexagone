@@ -684,6 +684,7 @@ internal class GameViewModel(
     }
 
     private fun finalizeAction() {
+        updateLevel()
         if (_uiState.value.preview.isEmpty()) {
             spawnFromQueue(_uiState.value.grid)
         } else {
