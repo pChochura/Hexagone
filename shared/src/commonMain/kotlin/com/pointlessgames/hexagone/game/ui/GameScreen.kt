@@ -193,7 +193,6 @@ internal fun GameScreen(
                         progress = viewModel.getLevelProgress(),
                         highestValue = uiState.highestValue,
                         activePerk = uiState.activePerk,
-                        selectedCellId = uiState.selectedCellId,
                         onLevelClick = onDebugToggle,
                         onLeaderboardClick = { showLeaderboard = true }
                     )

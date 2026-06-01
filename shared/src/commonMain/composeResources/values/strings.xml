@@ -26,14 +26,6 @@
     <string name="perk_selection_hint">Long press a perk to see what it does</string>
     <string name="no_moves_left_warning">NO MOVES LEFT! USE A PERK</string>
 
-    <!-- Perk Action States (Score Section) -->
-    <string name="perk_action_select">Select</string>
-    <string name="perk_action_move">Move</string>
-    <string name="perk_action_pick">Pick</string>
-    <string name="perk_action_first">First</string>
-    <string name="perk_action_second">Second</string>
-    <string name="perk_action_fuse">Fuse</string>
-
     <!-- Combo Tiers -->
     <string name="tier_surge">SURGE</string>
     <string name="tier_overdrive">OVERDRIVE</string>

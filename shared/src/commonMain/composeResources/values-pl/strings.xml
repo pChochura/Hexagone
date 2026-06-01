@@ -4,17 +4,17 @@
     <!-- UI Elements -->
     <string name="score_label">WYNIK</string>
     <string name="level_label">POZIOM %1$d</string>
-    <string name="best_score_label">NAJLEPSZY </string>
+    <string name="best_score_label">REKORD </string>
     <string name="max_label">MAX</string>
     <string name="perk_active_label">PERK</string>
-    <string name="level_up_title">AWANS!</string>
+    <string name="level_up_title">NOWY POZIOM!</string>
     <string name="choose_your_perk">Wybierz perk</string>
     <string name="game_over_title">KONIEC GRY</string>
     <string name="new_best_label">NOWY REKORD</string>
     <string name="stat_level">POZIOM</string>
     <string name="stat_merges">POŁĄCZENIA</string>
     <string name="stat_max_combo">MAX COMBO</string>
-    <string name="stat_max_piece">NAJWIĘKSZY</string>
+    <string name="stat_max_piece">MAX</string>
     <string name="play_again_button">ZAGRAJ PONOWNIE</string>
     <string name="view_board_button">ZOBACZ PLANSZĘ</string>
     <string name="view_stats_button">ZOBACZ STATYSTYKI</string>
@@ -25,14 +25,6 @@
     <string name="perk_bar_empty_hint">Zdobywaj poziomy, aby odblokować perki i ulepszyć swoją strategię!</string>
     <string name="perk_selection_hint">Przytrzymaj perk, aby zobaczyć jego opis</string>
     <string name="no_moves_left_warning">BRAK RUCHÓW! UŻYJ PERKA</string>
-
-    <!-- Perk Action States (Score Section) -->
-    <string name="perk_action_select">Wybierz</string>
-    <string name="perk_action_move">Przesuń</string>
-    <string name="perk_action_pick">Wskaż</string>
-    <string name="perk_action_first">Pierwszy</string>
-    <string name="perk_action_second">Drugi</string>
-    <string name="perk_action_fuse">Połącz</string>
 
     <!-- Combo Tiers -->
     <string name="tier_surge">PRZYPŁYW</string>
@@ -50,20 +42,88 @@
 
     <!-- Perk Names -->
     <string name="perk_undo_name">COFNIJ</string>
-    <string name="perk_move_tile_name">PRZESUŃ PŁYTKĘ</string>
+    <string name="perk_move_tile_name">PRZENIEŚ PŁYTKĘ</string>
     <string name="perk_remove_tile_name">USUŃ PŁYTKĘ</string>
-    <string name="perk_advance_queue_name">PRZYSPIESZ KOLEJKĘ</string>
+    <string name="perk_advance_queue_name">DODAJ Z KOLEJKI</string>
     <string name="perk_swap_tiles_name">ZAMIEŃ PŁYTKI</string>
     <string name="perk_fusion_name">FUZJA</string>
-    <string name="perk_chain_merge_name">REAKCJA ŁAŃCUCHOWA</string>
+    <string name="perk_chain_merge_name">ŁAŃCUCH</string>
+    <string name="perk_duplicate_tile_name">KLONOWANIE</string>
+    <string name="perk_skip_spawn_name">BLOKADA KOLEJKI</string>
+    <string name="perk_increment_tile_name">ULEPSZENIE</string>
+    <string name="perk_path_merge_name">SCALANIE ŚCIEŻKI</string>
 
     <!-- Perk Descriptions -->
     <string name="perk_undo_desc">Cofnij swój ostatni ruch.</string>
     <string name="perk_move_tile_desc">Wybierz płytkę i przesuń ją w dowolne wolne miejsce.</string>
     <string name="perk_remove_tile_desc">Wybierz płytkę i usuń ją z planszy.</string>
-    <string name="perk_advance_queue_desc">Natychmiast dodaj kolejną płytkę z kolejki.</string>
+    <string name="perk_advance_queue_desc">Natychmiast pobierz kolejną płytkę z kolejki.</string>
     <string name="perk_swap_tiles_desc">Wybierz dwie płytki, aby zamienić je miejscami.</string>
     <string name="perk_fusion_desc">Połącz wszystkie sąsiednie płytki w jedną potężną.</string>
     <string name="perk_chain_merge_desc">Twój następny ruch wywoła reakcje łańcuchowe.</string>
+    <string name="perk_duplicate_tile_desc">Wybierz płytkę i umieść jej kopię w dowolnym miejscu na planszy.</string>
+    <string name="perk_skip_spawn_desc">Rozegraj następny ruch bez dodawania nowej płytki z kolejki.</string>
+    <string name="perk_increment_tile_desc">Zwiększ wartość wybranej płytki o jeden.</string>
+    <string name="perk_path_merge_desc">Połącz wszystkie sąsiednie płytki o tej samej wartości w jedną ścieżkę.</string>
+
+    <!-- Tooltips -->
+    <string name="undo_last_move">Cofnij ostatni ruch</string>
+    <string name="redo_previous_move">Ponów poprzedni ruch</string>
+    <string name="restart_the_level">Zrestartuj poziom</string>
+    <string name="show_a_hint">Pokaż podpowiedź</string>
+    <string name="test_the_level">Przetestuj poziom</string>
+    <string name="save_the_level">Zapisz poziom</string>
+    <string name="decrement">Zmniejsz</string>
+    <string name="increment">Zwiększ</string>
+    <string name="go_to_previous_level">Idź do poprzedniego poziomu</string>
+    <string name="go_to_next_level">Idź do następnego poziomu</string>
+    <string name="go_to_level_creator">Idź do kreatora poziomów</string>
+    <string name="go_to_daily_challenge">Idź do wyzwania dnia</string>
+    <string name="start_of_the_level">Początek poziomu</string>
+    <string name="end_of_the_level">Koniec poziomu</string>
+    <string name="remove_level">Usuń poziom</string>
+    <string name="start_game">Rozpocznij grę</string>
+    <string name="go_back">Wróć</string>
+    <string name="show_tutorial">Pokaż samouczek</string>
     <string name="reroll_perks">Przelosuj wybór. Uwaga: Legendarne perki nie pojawią się w nowym wyborze.</string>
+
+    <!-- Content -->
+    <string name="continue_where_you_left_off">Kontynuuj od miejsca, w którym skończyłeś</string>
+    <string name="generate">Generuj</string>
+    <string name="reset">Resetuj</string>
+    <string name="resize">Zmień rozmiar</string>
+    <string name="save">Zapisz</string>
+    <string name="cancel">Anuluj</string>
+    <string name="width">Szerokość</string>
+    <string name="height">Wysokość</string>
+    <string name="no_hints_available">Brak dostępnych podpowiedzi\nSpróbuj cofnąć ruchy</string>
+    <string name="need_a_hint">Potrzebujesz podpowiedzi?</string>
+    <string name="daily_challenge">Wyzwanie\ndnia</string>
+    <string name="easy">Łatwy</string>
+    <string name="medium">Średni</string>
+    <string name="hard">Trudny</string>
+    <string name="today">Dzisiaj</string>
+
+    <!-- Tutorial -->
+    <string name="tutorial_1">Przesuń palcem po ekranie, aby się poruszać</string>
+    <string name="tutorial_2">Sąsiednia płytka zmieni kolor</string>
+    <string name="tutorial_3">Pomaluj puste płytki</string>
+    <string name="tutorial_4">Poruszaj się tylko na płytkę o innym kolorze</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">WITAJ</string>
+    <string name="onboarding_subtitle">Wprowadź nazwę użytkownika, aby rozpocząć przygodę.</string>
+    <string name="onboarding_username_placeholder">Nazwa użytkownika</string>
+    <string name="onboarding_submit">START</string>
+    <string name="onboarding_error_empty">Nazwa użytkownika nie może być pusta</string>
+
+    <!-- Leaderboard -->
+    <string name="leaderboard_title">RANKING</string>
+    <string name="leaderboard_global">GLOBALNY</string>
+    <string name="leaderboard_regional">REGIONALNY</string>
+    <string name="leaderboard_rank">RANKING</string>
+    <string name="leaderboard_name">NAZWA</string>
+    <string name="leaderboard_score">WYNIK</string>
+    <string name="leaderboard_max_piece">MAX</string>
+    <string name="leaderboard_empty">Brak wyników. Bądź pierwszy!</string>
 </resources>
