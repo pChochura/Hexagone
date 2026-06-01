@@ -235,9 +235,12 @@ internal class GameViewModel(
                 pendingMerge = null,
                 activePerk = null,
                 selectedCellId = null,
+                isBusy = false,
             )
         }
 
+        lastProcessedMergeId = null
+        lastProcessedStepIndex = -1
         lastLevel = previousState.level
         checkValidMoves()
         return true

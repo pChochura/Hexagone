@@ -68,6 +68,13 @@ internal fun AnimatedGridHexagon(
             currentStep?.mergingCells?.any { it.id == cell.id } == true
         }
     }
+    val pendingMerge = pendingMergeProvider()
+    val activeMergeStepIndex = activeMergeStepIndexProvider()
+    val currentStep = pendingMerge?.steps?.getOrNull(activeMergeStepIndex)
+    val isMergingLocal = currentStep?.mergingCells?.any { it.id == cell.id } == true
+    val isTargetMerging =
+        pendingMerge != null && pendingMerge.targetX == cell.x && pendingMerge.targetY == cell.y
+
     val targetOffset = remember(
         visualPos.first,
         visualPos.second,
@@ -83,12 +90,21 @@ internal fun AnimatedGridHexagon(
             gapPx,
         )
     }
+
     val animatedOffset by animateIntOffsetAsState(
         targetOffset,
         moveAnimationSpec,
         label = "cell_offset",
         finishedListener = { if (isMergingProvider()) onAnimationFinished() },
     )
+
+    LaunchedEffect(isMergingLocal, targetOffset) {
+        if (isMergingLocal && animatedOffset == targetOffset) {
+            // Already at target, no animation will trigger finishedListener
+            onAnimationFinished()
+        }
+    }
+
     var targetScale by remember { mutableStateOf(0f) }; LaunchedEffect(Unit) { targetScale = 1f }
     val scale by animateFloatAsState(
         targetScale,
@@ -126,12 +142,6 @@ internal fun AnimatedGridHexagon(
     val selectedCellId = selectedCellIdProvider()
     val activePerk = activePerkProvider()
     val isSelected = selectedCellId == cell.id
-    val pendingMerge = pendingMergeProvider()
-    val activeMergeStepIndex = activeMergeStepIndexProvider()
-    val currentStep = pendingMerge?.steps?.getOrNull(activeMergeStepIndex)
-    val isMergingLocal = currentStep?.mergingCells?.any { it.id == cell.id } == true
-    val isTargetMerging =
-        pendingMerge != null && pendingMerge.targetX == cell.x && pendingMerge.targetY == cell.y
 
     val isSelectableLocal = remember(activePerk, cell.id, gridStateProvider(), selectedCellId) {
         when (activePerk) {
