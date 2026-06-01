@@ -54,6 +54,7 @@ data class GameUiState(
     val perksUsedTracking: Map<Perk, Int> = emptyMap(),
     val pendingResult: DetailedGameResult? = null,
     val earnedRewardsThisTurn: List<GameEffect.TierReward> = emptyList(),
+    val currentRank: RankingInfo? = null,
 ) {
     fun consumePerk(perk: Perk): GameUiState {
         val perkIndex = collectedPerks.indexOf(perk)
@@ -66,6 +67,12 @@ data class GameUiState(
         } else this
     }
 }
+
+@Immutable
+data class RankingInfo(
+    val rank: Int,
+    val isRegional: Boolean
+)
 
 @Immutable
 data class PotentialMerge(

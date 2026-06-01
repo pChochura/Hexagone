@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pointlessgames.hexagone.data.LeaderboardRepository
 import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.game.model.DetailedGameResult
+import com.pointlessgames.hexagone.game.model.RankingInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +29,7 @@ internal class LeaderboardViewModel(
         val onboardingName: String = "",
         val isCreatingProfile: Boolean = false,
         val pendingResult: DetailedGameResult? = null,
+        val currentRank: RankingInfo? = null,
     )
 
     enum class Filter {
@@ -63,15 +65,17 @@ internal class LeaderboardViewModel(
             try {
                 val profile = leaderboardRepository.createProfile(name, "Global")
                 val pendingResult = _uiState.value.pendingResult
+                var rank: RankingInfo? = null
                 if (pendingResult != null) {
-                    leaderboardRepository.submitResult(pendingResult)
+                    rank = leaderboardRepository.submitResult(pendingResult)
                 }
 
                 _uiState.value = _uiState.value.copy(
                     isCreatingProfile = false,
                     playerName = profile.username,
                     playerRegion = profile.region,
-                    pendingResult = null
+                    pendingResult = null,
+                    currentRank = rank
                 )
                 loadRankings()
             } catch (e: Exception) {

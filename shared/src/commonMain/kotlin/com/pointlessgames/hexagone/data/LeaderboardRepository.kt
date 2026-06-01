@@ -2,6 +2,7 @@ package com.pointlessgames.hexagone.data
 
 import com.pointlessgames.hexagone.game.model.DetailedGameResult
 import com.pointlessgames.hexagone.game.model.PlayerProfile
+import com.pointlessgames.hexagone.game.model.RankingInfo
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
@@ -13,8 +14,8 @@ class LeaderboardRepository(
     private val supabase: SupabaseClient,
     private val settingsRepository: SettingsRepository,
 ) {
-    suspend fun submitResult(result: DetailedGameResult) = withContext(Dispatchers.IO) {
-        val playerId = settingsRepository.getPlayerId() ?: return@withContext
+    suspend fun submitResult(result: DetailedGameResult): RankingInfo? = withContext(Dispatchers.IO) {
+        val playerId = settingsRepository.getPlayerId() ?: return@withContext null
         val username = settingsRepository.getPlayerName() ?: "Unknown"
         val region = settingsRepository.getPlayerRegion() ?: "Global"
         
@@ -34,6 +35,33 @@ class LeaderboardRepository(
                     eq("id", playerId)
                 }
             }
+        }
+
+        getBestRank(result.score, region)
+    }
+
+    private suspend fun getBestRank(score: Int, region: String): RankingInfo = withContext(Dispatchers.IO) {
+        val globalResult = supabase.from("game_results").select {
+            filter {
+                gt("score", score)
+            }
+        }
+        // Fallback to list size if count is not available directly
+        // In a real app we would use the 'count' parameter in select()
+        val gRank = globalResult.decodeList<DetailedGameResult>().size + 1L
+
+        val regionalResult = supabase.from("game_results").select {
+            filter {
+                eq("region", region)
+                gt("score", score)
+            }
+        }
+        val rRank = regionalResult.decodeList<DetailedGameResult>().size + 1L
+
+        if (rRank < gRank && rRank <= 100L) {
+            RankingInfo(rRank.toInt(), isRegional = true)
+        } else {
+            RankingInfo(gRank.toInt(), isRegional = false)
         }
     }
 

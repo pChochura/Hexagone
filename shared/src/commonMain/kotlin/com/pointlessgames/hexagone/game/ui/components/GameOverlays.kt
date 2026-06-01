@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.ConfettiPiece
 import com.pointlessgames.hexagone.game.model.Perk
+import com.pointlessgames.hexagone.game.model.RankingInfo
 import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
 import com.pointlessgames.hexagone.leaderboard.ui.LeaderboardOverlay
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
@@ -82,6 +84,7 @@ internal fun GameOverlays(
     leaderboardViewModel: LeaderboardViewModel,
     activeTierReward: Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>?,
     onTierRewardFinished: () -> Unit,
+    rankingInfo: RankingInfo?,
 ) {
     val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver || showLeaderboard || activeTierReward != null
     val dimAlphaState = animateFloatAsState(
@@ -195,6 +198,9 @@ internal fun GameOverlays(
                 exit = fadeOut(tween(400)) + scaleOut(targetScale = 0.9f),
                 modifier = Modifier.align(Alignment.Center)
             ) {
+                val leaderboardUiState by leaderboardViewModel.uiState.collectAsStateWithLifecycle()
+                val displayRank = rankingInfo ?: leaderboardUiState.currentRank
+
                 GameOverDialog(
                     score = scoreProvider(),
                     bestScore = bestScore,
@@ -202,6 +208,7 @@ internal fun GameOverlays(
                     maxCombo = maxCombo,
                     totalMerges = totalMerges,
                     highestValue = highestValue,
+                    rankingInfo = displayRank,
                     onViewBoard = onViewBoardToggle
                 )
             }

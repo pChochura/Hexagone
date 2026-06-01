@@ -1485,7 +1485,8 @@ internal class GameViewModel(
                 settingsRepository.setGameState(null)
 
                 if (playerName != null) {
-                    leaderboardRepository.submitResult(finalResult)
+                    val rankInfo = leaderboardRepository.submitResult(finalResult)
+                    _uiState.update { it.copy(currentRank = rankInfo) }
                 }
             }
         }

@@ -356,7 +356,8 @@ internal fun GameScreen(
             onLeaderboardDismiss = { showLeaderboard = false },
             leaderboardViewModel = leaderboardViewModel,
             activeTierReward = activeTierReward,
-            onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) }
+            onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
+            rankingInfo = uiState.currentRank
         )
     }
 }

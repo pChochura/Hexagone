@@ -1,5 +1,6 @@
 package com.pointlessgames.hexagone.game.ui.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.foundation.layout.width
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
@@ -45,6 +46,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import com.pointlessgames.hexagone.game.model.RankingInfo
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
@@ -64,12 +66,13 @@ internal fun GameOverDialog(
     maxCombo: Int,
     totalMerges: Int,
     highestValue: Int,
+    rankingInfo: RankingInfo?,
     onViewBoard: () -> Unit,
 ) {
     val animatedScore by animateIntAsState(
         targetValue = score,
         animationSpec = tween(1500),
-        label = "score_count_up"
+        label = "score_count_up",
     )
 
     val infiniteTransition = rememberInfiniteTransition(label = "gameover_glow")
@@ -78,9 +81,9 @@ internal fun GameOverDialog(
         targetValue = 0.3f,
         animationSpec = infiniteRepeatable(
             animation = tween(2000),
-            repeatMode = RepeatMode.Reverse
+            repeatMode = RepeatMode.Reverse,
         ),
-        label = "glow_alpha"
+        label = "glow_alpha",
     )
 
     val isNewBest = score >= bestScore && score > 0
@@ -89,13 +92,16 @@ internal fun GameOverDialog(
         initialValue = 1f,
         targetValue = 1.1f,
         animationSpec = infiniteRepeatable(animation = tween(800), repeatMode = RepeatMode.Reverse),
-        label = "badge_scale"
+        label = "badge_scale",
     )
     val badgeRotation by badgeTransition.animateFloat(
         initialValue = -8f,
         targetValue = 8f,
-        animationSpec = infiniteRepeatable(animation = tween(1200), repeatMode = RepeatMode.Reverse),
-        label = "badge_rotation"
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "badge_rotation",
     )
 
     val maxPieceTransition = rememberInfiniteTransition(label = "max_piece_shift")
@@ -104,9 +110,9 @@ internal fun GameOverDialog(
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
+            repeatMode = RepeatMode.Reverse,
         ),
-        label = "max_piece_shift"
+        label = "max_piece_shift",
     )
 
     val spacing = MaterialTheme.spacing
@@ -127,12 +133,19 @@ internal fun GameOverDialog(
                     drawPath(
                         path = path,
                         color = baseColor.copy(alpha = glowAlpha / (i * 2f)),
-                        style = Stroke(width = (spacing.extraSmall * i).toPx())
+                        style = Stroke(width = (spacing.extraSmall * i).toPx()),
                     )
                 }
             }
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f), RoundedCornerShape(cornerRadius.extraLarge))
-            .border(spacing.extraTiny, Color.White.copy(alpha = 0.1f), RoundedCornerShape(cornerRadius.extraLarge))
+            .background(
+                MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+                RoundedCornerShape(cornerRadius.extraLarge),
+            )
+            .border(
+                spacing.extraTiny,
+                Color.White.copy(alpha = 0.1f),
+                RoundedCornerShape(cornerRadius.extraLarge),
+            )
             .padding(spacing.extraLarge),
     ) {
         Box(
@@ -142,7 +155,7 @@ internal fun GameOverDialog(
                 .clip(CircleShape)
                 .clickable { onViewBoard() }
                 .padding(spacing.small),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val stroke = spacing.extraTiny.toPx() * 1.5f
@@ -165,15 +178,42 @@ internal fun GameOverDialog(
                 color = Color.White.copy(alpha = 0.3f),
                 fontWeight = FontWeight.Black,
                 fontSize = 10.sp,
-                letterSpacing = 4.sp
+                letterSpacing = 4.sp,
             )
 
             Spacer(Modifier.height(spacing.small))
 
+            AnimatedContent(rankingInfo) { rankingInfo ->
+                rankingInfo?.let { rank ->
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                Color.White.copy(alpha = 0.05f),
+                                RoundedCornerShape(cornerRadius.full),
+                            )
+                            .border(
+                                spacing.extraTiny,
+                                Color.White.copy(alpha = 0.1f),
+                                RoundedCornerShape(cornerRadius.full),
+                            )
+                            .padding(horizontal = spacing.medium, vertical = spacing.extraSmall),
+                    ) {
+                        Text(
+                            text = if (rank.isRegional) "#${rank.rank} in your region" else "#${rank.rank} in the world",
+                            color = MaterialTheme.colorScheme.tertiary,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 11.sp,
+                            letterSpacing = 1.sp,
+                        )
+                    }
+                    Spacer(Modifier.height(spacing.medium))
+                }
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(contentAlignment = Alignment.TopEnd) {
@@ -187,12 +227,12 @@ internal fun GameOverDialog(
                                 shadow = androidx.compose.ui.graphics.Shadow(
                                     color = MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha * 2f),
                                     offset = Offset(0f, 0f),
-                                    blurRadius = 30f
-                                )
+                                    blurRadius = 30f,
+                                ),
                             ),
-                            modifier = Modifier.padding(horizontal = spacing.semiLarge)
+                            modifier = Modifier.padding(horizontal = spacing.semiLarge),
                         )
-                        
+
                         if (isNewBest) {
                             Box(
                                 modifier = Modifier
@@ -202,8 +242,11 @@ internal fun GameOverDialog(
                                         scaleY = badgeScale
                                         rotationZ = badgeRotation
                                     }
-                                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(cornerRadius.full))
-                                    .padding(horizontal = spacing.small, vertical = spacing.tiny)
+                                    .background(
+                                        MaterialTheme.colorScheme.primary,
+                                        RoundedCornerShape(cornerRadius.full),
+                                    )
+                                    .padding(horizontal = spacing.small, vertical = spacing.tiny),
                             ) {
                                 Text(
                                     text = stringResource(Res.string.new_best_label).uppercase(),
@@ -214,13 +257,13 @@ internal fun GameOverDialog(
                             }
                         }
                     }
-                    
+
                     Text(
                         text = "BEST: $bestScore",
                         color = Color.White.copy(alpha = 0.4f),
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
-                        letterSpacing = 1.sp
+                        letterSpacing = 1.sp,
                     )
                 }
 
@@ -229,17 +272,20 @@ internal fun GameOverDialog(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(contentAlignment = Alignment.Center) {
                         val colorScheme = MaterialTheme.colorScheme
-                        val baseColor = HexagonGridDefaults.getColorForValue(highestValue, colorScheme)
+                        val baseColor =
+                            HexagonGridDefaults.getColorForValue(highestValue, colorScheme)
                         val shiftColor = Color(
                             (baseColor.red * 0.6f + 0.4f).coerceIn(0f, 1f),
                             (baseColor.green * 0.6f + 0.4f).coerceIn(0f, 1f),
                             (baseColor.blue * 0.6f + 0.4f).coerceIn(0f, 1f),
-                            1f
+                            1f,
                         )
-                        
-                        val c1 = androidx.compose.ui.graphics.lerp(baseColor, shiftColor, maxPieceShift)
-                        val c2 = androidx.compose.ui.graphics.lerp(shiftColor, baseColor, maxPieceShift)
-                        
+
+                        val c1 =
+                            androidx.compose.ui.graphics.lerp(baseColor, shiftColor, maxPieceShift)
+                        val c2 =
+                            androidx.compose.ui.graphics.lerp(shiftColor, baseColor, maxPieceShift)
+
                         Hexagon(
                             value = highestValue.toString(),
                             backgroundColor = Color.Transparent,
@@ -250,11 +296,15 @@ internal fun GameOverDialog(
                                     brush = Brush.linearGradient(
                                         colors = listOf(c1, c2, c1),
                                         start = Offset(0f, 0f),
-                                        end = Offset.Infinite
+                                        end = Offset.Infinite,
                                     ),
-                                    shape = FlatTopHexagonShape()
+                                    shape = FlatTopHexagonShape(),
                                 )
-                                .border(spacing.extraTiny, Color.White.copy(alpha = 0.15f), FlatTopHexagonShape())
+                                .border(
+                                    spacing.extraTiny,
+                                    Color.White.copy(alpha = 0.15f),
+                                    FlatTopHexagonShape(),
+                                ),
                         )
                     }
                     Spacer(Modifier.height(spacing.extraSmall))
@@ -263,7 +313,7 @@ internal fun GameOverDialog(
                         color = Color.White.copy(alpha = 0.3f),
                         fontWeight = FontWeight.Bold,
                         fontSize = 9.sp,
-                        letterSpacing = 1.sp
+                        letterSpacing = 1.sp,
                     )
                 }
             }
@@ -274,22 +324,22 @@ internal fun GameOverDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = spacing.small),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 OrganicStatItem(
                     icon = { LevelIcon(spacing) },
                     label = stringResource(Res.string.stat_level),
-                    value = level.toString()
+                    value = level.toString(),
                 )
                 OrganicStatItem(
                     icon = { ComboIcon(spacing) },
                     label = stringResource(Res.string.stat_max_combo),
-                    value = "x$maxCombo"
+                    value = "x$maxCombo",
                 )
                 OrganicStatItem(
                     icon = { MergeIcon(spacing) },
                     label = stringResource(Res.string.stat_merges),
-                    value = totalMerges.toString()
+                    value = totalMerges.toString(),
                 )
             }
         }
