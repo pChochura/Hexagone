@@ -31,8 +31,12 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 │   │       ├── ScoreSection.kt    # HUD: liquid progress & combo indicators
 │   │       ├── PerkBar.kt         # Strategic tool selection shelf with item animations
 │   │       └── GameOverlays.kt    # Dialog orchestration (Level Up, Game Over)
-│   ├── GameViewModel.kt          # Orchestrator: Turn logic & animation loops
-│   └── DebugDelegate.kt          # Isolated developer tools & state manipulation
+│   ├── ActionDelegate.kt         # Delegate: User input & tile manipulation
+│   ├── EffectDelegate.kt         # Delegate: Particles, Popups & HUD feedback
+│   ├── MergeDelegate.kt          # Delegate: Merge lifecycle & animation logic
+│   ├── StateDelegate.kt          # Delegate: History, Undo & Persistence
+│   ├── GameViewModel.kt          # Coordinator: Orchestrates delegates & game state
+│   └── DebugDelegate.kt          # Delegate: Developer tools & state manipulation
 ├── ui/
 │   └── theme/
 │       └── Theme.kt              # Centralized "Glowing Hardware" Design System
@@ -104,6 +108,7 @@ The game calculates **Weighted Hints** and provides **Interactive Hover Previews
 ## 5. Development Guidelines
 1.  **Modular UI**: Keep composables small. Use `Modifier` as the first parameter and prefer slot-based APIs.
 2.  **State Atomicity**: Use `_uiState.update { ... }` for all gameplay changes.
-3.  **Stability Guards**: Use stable keys (`key(id)`) for all dynamic items to prevent unnecessary recompositions.
-4.  **Interaction Locking**: Check `isBusy` and `pendingMerge` flags during animations.
-5.  **Persistence**: State is serialized via `kotlinx.serialization` and persisted to `DataStore` after every move.
+3.  **ViewModel Delegation**: Favor composition by extracting complex logic into domain-specific delegates (State, Action, Effect, Merge) to maintain a slim, manageable `GameViewModel`.
+4.  **Stability Guards**: Use stable keys (`key(id)`) for all dynamic items to prevent unnecessary recompositions.
+5.  **Interaction Locking**: Check `isBusy` and `pendingMerge` flags during animations.
+6.  **Persistence**: State is serialized via `kotlinx.serialization` and persisted to `DataStore` after every move.
