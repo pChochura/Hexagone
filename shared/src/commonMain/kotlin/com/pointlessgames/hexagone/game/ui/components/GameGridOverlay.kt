@@ -388,6 +388,8 @@ internal fun GameGridOverlay(
                                     val change = event.changes.first()
                                     if (change.changedToUp()) {
                                         job.cancel()
+                                        onEmptySpaceTouchUp()
+                                        onCellTouchUp()
                                         if (!longPressTriggered) {
                                             val upCellPos = getCellAt(change.position.x, change.position.y)
                                             if (upCellPos != null && upCellPos == initialCellPos) {
@@ -399,8 +401,6 @@ internal fun GameGridOverlay(
                                                 }
                                             }
                                         }
-                                        onEmptySpaceTouchUp()
-                                        onCellTouchUp()
                                         break
                                     } else if (!change.pressed) break
                                 }

@@ -9,6 +9,8 @@ import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.label_redemption
 import hexagone.shared.generated.resources.label_tactical_redemption
 import hexagone.shared.generated.resources.label_bar_raised
+import hexagone.shared.generated.resources.label_sacrifice
+import hexagone.shared.generated.resources.label_janitor_plus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -42,16 +44,22 @@ internal class EffectDelegate(
         totalScore: Int,
         isRedemption: Boolean,
         isBarRaised: Boolean,
+        isSacrifice: Boolean = false,
     ) {
         scope.launch {
             val labelRes = when {
+                isRedemption && isSacrifice -> Res.string.label_sacrifice // Sacrifice takes precedence if both, but color will show redemption
+                isBarRaised && isSacrifice -> Res.string.label_janitor_plus
                 isRedemption && isBarRaised -> Res.string.label_tactical_redemption
                 isRedemption -> Res.string.label_redemption
+                isSacrifice -> Res.string.label_sacrifice
                 isBarRaised -> Res.string.label_bar_raised
                 else -> null
             }
             val color = when {
-                isRedemption -> Colors().gold
+                isRedemption -> Colors().yellow
+                isBarRaised && isSacrifice -> Colors().gold
+                isSacrifice -> Colors().pink
                 isBarRaised -> Colors().skyBlue
                 else -> Color.White
             }

@@ -1,6 +1,7 @@
 package com.pointlessgames.hexagone.game
 
 import com.pointlessgames.hexagone.game.logic.GameEngine
+import com.pointlessgames.hexagone.game.logic.ScoreResult
 import com.pointlessgames.hexagone.game.logic.Scoring
 import com.pointlessgames.hexagone.game.model.GameItem
 import com.pointlessgames.hexagone.game.model.GameUiState
@@ -9,12 +10,6 @@ import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PotentialMerge
 import com.pointlessgames.hexagone.game.model.PreviewCell
-import com.pointlessgames.hexagone.ui.theme.Colors
-import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.label_bar_raised
-import hexagone.shared.generated.resources.label_cleanup
-import hexagone.shared.generated.resources.label_janitor_plus
-import hexagone.shared.generated.resources.label_sacrifice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -108,6 +103,21 @@ internal class ActionDelegate(
                 stateDelegate.saveState()
                 uiState.update { it.consumePerk(Perk.CHAIN_MERGE).copy(activePerk = null) }
                 finalizeAction()
+            } else if (perk == null && previewAtPos != null) {
+                // Base move: Solidify piece if no merge happens
+                stateDelegate.saveState()
+                uiState.update { currentState ->
+                    currentState.copy(
+                        grid = currentState.grid + engine.createCell(
+                            x, y, previewAtPos.value, isTactical = previewAtPos.isTactical,
+                        ),
+                        preview = currentState.preview.filter { it.id != previewAtPos.id },
+                        combo = 0, // Reset combo if no merge
+                        reachedComboTiers = emptySet(),
+                    )
+                }
+                stateDelegate.setRedemptionBaseline(null)
+                finalizeAction()
             }
         }
     }
@@ -173,7 +183,7 @@ internal class ActionDelegate(
                         forceSolidIds = setOf("preview_path_merge"),
                         previewValues = ghostAtPos?.let { mapOf(it.id to merge.finalValue) }
                             ?: emptyMap(),
-                        baseScore = calculatePotentialScore(it, state)
+                        baseScore = calculatePotentialScore(it, state),
                     )
                 }
             }
@@ -236,15 +246,26 @@ internal class ActionDelegate(
 
             Perk.FUSION -> {
                 val merge = engine.calculateFusion(x, y, state.grid)
-                merge?.let { it.copy(baseScore = calculatePotentialScore(it, state), resultId = "preview_fusion") }
+                merge?.let {
+                    it.copy(
+                        baseScore = calculatePotentialScore(it, state),
+                        resultId = "preview_fusion",
+                    )
+                }
             }
+
             null, Perk.CHAIN_MERGE, Perk.SKIP_SPAWN -> {
                 val merge = if (perk == Perk.CHAIN_MERGE) {
                     engine.simulateChainMerge(x, y, state.grid, state.combo)
                 } else {
                     engine.calculateMerge(x, y, state.grid)
                 }
-                merge?.let { it.copy(baseScore = calculatePotentialScore(it, state), resultId = "preview_merge") }
+                merge?.let {
+                    it.copy(
+                        baseScore = calculatePotentialScore(it, state),
+                        resultId = "preview_merge",
+                    )
+                }
             }
 
             else -> null
@@ -269,7 +290,7 @@ internal class ActionDelegate(
                         resultId = "preview_path_merge",
                         forceSolidIds = setOf("preview_path_merge"),
                         previewValues = mapOf(cell.id to m.finalValue),
-                        baseScore = calculatePotentialScore(it, state)
+                        baseScore = calculatePotentialScore(it, state),
                     )
                 }
             }
@@ -359,9 +380,14 @@ internal class ActionDelegate(
 
             Perk.REMOVE_TILE -> {
                 stateDelegate.saveState()
+                var result: ScoreResult? = null
+                var targetPos: Pair<Int, Int>? = null
+
                 uiState.update { currentState ->
                     val previewToTarget = currentState.preview.find { it.id == preview.id }
                         ?: return@update currentState
+                    targetPos = previewToTarget.x to previewToTarget.y
+
                     val merge = MergeTransition(
                         targetX = previewToTarget.x,
                         targetY = previewToTarget.y,
@@ -380,28 +406,30 @@ internal class ActionDelegate(
                         preview = currentState.preview,
                         initialCombo = currentState.combo,
                         activePerk = currentState.activePerk,
-                        lastMoveScore = stateDelegate.lastMoveScore
+                        redemptionBaseline = stateDelegate.redemptionBaseline,
                     )
-
-                    val labelRes =
-                        if (scoreResult.barRaisedBonus > 0) Res.string.label_bar_raised else Res.string.label_cleanup
-                    val nextScore = currentState.score + scoreResult.totalScore
-
-                    stateDelegate.persistBestScore(nextScore)
-                    val popupColor =
-                        if (scoreResult.barRaisedBonus > 0) Colors().skyBlue else Colors().greyBlue
-                    effectDelegate.addScorePopup(
-                        previewToTarget.x,
-                        previewToTarget.y,
-                        scoreResult.totalScore,
-                        popupColor,
-                        labelRes
-                    )
+                    result = scoreResult
 
                     currentState.copy(
                         preview = currentState.preview.filter { it.id != previewToTarget.id },
-                        score = nextScore,
+                        score = currentState.score + scoreResult.totalScore,
                     ).consumePerk(Perk.REMOVE_TILE).copy(activePerk = null, selectedCellId = null)
+                }
+
+                result?.let { scoreResult ->
+                    targetPos?.let { (tx, ty) ->
+                        stateDelegate.persistBestScore(uiState.value.score)
+                        stateDelegate.setRedemptionBaseline(null)
+
+                        effectDelegate.handlePopups(
+                            targetX = tx,
+                            targetY = ty,
+                            totalScore = scoreResult.totalScore,
+                            isRedemption = scoreResult.redemptionBonus > 0,
+                            isBarRaised = scoreResult.barRaisedBonus > 0,
+                            isSacrifice = scoreResult.sacrificeBonus > 0,
+                        )
+                    }
                 }
                 finalizeAction()
             }
@@ -417,9 +445,14 @@ internal class ActionDelegate(
 
             Perk.INCREMENT_TILE -> {
                 stateDelegate.saveState()
+                var result: ScoreResult? = null
+                var targetPos: Pair<Int, Int>? = null
+
                 uiState.update { currentState ->
                     val previewToUpdate = currentState.preview.find { it.id == preview.id }
                         ?: return@update currentState
+                    targetPos = previewToUpdate.x to previewToUpdate.y
+
                     val merge = MergeTransition(
                         targetX = previewToUpdate.x,
                         targetY = previewToUpdate.y,
@@ -438,8 +471,9 @@ internal class ActionDelegate(
                         preview = currentState.preview,
                         initialCombo = currentState.combo,
                         activePerk = currentState.activePerk,
-                        lastMoveScore = stateDelegate.lastMoveScore
+                        redemptionBaseline = stateDelegate.redemptionBaseline,
                     )
+                    result = scoreResult
 
                     val nextPreview = currentState.preview.map {
                         if (it.id == previewToUpdate.id) it.copy(
@@ -448,24 +482,25 @@ internal class ActionDelegate(
                         ) else it
                     }
 
-                    if (scoreResult.totalScore > 0) {
-                        val nextScore = currentState.score + scoreResult.totalScore
-                        stateDelegate.persistBestScore(nextScore)
-                        effectDelegate.addScorePopup(
-                            previewToUpdate.x,
-                            previewToUpdate.y,
-                            scoreResult.totalScore,
-                            Colors().skyBlue,
-                            Res.string.label_bar_raised,
+                    currentState.copy(
+                        preview = nextPreview,
+                        score = currentState.score + scoreResult.totalScore,
+                    ).consumePerk(Perk.INCREMENT_TILE)
+                        .copy(activePerk = null, selectedCellId = null)
+                }
+
+                result?.let { scoreResult ->
+                    targetPos?.let { (tx, ty) ->
+                        stateDelegate.persistBestScore(uiState.value.score)
+                        stateDelegate.setRedemptionBaseline(null)
+                        effectDelegate.handlePopups(
+                            targetX = tx,
+                            targetY = ty,
+                            totalScore = scoreResult.totalScore,
+                            isRedemption = scoreResult.redemptionBonus > 0,
+                            isBarRaised = scoreResult.barRaisedBonus > 0,
+                            isSacrifice = false,
                         )
-                        currentState.copy(
-                            preview = nextPreview,
-                            score = nextScore,
-                        ).consumePerk(Perk.INCREMENT_TILE)
-                            .copy(activePerk = null, selectedCellId = null)
-                    } else {
-                        currentState.copy(preview = nextPreview).consumePerk(Perk.INCREMENT_TILE)
-                            .copy(activePerk = null, selectedCellId = null)
                     }
                 }
                 finalizeAction()
@@ -490,9 +525,14 @@ internal class ActionDelegate(
 
             Perk.INCREMENT_TILE -> {
                 stateDelegate.saveState()
+                var result: ScoreResult? = null
+                var targetPos: Pair<Int, Int>? = null
+
                 uiState.update { currentState ->
                     val cellToUpdate =
                         currentState.grid.find { it.id == cell.id } ?: return@update currentState
+                    targetPos = cellToUpdate.x to cellToUpdate.y
+
                     val merge = MergeTransition(
                         targetX = cellToUpdate.x,
                         targetY = cellToUpdate.y,
@@ -511,8 +551,9 @@ internal class ActionDelegate(
                         preview = currentState.preview,
                         initialCombo = currentState.combo,
                         activePerk = currentState.activePerk,
-                        lastMoveScore = stateDelegate.lastMoveScore
+                        redemptionBaseline = stateDelegate.redemptionBaseline,
                     )
+                    result = scoreResult
 
                     val nextGrid = currentState.grid.map {
                         if (it.id == cellToUpdate.id) it.copy(
@@ -521,24 +562,25 @@ internal class ActionDelegate(
                         ) else it
                     }
 
-                    if (scoreResult.totalScore > 0) {
-                        val nextScore = currentState.score + scoreResult.totalScore
-                        stateDelegate.persistBestScore(nextScore)
-                        effectDelegate.addScorePopup(
-                            cellToUpdate.x,
-                            cellToUpdate.y,
-                            scoreResult.totalScore,
-                            Colors().skyBlue,
-                            Res.string.label_bar_raised,
+                    currentState.copy(
+                        grid = nextGrid,
+                        score = currentState.score + scoreResult.totalScore,
+                    ).consumePerk(Perk.INCREMENT_TILE)
+                        .copy(activePerk = null, selectedCellId = null)
+                }
+
+                result?.let { scoreResult ->
+                    targetPos?.let { (tx, ty) ->
+                        stateDelegate.persistBestScore(uiState.value.score)
+                        stateDelegate.setRedemptionBaseline(null)
+                        effectDelegate.handlePopups(
+                            targetX = tx,
+                            targetY = ty,
+                            totalScore = scoreResult.totalScore,
+                            isRedemption = scoreResult.redemptionBonus > 0,
+                            isBarRaised = scoreResult.barRaisedBonus > 0,
+                            isSacrifice = false,
                         )
-                        currentState.copy(
-                            grid = nextGrid,
-                            score = nextScore,
-                        ).consumePerk(Perk.INCREMENT_TILE)
-                            .copy(activePerk = null, selectedCellId = null)
-                    } else {
-                        currentState.copy(grid = nextGrid).consumePerk(Perk.INCREMENT_TILE)
-                            .copy(activePerk = null, selectedCellId = null)
                     }
                 }
                 finalizeAction()
@@ -572,9 +614,14 @@ internal class ActionDelegate(
 
             Perk.REMOVE_TILE -> {
                 stateDelegate.saveState()
+                var result: ScoreResult? = null
+                var targetPos: Pair<Int, Int>? = null
+
                 uiState.update { currentState ->
                     val cellToRemove =
                         currentState.grid.find { it.id == cell.id } ?: return@update currentState
+                    targetPos = cellToRemove.x to cellToRemove.y
+
                     val merge = MergeTransition(
                         targetX = cellToRemove.x,
                         targetY = cellToRemove.y,
@@ -593,35 +640,30 @@ internal class ActionDelegate(
                         preview = currentState.preview,
                         initialCombo = currentState.combo,
                         activePerk = currentState.activePerk,
-                        lastMoveScore = stateDelegate.lastMoveScore
+                        redemptionBaseline = stateDelegate.redemptionBaseline,
                     )
-
-                    val labelRes = when {
-                        scoreResult.barRaisedBonus > 0 && scoreResult.sacrificeBonus > 0 -> Res.string.label_janitor_plus
-                        scoreResult.barRaisedBonus > 0 -> Res.string.label_bar_raised
-                        scoreResult.sacrificeBonus > 0 -> Res.string.label_sacrifice
-                        else -> Res.string.label_cleanup
-                    }
-
-                    val nextScore = currentState.score + scoreResult.totalScore
-                    stateDelegate.persistBestScore(nextScore)
-                    val popupColor = when {
-                        scoreResult.barRaisedBonus > 0 -> Colors().skyBlue
-                        scoreResult.sacrificeBonus > 0 -> Colors().pink
-                        else -> Colors().greyBlue
-                    }
-                    effectDelegate.addScorePopup(
-                        cellToRemove.x,
-                        cellToRemove.y,
-                        scoreResult.totalScore,
-                        popupColor,
-                        labelRes,
-                    )
+                    result = scoreResult
 
                     currentState.copy(
                         grid = currentState.grid.filter { it.id != cellToRemove.id },
-                        score = nextScore,
+                        score = currentState.score + scoreResult.totalScore,
                     ).consumePerk(Perk.REMOVE_TILE).copy(activePerk = null, selectedCellId = null)
+                }
+
+                result?.let { scoreResult ->
+                    targetPos?.let { (tx, ty) ->
+                        stateDelegate.persistBestScore(uiState.value.score)
+                        stateDelegate.setRedemptionBaseline(null)
+
+                        effectDelegate.handlePopups(
+                            targetX = tx,
+                            targetY = ty,
+                            totalScore = scoreResult.totalScore,
+                            isRedemption = scoreResult.redemptionBonus > 0,
+                            isBarRaised = scoreResult.barRaisedBonus > 0,
+                            isSacrifice = scoreResult.sacrificeBonus > 0,
+                        )
+                    }
                 }
                 finalizeAction()
             }
@@ -677,6 +719,7 @@ internal class ActionDelegate(
                 onBoardPerks = currentState.onBoardPerks.filterNot { it.x == x && it.y == y },
             ).consumePerk(Perk.MOVE_TILE).copy(activePerk = null, selectedCellId = null)
         }
+        stateDelegate.setRedemptionBaseline(null)
         finalizeAction()
     }
 
@@ -699,7 +742,12 @@ internal class ActionDelegate(
             }
 
             val updatedPreview = if (previewToCopy != null) {
-                currentState.preview.filterNot { it.x == x && it.y == y } + engine.createPreviewCell(x, y, value, isTactical = true)
+                currentState.preview.filterNot { it.x == x && it.y == y } + engine.createPreviewCell(
+                    x,
+                    y,
+                    value,
+                    isTactical = true,
+                )
             } else {
                 currentState.preview.filterNot { it.x == x && it.y == y }
             }
@@ -711,6 +759,7 @@ internal class ActionDelegate(
                 onBoardPerks = currentState.onBoardPerks.filterNot { it.x == x && it.y == y },
             ).consumePerk(Perk.DUPLICATE_TILE).copy(activePerk = null, selectedCellId = null)
         }
+        stateDelegate.setRedemptionBaseline(null)
         finalizeAction()
     }
 
@@ -763,6 +812,7 @@ internal class ActionDelegate(
                 onBoardPerks = currentState.onBoardPerks.filterNot { (it.x == x1 && it.y == y1) || (it.x == x2 && it.y == y2) },
             ).consumePerk(Perk.SWAP_TILES).copy(activePerk = null, selectedCellId = null)
         }
+        stateDelegate.setRedemptionBaseline(null)
         finalizeAction()
     }
 
@@ -814,7 +864,7 @@ internal class ActionDelegate(
             preview = state.preview,
             initialCombo = state.combo,
             activePerk = state.activePerk,
-            lastMoveScore = stateDelegate.lastMoveScore
+            redemptionBaseline = stateDelegate.redemptionBaseline,
         ).totalScore
     }
 

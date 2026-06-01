@@ -7,7 +7,6 @@ import com.pointlessgames.hexagone.game.model.PreviewCell
 
 object Scoring {
     const val MAX_COMBO_MULTIPLIER = 12
-    const val REDEMPTION_COEFFICIENT = 0.25f
 
     fun calculateBarRaisedBonus(
         oldGrid: List<HexagonCell>,
@@ -36,9 +35,9 @@ object Scoring {
         return (removedCell.value * 25) + (diff * 50)
     }
 
-    fun calculateRedemptionBonus(totalAddedScore: Int, lastMoveScore: Int?): Int {
-        return if (lastMoveScore != null && totalAddedScore > lastMoveScore) {
-            250 + ((totalAddedScore - lastMoveScore) * 0.5).toInt()
+    fun calculateRedemptionBonus(totalAddedScore: Int, redemptionBaseline: Int?): Int {
+        return if (redemptionBaseline != null && totalAddedScore > redemptionBaseline) {
+            250 + ((totalAddedScore - redemptionBaseline) * 0.5).toInt()
         } else {
             0
         }
@@ -76,7 +75,7 @@ object Scoring {
         preview: List<PreviewCell>,
         initialCombo: Int,
         activePerk: Perk?,
-        lastMoveScore: Int?,
+        redemptionBaseline: Int?,
     ): ScoreResult {
         var currentCombo = initialCombo
         var totalStepScore = 0
@@ -121,13 +120,14 @@ object Scoring {
             if (cell != null) calculateSacrificeBonus(grid, cell) else 0
         } else 0
 
-        val redemptionBonus = calculateRedemptionBonus(totalStepScore, lastMoveScore)
-        val multipliedBonuses = (redemptionBonus + barRaisedBonus) * comboMultiplier
+        val redemptionBonus = calculateRedemptionBonus(totalStepScore + barRaisedBonus * comboMultiplier + sacrificeBonus, redemptionBaseline)
+        val multipliedBarRaised = barRaisedBonus * comboMultiplier
+        val totalScore = totalStepScore + multipliedBarRaised + redemptionBonus + sacrificeBonus
 
         return ScoreResult(
-            totalScore = totalStepScore + multipliedBonuses + sacrificeBonus,
+            totalScore = totalScore,
             stepScore = totalStepScore,
-            bonusScore = multipliedBonuses,
+            bonusScore = multipliedBarRaised + redemptionBonus,
             sacrificeBonus = sacrificeBonus,
             finalCombo = finalCombo,
             barRaisedBonus = barRaisedBonus,

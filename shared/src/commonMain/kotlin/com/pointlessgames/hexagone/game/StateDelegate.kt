@@ -23,15 +23,15 @@ internal class StateDelegate(
     
     private val stateHistory = mutableListOf<GameState>()
     
-    var lastMoveScore: Int? = null
-        private set
+    val redemptionBaseline: Int?
+        get() = uiState.value.redemptionBaseline
 
     fun setAbsoluteBestScore(score: Int) {
         absoluteBestScore = score
     }
     
-    fun setLastMoveScore(score: Int?) {
-        lastMoveScore = score
+    fun setRedemptionBaseline(score: Int?) {
+        uiState.update { it.copy(redemptionBaseline = score) }
     }
 
     fun persistBestScore(score: Int) {
@@ -85,6 +85,7 @@ internal class StateDelegate(
             isStuck = state.isStuck,
             availableChoices = state.availableChoices,
             perksUsedTracking = state.perksUsedTracking,
+            redemptionBaseline = state.redemptionBaseline,
         )
     }
 
@@ -99,7 +100,7 @@ internal class StateDelegate(
         val currentState = uiState.value
         val previousState = stateHistory.removeAt(stateHistory.size - 1)
 
-        lastMoveScore = currentState.score - previousState.score
+        val undoneMoveScore = currentState.score - previousState.score
 
         uiState.update { state ->
             state.copy(
@@ -119,6 +120,7 @@ internal class StateDelegate(
                 canReroll = previousState.canReroll,
                 perkSpawnCounter = previousState.perkSpawnCounter,
                 perksUsedTracking = previousState.perksUsedTracking,
+                redemptionBaseline = undoneMoveScore,
                 earnedRewardsThisTurn = emptyList(),
                 pendingMerge = null,
                 activePerk = null,

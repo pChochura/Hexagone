@@ -89,23 +89,38 @@ internal class MergeDelegate(
             currentState.preview,
             currentState.combo,
             currentState.activePerk,
-            stateDelegate.lastMoveScore
+            stateDelegate.redemptionBaseline
         ).let {
+            // Use the actual barRaisedBonus we calculated with the new grid
             val multiplier = (it.finalCombo + 1).coerceAtMost(Scoring.MAX_COMBO_MULTIPLIER)
-            val updatedBonus = (it.redemptionBonus + barRaisedBonus) * multiplier
+            val updatedBarRaised = barRaisedBonus * multiplier
+            
+            // Recalculate total score with the actual barRaisedBonus
+            val scoreBeforeRedemption = it.stepScore + updatedBarRaised + it.sacrificeBonus
+            val redemptionBonus = Scoring.calculateRedemptionBonus(scoreBeforeRedemption, stateDelegate.redemptionBaseline)
+            
             it.copy(
-                totalScore = it.stepScore + updatedBonus + it.sacrificeBonus,
-                bonusScore = updatedBonus,
-                barRaisedBonus = barRaisedBonus
+                totalScore = scoreBeforeRedemption + redemptionBonus,
+                bonusScore = updatedBarRaised + redemptionBonus,
+                barRaisedBonus = barRaisedBonus,
+                redemptionBonus = redemptionBonus
             )
         }
 
-        stateDelegate.setLastMoveScore(null)
+        stateDelegate.setRedemptionBaseline(null)
         val finalCombo = scoreResult.finalCombo
         val redemptionBonus = scoreResult.redemptionBonus > 0
         val isBarRaised = barRaisedBonus > 0
+        val isSacrifice = scoreResult.sacrificeBonus > 0
 
-        effectDelegate.handlePopups(merge.targetX, merge.targetY, scoreResult.totalScore, redemptionBonus, isBarRaised)
+        effectDelegate.handlePopups(
+            merge.targetX,
+            merge.targetY,
+            scoreResult.totalScore,
+            redemptionBonus,
+            isBarRaised,
+            isSacrifice
+        )
 
         val collectedOnBoard =
             currentState.onBoardPerks.find { it.x == merge.targetX && it.y == merge.targetY }?.perk

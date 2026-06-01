@@ -79,7 +79,6 @@ internal class GameViewModel(
         },
     )
 
-    private var lastLevel = 1
 
     init {
         viewModelScope.launch {
@@ -115,7 +114,6 @@ internal class GameViewModel(
                         )
                     }
                     stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
-                    lastLevel = savedState.level
                     updateLevel()
                     engine.syncCounters(savedState.grid, savedState.preview)
                     checkValidMoves()
@@ -162,17 +160,14 @@ internal class GameViewModel(
     fun onMergeAnimationFinished() = mergeDelegate.onMergeAnimationFinished()
 
     private fun updateLevel() {
-        val currentScore = _uiState.value.score
-        val lvl = engine.calculateLevel(currentScore)
-
         _uiState.update { state ->
-            val levelDifference = lvl - lastLevel
+            val lvl = engine.calculateLevel(state.score)
+            val levelDifference = lvl - state.level
             if (levelDifference > 0) {
-                lastLevel = lvl
                 val nextPerkOptions = state.perkOptions.ifEmpty { engine.pickWeightedPerks(3) }
                 state.copy(
                     level = lvl,
-                    levelProgress = engine.getLevelProgress(currentScore, lvl),
+                    levelProgress = engine.getLevelProgress(state.score, lvl),
                     highestValue = state.grid.maxOfOrNull { it.value } ?: 1,
                     perkOptions = nextPerkOptions,
                     pendingLevelUps = state.pendingLevelUps + levelDifference,
@@ -181,7 +176,7 @@ internal class GameViewModel(
             } else {
                 state.copy(
                     level = lvl,
-                    levelProgress = engine.getLevelProgress(currentScore, lvl),
+                    levelProgress = engine.getLevelProgress(state.score, lvl),
                     highestValue = state.grid.maxOfOrNull { it.value } ?: 1,
                 )
             }
@@ -283,7 +278,6 @@ internal class GameViewModel(
 
     private fun restartGame() {
         stateDelegate.clearHistory()
-        lastLevel = 1
         mergeDelegate.resetLastProcessed()
         engine.syncCounters(emptyList(), emptyList())
         val initialGrid = engine.generateInitialGrid()
