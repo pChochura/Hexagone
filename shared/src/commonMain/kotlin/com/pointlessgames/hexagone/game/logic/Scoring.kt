@@ -16,7 +16,7 @@ object Scoring {
     ): Int {
         val oldMin = (oldGrid.map { it.value } + oldPreview.map { it.value }).minOrNull() ?: return 0
         val newMin = (newGrid.map { it.value } + newPreview.map { it.value }).minOrNull() ?: return 0
-        return if (newMin > oldMin) oldMin * 50 else 0
+        return if (newMin > oldMin) oldMin * 10 else 0
     }
 
     fun calculateSacrificeBonus(
@@ -120,14 +120,22 @@ object Scoring {
             if (cell != null) calculateSacrificeBonus(grid, cell) else 0
         } else 0
 
-        val redemptionBonus = calculateRedemptionBonus(totalStepScore + barRaisedBonus * comboMultiplier + sacrificeBonus, redemptionBaseline)
-        val multipliedBarRaised = barRaisedBonus * comboMultiplier
-        val totalScore = totalStepScore + multipliedBarRaised + redemptionBonus + sacrificeBonus
+        // Use a dampened multiplier so scores don't explode too much at high combos
+        val dampenedMultiplier = 1 + (comboMultiplier - 1) / 3
+        val multipliedBarRaised = barRaisedBonus * dampenedMultiplier
+        val multipliedSacrifice = sacrificeBonus * dampenedMultiplier
+        
+        val redemptionBonus = calculateRedemptionBonus(
+            totalStepScore + multipliedBarRaised + multipliedSacrifice, 
+            redemptionBaseline
+        )
+        
+        val totalScore = totalStepScore + multipliedBarRaised + redemptionBonus + multipliedSacrifice
 
         return ScoreResult(
             totalScore = totalScore,
             stepScore = totalStepScore,
-            bonusScore = multipliedBarRaised + redemptionBonus,
+            bonusScore = multipliedBarRaised + multipliedSacrifice + redemptionBonus,
             sacrificeBonus = sacrificeBonus,
             finalCombo = finalCombo,
             barRaisedBonus = barRaisedBonus,

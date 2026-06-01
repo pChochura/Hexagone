@@ -93,15 +93,19 @@ internal class MergeDelegate(
         ).let {
             // Use the actual barRaisedBonus we calculated with the new grid
             val multiplier = (it.finalCombo + 1).coerceAtMost(Scoring.MAX_COMBO_MULTIPLIER)
-            val updatedBarRaised = barRaisedBonus * multiplier
             
-            // Recalculate total score with the actual barRaisedBonus
-            val scoreBeforeRedemption = it.stepScore + updatedBarRaised + it.sacrificeBonus
+            // Use a dampened multiplier consistent with Scoring logic
+            val dampenedMultiplier = 1 + (multiplier - 1) / 3
+            val updatedBarRaised = barRaisedBonus * dampenedMultiplier
+            val updatedSacrifice = it.sacrificeBonus * dampenedMultiplier
+            
+            // Recalculate total score with the actual bonuses
+            val scoreBeforeRedemption = it.stepScore + updatedBarRaised + updatedSacrifice
             val redemptionBonus = Scoring.calculateRedemptionBonus(scoreBeforeRedemption, stateDelegate.redemptionBaseline)
             
             it.copy(
                 totalScore = scoreBeforeRedemption + redemptionBonus,
-                bonusScore = updatedBarRaised + redemptionBonus,
+                bonusScore = updatedBarRaised + updatedSacrifice + redemptionBonus,
                 barRaisedBonus = barRaisedBonus,
                 redemptionBonus = redemptionBonus
             )
