@@ -17,7 +17,8 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 │   └── AppModule.kt              # Koin Dependency Injection
 ├── game/
 │   ├── logic/
-│   │   └── GameEngine.kt         # Core math: neighbors, merges, hints, scoring
+│   │   ├── GameEngine.kt         # Core math: neighbors, merges, hints
+│   │   └── Scoring.kt            # Centralized scoring formulas & multipliers
 │   ├── model/
 │   │   ├── GameModels.kt         # Domain Models: Perk, GameUiState, MergeTransition
 │   │   └── UIModels.kt           # UI-specific state: Particles, Animation states
@@ -60,10 +61,10 @@ A merge occurs when 2+ tiles of the same value touch.
 *   **Scalable Bar Raised Bonus**: Granted whenever the smallest value tile is cleared from the game.
     *   **Formula**: `clearedValue * 50`.
 *   **Scalable Sacrifice Bonus**: Granted when removing the only remaining highest-value tile.
-    *   **Formula**: `(SacrificedValue * 75) + (Difference * 150)`, where *Difference* is the gap to the second highest tile.
+    *   **Formula**: `(SacrificedValue * 25) + (Difference * 50)`, where *Difference* is the gap to the second highest tile.
 *   **JANITOR+**: A rare combined achievement for clearing both the board's highest and lowest tiles simultaneously.
-*   **Redemption Bonus**: If a move's score exceeds the previous turn's, a **50% bonus** is applied to the difference.
-*   **Combo System**: Multipliers build with every merge, capped at **x12** for internal scoring.
+*   **Redemption Bonus**: If a move's score exceeds the previous turn's, a bonus is applied (`250 + 50% of the difference`).
+*   **Combo System**: Multipliers build with every merge (capped at **x12**). The combo only resets when a tile is placed from the queue without triggering a merge; mis-clicks on empty spaces do not penalize the current chain.
 
 ---
 
@@ -79,7 +80,7 @@ The game calculates **Weighted Hints** and provides **Interactive Hover Previews
 ### Perk Economy
 *   **Rarity Weights**: Common (Undo, Move, Remove, Increment), Rare (Advance, Swap, Duplicate, Skip), Legendary (Fusion, Chain Merge, Path Merge).
 *   **Behavioral Rules**:
-    *   **Move & Duplicate**: These actions are "positional only." They do not trigger automatic merges, allowing for strategic setup and combo preparation.
+    *   **Move & Duplicate**: These actions are "positional only." They preserve the "ghost" or "solid" status of the tile. They do not trigger automatic merges, allowing for strategic setup and combo preparation.
     *   **Lifespan Stability**: Strategic perks like `Advance Queue` and `Skip Spawn` do not progress the "organic" board state. On-board perks only decrement their lifespan during standard turn progression (i.e., when a regular piece is placed from the queue).
     *   **Skip Spawn Versatility**: The `Skip Spawn` perk allows placing a tile on any valid empty cell, including those currently occupied by "ghost" previews from the queue.
 *   **Stacked Storage**: Perks of the same type stack in the shelf, displaying a total count.
