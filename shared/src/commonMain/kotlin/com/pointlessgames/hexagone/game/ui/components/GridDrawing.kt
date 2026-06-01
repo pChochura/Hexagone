@@ -183,8 +183,11 @@ internal fun drawHoverResult(
     }
 
     val displayScore = when {
-        merge.resultId == "preview_chain" -> merge.baseScore
-        merge.uniqueGroups > 0 -> merge.baseScore * (combo + 1)
+        merge.resultId.startsWith("preview_") -> merge.baseScore
+        merge.uniqueGroups > 0 -> {
+            val multiplier = (combo + 1).coerceAtMost(12)
+            merge.baseScore * multiplier
+        }
         else -> merge.baseScore
     }
     if (displayScore > 0) {
