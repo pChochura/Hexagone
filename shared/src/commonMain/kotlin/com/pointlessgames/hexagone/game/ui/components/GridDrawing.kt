@@ -182,7 +182,11 @@ internal fun drawHoverResult(
         }
     }
 
-    val displayScore = if (merge.uniqueGroups > 0) merge.baseScore * (combo + 1) else merge.baseScore
+    val displayScore = when {
+        merge.resultId == "preview_chain" -> merge.baseScore
+        merge.uniqueGroups > 0 -> merge.baseScore * (combo + 1)
+        else -> merge.baseScore
+    }
     if (displayScore > 0) {
         val scoreText = "+$displayScore"
         val scoreTextLayout = textMeasurer.measure(

@@ -1503,6 +1503,7 @@ internal class GameViewModel(
                     val merge = when (perk) {
                         Perk.FUSION -> engine.calculateFusion(x, y, grid)
                         Perk.PATH_MERGE -> engine.calculatePathMerge(x, y, grid)
+                        Perk.CHAIN_MERGE -> engine.simulateChainMerge(x, y, grid, state.combo)
                         else -> engine.calculateMerge(x, y, grid)
                     }
 
