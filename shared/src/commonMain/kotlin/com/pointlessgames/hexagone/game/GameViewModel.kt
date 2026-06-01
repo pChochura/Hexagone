@@ -320,7 +320,9 @@ internal class GameViewModel(
         if (merge != null) {
             _uiState.update { currentState ->
                 val firstStep = merge.steps.first()
-                val comboMultiplier = (currentState.combo + 1).coerceAtMost(12)
+                val isPathMerge = merge.resultId == "preview_path_merge"
+                val nextComboValue = if (isPathMerge) currentState.combo + 1 else currentState.combo
+                val comboMultiplier = (nextComboValue + 1).coerceAtMost(12)
                 val stepScore = firstStep.baseScore * comboMultiplier
 
                 val stateAfterMergeStart = currentState.copy(
@@ -334,6 +336,7 @@ internal class GameViewModel(
                     pendingMerge = merge,
                     activeMergeStepIndex = 0,
                     pendingMergeScore = stepScore,
+                    combo = nextComboValue,
                     isBusy = true,
                 )
                 if (perk == Perk.FUSION) {
@@ -343,6 +346,7 @@ internal class GameViewModel(
                 }
             }
         } else {
+            _uiState.update { it.copy(combo = 0, reachedComboTiers = emptySet()) }
             lastMoveScore = null // Reset redemption if the next move isn't a merge
             if (perk == Perk.CHAIN_MERGE) {
                 _uiState.update { it.consumePerk(Perk.CHAIN_MERGE).copy(activePerk = null) }
@@ -731,7 +735,8 @@ internal class GameViewModel(
                         currentState.grid,
                         nextPreview,
                     )
-                    val finalBonus = baseCleanupScore + barRaisedBonus
+                    val comboMultiplier = (currentState.combo + 1).coerceAtMost(12)
+                    val finalBonus = (baseCleanupScore + barRaisedBonus) * comboMultiplier
                     val labelRes =
                         if (barRaisedBonus > 0) Res.string.label_bar_raised else Res.string.label_cleanup
 
@@ -779,13 +784,15 @@ internal class GameViewModel(
                     )
 
                     if (barRaisedBonus > 0) {
-                        val nextScore = currentState.score + barRaisedBonus
+                        val comboMultiplier = (currentState.combo + 1).coerceAtMost(12)
+                        val multipliedBonus = barRaisedBonus * comboMultiplier
+                        val nextScore = currentState.score + multipliedBonus
                         viewModelScope.launch {
                             persistBestScore(nextScore)
                             addScorePopup(
                                 previewToUpdate.x,
                                 previewToUpdate.y,
-                                barRaisedBonus,
+                                multipliedBonus,
                                 Colors().skyBlue,
                                 Res.string.label_bar_raised,
                             )
@@ -838,13 +845,15 @@ internal class GameViewModel(
                         currentState.preview,
                     )
                     if (barRaisedBonus > 0) {
-                        val nextScore = currentState.score + barRaisedBonus
+                        val comboMultiplier = (currentState.combo + 1).coerceAtMost(12)
+                        val multipliedBonus = barRaisedBonus * comboMultiplier
+                        val nextScore = currentState.score + multipliedBonus
                         viewModelScope.launch {
                             persistBestScore(nextScore)
                             addScorePopup(
                                 cellToUpdate.x,
                                 cellToUpdate.y,
-                                barRaisedBonus,
+                                multipliedBonus,
                                 Colors().skyBlue,
                                 Res.string.label_bar_raised,
                             )
@@ -866,11 +875,12 @@ internal class GameViewModel(
                 val merge = engine.calculatePathMerge(cell.x, cell.y, state.grid)
                 if (merge != null) {
                     saveState()
-                    val comboMultiplier = (state.combo + 1).coerceAtMost(12)
-                    val totalAddedScore = merge.baseScore * comboMultiplier
-
                     _uiState.update { currentState ->
                         val firstStep = merge.steps.first()
+                        val nextComboValue = currentState.combo + 1
+                        val comboMultiplier = (nextComboValue + 1).coerceAtMost(12)
+                        val stepScore = firstStep.baseScore * comboMultiplier
+
                         currentState.copy(
                             grid = currentState.grid.map { c ->
                                 if (firstStep.mergingCells.any { it.id == c.id }) c.copy(
@@ -880,7 +890,8 @@ internal class GameViewModel(
                             },
                             pendingMerge = merge.copy(resultId = "preview_path_merge"),
                             activeMergeStepIndex = 0,
-                            pendingMergeScore = totalAddedScore,
+                            pendingMergeScore = stepScore,
+                            combo = nextComboValue,
                             isBusy = true,
                         )
                     }
@@ -903,7 +914,8 @@ internal class GameViewModel(
                     )
                     val sacrificeBonus = calculateSacrificeBonus(currentState.grid, cellToRemove)
 
-                    val finalBonus = baseCleanupScore + barRaisedBonus + sacrificeBonus
+                    val comboMultiplier = (currentState.combo + 1).coerceAtMost(12)
+                    val finalBonus = (baseCleanupScore + barRaisedBonus + sacrificeBonus) * comboMultiplier
 
                     val labelRes = if (barRaisedBonus > 0 && sacrificeBonus > 0) {
                         Res.string.label_janitor_plus
@@ -1299,17 +1311,14 @@ internal class GameViewModel(
     private fun calculateFinalCombo(merge: MergeTransition, currentState: GameUiState): Int {
         val isPathMerge = merge.resultId == "preview_path_merge"
         val isChainMerge = currentState.activePerk == Perk.CHAIN_MERGE
-        val isFusion = currentState.activePerk == Perk.FUSION
 
-        if (isPathMerge) {
-            return currentState.combo + 1
+        // Complex move or sequential link: preserve current combo (already incremented in processNextStep)
+        if (isPathMerge || merge.uniqueGroups > 1) {
+            return currentState.combo
         }
 
-        if (merge.uniqueGroups > 1) {
-            return currentState.combo + 1
-        }
-
-        if ((isChainMerge || isFusion) && currentState.combo > 0) {
+        // 1-group merge: preserve during chain reaction, otherwise reset
+        if (isChainMerge && currentState.combo > 0) {
             return currentState.combo
         }
 
