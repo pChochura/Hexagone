@@ -140,10 +140,16 @@ internal class MergeDelegate(
         val newReachedTiers = tierRewards.map { it.first }.toSet()
         val newRewardEffects = tierRewards.map { GameEffect.TierReward(it.first, it.second) }
 
-        val finalGrid = if ((finalCombo + 1) >= ComboTier.ZENITH.threshold && 
-            !currentState.reachedComboTiers.contains(ComboTier.ZENITH)) {
+        val isZenithReached = (finalCombo + 1) >= ComboTier.ZENITH.threshold &&
+                !currentState.reachedComboTiers.contains(ComboTier.ZENITH)
+
+        val finalGrid = if (isZenithReached) {
             stateAfterStep.map { it.copy(value = it.value + 1) }
         } else stateAfterStep
+
+        val finalPreview = if (isZenithReached) {
+            currentState.preview.map { it.copy(value = it.value + 1) }
+        } else currentState.preview
 
         uiState.update {
             it.copy(
@@ -152,13 +158,14 @@ internal class MergeDelegate(
                 levelProgress = engine.getLevelProgress(finalScore, it.level),
                 combo = finalCombo,
                 grid = finalGrid,
+                preview = finalPreview,
                 collectedPerks = it.collectedPerks + listOfNotNull(collectedOnBoard) + newlyEarnedPerks,
                 onBoardPerks = remainingOnBoard,
                 reachedComboTiers = if (finalCombo == 0) emptySet() else it.reachedComboTiers + newReachedTiers,
                 earnedRewardsThisTurn = it.earnedRewardsThisTurn + newRewardEffects,
                 mergeHints = if (it.mergeHintsEnabled) engine.findMergeHints(
                     finalGrid,
-                    it.preview,
+                    finalPreview,
                     finalCombo,
                     it.activePerk,
                 ) else emptyList(),
