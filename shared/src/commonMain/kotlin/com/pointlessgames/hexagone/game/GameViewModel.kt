@@ -277,7 +277,6 @@ internal class GameViewModel(
         val state = _uiState.value
         if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
 
-        saveState()
         _hoveredMerge.value = null
 
         val perk = state.activePerk
@@ -321,6 +320,7 @@ internal class GameViewModel(
         }
 
         if (merge != null) {
+            saveState()
             _uiState.update { currentState ->
                 val firstStep = merge.steps.first()
                 val isPathMerge = merge.resultId == "preview_path_merge"
@@ -349,9 +349,8 @@ internal class GameViewModel(
                 }
             }
         } else {
-            _uiState.update { it.copy(combo = 0, reachedComboTiers = emptySet()) }
-            lastMoveScore = null // Reset redemption if the next move isn't a merge
             if (perk == Perk.CHAIN_MERGE) {
+                saveState()
                 _uiState.update { it.consumePerk(Perk.CHAIN_MERGE).copy(activePerk = null) }
                 finalizeAction()
             }
