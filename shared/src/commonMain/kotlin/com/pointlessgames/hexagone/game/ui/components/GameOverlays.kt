@@ -219,7 +219,7 @@ internal fun GameOverlays(
             }
 
             AnimatedVisibility(
-                visible = isGameOver && !showBoard,
+                visible = isGameOver && !showBoard && !showLeaderboard,
                 enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
                 modifier = Modifier.align(Alignment.BottomCenter)

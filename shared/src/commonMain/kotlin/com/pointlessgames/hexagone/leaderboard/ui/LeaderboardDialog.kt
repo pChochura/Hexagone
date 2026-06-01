@@ -11,16 +11,19 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -46,6 +49,10 @@ internal fun LeaderboardOverlay(
     val cornerRadius = MaterialTheme.cornerRadius
     val primaryColor = MaterialTheme.colorScheme.primary
 
+    LaunchedEffect(Unit) {
+        viewModel.loadRankings()
+    }
+
     val infiniteTransition = rememberInfiniteTransition(label = "leaderboard_glow")
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.1f,
@@ -66,7 +73,7 @@ internal fun LeaderboardOverlay(
         // Floating Header
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(0.95f)
                 .padding(bottom = spacing.large),
             contentAlignment = Alignment.Center
         ) {
@@ -75,15 +82,21 @@ internal fun LeaderboardOverlay(
                 icon = "⬅",
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .size(spacing.extraLarge)
+                    .size(spacing.huge)
             )
 
             Text(
                 text = stringResource(Res.string.leaderboard_title).uppercase(),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    shadow = Shadow(
+                        color = primaryColor.copy(alpha = 0.5f),
+                        offset = Offset(0f, 0f),
+                        blurRadius = 20f * (0.8f + 0.2f * (glowAlpha / 0.3f))
+                    )
+                ),
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Black,
-                letterSpacing = 4.sp,
+                letterSpacing = 6.sp,
                 textAlign = TextAlign.Center
             )
         }
@@ -258,12 +271,11 @@ private fun LeaderboardContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = spacing.medium, vertical = spacing.medium)
                 .background(
                     color = Color.White.copy(alpha = 0.05f),
-                    shape = RoundedCornerShape(cornerRadius.large)
+                    shape = RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge)
                 )
-                .padding(spacing.extraSmall),
+                .padding(spacing.small),
             horizontalArrangement = Arrangement.spacedBy(spacing.small)
         ) {
             FilterButton(
@@ -307,10 +319,13 @@ private fun LeaderboardContent(
                     }
                     itemsIndexed(uiState.rankings) { index, result ->
                         RankItem(rank = index + 1, result = result)
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = spacing.extraSmall),
-                            color = Color.White.copy(alpha = 0.05f),
-                        )
+                        if (index < uiState.rankings.lastIndex) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = spacing.extraSmall),
+                                color = Color.White.copy(alpha = 0.08f),
+                                thickness = 0.5.dp
+                            )
+                        }
                     }
                 }
             }
@@ -333,22 +348,22 @@ private fun FilterButton(
     val brush = remember(isSelected, primaryColor) {
         if (isSelected) {
             Brush.verticalGradient(
-                listOf(primaryColor, primaryColor.copy(alpha = 0.8f))
+                listOf(primaryColor, primaryColor.copy(alpha = 0.7f))
             )
         } else {
             Brush.verticalGradient(
-                listOf(Color.White.copy(alpha = 0.08f), Color.White.copy(alpha = 0.02f))
+                listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.01f))
             )
         }
     }
 
     Box(
         modifier = modifier
-            .height(40.dp)
+            .height(44.dp)
             .background(brush, shape)
             .border(
                 width = spacing.extraTiny,
-                color = if (isSelected) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.1f),
+                color = if (isSelected) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.05f),
                 shape = shape
             )
             .clickable { onClick() },
@@ -359,7 +374,7 @@ private fun FilterButton(
             color = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color.White.copy(alpha = 0.4f),
             fontSize = 12.sp,
             fontWeight = FontWeight.Black,
-            letterSpacing = 1.5.sp
+            letterSpacing = 2.sp
         )
     }
 }
@@ -414,27 +429,31 @@ private fun RankItem(rank: Int, result: DetailedGameResult) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = "#$rank",
+        Box(
             modifier = Modifier.width(45.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (rank <= 3) MaterialTheme.colorScheme.tertiary else Color.White,
-            fontWeight = FontWeight.Black,
-        )
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Text(
+                text = "#$rank",
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (rank <= 3) MaterialTheme.colorScheme.tertiary else Color.White.copy(alpha = 0.6f),
+                fontWeight = FontWeight.Black,
+            )
+        }
         Text(
             text = result.username ?: "Unknown",
             modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = Color.White,
             fontWeight = FontWeight.Bold
         )
         Text(
             text = result.score.toString(),
             modifier = Modifier.width(65.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.End,
@@ -442,7 +461,7 @@ private fun RankItem(rank: Int, result: DetailedGameResult) {
         Text(
             text = result.maxPiece.toString(),
             modifier = Modifier.width(65.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.secondary,
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.End,
