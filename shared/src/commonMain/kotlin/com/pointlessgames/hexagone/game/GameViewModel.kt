@@ -606,7 +606,7 @@ internal class GameViewModel(
         _uiState.update { currentState ->
             val cellToMove = currentState.grid.find { it.id == selectedId }
             val previewToMove = currentState.preview.find { it.id == selectedId }
-            val value = cellToMove?.value ?: previewToMove?.value ?: return@update currentState
+            if (cellToMove == null && previewToMove == null) return@update currentState
 
             val collectedPerk = currentState.onBoardPerks.find { it.x == x && it.y == y }?.perk
             if (collectedPerk != null) {
@@ -618,11 +618,16 @@ internal class GameViewModel(
                     if (it.id == selectedId) it.copy(x = x, y = y, isTactical = true) else it
                 }
             } else {
-                currentState.grid + engine.createCell(x, y, value, isTactical = true)
+                currentState.grid
             }
 
-            val updatedPreview =
-                currentState.preview.filterNot { (it.id == selectedId || (it.x == x && it.y == y)) }
+            val updatedPreview = if (previewToMove != null) {
+                currentState.preview.map {
+                    if (it.id == selectedId) it.copy(x = x, y = y, isTactical = true) else it
+                }.filterNot { it.id != selectedId && it.x == x && it.y == y }
+            } else {
+                currentState.preview.filterNot { it.x == x && it.y == y }
+            }
 
             currentState.copy(
                 grid = updatedGrid,
@@ -646,8 +651,17 @@ internal class GameViewModel(
                 viewModelScope.launch { addPerkPopup(x, y, collectedPerk) }
             }
 
-            val updatedGrid = currentState.grid + engine.createCell(x, y, value, isTactical = true)
-            val updatedPreview = currentState.preview.filterNot { it.x == x && it.y == y }
+            val updatedGrid = if (cellToCopy != null) {
+                currentState.grid + engine.createCell(x, y, value, isTactical = true)
+            } else {
+                currentState.grid
+            }
+
+            val updatedPreview = if (previewToCopy != null) {
+                currentState.preview.filterNot { it.x == x && it.y == y } + engine.createPreviewCell(x, y, value, isTactical = true)
+            } else {
+                currentState.preview.filterNot { it.x == x && it.y == y }
+            }
 
             currentState.copy(
                 grid = updatedGrid,
