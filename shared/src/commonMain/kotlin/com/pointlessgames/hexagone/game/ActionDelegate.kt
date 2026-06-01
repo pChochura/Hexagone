@@ -103,21 +103,6 @@ internal class ActionDelegate(
                 stateDelegate.saveState()
                 uiState.update { it.consumePerk(Perk.CHAIN_MERGE).copy(activePerk = null) }
                 finalizeAction()
-            } else if (perk == null && previewAtPos != null) {
-                // Base move: Solidify piece if no merge happens
-                stateDelegate.saveState()
-                uiState.update { currentState ->
-                    currentState.copy(
-                        grid = currentState.grid + engine.createCell(
-                            x, y, previewAtPos.value, isTactical = previewAtPos.isTactical,
-                        ),
-                        preview = currentState.preview.filter { it.id != previewAtPos.id },
-                        combo = 0, // Reset combo if no merge
-                        reachedComboTiers = emptySet(),
-                    )
-                }
-                stateDelegate.setRedemptionBaseline(null)
-                finalizeAction()
             }
         }
     }
