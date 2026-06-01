@@ -390,7 +390,7 @@ fun ScoreSection(
                         val tier = when {
                             targetCombo >= 31 -> Res.string.tier_zenith
                             targetCombo >= 21 -> Res.string.tier_overdrive
-                            targetCombo >= 13 -> Res.string.tier_surge
+                            targetCombo >= 11 -> Res.string.tier_surge
                             else -> null
                         }
                         

@@ -90,6 +90,11 @@ sealed interface GameEffect {
         val gridY: Int,
         val perk: Perk,
     ) : GameEffect
+
+    data class TierReward(
+        val tier: ComboTier,
+        val perk: Perk,
+    ) : GameEffect
 }
 
 @Serializable
@@ -212,7 +217,8 @@ data class MergeTransition(
 @Immutable
 data class MergeStep(
     val mergingCells: List<HexagonCell>,
-    val resultValue: Int
+    val resultValue: Int,
+    val baseScore: Int = 0
 )
 
 @Serializable

@@ -53,7 +53,7 @@ internal class GameViewModel(
     private val _hoveredMerge = MutableStateFlow<MergeTransition?>(null)
     val hoveredMerge: StateFlow<MergeTransition?> = _hoveredMerge.asStateFlow()
 
-    private val _effects = MutableSharedFlow<GameEffect>()
+    private val _effects = MutableSharedFlow<GameEffect>(extraBufferCapacity = 64)
     val effects: SharedFlow<GameEffect> = _effects.asSharedFlow()
 
     private val debugDelegate = DebugDelegate(
@@ -225,6 +225,12 @@ internal class GameViewModel(
                 maxCombo = previousState.maxCombo,
                 totalMerges = previousState.totalMerges,
                 onBoardPerks = previousState.onBoardPerks,
+                reachedComboTiers = previousState.reachedComboTiers,
+                pendingLevelUps = previousState.pendingLevelUps,
+                perkOptions = previousState.perkOptions,
+                canReroll = previousState.canReroll,
+                perkSpawnCounter = previousState.perkSpawnCounter,
+                perksUsedTracking = previousState.perksUsedTracking,
                 pendingMerge = null,
                 activePerk = null,
                 selectedCellId = null,
@@ -311,11 +317,11 @@ internal class GameViewModel(
         }
 
         if (merge != null) {
-            val comboMultiplier = (state.combo + 1).coerceAtMost(12)
-            val totalAddedScore = merge.baseScore * comboMultiplier
-
             _uiState.update { currentState ->
                 val firstStep = merge.steps.first()
+                val comboMultiplier = (currentState.combo + 1).coerceAtMost(12)
+                val stepScore = firstStep.baseScore * comboMultiplier
+
                 val stateAfterMergeStart = currentState.copy(
                     grid = currentState.grid.map { cell ->
                         if (firstStep.mergingCells.any { it.id == cell.id }) cell.copy(
@@ -326,7 +332,7 @@ internal class GameViewModel(
                     preview = currentState.preview.filterNot { it.x == x && it.y == y },
                     pendingMerge = merge,
                     activeMergeStepIndex = 0,
-                    pendingMergeScore = totalAddedScore,
+                    pendingMergeScore = stepScore,
                     isBusy = true,
                 )
                 if (perk == Perk.FUSION) {
@@ -1168,8 +1174,10 @@ internal class GameViewModel(
         currentState: GameUiState,
         stateAfterStep: List<HexagonCell>,
     ) {
-        val totalAddedScore = currentState.pendingMergeScore
-        val redemptionBonus = calculateRedemptionBonus(totalAddedScore)
+        val finalCombo = calculateFinalCombo(merge, currentState)
+        val comboMultiplier = (finalCombo + 1).coerceAtMost(12)
+        val addedScoreFromSteps = currentState.pendingMergeScore
+        val redemptionBonus = calculateRedemptionBonus(addedScoreFromSteps)
 
         val barRaisedBonus = calculateBarRaisedBonus(
             currentState.grid,
@@ -1177,9 +1185,11 @@ internal class GameViewModel(
             stateAfterStep,
             currentState.preview.filter { it.x != merge.targetX || it.y != merge.targetY },
         )
-        val combinedScore = totalAddedScore + redemptionBonus + barRaisedBonus
+        
+        val multipliedBonuses = (redemptionBonus + barRaisedBonus) * comboMultiplier
+        val combinedScore = addedScoreFromSteps + multipliedBonuses
 
-        handlePopups(merge, combinedScore, redemptionBonus, barRaisedBonus > 0)
+        handlePopups(merge, combinedScore, redemptionBonus > 0, barRaisedBonus > 0)
 
         val collectedOnBoard =
             currentState.onBoardPerks.find { it.x == merge.targetX && it.y == merge.targetY }?.perk
@@ -1195,14 +1205,21 @@ internal class GameViewModel(
         val remainingOnBoard =
             currentState.onBoardPerks.filterNot { it.x == merge.targetX && it.y == merge.targetY }
 
-        val finalCombo = calculateFinalCombo(merge, currentState)
         val finalScore = currentState.score + combinedScore
         persistBestScore(finalScore)
 
-        val (newReachedTiers, newlyEarnedPerks) = handleTierRewards(finalCombo, currentState)
+        val tierRewards = handleTierRewards(finalCombo, currentState)
+        val newlyEarnedPerks = tierRewards.map { it.second }
+        val newReachedTiers = tierRewards.map { it.first }.toSet()
+
+        tierRewards.forEach { (tier, perk) ->
+            viewModelScope.launch {
+                _effects.emit(GameEffect.TierReward(tier, perk))
+            }
+        }
 
         val finalGrid =
-            if (finalCombo >= ComboTier.ZENITH.threshold && !currentState.reachedComboTiers.contains(
+            if ((finalCombo + 1) >= ComboTier.ZENITH.threshold && !currentState.reachedComboTiers.contains(
                     ComboTier.ZENITH,
                 )
             ) {
@@ -1252,15 +1269,15 @@ internal class GameViewModel(
     private fun handlePopups(
         merge: MergeTransition,
         combinedScore: Int,
-        redemptionBonus: Int,
+        hasRedemption: Boolean,
         barRaised: Boolean = false,
     ) {
         val labelRes = when {
-            redemptionBonus > 0 && barRaised -> Res.string.label_tactical_redemption // TODO: Need a "Bar Raised + Redemption" label? 
+            hasRedemption && barRaised -> Res.string.label_tactical_redemption // TODO: Need a "Bar Raised + Redemption" label? 
             // For now let's prioritize Bar Raised if it's new
             barRaised -> Res.string.label_bar_raised
-            redemptionBonus > 0 && merge.isTactical -> Res.string.label_tactical_redemption
-            redemptionBonus > 0 -> Res.string.label_redemption
+            hasRedemption && merge.isTactical -> Res.string.label_tactical_redemption
+            hasRedemption -> Res.string.label_redemption
             merge.isTactical -> Res.string.label_tactician
             else -> null
         }
@@ -1282,29 +1299,33 @@ internal class GameViewModel(
     }
 
     private fun calculateFinalCombo(merge: MergeTransition, currentState: GameUiState): Int {
-        if (merge.resultId == "preview_path_merge") {
-            return maxOf(0, merge.totalCells - 1)
+        val isPathMerge = merge.resultId == "preview_path_merge"
+        val isChainMerge = currentState.activePerk == Perk.CHAIN_MERGE
+        val isFusion = currentState.activePerk == Perk.FUSION
+
+        if (isPathMerge) {
+            return currentState.combo + 1
         }
-        return if (merge.uniqueGroups > 1 || currentState.activePerk == Perk.CHAIN_MERGE || currentState.activePerk == Perk.FUSION) {
-            currentState.combo + (if (currentState.activePerk == Perk.CHAIN_MERGE) 1 else 0) + (merge.uniqueGroups - 1)
-        } else {
-            0
+
+        if (merge.uniqueGroups > 1) {
+            // Increments for Chain Merge reaction or Fusion of distinct values
+            return if (isChainMerge || isFusion) currentState.combo + 1 else currentState.combo
         }
+
+        return 0
     }
 
     private fun handleTierRewards(
         finalCombo: Int,
         currentState: GameUiState,
-    ): Pair<Set<ComboTier>, List<Perk>> {
-        val newReachedTiers = mutableSetOf<ComboTier>()
-        val newlyEarnedPerks = mutableListOf<Perk>()
+    ): List<Pair<ComboTier, Perk>> {
+        val rewards = mutableListOf<Pair<ComboTier, Perk>>()
 
         ComboTier.entries.forEach { tier ->
-            if (finalCombo >= tier.threshold && !currentState.reachedComboTiers.contains(
+            if (finalCombo + 1 >= tier.threshold && !currentState.reachedComboTiers.contains(
                     tier,
                 )
             ) {
-                newReachedTiers.add(tier)
                 val reward = when (tier) {
                     ComboTier.SURGE -> Perk.entries.filter { it.baseWeight in 50..80 }
                         .random()
@@ -1312,10 +1333,10 @@ internal class GameViewModel(
                     ComboTier.OVERDRIVE -> Perk.entries.filter { it.isLegendary }.random()
                     ComboTier.ZENITH -> Perk.entries.filter { it.isLegendary }.random()
                 }
-                newlyEarnedPerks.add(reward)
+                rewards.add(tier to reward)
             }
         }
-        return newReachedTiers to newlyEarnedPerks
+        return rewards
     }
 
     private suspend fun handleChainMerge(merge: MergeTransition, finalCombo: Int) {
@@ -1373,11 +1394,23 @@ internal class GameViewModel(
     ) {
         delay(100) // Artificial delay between sequential group merges
         val nextStep = merge.steps[stepIndex + 1]
-        _uiState.update {
-            val nextComboValue = it.combo + 1
-            it.copy(
+        
+        var rewardsToEmit: List<Pair<ComboTier, Perk>> = emptyList()
+        
+        _uiState.update { state ->
+            val nextComboValue = state.combo + 1
+            val comboMultiplier = (nextComboValue + 1).coerceAtMost(12)
+            val stepScore = nextStep.baseScore * comboMultiplier
+
+            val tierRewards = handleTierRewards(nextComboValue, state)
+            rewardsToEmit = tierRewards
+            val newReachedTiers = tierRewards.map { it.first }.toSet()
+            val newlyEarnedPerks = tierRewards.map { it.second }
+
+            state.copy(
                 combo = nextComboValue,
-                reachedComboTiers = if (nextComboValue == 0) emptySet() else it.reachedComboTiers,
+                reachedComboTiers = state.reachedComboTiers + newReachedTiers,
+                collectedPerks = state.collectedPerks + newlyEarnedPerks,
                 grid = stateAfterStep.map { cell ->
                     if (nextStep.mergingCells.any { it.id == cell.id }) cell.copy(
                         x = merge.targetX,
@@ -1385,7 +1418,14 @@ internal class GameViewModel(
                     ) else cell
                 },
                 activeMergeStepIndex = stepIndex + 1,
+                pendingMergeScore = state.pendingMergeScore + stepScore,
             )
+        }
+
+        rewardsToEmit.forEach { (tier, perk) ->
+            viewModelScope.launch {
+                _effects.emit(GameEffect.TierReward(tier, perk))
+            }
         }
     }
 

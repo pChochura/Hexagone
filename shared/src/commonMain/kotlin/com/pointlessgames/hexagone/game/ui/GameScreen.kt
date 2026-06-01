@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +65,9 @@ internal fun GameScreen(
 
     var showLeaderboard by remember { mutableStateOf(false) }
     val leaderboardViewModel: LeaderboardViewModel = koinViewModel()
+
+    val tierRewardQueue = remember { mutableStateListOf<Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>>() }
+    val activeTierReward = tierRewardQueue.firstOrNull()
 
     BackHandler(enabled = showLeaderboard) {
         showLeaderboard = false
@@ -141,6 +145,14 @@ internal fun GameScreen(
         if (uiState.pendingResult != null) {
             leaderboardViewModel.setPendingResult(uiState.pendingResult)
             showLeaderboard = true
+        }
+    }
+
+    LaunchedEffect(viewModel.effects) {
+        viewModel.effects.collect { effect ->
+            if (effect is com.pointlessgames.hexagone.game.model.GameEffect.TierReward) {
+                tierRewardQueue.add(effect.tier to effect.perk)
+            }
         }
     }
 
@@ -237,7 +249,15 @@ internal fun GameScreen(
 
         // Dimming Layer (above board, below PerkBar)
         if (stuckDimAlpha > 0f) {
-            Box(
+            LaunchedEffect(viewModel.effects) {
+        viewModel.effects.collect { effect ->
+            if (effect is com.pointlessgames.hexagone.game.model.GameEffect.TierReward) {
+                tierRewardQueue.add(effect.tier to effect.perk)
+            }
+        }
+    }
+
+    Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer { alpha = stuckDimAlpha }
@@ -261,7 +281,15 @@ internal fun GameScreen(
         ) {
             if (!uiState.isDebugMode) {
                 if (uiState.isStuck && uiState.activePerk == null) {
-                    Box(
+                    LaunchedEffect(viewModel.effects) {
+        viewModel.effects.collect { effect ->
+            if (effect is com.pointlessgames.hexagone.game.model.GameEffect.TierReward) {
+                tierRewardQueue.add(effect.tier to effect.perk)
+            }
+        }
+    }
+
+    Box(
                         modifier = Modifier
                             .offset(y = -MaterialTheme.spacing.semiMedium + stuckBounce.dp)
                             .shadow(
@@ -326,7 +354,9 @@ internal fun GameScreen(
             onLeaderboard = { showLeaderboard = true },
             showLeaderboard = showLeaderboard,
             onLeaderboardDismiss = { showLeaderboard = false },
-            leaderboardViewModel = leaderboardViewModel
+            leaderboardViewModel = leaderboardViewModel,
+            activeTierReward = activeTierReward,
+            onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) }
         )
     }
 }

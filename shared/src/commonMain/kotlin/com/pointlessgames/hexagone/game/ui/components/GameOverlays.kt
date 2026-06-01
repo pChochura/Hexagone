@@ -1,6 +1,9 @@
 package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.EaseInExpo
+import androidx.compose.animation.core.EaseOutBack
+import androidx.compose.animation.core.EaseOutExpo
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -78,10 +81,12 @@ internal fun GameOverlays(
     showLeaderboard: Boolean,
     onLeaderboardDismiss: () -> Unit,
     leaderboardViewModel: LeaderboardViewModel,
+    activeTierReward: Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>?,
+    onTierRewardFinished: () -> Unit,
 ) {
-    val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver || showLeaderboard
+    val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver || showLeaderboard || activeTierReward != null
     val dimAlphaState = animateFloatAsState(
-        targetValue = if (showLeaderboard) 0.85f else if (isAnyOverlayVisible && !showBoard) 0.6f else 0f,
+        targetValue = if (showLeaderboard || activeTierReward != null) 0.85f else if (isAnyOverlayVisible && !showBoard) 0.6f else 0f,
         animationSpec = tween(500),
         label = "dim_alpha"
     )
@@ -161,8 +166,23 @@ internal fun GameOverlays(
             )
 
             AnimatedVisibility(
-                visible = perkOptions.isNotEmpty(),
-                enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn() + scaleIn(initialScale = 0.9f),
+                visible = activeTierReward != null,
+                enter = fadeIn(tween(600)) + scaleIn(initialScale = 0.8f, animationSpec = tween(600, easing = EaseOutExpo)),
+                exit = fadeOut(tween(400)) + scaleOut(targetScale = 1.2f, animationSpec = tween(400, easing = EaseInExpo)),
+                modifier = Modifier.align(Alignment.Center)
+            ) {
+                activeTierReward?.let { (tier, perk) ->
+                    TierRewardOverlay(
+                        tier = tier,
+                        perk = perk,
+                        onFinished = onTierRewardFinished
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = perkOptions.isNotEmpty() && activeTierReward == null,
+                enter = fadeIn(tween(800)) + scaleIn(initialScale = 0.9f, animationSpec = tween(800, easing = EaseOutBack)),
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
                 modifier = Modifier.align(Alignment.BottomCenter),
             ) {

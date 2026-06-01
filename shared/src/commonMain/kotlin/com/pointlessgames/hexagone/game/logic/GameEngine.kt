@@ -138,22 +138,36 @@ internal class GameEngine(
 
             valuesToMerge.forEachIndexed { index, value ->
                 val groupCells = groups[value]!!
-                val mergingNeighbors = groupCells.filter { it.id != (centerCell?.id ?: "placed_temp") }
+                val mergingNeighbors =
+                    groupCells.filter { it.id != (centerCell?.id ?: "placed_temp") }
 
                 if (index == 0) {
                     currentCenterValue = value + groupCells.size - 1
-                    steps.add(MergeStep(mergingNeighbors, currentCenterValue))
+                    steps.add(
+                        MergeStep(
+                            mergingNeighbors,
+                            currentCenterValue,
+                            calculateBaseScore(groupCells)
+                        )
+                    )
                     totalCells += groupCells.size
                 } else {
                     // Merging next group into existing center
+                    val prevCenterValue = currentCenterValue
                     val n = groupCells.size + 1 // group + current center
                     currentCenterValue = maxOf(currentCenterValue, value) + n - 2
-                    steps.add(MergeStep(groupCells, currentCenterValue))
+                    steps.add(
+                        MergeStep(
+                            groupCells,
+                            currentCenterValue,
+                            calculateBaseScore(groupCells + createCell(x, y, prevCenterValue))
+                        )
+                    )
                     totalCells += groupCells.size
                 }
             }
 
-            val mergingCells = neighborCells.filter { it.value in valuesToMerge } + 
+            val mergingCells = neighborCells.filter { it.value in valuesToMerge } +
                     listOfNotNull(centerCell).filter { it.value in valuesToMerge }
 
             var baseScore = calculateBaseScore(mergingCells)
@@ -201,16 +215,29 @@ internal class GameEngine(
 
         val mergingNeighbors = connectedCells.filter { it.id != (targetCellInGrid?.id ?: "") }
         val finalValue = targetValue + connectedCells.size - 1
-        val baseScore = calculateBaseScore(connectedCells.toList())
+        
+        val steps = mutableListOf<MergeStep>()
+        var currentCenterValue = targetValue
+        mergingNeighbors.forEach { neighbor ->
+            val stepValue = currentCenterValue + 1
+            steps.add(
+                MergeStep(
+                    mergingCells = listOf(neighbor),
+                    resultValue = stepValue,
+                    baseScore = calculateBaseScore(listOf(neighbor, createCell(x, y, currentCenterValue)))
+                )
+            )
+            currentCenterValue = stepValue
+        }
 
         return MergeTransition(
             targetX = x,
             targetY = y,
-            steps = listOf(MergeStep(mergingNeighbors, finalValue)),
+            steps = steps,
             finalValue = finalValue,
             totalCells = connectedCells.size,
-            uniqueGroups = 1,
-            baseScore = baseScore,
+            uniqueGroups = mergingNeighbors.size,
+            baseScore = calculateBaseScore(connectedCells.toList()),
             resultId = "cell_${idCounter++}",
             isTactical = connectedCells.any { it.isTactical },
             participatingIds = connectedCells.map { it.id }.toSet()
@@ -231,7 +258,8 @@ internal class GameEngine(
         val centerCell = grid.find { it.x == x && it.y == y }
         val allCells = neighborCells + listOfNotNull(centerCell)
 
-        if (allCells.isNotEmpty()) {
+        // Fusion requires at least two neighbors to trigger
+        if (neighborCells.size >= 2) {
             val groups = allCells.groupBy { it.value }
             val sortedValues = groups.keys.sortedDescending()
 
@@ -241,18 +269,32 @@ internal class GameEngine(
 
             sortedValues.forEachIndexed { index, value ->
                 val groupCells = groups[value]!!
-                val mergingNeighbors = groupCells.filter { it.id != (centerCell?.id ?: "placed_temp") }
+                val mergingNeighbors =
+                    groupCells.filter { it.id != (centerCell?.id ?: "placed_temp") }
 
                 if (index == 0) {
                     currentCenterValue = value + groupCells.size - 1
                     if (mergingNeighbors.isNotEmpty()) {
-                        steps.add(MergeStep(mergingNeighbors, currentCenterValue))
+                        steps.add(
+                            MergeStep(
+                                mergingNeighbors,
+                                currentCenterValue,
+                                calculateBaseScore(groupCells)
+                            )
+                        )
                     }
                     totalCells += groupCells.size
                 } else {
+                    val prevValue = currentCenterValue
                     val n = groupCells.size + 1
                     currentCenterValue = maxOf(currentCenterValue, value) + n - 1
-                    steps.add(MergeStep(groupCells, currentCenterValue))
+                    steps.add(
+                        MergeStep(
+                            groupCells,
+                            currentCenterValue,
+                            calculateBaseScore(groupCells + createCell(x, y, prevValue))
+                        )
+                    )
                     totalCells += groupCells.size
                 }
             }
