@@ -56,7 +56,7 @@ fun PerkBar(
     val cornerRadius = MaterialTheme.cornerRadius
 
     val listState = rememberLazyListState()
-    val distinctPerks = remember(collectedPerks) { collectedPerks.distinct() }
+    val distinctPerks = remember(collectedPerks) { collectedPerks.distinct().sortedBy { it.ordinal } }
     val counts = remember(collectedPerks) { collectedPerks.groupingBy { it }.eachCount() }
     
     // We use a separate state to track which perk is currently "popping"
