@@ -2,7 +2,6 @@ package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.EaseInExpo
-import androidx.compose.animation.core.EaseOutBack
 import androidx.compose.animation.core.EaseOutExpo
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -180,12 +179,7 @@ internal fun GameOverlays(
                 }
             }
 
-            AnimatedVisibility(
-                visible = perkOptions.isNotEmpty() && activeTierReward == null,
-                enter = fadeIn(tween(800)) + scaleIn(initialScale = 0.9f, animationSpec = tween(800, easing = EaseOutBack)),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-                modifier = Modifier.align(Alignment.BottomCenter),
-            ) {
+            if (perkOptions.isNotEmpty() && activeTierReward == null) {
                 PerkSelectionDialog(
                     options = perkOptions,
                     pendingLevelUps = pendingLevelUps,
