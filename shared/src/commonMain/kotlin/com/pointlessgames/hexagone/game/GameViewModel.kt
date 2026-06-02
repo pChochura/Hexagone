@@ -69,10 +69,7 @@ internal class GameViewModel(
         scope = viewModelScope,
         stateDelegate = stateDelegate,
         effectDelegate = effectDelegate,
-        achievementDelegate = AchievementDelegate(
-            uiState = _uiState,
-            achievementManager = achievementManager,
-        ),
+        achievementDelegate = achievementDelegate,
         onSpawnRequested = { decrementLifespan, skipSpawn -> 
             spawnFromQueue(_uiState.value.grid, decrementLifespan, skipSpawn) 
         }
@@ -124,6 +121,9 @@ internal class GameViewModel(
                             availableChoices = savedState.availableChoices,
                             perksUsedTracking = savedState.perksUsedTracking,
                             consecutiveUndos = savedState.consecutiveUndos,
+                            comboTriggeredInSession = savedState.comboTriggeredInSession,
+                            perkUsedInSession = savedState.perkUsedInSession,
+                            undoUsedInSession = savedState.undoUsedInSession,
                         )
                     }
                     stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
@@ -255,6 +255,7 @@ internal class GameViewModel(
                 }
             }
         }
+        achievementDelegate.checkArchitectsDream(_uiState.value.grid, getPotentialMerges())
         recalculateHints()
     }
 
@@ -385,6 +386,7 @@ internal class GameViewModel(
                 }
             }
         }
+        achievementDelegate.checkArchitectsDream(_uiState.value.grid, getPotentialMerges())
         recalculateHints()
     }
 

@@ -189,7 +189,7 @@ internal class MergeDelegate(
             )
         }
 
-        achievementDelegate.checkMergeAchievements(merge)
+        achievementDelegate.checkMergeAchievements(merge, engine)
         achievementDelegate.checkComboAchievements(finalCombo)
         achievementDelegate.checkComboBroken(currentState.combo, finalCombo)
         achievementDelegate.checkLevelAchievements(uiState.value.level)

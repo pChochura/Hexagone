@@ -836,6 +836,7 @@ internal class ActionDelegate(
 
     private fun finalizeAction() {
         achievementDelegate.onNonUndoAction()
+        achievementDelegate.checkPatternAchievements(uiState.value.grid, engine)
         onUpdateLevel()
         if (uiState.value.preview.isEmpty()) {
             onSpawnRequested()

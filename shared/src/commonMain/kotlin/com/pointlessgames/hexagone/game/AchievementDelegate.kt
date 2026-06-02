@@ -2,11 +2,14 @@ package com.pointlessgames.hexagone.game
 
 import com.pointlessgames.hexagone.achievements.AchievementManager
 import com.pointlessgames.hexagone.achievements.GameAchievement
+import com.pointlessgames.hexagone.game.logic.GameEngine
+import com.pointlessgames.hexagone.game.logic.PatternRecognitionEngine
 import com.pointlessgames.hexagone.game.model.ComboTier
 import com.pointlessgames.hexagone.game.model.GameUiState
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.Perk
+import com.pointlessgames.hexagone.game.model.PotentialMerge
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
@@ -14,7 +17,7 @@ internal class AchievementDelegate(
     private val uiState: MutableStateFlow<GameUiState>,
     private val achievementManager: AchievementManager,
 ) {
-    fun checkMergeAchievements(merge: MergeTransition) {
+    fun checkMergeAchievements(merge: MergeTransition, engine: GameEngine) {
         // The whole gang: triggered when the player merges all 6 neighbors with the same value
         if (merge.totalCells >= 6 && merge.uniqueGroups == 1) {
             achievementManager.unlockAchievement(GameAchievement.THE_WHOLE_GANG)
@@ -34,6 +37,16 @@ internal class AchievementDelegate(
         if (uiState.value.grid.size >= 19) {
             achievementManager.unlockAchievement(GameAchievement.LIVING_ON_THE_EDGE)
         }
+
+        if (merge.resultId == "preview_path_merge" && merge.totalCells >= 10) {
+            achievementManager.unlockAchievement(GameAchievement.SNAKE_CHARMER)
+        }
+
+        if (merge.isTactical && merge.baseScore > 1000) {
+            achievementManager.unlockAchievement(GameAchievement.TACTICAL_GENIUS_ELITE)
+        }
+
+        checkPatternAchievements(uiState.value.grid, engine)
     }
 
     fun checkComboBroken(oldCombo: Int, newCombo: Int) {
@@ -43,6 +56,10 @@ internal class AchievementDelegate(
     }
 
     fun checkComboAchievements(finalCombo: Int) {
+        if (finalCombo > 0) {
+            uiState.update { it.copy(comboTriggeredInSession = true) }
+        }
+
         if (finalCombo >= ComboTier.ZENITH.threshold) {
             achievementManager.unlockAchievement(GameAchievement.ASCENSION)
         } else if (finalCombo >= ComboTier.OVERDRIVE.threshold) {
@@ -57,8 +74,18 @@ internal class AchievementDelegate(
             achievementManager.unlockAchievement(GameAchievement.HEX_MASTER)
         } else if (level >= 15) {
             achievementManager.unlockAchievement(GameAchievement.SEASONED_PLAYER)
+            if (!uiState.value.perkUsedInSession) {
+                achievementManager.unlockAchievement(GameAchievement.ASCETIC)
+            }
         } else if (level >= 5) {
             achievementManager.unlockAchievement(GameAchievement.A_NEW_BEGINNING)
+            if (!uiState.value.comboTriggeredInSession) {
+                achievementManager.unlockAchievement(GameAchievement.PACIFIST)
+            }
+        }
+
+        if (level >= 20 && !uiState.value.undoUsedInSession) {
+            achievementManager.unlockAchievement(GameAchievement.ZEN_MASTER)
         }
     }
 
@@ -73,6 +100,7 @@ internal class AchievementDelegate(
     }
 
     fun checkPerkAchievements(perk: Perk, state: GameUiState) {
+        uiState.update { it.copy(perkUsedInSession = true) }
         achievementManager.unlockAchievement(GameAchievement.FIRST_AID)
 
         if (state.collectedPerks.size >= 10) {
@@ -115,7 +143,7 @@ internal class AchievementDelegate(
             if (newCount >= 3) {
                 achievementManager.unlockAchievement(GameAchievement.TIME_MACHINE)
             }
-            it.copy(consecutiveUndos = newCount)
+            it.copy(consecutiveUndos = newCount, undoUsedInSession = true)
         }
     }
 
@@ -141,7 +169,13 @@ internal class AchievementDelegate(
     }
 
     fun onMergeDetails(isTactical: Boolean, isBarRaised: Boolean, isSacrifice: Boolean) {
-        if (isBarRaised) achievementManager.unlockAchievement(GameAchievement.THE_JANITOR)
+        if (isBarRaised) {
+            achievementManager.unlockAchievement(GameAchievement.THE_JANITOR)
+            uiState.update { it.copy(barRaisedThisTurn = it.barRaisedThisTurn + 1) }
+            if (uiState.value.barRaisedThisTurn >= 3) {
+                achievementManager.unlockAchievement(GameAchievement.TRIPLE_THREAT)
+            }
+        }
         if (isSacrifice) achievementManager.unlockAchievement(GameAchievement.SACRIFICE)
         if (isTactical) {
             uiState.update { 
@@ -155,7 +189,7 @@ internal class AchievementDelegate(
     }
 
     fun onSpawnOccurred() {
-        uiState.update { it.copy(consecutiveMergesWithoutSpawn = 0) }
+        uiState.update { it.copy(consecutiveMergesWithoutSpawn = 0, barRaisedThisTurn = 0) }
     }
 
     fun onRerollUsed() {
@@ -172,5 +206,26 @@ internal class AchievementDelegate(
 
     fun onPerkMissed() {
         achievementManager.unlockAchievement(GameAchievement.MISSED_OPPORTUNITY)
+    }
+
+    fun checkPatternAchievements(grid: List<HexagonCell>, engine: GameEngine) {
+        if (PatternRecognitionEngine.checkRingOfFire(grid, engine)) {
+            achievementManager.unlockAchievement(GameAchievement.RING_OF_FIRE)
+        }
+        if (PatternRecognitionEngine.checkGreatWall(grid, engine)) {
+            achievementManager.unlockAchievement(GameAchievement.GREAT_WALL)
+        }
+        if (PatternRecognitionEngine.checkTwinPeaks(grid, engine)) {
+            achievementManager.unlockAchievement(GameAchievement.TWIN_PEAKS)
+        }
+        if (PatternRecognitionEngine.checkThePrism(grid)) {
+            achievementManager.unlockAchievement(GameAchievement.THE_PRISM)
+        }
+    }
+
+    fun checkArchitectsDream(grid: List<HexagonCell>, potentialMerges: Map<Pair<Int, Int>, PotentialMerge>) {
+        if (PatternRecognitionEngine.checkArchitectsDream(grid, potentialMerges)) {
+            achievementManager.unlockAchievement(GameAchievement.ARCHITECTS_DREAM)
+        }
     }
 }

@@ -88,8 +88,8 @@ class LocalAchievementManager(
 
     override suspend fun getAchievementsStatus(): List<AchievementStatus> {
         val unlocked = settingsRepository.getUnlockedAchievements()
-        return GameAchievement.entries.map { achievement ->
-            AchievementStatus(achievement, achievement.id in unlocked)
-        }
+        return GameAchievement.entries
+            .map { achievement -> AchievementStatus(achievement, achievement.id in unlocked) }
+            .sortedByDescending { it.isUnlocked }
     }
 }

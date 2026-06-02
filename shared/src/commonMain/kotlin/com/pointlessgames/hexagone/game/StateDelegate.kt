@@ -88,6 +88,9 @@ internal class StateDelegate(
             consecutiveUndos = state.consecutiveUndos,
             consecutiveMergesWithoutSpawn = state.consecutiveMergesWithoutSpawn,
             tacticalMergesCount = state.tacticalMergesCount,
+            comboTriggeredInSession = state.comboTriggeredInSession,
+            perkUsedInSession = state.perkUsedInSession,
+            undoUsedInSession = state.undoUsedInSession,
             redemptionBaseline = state.redemptionBaseline,
         )
     }
@@ -126,6 +129,9 @@ internal class StateDelegate(
                 consecutiveUndos = previousState.consecutiveUndos,
                 consecutiveMergesWithoutSpawn = previousState.consecutiveMergesWithoutSpawn,
                 tacticalMergesCount = previousState.tacticalMergesCount,
+                comboTriggeredInSession = previousState.comboTriggeredInSession,
+                perkUsedInSession = previousState.perkUsedInSession,
+                undoUsedInSession = previousState.undoUsedInSession,
                 redemptionBaseline = undoneMoveScore,
                 earnedRewardsThisTurn = emptyList(),
                 pendingMerge = null,

@@ -56,6 +56,10 @@ data class GameUiState(
     val consecutiveUndos: Int = 0,
     val consecutiveMergesWithoutSpawn: Int = 0,
     val tacticalMergesCount: Int = 0,
+    val comboTriggeredInSession: Boolean = false,
+    val perkUsedInSession: Boolean = false,
+    val undoUsedInSession: Boolean = false,
+    val barRaisedThisTurn: Int = 0,
     val pendingResult: DetailedGameResult? = null,
     val achievementNotification: GameAchievement? = null,
     val earnedRewardsThisTurn: List<GameEffect.TierReward> = emptyList(),
@@ -146,6 +150,9 @@ data class GameState(
     val consecutiveUndos: Int = 0,
     val consecutiveMergesWithoutSpawn: Int = 0,
     val tacticalMergesCount: Int = 0,
+    val comboTriggeredInSession: Boolean = false,
+    val perkUsedInSession: Boolean = false,
+    val undoUsedInSession: Boolean = false,
     val redemptionBaseline: Int? = null,
 )
 
