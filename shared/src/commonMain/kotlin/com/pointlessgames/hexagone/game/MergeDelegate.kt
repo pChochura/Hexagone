@@ -238,20 +238,32 @@ internal class MergeDelegate(
                             y = merge.targetY,
                         ) else cell
                     },
-                    pendingMerge = chainMerge,
+                    pendingMerge = chainMerge.copy(resultId = chainMerge.resultId + "_chain"),
                     activeMergeStepIndex = 0,
                     pendingMergeScore = chainScore,
                 )
             }
         } else {
             val activePerkBeforeClear = uiState.value.activePerk
+            val isChainStep = merge.resultId.endsWith("_chain")
+            val oldCombo = uiState.value.combo
             uiState.update { state ->
                 val activePerk = state.activePerk
                 val shouldConsume = activePerk == Perk.CHAIN_MERGE || 
                                     activePerk == Perk.PATH_MERGE || 
                                     activePerk == Perk.SKIP_SPAWN
                 val nextState = if (shouldConsume) state.consumePerk(activePerk) else state
-                nextState.copy(activePerk = null)
+                
+                // Only force a reset if we are using CHAIN_MERGE, no chain happened, 
+                // AND the merge wouldn't have naturally maintained the combo (uniqueGroups <= 1)
+                val isNaturallyMaintained = merge.uniqueGroups > 1 || merge.resultId.contains("path_merge")
+                val nextCombo = if (activePerk == Perk.CHAIN_MERGE && !isChainStep && !isNaturallyMaintained) 0 else state.combo
+
+                nextState.copy(activePerk = null, combo = nextCombo)
+            }
+
+            if (activePerkBeforeClear == Perk.CHAIN_MERGE && !isChainStep) {
+                achievementDelegate.checkComboBroken(oldCombo, 0)
             }
 
             if (activePerkBeforeClear == Perk.SKIP_SPAWN) {
