@@ -295,6 +295,7 @@ internal class GameViewModel(
                 canReroll = false,
             )
         }
+        achievementDelegate.onRerollUsed()
         stateDelegate.persistState(stateDelegate.getCurrentGameState())
     }
 

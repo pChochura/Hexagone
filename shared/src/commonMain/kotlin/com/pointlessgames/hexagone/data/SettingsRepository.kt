@@ -23,6 +23,7 @@ class SettingsRepository(
     private val unlockedAchievementsKey = androidx.datastore.preferences.core.stringSetPreferencesKey("unlocked_achievements")
     private val perksCollectedLifetimeKey = androidx.datastore.preferences.core.intPreferencesKey("perks_collected_lifetime")
     private val gamesFinishedLifetimeKey = androidx.datastore.preferences.core.intPreferencesKey("games_finished_lifetime")
+    private val rerollsLifetimeKey = androidx.datastore.preferences.core.intPreferencesKey("rerolls_lifetime")
 
     suspend fun getBestScore(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[bestScoreKey] ?: 0
@@ -161,6 +162,19 @@ class SettingsRepository(
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[gamesFinishedLifetimeKey] ?: 0
                 prefs[gamesFinishedLifetimeKey] = current + 1
+            }
+        }
+    }
+
+    suspend fun getRerollsLifetime(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[rerollsLifetimeKey] ?: 0
+    }
+
+    suspend fun incrementRerollsLifetime() = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[rerollsLifetimeKey] ?: 0
+                prefs[rerollsLifetimeKey] = current + 1
             }
         }
     }

@@ -11,6 +11,7 @@ class NoOpAchievementManager : AchievementManager {
     override fun showAchievements() {}
     override fun trackMerge() {}
     override fun trackPerkUsed(perk: Perk) {}
+    override fun trackReroll() {}
 
     override val unlockedAchievements: SharedFlow<GameAchievement> = MutableSharedFlow<GameAchievement>().asSharedFlow()
     override suspend fun getAchievementsStatus(): List<AchievementStatus> = emptyList()

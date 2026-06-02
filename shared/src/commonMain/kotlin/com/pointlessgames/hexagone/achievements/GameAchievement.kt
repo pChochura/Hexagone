@@ -49,5 +49,7 @@ enum class GameAchievement(
     // New Achievements
     PERK_HUNTER("perk_hunter", "Perk Hunter", "Collect a perk from the board", "CgkI_perk_hunter", "grp.perk_hunter", isIncremental = true),
     COMBO_BREAKER("combo_breaker", "Combo Breaker", "Break a combo higher than 7", "CgkI_combo_breaker", "grp.combo_breaker"),
-    THE_JOURNEY_BEGINS("the_journey_begins", "The Journey Begins", "Finish your first game", "CgkI_the_journey_begins", "grp.the_journey_begins", isIncremental = true);
+    THE_JOURNEY_BEGINS("the_journey_begins", "The Journey Begins", "Finish your first game", "CgkI_the_journey_begins", "grp.the_journey_begins", isIncremental = true),
+    CHANCE_TAKEN("chance_taken", "Chance Taken", "Reroll perk rewards for the first time", "CgkI_chance_taken", "grp.chance_taken"),
+    GAMBLER("gambler", "Gambler", "Reroll perk rewards 15 times", "CgkI_gambler", "grp.gambler", isIncremental = true);
 }

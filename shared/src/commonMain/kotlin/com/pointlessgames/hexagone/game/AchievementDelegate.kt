@@ -157,4 +157,8 @@ internal class AchievementDelegate(
     fun onSpawnOccurred() {
         uiState.update { it.copy(consecutiveMergesWithoutSpawn = 0) }
     }
+
+    fun onRerollUsed() {
+        achievementManager.trackReroll()
+    }
 }

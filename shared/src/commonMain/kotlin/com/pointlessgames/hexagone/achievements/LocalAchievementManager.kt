@@ -41,6 +41,7 @@ class LocalAchievementManager(
                     settingsRepository.incrementGamesFinishedLifetime()
                     unlockAchievement(GameAchievement.THE_JOURNEY_BEGINS)
                 }
+                GameAchievement.CHANCE_TAKEN -> trackReroll()
                 else -> {}
             }
         }
@@ -69,6 +70,18 @@ class LocalAchievementManager(
 
             if (used.size == Perk.entries.size) {
                 unlockAchievement(GameAchievement.PERK_COLLECTOR)
+            }
+        }
+    }
+
+    override fun trackReroll() {
+        scope.launch {
+            settingsRepository.incrementRerollsLifetime()
+            val total = settingsRepository.getRerollsLifetime()
+            
+            unlockAchievement(GameAchievement.CHANCE_TAKEN)
+            if (total >= 15) {
+                unlockAchievement(GameAchievement.GAMBLER)
             }
         }
     }

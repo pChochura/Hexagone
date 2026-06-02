@@ -16,6 +16,7 @@ interface AchievementManager {
     // Lifetime tracking
     fun trackMerge()
     fun trackPerkUsed(perk: Perk)
+    fun trackReroll()
 
     val unlockedAchievements: SharedFlow<GameAchievement>
     suspend fun getAchievementsStatus(): List<AchievementStatus>

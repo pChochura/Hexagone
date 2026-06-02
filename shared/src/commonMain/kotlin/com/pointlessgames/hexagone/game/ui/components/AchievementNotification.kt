@@ -36,10 +36,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.pointlessgames.hexagone.achievements.GameAchievement
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun AchievementNotification(
@@ -52,74 +55,78 @@ fun AchievementNotification(
 
     LaunchedEffect(achievement) {
         isVisible = true
-        delay(3000)
+        delay(3000.milliseconds)
         isVisible = false
-        delay(500)
+        delay(500.milliseconds)
         onFinished()
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(MaterialTheme.spacing.medium),
-        contentAlignment = Alignment.TopCenter
+    Popup(
+        alignment = Alignment.TopCenter,
+        properties = PopupProperties(focusable = false)
     ) {
-        AnimatedVisibility(
-            visible = isVisible,
-            enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
-            exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(MaterialTheme.spacing.medium),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Row(
-                modifier = Modifier
-                    .shadow(8.dp, RoundedCornerShape(MaterialTheme.cornerRadius.medium))
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                Color(0xFF2C3E50),
-                                Color(0xFF4CA1AF)
-                            )
-                        ),
-                        RoundedCornerShape(MaterialTheme.cornerRadius.medium)
-                    )
-                    .border(
-                        1.dp,
-                        Color.White.copy(alpha = 0.2f),
-                        RoundedCornerShape(MaterialTheme.cornerRadius.medium)
-                    )
-                    .clickable { onClick() }
-                    .padding(MaterialTheme.spacing.medium),
-                verticalAlignment = Alignment.CenterVertically
+            AnimatedVisibility(
+                visible = isVisible,
+                enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
             ) {
-                Box(
+                Row(
                     modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
+                        .shadow(8.dp, RoundedCornerShape(MaterialTheme.cornerRadius.medium))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    Color(0xFF2C3E50),
+                                    Color(0xFF4CA1AF)
+                                )
+                            ),
+                            RoundedCornerShape(MaterialTheme.cornerRadius.medium)
+                        )
+                        .border(
+                            1.dp,
+                            Color.White.copy(alpha = 0.2f),
+                            RoundedCornerShape(MaterialTheme.cornerRadius.medium)
+                        )
+                        .clickable { onClick() }
+                        .padding(MaterialTheme.spacing.medium),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "⭐",
-                        fontSize = 20.sp
-                    )
-                }
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "⭐",
+                            fontSize = 20.sp
+                        )
+                    }
 
-                Spacer(Modifier.width(MaterialTheme.spacing.medium))
+                    Spacer(Modifier.width(MaterialTheme.spacing.medium))
 
-                Column {
-                    Text(
-                        text = "Achievement Unlocked!",
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = achievement.name.replace("_", " ").lowercase()
-                            .replaceFirstChar { it.uppercase() },
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Black
-                    )
+                    Column {
+                        Text(
+                            text = "Achievement Unlocked!",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = achievement.title,
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
                 }
             }
         }
