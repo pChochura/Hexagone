@@ -88,7 +88,10 @@ internal class ActionDelegate(
                         ) else cell
                     },
                     preview = currentState.preview.filterNot { it.x == x && it.y == y },
-                    pendingMerge = merge.copy(isPerkAssisted = perk != null),
+                    pendingMerge = merge.copy(
+                        isPerkAssisted = perk != null,
+                        startingCombo = currentState.combo
+                    ),
                     activeMergeStepIndex = 0,
                     pendingMergeScore = stepScore,
                     combo = nextComboValue,
@@ -167,12 +170,14 @@ internal class ActionDelegate(
             Perk.PATH_MERGE -> {
                 val merge = engine.calculatePathMerge(x, y, state.grid)
                 merge?.let {
+                    val nextId = "preview_path_merge"
                     it.copy(
-                        resultId = it.resultId.replace("cell_", "cell_path_merge_"),
-                        forceSolidIds = setOf(it.resultId.replace("cell_", "cell_path_merge_")),
+                        resultId = nextId,
+                        forceSolidIds = setOf(nextId),
                         previewValues = ghostAtPos?.let { mapOf(it.id to merge.finalValue) }
                             ?: emptyMap(),
                         baseScore = calculatePotentialScore(it, state),
+                        isPerkAssisted = true
                     )
                 }
             }
@@ -275,11 +280,13 @@ internal class ActionDelegate(
             Perk.PATH_MERGE -> {
                 val m = engine.calculatePathMerge(cell.x, cell.y, state.grid)
                 m?.let {
+                    val nextId = "preview_path_merge"
                     it.copy(
-                        resultId = it.resultId.replace("cell_", "cell_path_merge_"),
-                        forceSolidIds = setOf(it.resultId.replace("cell_", "cell_path_merge_")),
+                        resultId = nextId,
+                        forceSolidIds = setOf(nextId),
                         previewValues = mapOf(cell.id to m.finalValue),
                         baseScore = calculatePotentialScore(it, state),
+                        isPerkAssisted = true
                     )
                 }
             }
@@ -609,8 +616,8 @@ internal class ActionDelegate(
                                 ) else c
                             },
                             pendingMerge = merge.copy(
-                                resultId = merge.resultId.replace("cell_", "cell_path_merge_"),
-                                isPerkAssisted = true
+                                isPerkAssisted = true,
+                                startingCombo = currentState.combo
                             ),
                             activeMergeStepIndex = 0,
                             pendingMergeScore = stepScore,

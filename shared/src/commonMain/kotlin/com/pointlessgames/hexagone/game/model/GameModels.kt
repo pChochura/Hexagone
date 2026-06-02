@@ -244,7 +244,8 @@ data class MergeTransition(
     val forceGhostIds: Set<String>? = null,
     val forceSolidIds: Set<String>? = null,
     val isRemoval: Boolean = false,
-    val isPerkAssisted: Boolean = false
+    val isPerkAssisted: Boolean = false,
+    val startingCombo: Int = 0
 )
 
 @Immutable

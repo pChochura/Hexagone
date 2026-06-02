@@ -88,7 +88,7 @@ internal class MergeDelegate(
             merge,
             currentState.grid,
             currentState.preview,
-            currentState.combo,
+            merge.startingCombo,
             currentState.activePerk,
             stateDelegate.redemptionBaseline
         ).let {
@@ -240,7 +240,8 @@ internal class MergeDelegate(
                     },
                     pendingMerge = chainMerge.copy(
                         resultId = chainMerge.resultId + "_chain",
-                        isPerkAssisted = true
+                        isPerkAssisted = true,
+                        startingCombo = finalCombo
                     ),
                     activeMergeStepIndex = 0,
                     pendingMergeScore = chainScore,

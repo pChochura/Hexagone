@@ -243,7 +243,7 @@ internal class GameEngine(
             totalCells = connectedCells.size,
             uniqueGroups = mergingNeighbors.size,
             baseScore = baseScore,
-            resultId = "cell_${idCounter++}",
+            resultId = "cell_path_merge_${idCounter++}",
             isTactical = connectedCells.any { it.isTactical },
             participatingIds = connectedCells.map { it.id }.toSet()
         )
