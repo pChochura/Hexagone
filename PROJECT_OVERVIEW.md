@@ -11,6 +11,10 @@ The project follows a modular Kotlin Multiplatform (KMP) architecture, prioritiz
 ### Key Directory Map
 ```text
 shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
+├── achievements/
+│   ├── AchievementManager.kt     # Core Interface for unlocks & tracking
+│   ├── LocalAchievementManager.kt # Persistence-backed implementation
+│   └── GameAchievement.kt        # Logical registry of all milestones
 ├── data/
 │   └── SettingsRepository.kt     # Game State & DataStore persistence
 ├── di/
@@ -18,24 +22,28 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 ├── game/
 │   ├── logic/
 │   │   ├── GameEngine.kt         # Core math: neighbors, merges, hints
-│   │   └── Scoring.kt            # Centralized scoring formulas & multipliers
+│   │   ├── Scoring.kt            # Centralized scoring formulas & multipliers
+│   │   └── PatternRecognitionEngine.kt # Geometric achievement scanning
 │   ├── model/
 │   │   ├── GameModels.kt         # Domain Models: Perk, GameUiState, MergeTransition
 │   │   └── UIModels.kt           # UI-specific state: Particles, Animation states
 │   ├── ui/
 │   │   ├── GameScreen.kt         # Root UI Layout
 │   │   └── components/
+│   │       ├── AchievementsDialog.kt # BottomSheet list of all rewards
+│   │       ├── AchievementNotification.kt # Top-level clickable HUD popup
 │   │       ├── PopupsLayer.kt     # Stable HUD notifications (sequential IDs)
 │   │       ├── GridDrawing.kt     # Optimized DrawScope rendering logic
 │   │       ├── GameGridOverlay.kt # Grid orchestrator & gesture handling
 │   │       ├── ScoreSection.kt    # HUD: liquid progress & combo indicators
-│   │       ├── PerkBar.kt         # Strategic tool selection shelf with item animations
+│   │       ├── PerkBar.kt         # Strategic tool selection shelf
 │   │       └── GameOverlays.kt    # Dialog orchestration (Level Up, Game Over)
 │   ├── ActionDelegate.kt         # Delegate: User input & tile manipulation
 │   ├── EffectDelegate.kt         # Delegate: Particles, Popups & HUD feedback
 │   ├── MergeDelegate.kt          # Delegate: Merge lifecycle & animation logic
 │   ├── StateDelegate.kt          # Delegate: History, Undo & Persistence
-│   ├── GameViewModel.kt          # Coordinator: Orchestrates delegates & game state
+│   ├── AchievementDelegate.kt    # Delegate: Rule-based milestone triggering
+│   ├── GameViewModel.kt          # Coordinator: Orchestrates delegates & state
 │   └── DebugDelegate.kt          # Delegate: Developer tools & state manipulation
 ├── ui/
 │   └── theme/
@@ -63,52 +71,58 @@ A merge occurs when 2+ tiles of the same value touch.
 
 ### Scoring & Bonuses
 *   **Scalable Bar Raised Bonus**: Granted whenever the smallest value tile is cleared from the game.
-    *   **Formula**: `clearedValue * 50`.
 *   **Scalable Sacrifice Bonus**: Granted when removing the only remaining highest-value tile.
-    *   **Formula**: `(SacrificedValue * 25) + (Difference * 50)`, where *Difference* is the gap to the second highest tile.
-*   **JANITOR+**: A rare combined achievement for clearing both the board's highest and lowest tiles simultaneously.
-*   **Redemption Bonus**: If a move's score exceeds the previous turn's, a bonus is applied (`250 + 50% of the difference`).
-*   **Combo System**: Multipliers build with every merge (capped at **x12**). The combo only resets when a tile is placed from the queue without triggering a merge; mis-clicks on empty spaces do not penalize the current chain.
+*   **Redemption Bonus**: If a move's score exceeds the previous turn's baseline, a bonus is applied (`250 + 50% of the difference`).
+*   **Combo System**: Multipliers build with every merge (capped at **x12**). The combo resets only when a tile is placed from the queue without triggering a merge.
 
 ---
 
-## 3. Strategic Features
+## 3. Achievement System
+
+The game features a multi-layered achievement system integrated via a platform-agnostic `AchievementManager`.
+
+### Achievement Categories
+1.  **Spatial Architecture**: Detected by `PatternRecognitionEngine` (e.g., *Ring of Fire*, *Great Wall*, *The Prism*).
+2.  **Strategic Mastery**: Turn-based milestones (e.g., *Triple Threat*, *Tactical Genius*, *Snake Charmer*).
+3.  **Purity & Restraint**: Session-long tracking (e.g., *Pacifist*, *Ascetic*, *Zen Master*).
+4.  **Lifetime Grind**: Incremental tracking in `DataStore` (e.g., *Marathon*, *Gambler*, *Perk Collector*).
+5.  **Tactical Prowess**: Reward-based logic (e.g., *Redemption*, *Advanced Janitor*, *Double Vision*).
+
+### UI Integration
+*   **Sequential Notifications**: Unlocked achievements are queued and displayed via a top-level `Popup` window, ensuring visibility over bottom sheets and dialogs.
+*   **Interactive HUD**: Clicking an achievement notification immediately opens the full collection view.
+*   **Dynamic Sorting**: The achievements list automatically prioritizes unlocked rewards while maintaining a logical progression order.
+
+---
+
+## 4. Strategic Features
 
 ### Predictive Hint System & Hover Previews
-The game calculates **Weighted Hints** and provides **Interactive Hover Previews**:
-*   **Merge Isolation**: Hovering over or clicking a "ghost" tile at its preview position will not trigger a merge, as ghost tiles are excluded from all merge calculations.
-*   **Look-Ahead**: Simulates the current move + the next 3 pieces in the queue.
 *   **Interactive Previews**: Visually simulates Swaps, Moves, and direct Value changes (Increment/Fusion) before commitment.
-*   **Z-Index Prioritization**: Moving or selected tiles are dynamically layered on top.
+*   **Merge Isolation**: Previews at ghost positions do not trigger merges; only solid tiles are calculated.
+*   **Look-Ahead**: Simulations account for the current move plus the next 3 pieces in the queue.
 
 ### Perk Economy
 *   **Rarity Weights**: Common (Undo, Move, Remove, Increment), Rare (Advance, Swap, Duplicate, Skip), Legendary (Fusion, Chain Merge, Path Merge).
-*   **Behavioral Rules**:
-    *   **Move & Duplicate**: These actions are "positional only." They preserve the "ghost" or "solid" status of the tile. They do not trigger automatic merges, allowing for strategic setup and combo preparation.
-    *   **Lifespan Stability**: Strategic perks like `Advance Queue` and `Skip Spawn` do not progress the "organic" board state. On-board perks only decrement their lifespan during standard turn progression (i.e., when a regular piece is placed from the queue).
-    *   **Skip Spawn Versatility**: The `Skip Spawn` perk allows placing a tile on any valid empty cell, including those currently occupied by "ghost" previews from the queue.
-*   **Stacked Storage**: Perks of the same type stack in the shelf, displaying a total count.
-*   **On-Board Spawning (Pity System)**: Guaranteed spawning between 8 and 15 turns if the board has space, avoiding "ghost" positions.
+*   **Strategic Behavioral Rules**:
+    *   **Move & Duplicate**: Positional actions that preserve the "ghost" or "solid" status and allow for combo setup without forced merges.
+    *   **Lifespan Stability**: On-board perks only decrement lifespan during regular turn progression, not during strategic perk actions.
+    *   **Pity System**: Guaranteed on-board perk spawning between 8 and 15 turns.
 
 ---
 
-## 4. UI & Visual Identity
+## 5. UI & Visual Identity
 
 *   **Design System**: Centralized in `HexagoneTheme`, mapping Material 3 roles to "Glowing Hardware" tokens.
 *   **Stable Popups**: Notifications use **sequential IDs** and pre-calculated offsets for animation stability.
-*   **Animated Perk Shelf**:
-    *   **Popup Animation**: Items trigger a scale-up "pop" (150%) when added or counts increase.
-    *   **Smart Scrolling**: Shelf automatically scrolls to updated perks during gameplay.
-    *   **Suppressed Boot**: Initial state loads silently to avoid visual noise on game launch.
 *   **Liquid HUD**: A progress bar with a dynamic wavy edge that "splashes" based on point intensity.
-*   **Debug Layer**: `DebugDelegate` for real-time manipulation of tile values and perk spawning.
+*   **Animated Perk Shelf**: Items trigger a scale-up "pop" (150%) when added, with smart scrolling to the latest updates.
 
 ---
 
-## 5. Development Guidelines
-1.  **Modular UI**: Keep composables small. Use `Modifier` as the first parameter and prefer slot-based APIs.
-2.  **State Atomicity**: Use `_uiState.update { ... }` for all gameplay changes.
-3.  **ViewModel Delegation**: Favor composition by extracting complex logic into domain-specific delegates (State, Action, Effect, Merge) to maintain a slim, manageable `GameViewModel`.
-4.  **Stability Guards**: Use stable keys (`key(id)`) for all dynamic items to prevent unnecessary recompositions.
-5.  **Interaction Locking**: Check `isBusy` and `pendingMerge` flags during animations.
-6.  **Persistence**: State is serialized via `kotlinx.serialization` and persisted to `DataStore` after every move.
+## 6. Development Guidelines
+1.  **ViewModel Delegation**: Extract complex logic into domain-specific delegates (State, Action, Effect, Merge, Achievement) to maintain a slim coordinator.
+2.  **State Atomicity**: Use `_uiState.update { ... }` for all gameplay changes to ensure consistency.
+3.  **Stability Guards**: Use stable keys (`key(id)`) for all dynamic items to prevent unnecessary recompositions.
+4.  **Interaction Locking**: Check `isBusy` and `pendingMerge` flags to prevent input during animations.
+5.  **Persistence**: State is serialized via `kotlinx.serialization` and persisted after every successful move.
