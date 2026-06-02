@@ -90,6 +90,5 @@ class LocalAchievementManager(
         val unlocked = settingsRepository.getUnlockedAchievements()
         return GameAchievement.entries
             .map { achievement -> AchievementStatus(achievement, achievement.id in unlocked) }
-            .sortedByDescending { it.isUnlocked }
     }
 }

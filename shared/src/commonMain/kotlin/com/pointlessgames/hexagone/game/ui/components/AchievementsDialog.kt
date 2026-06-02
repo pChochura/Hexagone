@@ -1,5 +1,6 @@
 package com.pointlessgames.hexagone.game.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -46,7 +47,7 @@ import com.pointlessgames.hexagone.achievements.AchievementStatus
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun AchievementsDialog(
     achievementManager: AchievementManager,
@@ -56,6 +57,10 @@ fun AchievementsDialog(
 
     LaunchedEffect(Unit) {
         statuses = achievementManager.getAchievementsStatus()
+    }
+
+    val groupedStatuses = remember(statuses) {
+        statuses.groupBy { it.achievement.category }
     }
 
     ModalBottomSheet(
@@ -88,8 +93,31 @@ fun AchievementsDialog(
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(statuses) { status ->
-                    AchievementItem(status)
+                groupedStatuses.forEach { (category, categoryStatuses) ->
+                    stickyHeader {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surface)
+                                .padding(vertical = MaterialTheme.spacing.small)
+                        ) {
+                            Text(
+                                text = category.title.uppercase(),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                    }
+
+                    items(categoryStatuses) { status ->
+                        AchievementItem(status)
+                    }
+
+                    item {
+                        Spacer(Modifier.height(MaterialTheme.spacing.medium))
+                    }
                 }
             }
         }
