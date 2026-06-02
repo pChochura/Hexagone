@@ -48,6 +48,10 @@ internal class AchievementDelegate(
             achievementManager.unlockAchievement(GameAchievement.TACTICAL_GENIUS_ELITE)
         }
 
+        if (merge.uniqueGroups == 3 && !merge.isPerkAssisted) {
+            achievementManager.unlockAchievement(GameAchievement.ALL_AROUND)
+        }
+
         checkPatternAchievements(uiState.value.grid, uiState.value.preview, engine)
     }
 

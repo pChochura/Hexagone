@@ -50,6 +50,7 @@ enum class GameAchievement(
     THE_JANITOR("the_janitor", "The Janitor", "Use Remove Tile to raise the bar", AchievementCategory.TACTICAL, "CgkI_the_janitor", "grp.the_janitor"),
     SACRIFICE("sacrifice", "Sacrifice", "Use Remove Tile on your highest-value tile", AchievementCategory.TACTICAL, "CgkI_sacrifice", "grp.sacrifice"),
     ADVANCED_JANITOR("advanced_janitor", "Advanced Janitor", "Raise the bar by using the Increment perk", AchievementCategory.TACTICAL, "CgkI_advanced_janitor", "grp.advanced_janitor"),
+    ALL_AROUND("all_around", "All Around", "Merge 3 different value groups without using perks", AchievementCategory.TACTICAL, "CgkI_all_around", "grp.all_around"),
     TACTICAL_GENIUS("tactical_genius", "Tactical Genius", "Perform 5 Tactical Merges in a single game", AchievementCategory.TACTICAL, "CgkI_tactical_genius", "grp.tactical_genius"),
     TACTICAL_GENIUS_ELITE("tactical_genius_elite", "Tactical Expert", "A Tactical Merge with a base score over 1,000", AchievementCategory.TACTICAL, "CgkI_tactical_genius_elite", "grp.tactical_genius_elite"),
     MASTER_OF_FATE("master_of_fate", "Master of Fate", "Use a perk to resolve a Stuck state", AchievementCategory.TACTICAL, "CgkI_master_of_fate", "grp.master_of_fate"),

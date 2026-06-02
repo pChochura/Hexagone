@@ -243,7 +243,8 @@ data class MergeTransition(
     val participatingIds: Set<String>? = null,
     val forceGhostIds: Set<String>? = null,
     val forceSolidIds: Set<String>? = null,
-    val isRemoval: Boolean = false
+    val isRemoval: Boolean = false,
+    val isPerkAssisted: Boolean = false
 )
 
 @Immutable

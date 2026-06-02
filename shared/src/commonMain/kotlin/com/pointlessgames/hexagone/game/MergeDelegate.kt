@@ -238,7 +238,10 @@ internal class MergeDelegate(
                             y = merge.targetY,
                         ) else cell
                     },
-                    pendingMerge = chainMerge.copy(resultId = chainMerge.resultId + "_chain"),
+                    pendingMerge = chainMerge.copy(
+                        resultId = chainMerge.resultId + "_chain",
+                        isPerkAssisted = true
+                    ),
                     activeMergeStepIndex = 0,
                     pendingMergeScore = chainScore,
                 )

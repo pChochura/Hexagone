@@ -88,7 +88,7 @@ internal class ActionDelegate(
                         ) else cell
                     },
                     preview = currentState.preview.filterNot { it.x == x && it.y == y },
-                    pendingMerge = merge,
+                    pendingMerge = merge.copy(isPerkAssisted = perk != null),
                     activeMergeStepIndex = 0,
                     pendingMergeScore = stepScore,
                     combo = nextComboValue,
@@ -608,7 +608,10 @@ internal class ActionDelegate(
                                     y = cell.y,
                                 ) else c
                             },
-                            pendingMerge = merge.copy(resultId = merge.resultId.replace("cell_", "cell_path_merge_")),
+                            pendingMerge = merge.copy(
+                                resultId = merge.resultId.replace("cell_", "cell_path_merge_"),
+                                isPerkAssisted = true
+                            ),
                             activeMergeStepIndex = 0,
                             pendingMergeScore = stepScore,
                             combo = nextComboValue,
