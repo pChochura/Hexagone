@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pointlessgames.hexagone.data.LeaderboardRepository
 import com.pointlessgames.hexagone.data.SettingsRepository
+import com.pointlessgames.hexagone.achievements.AchievementManager
 import com.pointlessgames.hexagone.game.logic.GameEngine
 import com.pointlessgames.hexagone.game.model.*
 import kotlinx.coroutines.delay
@@ -16,6 +17,7 @@ import org.jetbrains.compose.resources.StringResource
 internal class GameViewModel(
     private val settingsRepository: SettingsRepository,
     private val leaderboardRepository: LeaderboardRepository,
+    private val achievementManager: AchievementManager,
 ) : ViewModel() {
 
     private val engine = GameEngine()
@@ -42,12 +44,18 @@ internal class GameViewModel(
         scope = viewModelScope
     )
 
+    private val achievementDelegate = AchievementDelegate(
+        uiState = _uiState,
+        achievementManager = achievementManager,
+    )
+
     private val actionDelegate = ActionDelegate(
         uiState = _uiState,
         engine = engine,
         scope = viewModelScope,
         stateDelegate = stateDelegate,
         effectDelegate = effectDelegate,
+        achievementDelegate = achievementDelegate,
         onSpawnRequested = { spawnFromQueue(_uiState.value.grid) },
         onCheckValidMoves = { checkValidMoves() },
         onUpdateLevel = { updateLevel() },
@@ -61,6 +69,10 @@ internal class GameViewModel(
         scope = viewModelScope,
         stateDelegate = stateDelegate,
         effectDelegate = effectDelegate,
+        achievementDelegate = AchievementDelegate(
+            uiState = _uiState,
+            achievementManager = achievementManager,
+        ),
         onSpawnRequested = { decrementLifespan, skipSpawn -> 
             spawnFromQueue(_uiState.value.grid, decrementLifespan, skipSpawn) 
         }
@@ -111,6 +123,7 @@ internal class GameViewModel(
                             isStuck = savedState.isStuck,
                             availableChoices = savedState.availableChoices,
                             perksUsedTracking = savedState.perksUsedTracking,
+                            consecutiveUndos = savedState.consecutiveUndos,
                         )
                     }
                     stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
@@ -128,6 +141,12 @@ internal class GameViewModel(
                 restartGame()
             }
             recalculateHints()
+        }
+
+        viewModelScope.launch {
+            achievementManager.unlockedAchievements.collect { achievement ->
+                _effects.emit(GameEffect.AchievementUnlock(achievement))
+            }
         }
     }
 
@@ -191,6 +210,10 @@ internal class GameViewModel(
             return
         }
 
+        if (_uiState.value.isStuck && _uiState.value.stuckPerks.contains(perk)) {
+            achievementDelegate.onStuckResolvedWithPerk()
+        }
+
         when (perk) {
             Perk.ADVANCE_QUEUE -> {
                 stateDelegate.saveState()
@@ -207,6 +230,7 @@ internal class GameViewModel(
                         it.consumePerk(Perk.UNDO)
                             .copy(isGameOver = false, activePerk = null, selectedCellId = null)
                     }
+                    achievementDelegate.onUndoUsed()
                     stateDelegate.persistState(stateDelegate.getCurrentGameState())
                 }
             }
@@ -254,6 +278,8 @@ internal class GameViewModel(
                 canReroll = true,
             )
         }
+        achievementDelegate.checkPerkAchievements(perk, _uiState.value)
+        achievementDelegate.onNonUndoAction()
         recalculateHints()
         checkValidMoves()
         stateDelegate.persistState(stateDelegate.getCurrentGameState())
@@ -345,6 +371,7 @@ internal class GameViewModel(
 
                 val playerName = settingsRepository.getPlayerName()
                 _uiState.update { it.copy(isGameOver = true, pendingResult = if (playerName == null) finalResult else null) }
+                achievementDelegate.onGameFinished()
                 settingsRepository.setGameState(null)
 
                 if (playerName != null) {
@@ -405,6 +432,7 @@ internal class GameViewModel(
                 _effects.emit(reward)
             }
 
+            achievementDelegate.onSpawnOccurred()
             updateLevel()
             checkValidMoves()
             _uiState.update { it.copy(isBusy = false) }

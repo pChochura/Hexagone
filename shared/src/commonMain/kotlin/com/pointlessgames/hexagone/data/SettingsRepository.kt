@@ -18,6 +18,11 @@ class SettingsRepository(
     private val playerIdKey = androidx.datastore.preferences.core.stringPreferencesKey("player_id")
     private val playerNameKey = androidx.datastore.preferences.core.stringPreferencesKey("player_name")
     private val playerRegionKey = androidx.datastore.preferences.core.stringPreferencesKey("player_region")
+    private val totalMergesLifetimeKey = androidx.datastore.preferences.core.longPreferencesKey("total_merges_lifetime")
+    private val perksUsedLifetimeKey = androidx.datastore.preferences.core.stringSetPreferencesKey("perks_used_lifetime")
+    private val unlockedAchievementsKey = androidx.datastore.preferences.core.stringSetPreferencesKey("unlocked_achievements")
+    private val perksCollectedLifetimeKey = androidx.datastore.preferences.core.intPreferencesKey("perks_collected_lifetime")
+    private val gamesFinishedLifetimeKey = androidx.datastore.preferences.core.intPreferencesKey("games_finished_lifetime")
 
     suspend fun getBestScore(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[bestScoreKey] ?: 0
@@ -91,6 +96,71 @@ class SettingsRepository(
                 } else {
                     prefs[gameStateKey] = state
                 }
+            }
+        }
+    }
+
+    suspend fun getTotalMergesLifetime(): Long = withContext(Dispatchers.IO) {
+        appSettings.data.first()[totalMergesLifetimeKey] ?: 0L
+    }
+
+    suspend fun incrementTotalMergesLifetime() = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[totalMergesLifetimeKey] ?: 0L
+                prefs[totalMergesLifetimeKey] = current + 1
+            }
+        }
+    }
+
+    suspend fun getPerksUsedLifetime(): Set<String> = withContext(Dispatchers.IO) {
+        appSettings.data.first()[perksUsedLifetimeKey] ?: emptySet()
+    }
+
+    suspend fun addPerkToLifetime(perkName: String) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[perksUsedLifetimeKey] ?: emptySet()
+                prefs[perksUsedLifetimeKey] = current + perkName
+            }
+        }
+    }
+
+    suspend fun getUnlockedAchievements(): Set<String> = withContext(Dispatchers.IO) {
+        appSettings.data.first()[unlockedAchievementsKey] ?: emptySet()
+    }
+
+    suspend fun setAchievementUnlocked(achievementId: String) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[unlockedAchievementsKey] ?: emptySet()
+                prefs[unlockedAchievementsKey] = current + achievementId
+            }
+        }
+    }
+
+    suspend fun getPerksCollectedLifetime(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[perksCollectedLifetimeKey] ?: 0
+    }
+
+    suspend fun incrementPerksCollectedLifetime() = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[perksCollectedLifetimeKey] ?: 0
+                prefs[perksCollectedLifetimeKey] = current + 1
+            }
+        }
+    }
+
+    suspend fun getGamesFinishedLifetime(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[gamesFinishedLifetimeKey] ?: 0
+    }
+
+    suspend fun incrementGamesFinishedLifetime() = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[gamesFinishedLifetimeKey] ?: 0
+                prefs[gamesFinishedLifetimeKey] = current + 1
             }
         }
     }

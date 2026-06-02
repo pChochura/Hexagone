@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.GameViewModel
+import com.pointlessgames.hexagone.game.ui.components.AchievementNotification
 import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
@@ -68,6 +69,9 @@ internal fun GameScreen(
 
     val tierRewardQueue = remember { mutableStateListOf<Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>>() }
     val activeTierReward = tierRewardQueue.firstOrNull()
+
+    val achievementQueue = remember { mutableStateListOf<com.pointlessgames.hexagone.achievements.GameAchievement>() }
+    val activeAchievement = achievementQueue.firstOrNull()
 
     BackHandler(enabled = showLeaderboard) {
         showLeaderboard = false
@@ -150,8 +154,14 @@ internal fun GameScreen(
 
     LaunchedEffect(viewModel.effects) {
         viewModel.effects.collect { effect ->
-            if (effect is com.pointlessgames.hexagone.game.model.GameEffect.TierReward) {
-                tierRewardQueue.add(effect.tier to effect.perk)
+            when (effect) {
+                is com.pointlessgames.hexagone.game.model.GameEffect.TierReward -> {
+                    tierRewardQueue.add(effect.tier to effect.perk)
+                }
+                is com.pointlessgames.hexagone.game.model.GameEffect.AchievementUnlock -> {
+                    achievementQueue.add(effect.achievement)
+                }
+                else -> {}
             }
         }
     }
@@ -248,15 +258,7 @@ internal fun GameScreen(
 
         // Dimming Layer (above board, below PerkBar)
         if (stuckDimAlpha > 0f) {
-            LaunchedEffect(viewModel.effects) {
-        viewModel.effects.collect { effect ->
-            if (effect is com.pointlessgames.hexagone.game.model.GameEffect.TierReward) {
-                tierRewardQueue.add(effect.tier to effect.perk)
-            }
-        }
-    }
-
-    Box(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer { alpha = stuckDimAlpha }
@@ -280,15 +282,7 @@ internal fun GameScreen(
         ) {
             if (!uiState.isDebugMode) {
                 if (uiState.isStuck && uiState.activePerk == null) {
-                    LaunchedEffect(viewModel.effects) {
-        viewModel.effects.collect { effect ->
-            if (effect is com.pointlessgames.hexagone.game.model.GameEffect.TierReward) {
-                tierRewardQueue.add(effect.tier to effect.perk)
-            }
-        }
-    }
-
-    Box(
+                    Box(
                         modifier = Modifier
                             .offset(y = -MaterialTheme.spacing.semiMedium + stuckBounce.dp)
                             .shadow(
@@ -358,5 +352,12 @@ internal fun GameScreen(
             onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
             rankingInfo = uiState.currentRank
         )
+
+        activeAchievement?.let { achievement ->
+            AchievementNotification(
+                achievement = achievement,
+                onFinished = { if (achievementQueue.isNotEmpty()) achievementQueue.removeAt(0) }
+            )
+        }
     }
 }

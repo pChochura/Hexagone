@@ -2,6 +2,7 @@ package com.pointlessgames.hexagone.game.model
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import com.pointlessgames.hexagone.achievements.GameAchievement
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.StringResource
@@ -52,7 +53,11 @@ data class GameUiState(
     val debugSelectedValue: Int? = 1,
     val debugAddAsGhost: Boolean = false,
     val perksUsedTracking: Map<Perk, Int> = emptyMap(),
+    val consecutiveUndos: Int = 0,
+    val consecutiveMergesWithoutSpawn: Int = 0,
+    val tacticalMergesCount: Int = 0,
     val pendingResult: DetailedGameResult? = null,
+    val achievementNotification: GameAchievement? = null,
     val earnedRewardsThisTurn: List<GameEffect.TierReward> = emptyList(),
     val currentRank: RankingInfo? = null,
     val redemptionBaseline: Int? = null,
@@ -104,6 +109,10 @@ sealed interface GameEffect {
         val tier: ComboTier,
         val perk: Perk,
     ) : GameEffect
+
+    data class AchievementUnlock(
+        val achievement: com.pointlessgames.hexagone.achievements.GameAchievement,
+    ) : GameEffect
 }
 
 @Serializable
@@ -134,6 +143,9 @@ data class GameState(
     val isStuck: Boolean = false,
     val availableChoices: Int = 0,
     val perksUsedTracking: Map<Perk, Int> = emptyMap(),
+    val consecutiveUndos: Int = 0,
+    val consecutiveMergesWithoutSpawn: Int = 0,
+    val tacticalMergesCount: Int = 0,
     val redemptionBaseline: Int? = null,
 )
 

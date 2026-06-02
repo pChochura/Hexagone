@@ -20,6 +20,7 @@ internal class ActionDelegate(
     private val scope: CoroutineScope,
     private val stateDelegate: StateDelegate,
     private val effectDelegate: EffectDelegate,
+    private val achievementDelegate: AchievementDelegate,
     private val onSpawnRequested: () -> Unit,
     private val onCheckValidMoves: () -> Unit,
     private val onUpdateLevel: () -> Unit,
@@ -31,6 +32,7 @@ internal class ActionDelegate(
         if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
 
         onHoveredMergeChanged(null)
+        achievementDelegate.onNonUndoAction()
 
         val perk = state.activePerk
         val selectedId = state.selectedCellId
@@ -101,7 +103,9 @@ internal class ActionDelegate(
         } else {
             if (perk == Perk.CHAIN_MERGE) {
                 stateDelegate.saveState()
-                uiState.update { it.consumePerk(Perk.CHAIN_MERGE).copy(activePerk = null) }
+                val oldCombo = uiState.value.combo
+                uiState.update { it.consumePerk(Perk.CHAIN_MERGE).copy(activePerk = null, combo = 0) }
+                achievementDelegate.checkComboBroken(oldCombo, 0)
                 finalizeAction()
             }
         }
@@ -416,6 +420,12 @@ internal class ActionDelegate(
                         )
                     }
                 }
+
+                achievementDelegate.checkCleanse(state.grid, uiState.value.grid)
+                achievementDelegate.checkScoreAchievements(uiState.value.score)
+                achievementDelegate.checkLevelAchievements(uiState.value.level)
+                achievementDelegate.checkPerkAchievements(Perk.REMOVE_TILE, uiState.value)
+                achievementDelegate.onNonUndoAction()
                 finalizeAction()
             }
 
@@ -650,6 +660,12 @@ internal class ActionDelegate(
                         )
                     }
                 }
+
+                achievementDelegate.checkCleanse(state.grid, uiState.value.grid)
+                achievementDelegate.checkScoreAchievements(uiState.value.score)
+                achievementDelegate.checkLevelAchievements(uiState.value.level)
+                achievementDelegate.checkPerkAchievements(Perk.REMOVE_TILE, uiState.value)
+                achievementDelegate.onNonUndoAction()
                 finalizeAction()
             }
 
@@ -679,6 +695,7 @@ internal class ActionDelegate(
             val collectedPerk = currentState.onBoardPerks.find { it.x == x && it.y == y }?.perk
             if (collectedPerk != null) {
                 effectDelegate.addPerkPopup(x, y, collectedPerk)
+                achievementDelegate.onPerkCollectedFromBoard()
             }
 
             val updatedGrid = if (cellToMove != null) {
@@ -718,6 +735,7 @@ internal class ActionDelegate(
             val collectedPerk = currentState.onBoardPerks.find { it.x == x && it.y == y }?.perk
             if (collectedPerk != null) {
                 effectDelegate.addPerkPopup(x, y, collectedPerk)
+                achievementDelegate.onPerkCollectedFromBoard()
             }
 
             val updatedGrid = if (cellToCopy != null) {
@@ -735,6 +753,11 @@ internal class ActionDelegate(
                 )
             } else {
                 currentState.preview.filterNot { it.x == x && it.y == y }
+            }
+
+            val potentialMerges = getPotentialMerges()
+            if (potentialMerges.values.any { it.participatingIds.contains(selectedId) }) {
+                achievementDelegate.onDoubleVisionOccurred()
             }
 
             currentState.copy(
@@ -782,9 +805,11 @@ internal class ActionDelegate(
 
             if (collectedPerkAt1 != null) {
                 effectDelegate.addPerkPopup(x1, y1, collectedPerkAt1)
+                achievementDelegate.onPerkCollectedFromBoard()
             }
             if (collectedPerkAt2 != null) {
                 effectDelegate.addPerkPopup(x2, y2, collectedPerkAt2)
+                achievementDelegate.onPerkCollectedFromBoard()
             }
 
             currentState.copy(
@@ -802,6 +827,7 @@ internal class ActionDelegate(
     }
 
     private fun finalizeAction() {
+        achievementDelegate.onNonUndoAction()
         onUpdateLevel()
         if (uiState.value.preview.isEmpty()) {
             onSpawnRequested()

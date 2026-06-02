@@ -85,6 +85,9 @@ internal class StateDelegate(
             isStuck = state.isStuck,
             availableChoices = state.availableChoices,
             perksUsedTracking = state.perksUsedTracking,
+            consecutiveUndos = state.consecutiveUndos,
+            consecutiveMergesWithoutSpawn = state.consecutiveMergesWithoutSpawn,
+            tacticalMergesCount = state.tacticalMergesCount,
             redemptionBaseline = state.redemptionBaseline,
         )
     }
@@ -120,6 +123,9 @@ internal class StateDelegate(
                 canReroll = previousState.canReroll,
                 perkSpawnCounter = previousState.perkSpawnCounter,
                 perksUsedTracking = previousState.perksUsedTracking,
+                consecutiveUndos = previousState.consecutiveUndos,
+                consecutiveMergesWithoutSpawn = previousState.consecutiveMergesWithoutSpawn,
+                tacticalMergesCount = previousState.tacticalMergesCount,
                 redemptionBaseline = undoneMoveScore,
                 earnedRewardsThisTurn = emptyList(),
                 pendingMerge = null,

@@ -21,6 +21,7 @@ internal class MergeDelegate(
     private val scope: CoroutineScope,
     private val stateDelegate: StateDelegate,
     private val effectDelegate: EffectDelegate,
+    private val achievementDelegate: AchievementDelegate,
     private val onSpawnRequested: (decrementLifespan: Boolean, skipSpawn: Boolean) -> Unit,
 ) {
     private var lastProcessedMergeId: String? = null
@@ -117,6 +118,10 @@ internal class MergeDelegate(
         val isBarRaised = barRaisedBonus > 0
         val isSacrifice = scoreResult.sacrificeBonus > 0
 
+        if (redemptionBonus) {
+            achievementDelegate.onRedemptionOccurred()
+        }
+
         effectDelegate.handlePopups(
             merge.targetX,
             merge.targetY,
@@ -131,6 +136,8 @@ internal class MergeDelegate(
 
         if (collectedOnBoard != null) {
             effectDelegate.addPerkPopup(merge.targetX, merge.targetY, collectedOnBoard)
+            achievementDelegate.checkPerkAchievements(collectedOnBoard, currentState)
+            achievementDelegate.onPerkCollectedFromBoard()
         }
 
         val remainingOnBoard =
@@ -181,6 +188,15 @@ internal class MergeDelegate(
                 totalMerges = it.totalMerges + 1,
             )
         }
+
+        achievementDelegate.checkMergeAchievements(merge)
+        achievementDelegate.checkComboAchievements(finalCombo)
+        achievementDelegate.checkComboBroken(currentState.combo, finalCombo)
+        achievementDelegate.checkLevelAchievements(uiState.value.level)
+        achievementDelegate.checkScoreAchievements(finalScore)
+        achievementDelegate.onMergesIncremented(uiState.value.totalMerges)
+        achievementDelegate.onMergeDetails(merge.isTactical, isBarRaised, isSacrifice)
+        achievementDelegate.onNonUndoAction()
 
         handleChainMerge(merge, finalCombo)
     }
