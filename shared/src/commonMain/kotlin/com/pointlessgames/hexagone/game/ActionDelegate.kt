@@ -698,6 +698,7 @@ internal class ActionDelegate(
 
     private fun moveTile(selectedId: String, x: Int, y: Int) {
         stateDelegate.saveState()
+        var isGhostMarkedTactical = false
         uiState.update { currentState ->
             val cellToMove = currentState.grid.find { it.id == selectedId }
             val previewToMove = currentState.preview.find { it.id == selectedId }
@@ -715,7 +716,7 @@ internal class ActionDelegate(
                 }
             } else {
                 if (previewToMove != null) {
-                    achievementDelegate.onGhostMarkedTactical()
+                    isGhostMarkedTactical = true
                 }
                 currentState.grid
             }
@@ -739,6 +740,9 @@ internal class ActionDelegate(
                 onBoardPerks = currentState.onBoardPerks.filterNot { it.x == x && it.y == y },
             ).consumePerk(Perk.MOVE_TILE).copy(activePerk = null, selectedCellId = null)
         }
+        if (isGhostMarkedTactical) {
+            achievementDelegate.onGhostMarkedTactical()
+        }
         achievementDelegate.checkPerkAchievements(Perk.MOVE_TILE, uiState.value, isTargetGhost = selectedId.startsWith("preview"))
         stateDelegate.setRedemptionBaseline(null)
         finalizeAction()
@@ -746,6 +750,7 @@ internal class ActionDelegate(
 
     private fun duplicateTile(selectedId: String, x: Int, y: Int) {
         stateDelegate.saveState()
+        var isGhostMarkedTactical = false
         uiState.update { currentState ->
             val cellToCopy = currentState.grid.find { it.id == selectedId }
             val previewToCopy = currentState.preview.find { it.id == selectedId }
@@ -761,7 +766,7 @@ internal class ActionDelegate(
                 currentState.grid + engine.createCell(x, y, value, isTactical = true)
             } else {
                 if (previewToCopy != null) {
-                    achievementDelegate.onGhostMarkedTactical()
+                    isGhostMarkedTactical = true
                 }
                 currentState.grid
             }
@@ -789,12 +794,16 @@ internal class ActionDelegate(
                 onBoardPerks = currentState.onBoardPerks.filterNot { it.x == x && it.y == y },
             ).consumePerk(Perk.DUPLICATE_TILE).copy(activePerk = null, selectedCellId = null)
         }
+        if (isGhostMarkedTactical) {
+            achievementDelegate.onGhostMarkedTactical()
+        }
         achievementDelegate.checkPerkAchievements(Perk.DUPLICATE_TILE, uiState.value, isTargetGhost = selectedId.startsWith("preview"))
         stateDelegate.setRedemptionBaseline(null)
         finalizeAction()
     }
 
     private fun swapTiles(id1: String, id2: String) {
+        var isGhostMarkedTactical = false
         uiState.update { currentState ->
             val item1 = currentState.grid.find { it.id == id1 }
                 ?: currentState.preview.find { it.id == id1 }
@@ -816,7 +825,7 @@ internal class ActionDelegate(
                 }
             }
             if (id1.startsWith("preview") || id2.startsWith("preview")) {
-                achievementDelegate.onGhostMarkedTactical()
+                isGhostMarkedTactical = true
             }
             val updatedPreview = currentState.preview.map { preview ->
                 when (preview.id) {
@@ -847,6 +856,9 @@ internal class ActionDelegate(
                 ),
                 onBoardPerks = currentState.onBoardPerks.filterNot { (it.x == x1 && it.y == y1) || (it.x == x2 && it.y == y2) },
             ).consumePerk(Perk.SWAP_TILES).copy(activePerk = null, selectedCellId = null)
+        }
+        if (isGhostMarkedTactical) {
+            achievementDelegate.onGhostMarkedTactical()
         }
         achievementDelegate.checkPerkAchievements(Perk.SWAP_TILES, uiState.value, isTargetGhost = id1.startsWith("preview") || id2.startsWith("preview"))
         stateDelegate.setRedemptionBaseline(null)

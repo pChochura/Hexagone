@@ -634,6 +634,7 @@ internal class GameEngine(
                 false
             }
             Perk.SWAP_TILES -> {
+                // Swapping two solid tiles
                 for (i in grid.indices) {
                     for (j in i + 1 until grid.size) {
                         val c1 = grid[i]
@@ -646,6 +647,22 @@ internal class GameEngine(
                             }
                         }
                         if (checkMergeAt(c1.x, c1.y, tempGrid) || checkMergeAt(c2.x, c2.y, tempGrid)) return true
+                    }
+                }
+                // Swapping a solid tile with a ghost
+                for (cell in grid) {
+                    for (preview in previews) {
+                        val tempGrid = grid.map {
+                            if (it.id == cell.id) it.copy(value = preview.value) else it
+                        }
+                        if (checkMergeAt(cell.x, cell.y, tempGrid)) return true
+                        
+                        // Also check if the ghost's new position (cell.x, cell.y) would create a merge
+                        // but ghosts don't merge on their own, they only merge when they land.
+                        // However, if we swap, the ghost stays a ghost at the new position.
+                        // Wait, canPerkResolveStuck should check if the perk allows a merge to happen NOW.
+                        // Swapping a ghost with a solid tile changes the value of the solid tile at its position.
+                        // That's what the code above checks.
                     }
                 }
                 false
