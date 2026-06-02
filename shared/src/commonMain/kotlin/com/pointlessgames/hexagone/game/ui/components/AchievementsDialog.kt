@@ -5,13 +5,13 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -188,108 +188,89 @@ private fun AchievementItem(
         )
     } else remember { mutableStateOf(0.05f) }
 
-    Row(
+    val progress = if (status.maxProgress > 0L) (status.currentProgress.toFloat() / status.maxProgress.toFloat()).coerceIn(0f, 1f) else if (status.isUnlocked) 1f else 0f
+    val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium)
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                if (status.isUnlocked || isHighlighted) Color.White.copy(alpha = if (isHighlighted) highlightAlpha else 0.05f) else Color.Transparent,
-                RoundedCornerShape(MaterialTheme.cornerRadius.medium)
-            )
+            .height(IntrinsicSize.Min)
+            .clip(shape)
             .border(
                 1.dp,
                 if (isHighlighted) MaterialTheme.colorScheme.primary.copy(alpha = 0.8f) 
                 else if (status.isUnlocked) Color.White.copy(alpha = 0.1f) 
                 else Color.White.copy(alpha = 0.05f),
-                RoundedCornerShape(MaterialTheme.cornerRadius.medium)
+                shape
             )
-            .padding(MaterialTheme.spacing.medium),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(
-                    if (status.isUnlocked) {
-                        Brush.linearGradient(listOf(Color(0xFF2C3E50), Color(0xFF4CA1AF)))
-                    } else {
-                        Brush.linearGradient(listOf(Color.Gray.copy(alpha = 0.2f), Color.Gray.copy(alpha = 0.1f)))
-                    }
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = if (status.isUnlocked) "⭐" else "🔒",
-                fontSize = 18.sp,
-                modifier = Modifier.padding(bottom = 2.dp)
+        if (progress > 0f) {
+            WavyProgressBar(
+                progress = progress,
+                modifier = Modifier.matchParentSize(),
+                showContainer = true,
+                containerColor = if (status.isUnlocked) Color.White.copy(alpha = 0.05f) else Color.Transparent,
+                borderColor = Color.Transparent,
+                shape = shape,
+                isWavy = !status.isUnlocked
             )
+        } else if (isHighlighted) {
+            Box(modifier = Modifier.matchParentSize().background(Color.White.copy(alpha = highlightAlpha)))
         }
 
-        Spacer(Modifier.width(MaterialTheme.spacing.medium))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(MaterialTheme.spacing.medium),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (status.isUnlocked) {
+                            Brush.linearGradient(listOf(Color(0xFF2C3E50), Color(0xFF4CA1AF)))
+                        } else {
+                            Brush.linearGradient(listOf(Color.Gray.copy(alpha = 0.2f), Color.Gray.copy(alpha = 0.1f)))
+                        }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (status.isUnlocked) "⭐" else "🔒",
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(bottom = 2.dp)
+                )
+            }
 
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = status.achievement.title,
-                color = Color.White.copy(alpha = alpha),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = status.achievement.description,
-                color = Color.White.copy(alpha = alpha * 0.7f),
-                fontSize = 12.sp
-            )
+            Spacer(Modifier.width(MaterialTheme.spacing.medium))
 
-            if (status.maxProgress > 0 && !status.isUnlocked) {
-                Spacer(Modifier.height(MaterialTheme.spacing.small))
-                AchievementProgressBar(
-                    current = status.currentProgress,
-                    max = status.maxProgress
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = status.achievement.title,
+                    color = Color.White.copy(alpha = alpha),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = status.achievement.description,
+                    color = Color.White.copy(alpha = alpha * 0.7f),
+                    fontSize = 12.sp
                 )
             }
         }
-    }
-}
 
-@Composable
-private fun AchievementProgressBar(
-    current: Long,
-    max: Long
-) {
-    val progress = (current.toFloat() / max.toFloat()).coerceIn(0f, 1f)
-    val colorScheme = MaterialTheme.colorScheme
-    
-    Column {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(4.dp))
-                .clip(RoundedCornerShape(4.dp))
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val width = size.width * progress
-                if (width > 0) {
-                    drawRect(
-                        brush = Brush.horizontalGradient(
-                            listOf(
-                                colorScheme.scrim.copy(alpha = 0.3f),
-                                colorScheme.primary.copy(alpha = 0.6f),
-                            )
-                        ),
-                        size = Size(width, size.height)
-                    )
-                }
-            }
+        if (status.maxProgress > 0 && !status.isUnlocked) {
+            Text(
+                text = "${status.currentProgress} / ${status.maxProgress}",
+                color = Color.White.copy(alpha = 0.4f),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(MaterialTheme.spacing.small)
+            )
         }
-        Spacer(Modifier.height(2.dp))
-        Text(
-            text = "$current / $max",
-            color = Color.White.copy(alpha = 0.4f),
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.End
-        )
     }
 }
