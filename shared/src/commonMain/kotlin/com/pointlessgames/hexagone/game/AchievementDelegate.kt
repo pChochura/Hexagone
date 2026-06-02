@@ -48,7 +48,7 @@ internal class AchievementDelegate(
             achievementManager.unlockAchievement(GameAchievement.TACTICAL_GENIUS_ELITE)
         }
 
-        checkPatternAchievements(uiState.value.grid, engine)
+        checkPatternAchievements(uiState.value.grid, uiState.value.preview, engine)
     }
 
     fun checkComboBroken(oldCombo: Int, newCombo: Int) {
@@ -76,6 +76,9 @@ internal class AchievementDelegate(
     fun checkLevelAchievements(level: Int) {
         if (level >= 30) {
             achievementManager.unlockAchievement(GameAchievement.HEX_MASTER)
+            if (!uiState.value.ghostPerkUsedInSession) {
+                achievementManager.unlockAchievement(GameAchievement.SOLID_GROUND)
+            }
         }
         if (level >= 15) {
             achievementManager.unlockAchievement(GameAchievement.SEASONED_PLAYER)
@@ -107,9 +110,13 @@ internal class AchievementDelegate(
         }
     }
 
-    fun checkPerkAchievements(perk: Perk, state: GameUiState) {
+    fun checkPerkAchievements(perk: Perk, state: GameUiState, isTargetGhost: Boolean = false) {
         uiState.update { it.copy(perkUsedInSession = true) }
         achievementManager.unlockAchievement(GameAchievement.FIRST_AID)
+
+        if (isTargetGhost) {
+            handleGhostPerkTrigger(perk)
+        }
 
         if (state.collectedPerks.size >= 10) {
             achievementManager.unlockAchievement(GameAchievement.DEEP_POCKETS)
@@ -121,6 +128,18 @@ internal class AchievementDelegate(
 
         // Perk Collector check is now handled in AchievementManager.trackPerkUsed
         achievementManager.trackPerkUsed(perk)
+    }
+
+    private fun handleGhostPerkTrigger(perk: Perk) {
+        uiState.update { it.copy(ghostPerkUsedInSession = true) }
+        when (perk) {
+            Perk.MOVE_TILE -> achievementManager.unlockAchievement(GameAchievement.PHANTOM_MOVE)
+            Perk.DUPLICATE_TILE -> achievementManager.unlockAchievement(GameAchievement.SPECTRAL_ECHO)
+            Perk.REMOVE_TILE -> achievementManager.unlockAchievement(GameAchievement.CLEAN_SWEEP)
+            Perk.SWAP_TILES -> achievementManager.unlockAchievement(GameAchievement.POLTERGEIST)
+            Perk.INCREMENT_TILE -> achievementManager.unlockAchievement(GameAchievement.GHOSTLY_ENHANCEMENT)
+            else -> {}
+        }
     }
 
     fun onDoubleVisionOccurred() {
@@ -200,7 +219,7 @@ internal class AchievementDelegate(
     }
 
     fun onSpawnOccurred() {
-        uiState.update { it.copy(consecutiveMergesWithoutSpawn = 0, barRaisedThisTurn = 0) }
+        uiState.update { it.copy(consecutiveMergesWithoutSpawn = 0, barRaisedThisTurn = 0, tacticalGhostsThisTurn = 0) }
     }
 
     fun onRerollUsed() {
@@ -219,7 +238,21 @@ internal class AchievementDelegate(
         achievementManager.unlockAchievement(GameAchievement.MISSED_OPPORTUNITY)
     }
 
-    fun checkPatternAchievements(grid: List<HexagonCell>, engine: GameEngine) {
+    fun onGhostMarkedTactical() {
+        uiState.update { 
+            val next = it.tacticalGhostsThisTurn + 1
+            if (next >= 3) {
+                achievementManager.unlockAchievement(GameAchievement.GHOST_PROTOCOL)
+            }
+            it.copy(tacticalGhostsThisTurn = next)
+        }
+    }
+
+    fun onPossession() {
+        achievementManager.unlockAchievement(GameAchievement.POSSESSION)
+    }
+
+    fun checkPatternAchievements(grid: List<HexagonCell>, previews: List<com.pointlessgames.hexagone.game.model.PreviewCell>, engine: GameEngine) {
         if (PatternRecognitionEngine.checkRingOfFire(grid, engine)) {
             achievementManager.unlockAchievement(GameAchievement.RING_OF_FIRE)
         }
@@ -231,6 +264,12 @@ internal class AchievementDelegate(
         }
         if (PatternRecognitionEngine.checkThePrism(grid)) {
             achievementManager.unlockAchievement(GameAchievement.THE_PRISM)
+        }
+        if (PatternRecognitionEngine.checkQuadruplets(previews)) {
+            achievementManager.unlockAchievement(GameAchievement.QUADRUPLETS)
+        }
+        if (PatternRecognitionEngine.checkTheMedium(grid, previews, engine)) {
+            achievementManager.unlockAchievement(GameAchievement.THE_MEDIUM)
         }
     }
 

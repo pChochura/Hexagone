@@ -59,7 +59,9 @@ data class GameUiState(
     val comboTriggeredInSession: Boolean = false,
     val perkUsedInSession: Boolean = false,
     val undoUsedInSession: Boolean = false,
+    val ghostPerkUsedInSession: Boolean = false,
     val barRaisedThisTurn: Int = 0,
+    val tacticalGhostsThisTurn: Int = 0,
     val pendingResult: DetailedGameResult? = null,
     val achievementNotification: GameAchievement? = null,
     val earnedRewardsThisTurn: List<GameEffect.TierReward> = emptyList(),
@@ -153,6 +155,7 @@ data class GameState(
     val comboTriggeredInSession: Boolean = false,
     val perkUsedInSession: Boolean = false,
     val undoUsedInSession: Boolean = false,
+    val ghostPerkUsedInSession: Boolean = false,
     val redemptionBaseline: Int? = null,
 )
 

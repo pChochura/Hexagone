@@ -424,7 +424,7 @@ internal class ActionDelegate(
                 achievementDelegate.checkCleanse(state.grid, uiState.value.grid)
                 achievementDelegate.checkScoreAchievements(uiState.value.score)
                 achievementDelegate.checkLevelAchievements(uiState.value.level)
-                achievementDelegate.checkPerkAchievements(Perk.REMOVE_TILE, uiState.value)
+                achievementDelegate.checkPerkAchievements(Perk.REMOVE_TILE, uiState.value, isTargetGhost = true)
                 achievementDelegate.onNonUndoAction()
                 finalizeAction()
             }
@@ -484,6 +484,7 @@ internal class ActionDelegate(
                         .copy(activePerk = null, selectedCellId = null)
                 }
 
+                achievementDelegate.onGhostMarkedTactical()
                 result?.let { scoreResult ->
                     targetPos?.let { (tx, ty) ->
                         stateDelegate.persistBestScore(uiState.value.score)
@@ -502,6 +503,7 @@ internal class ActionDelegate(
                         }
                     }
                 }
+                achievementDelegate.checkPerkAchievements(Perk.INCREMENT_TILE, uiState.value, isTargetGhost = true)
                 finalizeAction()
             }
 
@@ -586,6 +588,7 @@ internal class ActionDelegate(
                         }
                     }
                 }
+                achievementDelegate.checkPerkAchievements(Perk.INCREMENT_TILE, uiState.value, isTargetGhost = false)
                 finalizeAction()
             }
 
@@ -672,7 +675,7 @@ internal class ActionDelegate(
                 achievementDelegate.checkCleanse(state.grid, uiState.value.grid)
                 achievementDelegate.checkScoreAchievements(uiState.value.score)
                 achievementDelegate.checkLevelAchievements(uiState.value.level)
-                achievementDelegate.checkPerkAchievements(Perk.REMOVE_TILE, uiState.value)
+                achievementDelegate.checkPerkAchievements(Perk.REMOVE_TILE, uiState.value, isTargetGhost = false)
                 achievementDelegate.onNonUndoAction()
                 finalizeAction()
             }
@@ -711,7 +714,14 @@ internal class ActionDelegate(
                     if (it.id == selectedId) it.copy(x = x, y = y, isTactical = true) else it
                 }
             } else {
+                if (previewToMove != null) {
+                    achievementDelegate.onGhostMarkedTactical()
+                }
                 currentState.grid
+            }
+
+            if (previewToMove != null && collectedPerk != null) {
+                achievementDelegate.onPossession()
             }
 
             val updatedPreview = if (previewToMove != null) {
@@ -729,6 +739,7 @@ internal class ActionDelegate(
                 onBoardPerks = currentState.onBoardPerks.filterNot { it.x == x && it.y == y },
             ).consumePerk(Perk.MOVE_TILE).copy(activePerk = null, selectedCellId = null)
         }
+        achievementDelegate.checkPerkAchievements(Perk.MOVE_TILE, uiState.value, isTargetGhost = selectedId.startsWith("preview"))
         stateDelegate.setRedemptionBaseline(null)
         finalizeAction()
     }
@@ -749,6 +760,9 @@ internal class ActionDelegate(
             val updatedGrid = if (cellToCopy != null) {
                 currentState.grid + engine.createCell(x, y, value, isTactical = true)
             } else {
+                if (previewToCopy != null) {
+                    achievementDelegate.onGhostMarkedTactical()
+                }
                 currentState.grid
             }
 
@@ -775,6 +789,7 @@ internal class ActionDelegate(
                 onBoardPerks = currentState.onBoardPerks.filterNot { it.x == x && it.y == y },
             ).consumePerk(Perk.DUPLICATE_TILE).copy(activePerk = null, selectedCellId = null)
         }
+        achievementDelegate.checkPerkAchievements(Perk.DUPLICATE_TILE, uiState.value, isTargetGhost = selectedId.startsWith("preview"))
         stateDelegate.setRedemptionBaseline(null)
         finalizeAction()
     }
@@ -799,6 +814,9 @@ internal class ActionDelegate(
                     id2 -> cell.copy(x = x1, y = y1, isTactical = true)
                     else -> cell
                 }
+            }
+            if (id1.startsWith("preview") || id2.startsWith("preview")) {
+                achievementDelegate.onGhostMarkedTactical()
             }
             val updatedPreview = currentState.preview.map { preview ->
                 when (preview.id) {
@@ -830,13 +848,14 @@ internal class ActionDelegate(
                 onBoardPerks = currentState.onBoardPerks.filterNot { (it.x == x1 && it.y == y1) || (it.x == x2 && it.y == y2) },
             ).consumePerk(Perk.SWAP_TILES).copy(activePerk = null, selectedCellId = null)
         }
+        achievementDelegate.checkPerkAchievements(Perk.SWAP_TILES, uiState.value, isTargetGhost = id1.startsWith("preview") || id2.startsWith("preview"))
         stateDelegate.setRedemptionBaseline(null)
         finalizeAction()
     }
 
     private fun finalizeAction() {
         achievementDelegate.onNonUndoAction()
-        achievementDelegate.checkPatternAchievements(uiState.value.grid, engine)
+        achievementDelegate.checkPatternAchievements(uiState.value.grid, uiState.value.preview, engine)
         onUpdateLevel()
         if (uiState.value.preview.isEmpty()) {
             onSpawnRequested()

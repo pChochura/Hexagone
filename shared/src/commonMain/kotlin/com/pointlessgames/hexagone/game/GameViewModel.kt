@@ -124,6 +124,7 @@ internal class GameViewModel(
                             comboTriggeredInSession = savedState.comboTriggeredInSession,
                             perkUsedInSession = savedState.perkUsedInSession,
                             undoUsedInSession = savedState.undoUsedInSession,
+                            ghostPerkUsedInSession = savedState.ghostPerkUsedInSession,
                         )
                     }
                     stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))

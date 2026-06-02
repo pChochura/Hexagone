@@ -81,4 +81,23 @@ internal object PatternRecognitionEngine {
         val allParticipatingIds = potentialMerges.values.flatMap { it.participatingIds }.toSet()
         return grid.all { it.id in allParticipatingIds }
     }
+
+    fun checkQuadruplets(previews: List<com.pointlessgames.hexagone.game.model.PreviewCell>): Boolean {
+        return previews.groupBy { it.value }.any { it.value.size >= 4 }
+    }
+
+    fun checkTheMedium(grid: List<HexagonCell>, previews: List<com.pointlessgames.hexagone.game.model.PreviewCell>, engine: GameEngine): Boolean {
+        // Find if any ghost is in a position where it's surrounded by 6 same-value solid tiles
+        val ghostPositions = previews.map { it.x to it.y }
+        for ((gx, gy) in ghostPositions) {
+            val neighbors = engine.getNeighbors(gx, gy)
+            if (neighbors.size == 6) {
+                val neighborCells = grid.filter { it.x to it.y in neighbors.toSet() }
+                if (neighborCells.size == 6 && neighborCells.map { it.value }.distinct().size == 1) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
 }

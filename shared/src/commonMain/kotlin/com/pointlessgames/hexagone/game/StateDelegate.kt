@@ -91,6 +91,7 @@ internal class StateDelegate(
             comboTriggeredInSession = state.comboTriggeredInSession,
             perkUsedInSession = state.perkUsedInSession,
             undoUsedInSession = state.undoUsedInSession,
+            ghostPerkUsedInSession = state.ghostPerkUsedInSession,
             redemptionBaseline = state.redemptionBaseline,
         )
     }
@@ -132,6 +133,7 @@ internal class StateDelegate(
                 comboTriggeredInSession = previousState.comboTriggeredInSession,
                 perkUsedInSession = previousState.perkUsedInSession,
                 undoUsedInSession = previousState.undoUsedInSession,
+                ghostPerkUsedInSession = previousState.ghostPerkUsedInSession,
                 redemptionBaseline = undoneMoveScore,
                 earnedRewardsThisTurn = emptyList(),
                 pendingMerge = null,

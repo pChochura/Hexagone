@@ -58,7 +58,19 @@ enum class GameAchievement(
     ASCETIC("ascetic", "Ascetic", "Reach Level 15 without ever using a Perk", "CgkI_ascetic", "grp.ascetic"),
     ZEN_MASTER("zen_master", "Zen Master", "Reach Level 20 without ever using Undo", "CgkI_zen_master", "grp.zen_master"),
 
-    // --- Phase 7: Miscellaneous ---
+    // --- Phase 7: Ghost Mastery ---
+    PHANTOM_MOVE("phantom_move", "Phantom Move", "Use Move on a ghost tile", "CgkI_phantom_move", "grp.phantom_move"),
+    SPECTRAL_ECHO("spectral_echo", "Spectral Echo", "Use Duplicate on a ghost tile", "CgkI_spectral_echo", "grp.spectral_echo"),
+    CLEAN_SWEEP("clean_sweep", "Clean Sweep", "Use Remove Tile on a ghost tile", "CgkI_clean_sweep", "grp.clean_sweep"),
+    POLTERGEIST("poltergeist", "Poltergeist", "Swap a ghost tile with a solid tile", "CgkI_poltergeist", "grp.poltergeist"),
+    GHOSTLY_ENHANCEMENT("ghostly_enhancement", "Ghostly Enhancement", "Use Increment on a ghost tile", "CgkI_ghostly_enhancement", "grp.ghostly_enhancement"),
+    QUADRUPLETS("quadruplets", "Quadruplets", "Have 4 ghost tiles of the same value on the board", "CgkI_quadruplets", "grp.quadruplets"),
+    THE_MEDIUM("the_medium", "The Medium", "Move a ghost into the center of a Ring of Fire", "CgkI_the_medium", "grp.the_medium"),
+    POSSESSION("possession", "Possession", "Move a ghost tile onto an on-board perk", "CgkI_possession", "grp.possession"),
+    GHOST_PROTOCOL("ghost_protocol", "Ghost Protocol", "Mark 3 ghost tiles as Tactical in one turn", "CgkI_ghost_protocol", "grp.ghost_protocol"),
+    SOLID_GROUND("solid_ground", "Solid Ground", "Reach Level 30 without manipulating ghosts with perks", "CgkI_solid_ground", "grp.solid_ground"),
+
+    // --- Phase 8: Miscellaneous ---
     CLEANSE("cleanse", "Cleanse", "Delete your last solid tile from the board", "CgkI_cleanse", "grp.cleanse"),
     TIME_MACHINE("time_machine", "Time Machine", "Use Undo 3 times in a row", "CgkI_time_machine", "grp.time_machine"),
     LIVING_ON_THE_EDGE("living_on_the_edge", "Living on the Edge", "Perform a merge while the board has only 1 empty space", "CgkI_living_on_the_edge", "grp.living_on_the_edge"),
