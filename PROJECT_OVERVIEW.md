@@ -63,17 +63,21 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 ### The Merge Formula
 A merge occurs when 2+ tiles of the same value touch.
 *   **Solid Only**: Only solid tiles participate in merges. Ghost tiles (previews) are ignored by the merge engine until they are solidified.
+*   **Path Merge (Legendary)**: Merges all connected tiles of the same value across the board into a single target.
 *   **Final Value**: $V_{max} + n - k$
     *   `Vmax`: Highest value in the group.
     *   `n`: Total number of tiles.
     *   `k`: Number of unique value groups involved.
 *   **Base Score**: $\sum Values_{merging} + n^2 - n$.
+*   **Tactical Multiplier**: Any merge involving a tile marked as "tactical" (from a Move, Swap, or Perk action) receives a **1.5x base score multiplier**.
 
 ### Scoring & Bonuses
 *   **Scalable Bar Raised Bonus**: Granted whenever the smallest value tile is cleared from the game.
 *   **Scalable Sacrifice Bonus**: Granted when removing the only remaining highest-value tile.
 *   **Redemption Bonus**: If a move's score exceeds the previous turn's baseline, a bonus is applied (`250 + 50% of the difference`).
-*   **Combo System**: Multipliers build with every merge (capped at **x12**). The combo resets only when a tile is placed from the queue without triggering a merge.
+*   **Combo System**: Multipliers build with every merge (capped at **x12**). 
+    *   The combo resets when a tile is placed from the queue without triggering a merge.
+    *   **Chain Merge Rule**: Using `CHAIN_MERGE` forces a combo reset to 0 if no chain reaction occurs, unless the initial merge was complex enough to maintain the combo naturally (multi-group or path merge).
 
 ---
 
@@ -89,7 +93,8 @@ The game features a multi-layered achievement system integrated via a platform-a
 5.  **Tactical Prowess**: Reward-based logic (e.g., *Redemption*, *Advanced Janitor*, *Double Vision*).
 
 ### UI Integration
-*   **Sequential Notifications**: Unlocked achievements are queued and displayed via a top-level `Popup` window, ensuring visibility over bottom sheets and dialogs.
+*   **Sequential Notifications**: Unlocked achievements are queued and displayed via a top-level `Popup` window.
+*   **Multi-Tier Unlocks**: The logic supports triggering multiple achievement tiers (e.g., *Feeling the Surge* and *Maximum Overdrive*) in a single action.
 *   **Interactive HUD**: Clicking an achievement notification immediately opens the full collection view.
 *   **Dynamic Sorting**: The achievements list automatically prioritizes unlocked rewards while maintaining a logical progression order.
 
@@ -123,6 +128,7 @@ The game features a multi-layered achievement system integrated via a platform-a
 ## 6. Development Guidelines
 1.  **ViewModel Delegation**: Extract complex logic into domain-specific delegates (State, Action, Effect, Merge, Achievement) to maintain a slim coordinator.
 2.  **State Atomicity**: Use `_uiState.update { ... }` for all gameplay changes to ensure consistency.
-3.  **Stability Guards**: Use stable keys (`key(id)`) for all dynamic items to prevent unnecessary recompositions.
-4.  **Interaction Locking**: Check `isBusy` and `pendingMerge` flags to prevent input during animations.
-5.  **Persistence**: State is serialized via `kotlinx.serialization` and persisted after every successful move.
+3.  **Unique Merge IDs**: Always generate dynamic, unique IDs for merges (e.g., `cell_path_merge_N`) to prevent `MergeDelegate` from skipping animation steps due to ID collisions.
+4.  **Stability Guards**: Use stable keys (`key(id)`) for all dynamic items to prevent unnecessary recompositions.
+5.  **Interaction Locking**: Check `isBusy` and `pendingMerge` flags to prevent input during animations.
+6.  **Persistence**: State is serialized via `kotlinx.serialization` and persisted after every successful move.
