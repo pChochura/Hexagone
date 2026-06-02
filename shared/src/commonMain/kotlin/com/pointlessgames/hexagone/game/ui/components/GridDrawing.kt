@@ -129,7 +129,7 @@ internal fun drawHoverResult(
     val isPlacement = merge.resultId.contains("move") || merge.resultId.contains("duplicate") || merge.resultId.contains("swap") || merge.resultId.contains("highlight")
 
     val shouldSkipHexagon = merge.resultId == "preview_move" ||
-            (merge.resultId == "preview_path_merge" && (currentCell != null || currentPreview != null))
+            (merge.resultId.contains("path_merge") && (currentCell != null || currentPreview != null))
 
     if (merge.finalValue > 0 && (merge.finalValue != currentValue || isPlacement) && !shouldSkipHexagon) {
         val isForcedSolid = merge.forceSolidIds?.contains(merge.resultId) == true

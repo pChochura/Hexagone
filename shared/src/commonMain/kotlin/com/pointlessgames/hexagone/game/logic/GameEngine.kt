@@ -230,6 +230,11 @@ internal class GameEngine(
             currentCenterValue = stepValue
         }
 
+        var baseScore = calculateBaseScore(connectedCells.toList())
+        if (connectedCells.any { it.isTactical }) {
+            baseScore = (baseScore * 1.5).toInt()
+        }
+
         return MergeTransition(
             targetX = x,
             targetY = y,
@@ -237,7 +242,7 @@ internal class GameEngine(
             finalValue = finalValue,
             totalCells = connectedCells.size,
             uniqueGroups = mergingNeighbors.size,
-            baseScore = calculateBaseScore(connectedCells.toList()),
+            baseScore = baseScore,
             resultId = "cell_${idCounter++}",
             isTactical = connectedCells.any { it.isTactical },
             participatingIds = connectedCells.map { it.id }.toSet()
@@ -499,10 +504,10 @@ internal class GameEngine(
     }
 
     fun syncCounters(grid: List<HexagonCell>, previews: List<PreviewCell>) {
-        val cellIds = grid.mapNotNull { it.id.substringAfter("cell_").toIntOrNull() }
+        val cellIds = grid.mapNotNull { Regex("\\d+").find(it.id)?.value?.toIntOrNull() }
         idCounter = (cellIds.maxOrNull() ?: -1) + 1
 
-        val previewIds = previews.mapNotNull { it.id.substringAfter("preview_").toIntOrNull() }
+        val previewIds = previews.mapNotNull { Regex("\\d+").find(it.id)?.value?.toIntOrNull() }
         previewIdCounter = (previewIds.maxOrNull() ?: -1) + 1
     }
 

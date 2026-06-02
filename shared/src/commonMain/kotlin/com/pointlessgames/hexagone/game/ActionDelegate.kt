@@ -76,7 +76,7 @@ internal class ActionDelegate(
             stateDelegate.saveState()
             uiState.update { currentState ->
                 val firstStep = merge.steps.first()
-                val isPathMerge = merge.resultId == "preview_path_merge"
+                val isPathMerge = merge.resultId.contains("path_merge")
                 val nextComboValue = Scoring.getNextStepCombo(currentState.combo, 0, isPathMerge)
                 val stepScore = Scoring.getStepScore(firstStep.baseScore, nextComboValue)
 
@@ -168,8 +168,8 @@ internal class ActionDelegate(
                 val merge = engine.calculatePathMerge(x, y, state.grid)
                 merge?.let {
                     it.copy(
-                        resultId = "preview_path_merge",
-                        forceSolidIds = setOf("preview_path_merge"),
+                        resultId = it.resultId.replace("cell_", "cell_path_merge_"),
+                        forceSolidIds = setOf(it.resultId.replace("cell_", "cell_path_merge_")),
                         previewValues = ghostAtPos?.let { mapOf(it.id to merge.finalValue) }
                             ?: emptyMap(),
                         baseScore = calculatePotentialScore(it, state),
@@ -276,8 +276,8 @@ internal class ActionDelegate(
                 val m = engine.calculatePathMerge(cell.x, cell.y, state.grid)
                 m?.let {
                     it.copy(
-                        resultId = "preview_path_merge",
-                        forceSolidIds = setOf("preview_path_merge"),
+                        resultId = it.resultId.replace("cell_", "cell_path_merge_"),
+                        forceSolidIds = setOf(it.resultId.replace("cell_", "cell_path_merge_")),
                         previewValues = mapOf(cell.id to m.finalValue),
                         baseScore = calculatePotentialScore(it, state),
                     )
@@ -605,7 +605,7 @@ internal class ActionDelegate(
                                     y = cell.y,
                                 ) else c
                             },
-                            pendingMerge = merge.copy(resultId = "preview_path_merge"),
+                            pendingMerge = merge.copy(resultId = merge.resultId.replace("cell_", "cell_path_merge_")),
                             activeMergeStepIndex = 0,
                             pendingMergeScore = stepScore,
                             combo = nextComboValue,
