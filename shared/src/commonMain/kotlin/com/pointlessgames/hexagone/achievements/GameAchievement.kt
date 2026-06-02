@@ -51,5 +51,8 @@ enum class GameAchievement(
     COMBO_BREAKER("combo_breaker", "Combo Breaker", "Break a combo higher than 7", "CgkI_combo_breaker", "grp.combo_breaker"),
     THE_JOURNEY_BEGINS("the_journey_begins", "The Journey Begins", "Finish your first game", "CgkI_the_journey_begins", "grp.the_journey_begins", isIncremental = true),
     CHANCE_TAKEN("chance_taken", "Chance Taken", "Reroll perk rewards for the first time", "CgkI_chance_taken", "grp.chance_taken"),
-    GAMBLER("gambler", "Gambler", "Reroll perk rewards 15 times", "CgkI_gambler", "grp.gambler", isIncremental = true);
+    GAMBLER("gambler", "Gambler", "Reroll perk rewards 15 times", "CgkI_gambler", "grp.gambler", isIncremental = true),
+    ADVANCED_JANITOR("advanced_janitor", "Advanced Janitor", "Raise the bar by using the Increment perk", "CgkI_advanced_janitor", "grp.advanced_janitor"),
+    HIGH_ROLLER("high_roller", "High Roller", "Reroll a legendary perk reward", "CgkI_high_roller", "grp.high_roller"),
+    MISSED_OPPORTUNITY("missed_perk", "Missed Opportunity", "Miss a perk collection from the board", "CgkI_missed_perk", "grp.missed_perk");
 }

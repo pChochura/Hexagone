@@ -289,6 +289,10 @@ internal class GameViewModel(
         val state = _uiState.value
         if (!state.canReroll || state.perkOptions.isEmpty()) return
 
+        if (state.perkOptions.any { it.isLegendary }) {
+            achievementDelegate.onRerollLegendary()
+        }
+
         _uiState.update {
             it.copy(
                 perkOptions = engine.pickWeightedPerks(3, excludeLegendary = true),
@@ -408,6 +412,10 @@ internal class GameViewModel(
                 engine.updateOnBoardPerks(perksAfterSpawn)
             } else {
                 perksAfterSpawn
+            }
+
+            if (updatedPerks.size < currentPerks.size) {
+                achievementDelegate.onPerkMissed()
             }
 
             val (nextPerks, nextCounter) = engine.trySpawnPerkOnBoard(

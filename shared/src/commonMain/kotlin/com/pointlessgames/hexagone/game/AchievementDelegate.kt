@@ -161,4 +161,16 @@ internal class AchievementDelegate(
     fun onRerollUsed() {
         achievementManager.trackReroll()
     }
+
+    fun onRerollLegendary() {
+        achievementManager.unlockAchievement(GameAchievement.HIGH_ROLLER)
+    }
+
+    fun onAdvancedJanitor() {
+        achievementManager.unlockAchievement(GameAchievement.ADVANCED_JANITOR)
+    }
+
+    fun onPerkMissed() {
+        achievementManager.unlockAchievement(GameAchievement.MISSED_OPPORTUNITY)
+    }
 }

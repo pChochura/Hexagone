@@ -496,6 +496,10 @@ internal class ActionDelegate(
                             isBarRaised = scoreResult.barRaisedBonus > 0,
                             isSacrifice = false,
                         )
+
+                        if (scoreResult.barRaisedBonus > 0) {
+                            achievementDelegate.onAdvancedJanitor()
+                        }
                     }
                 }
                 finalizeAction()
@@ -576,6 +580,10 @@ internal class ActionDelegate(
                             isBarRaised = scoreResult.barRaisedBonus > 0,
                             isSacrifice = false,
                         )
+
+                        if (scoreResult.barRaisedBonus > 0) {
+                            achievementDelegate.onAdvancedJanitor()
+                        }
                     }
                 }
                 finalizeAction()
