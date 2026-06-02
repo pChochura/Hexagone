@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.ui.components.AchievementNotification
+import com.pointlessgames.hexagone.game.ui.components.AchievementsDialog
 import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
@@ -65,6 +66,7 @@ internal fun GameScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     var showLeaderboard by remember { mutableStateOf(false) }
+    var showAchievements by remember { mutableStateOf(false) }
     val leaderboardViewModel: LeaderboardViewModel = koinViewModel()
 
     val tierRewardQueue = remember { mutableStateListOf<Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>>() }
@@ -73,8 +75,9 @@ internal fun GameScreen(
     val achievementQueue = remember { mutableStateListOf<com.pointlessgames.hexagone.achievements.GameAchievement>() }
     val activeAchievement = achievementQueue.firstOrNull()
 
-    BackHandler(enabled = showLeaderboard) {
+    BackHandler(enabled = showLeaderboard || showAchievements) {
         showLeaderboard = false
+        showAchievements = false
     }
 
     val onEmptySpaceClick = remember(viewModel) { viewModel::onEmptySpaceClicked }
@@ -204,7 +207,8 @@ internal fun GameScreen(
                         highestValue = uiState.highestValue,
                         activePerk = uiState.activePerk,
                         onLevelClick = onDebugToggle,
-                        onLeaderboardClick = { showLeaderboard = true }
+                        onLeaderboardClick = { showLeaderboard = true },
+                        onAchievementsClick = { showAchievements = true }
                     )
 
                     Spacer(Modifier.weight(0.1f))
@@ -356,7 +360,15 @@ internal fun GameScreen(
         activeAchievement?.let { achievement ->
             AchievementNotification(
                 achievement = achievement,
+                onClick = { showAchievements = true },
                 onFinished = { if (achievementQueue.isNotEmpty()) achievementQueue.removeAt(0) }
+            )
+        }
+
+        if (showAchievements) {
+            AchievementsDialog(
+                achievementManager = viewModel.getAchievementManager(),
+                onDismiss = { showAchievements = false }
             )
         }
     }

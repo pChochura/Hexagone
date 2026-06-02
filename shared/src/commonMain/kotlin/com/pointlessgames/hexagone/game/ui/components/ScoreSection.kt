@@ -99,6 +99,7 @@ fun ScoreSection(
     activePerk: Perk?,
     onLevelClick: () -> Unit = {},
     onLeaderboardClick: () -> Unit = {},
+    onAchievementsClick: () -> Unit = {},
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
@@ -148,30 +149,62 @@ fun ScoreSection(
         // Top Header with Game Name and Icons
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onLeaderboardClick) {
-                Canvas(modifier = Modifier.size(spacing.extraLarge)) {
-                    val barWidth = size.width * 0.2f
-                    val gap = size.width * 0.1f
-                    drawRect(
-                        color = Color.White.copy(alpha = 0.7f),
-                        topLeft = Offset(0f, size.height * 0.6f),
-                        size = Size(barWidth, size.height * 0.4f),
-                    )
-                    drawRect(
-                        color = Color.White.copy(alpha = 0.7f),
-                        topLeft = Offset(barWidth + gap, size.height * 0.2f),
-                        size = Size(barWidth, size.height * 0.8f),
-                    )
-                    drawRect(
-                        color = Color.White.copy(alpha = 0.7f),
-                        topLeft = Offset((barWidth + gap) * 2, size.height * 0.4f),
-                        size = Size(barWidth, size.height * 0.6f),
-                    )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onLeaderboardClick) {
+                    Canvas(modifier = Modifier.size(spacing.extraLarge)) {
+                        val barWidth = size.width * 0.2f
+                        val gap = size.width * 0.1f
+                        drawRect(
+                            color = Color.White.copy(alpha = 0.7f),
+                            topLeft = Offset(0f, size.height * 0.6f),
+                            size = Size(barWidth, size.height * 0.4f),
+                        )
+                        drawRect(
+                            color = Color.White.copy(alpha = 0.7f),
+                            topLeft = Offset(barWidth + gap, size.height * 0.2f),
+                            size = Size(barWidth, size.height * 0.8f),
+                        )
+                        drawRect(
+                            color = Color.White.copy(alpha = 0.7f),
+                            topLeft = Offset((barWidth + gap) * 2, size.height * 0.4f),
+                            size = Size(barWidth, size.height * 0.6f),
+                        )
+                    }
+                }
+
+                IconButton(onClick = onAchievementsClick) {
+                    Canvas(modifier = Modifier.size(spacing.extraLarge)) {
+                        val outerRadius = size.minDimension / 2.5f
+                        drawCircle(
+                            color = Color.White.copy(alpha = 0.7f),
+                            radius = outerRadius,
+                            style = Stroke(width = spacing.tiny.toPx()),
+                        )
+
+                        // Simple Star/Trophy Icon
+                        val innerRadius = outerRadius * 0.6f
+                        val path = Path().apply {
+                            val centerX = size.width / 2
+                            val centerY = size.height / 2
+                            for (i in 0 until 5) {
+                                val angle = (i * 4 * PI / 5 - PI / 2).toFloat()
+                                val x = centerX + cos(angle) * innerRadius
+                                val y = centerY + sin(angle) * innerRadius
+                                if (i == 0) moveTo(x, y) else lineTo(x, y)
+                            }
+                            close()
+                        }
+                        drawPath(
+                            path = path,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             }
+
+            Spacer(Modifier.weight(1f))
 
             Text(
                 text = stringResource(Res.string.app_name).uppercase(),
@@ -181,6 +214,9 @@ fun ScoreSection(
                 letterSpacing = 2.sp,
             )
 
+            Spacer(Modifier.weight(1f))
+
+            // Re-add the Gear/Settings icon on the right for symmetry
             IconButton(onClick = { /* TODO */ }) {
                 Canvas(modifier = Modifier.size(spacing.extraLarge)) {
                     val outerRadius = size.minDimension / 2.5f

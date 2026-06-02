@@ -7,6 +7,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,6 +44,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun AchievementNotification(
     achievement: GameAchievement,
+    onClick: () -> Unit,
     onFinished: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -85,6 +87,7 @@ fun AchievementNotification(
                         Color.White.copy(alpha = 0.2f),
                         RoundedCornerShape(MaterialTheme.cornerRadius.medium)
                     )
+                    .clickable { onClick() }
                     .padding(MaterialTheme.spacing.medium),
                 verticalAlignment = Alignment.CenterVertically
             ) {

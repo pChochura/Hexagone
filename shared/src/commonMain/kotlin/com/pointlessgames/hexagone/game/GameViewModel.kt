@@ -453,4 +453,6 @@ internal class GameViewModel(
     fun toggleDebugAddAsGhost() = debugDelegate.toggleDebugAddAsGhost()
     fun onDebugCellClicked(x: Int, y: Int) = debugDelegate.onDebugCellClicked(x, y)
     fun addPerkManually(perk: Perk) = debugDelegate.addPerkManually(perk)
+
+    fun getAchievementManager(): AchievementManager = achievementManager
 }
