@@ -1,5 +1,10 @@
 package com.pointlessgames.hexagone.game.ui.components
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,6 +25,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
@@ -44,16 +50,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.achievements.AchievementManager
 import com.pointlessgames.hexagone.achievements.AchievementStatus
+import com.pointlessgames.hexagone.achievements.GameAchievement
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun AchievementsDialog(
     achievementManager: AchievementManager,
+    initialAchievement: GameAchievement? = null,
     onDismiss: () -> Unit
 ) {
     var statuses by remember { mutableStateOf<List<AchievementStatus>>(emptyList()) }
+    val listState = rememberLazyListState()
 
     LaunchedEffect(Unit) {
         statuses = achievementManager.getAchievementsStatus()
@@ -61,6 +71,31 @@ fun AchievementsDialog(
 
     val groupedStatuses = remember(statuses) {
         statuses.groupBy { it.achievement.category }
+    }
+
+    LaunchedEffect(groupedStatuses, initialAchievement) {
+        if (initialAchievement != null && groupedStatuses.isNotEmpty()) {
+            var targetIndex = 0
+            var found = false
+            
+            outer@for (category in groupedStatuses.keys) {
+                targetIndex++ // StickyHeader
+                val itemsInCategory = groupedStatuses[category] ?: emptyList()
+                for (status in itemsInCategory) {
+                    if (status.achievement == initialAchievement) {
+                        found = true
+                        break@outer
+                    }
+                    targetIndex++
+                }
+                targetIndex++ // Spacer
+            }
+            
+            if (found) {
+                delay(300) // Wait for sheet to expand
+                listState.animateScrollToItem(targetIndex)
+            }
+        }
     }
 
     ModalBottomSheet(
@@ -86,6 +121,7 @@ fun AchievementsDialog(
             Spacer(Modifier.height(MaterialTheme.spacing.medium))
 
             LazyColumn(
+                state = listState,
                 contentPadding = PaddingValues(
                     bottom = WindowInsets.navigationBars.asPaddingValues()
                         .calculateBottomPadding() + MaterialTheme.spacing.large
@@ -112,7 +148,10 @@ fun AchievementsDialog(
                     }
 
                     items(categoryStatuses) { status ->
-                        AchievementItem(status)
+                        AchievementItem(
+                            status = status,
+                            isHighlighted = status.achievement == initialAchievement
+                        )
                     }
 
                     item {
@@ -125,19 +164,38 @@ fun AchievementsDialog(
 }
 
 @Composable
-private fun AchievementItem(status: AchievementStatus) {
+private fun AchievementItem(
+    status: AchievementStatus,
+    isHighlighted: Boolean = false
+) {
     val alpha = if (status.isUnlocked) 1f else 0.4f
     
+    val highlightAlpha = if (isHighlighted) {
+        val infiniteTransition = rememberInfiniteTransition(label = "highlight_pulse")
+        val anim by infiniteTransition.animateFloat(
+            initialValue = 0.1f,
+            targetValue = 0.3f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1000),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "alpha"
+        )
+        anim
+    } else 0.05f
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                if (status.isUnlocked) Color.White.copy(alpha = 0.05f) else Color.Transparent,
+                if (status.isUnlocked || isHighlighted) Color.White.copy(alpha = if (isHighlighted) highlightAlpha else 0.05f) else Color.Transparent,
                 RoundedCornerShape(MaterialTheme.cornerRadius.medium)
             )
             .border(
                 1.dp,
-                if (status.isUnlocked) Color.White.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.05f),
+                if (isHighlighted) MaterialTheme.colorScheme.primary.copy(alpha = 0.8f) 
+                else if (status.isUnlocked) Color.White.copy(alpha = 0.1f) 
+                else Color.White.copy(alpha = 0.05f),
                 RoundedCornerShape(MaterialTheme.cornerRadius.medium)
             )
             .padding(MaterialTheme.spacing.medium),

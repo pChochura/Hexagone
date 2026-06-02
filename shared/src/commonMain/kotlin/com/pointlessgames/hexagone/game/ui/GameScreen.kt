@@ -67,6 +67,7 @@ internal fun GameScreen(
 
     var showLeaderboard by remember { mutableStateOf(false) }
     var showAchievements by remember { mutableStateOf(false) }
+    var initiallySelectedAchievement by remember { mutableStateOf<com.pointlessgames.hexagone.achievements.GameAchievement?>(null) }
     val leaderboardViewModel: LeaderboardViewModel = koinViewModel()
 
     val tierRewardQueue = remember { mutableStateListOf<Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>>() }
@@ -78,6 +79,7 @@ internal fun GameScreen(
     BackHandler(enabled = showLeaderboard || showAchievements) {
         showLeaderboard = false
         showAchievements = false
+        initiallySelectedAchievement = null
     }
 
     val onEmptySpaceClick = remember(viewModel) { viewModel::onEmptySpaceClicked }
@@ -208,7 +210,10 @@ internal fun GameScreen(
                         activePerk = uiState.activePerk,
                         onLevelClick = onDebugToggle,
                         onLeaderboardClick = { showLeaderboard = true },
-                        onAchievementsClick = { showAchievements = true }
+                        onAchievementsClick = { 
+                            initiallySelectedAchievement = null
+                            showAchievements = true 
+                        }
                     )
 
                     Spacer(Modifier.weight(0.1f))
@@ -360,7 +365,10 @@ internal fun GameScreen(
         activeAchievement?.let { achievement ->
             AchievementNotification(
                 achievement = achievement,
-                onClick = { showAchievements = true },
+                onClick = { 
+                    initiallySelectedAchievement = achievement
+                    showAchievements = true 
+                },
                 onFinished = { if (achievementQueue.isNotEmpty()) achievementQueue.removeAt(0) }
             )
         }
@@ -368,7 +376,11 @@ internal fun GameScreen(
         if (showAchievements) {
             AchievementsDialog(
                 achievementManager = viewModel.getAchievementManager(),
-                onDismiss = { showAchievements = false }
+                initialAchievement = initiallySelectedAchievement,
+                onDismiss = { 
+                    showAchievements = false
+                    initiallySelectedAchievement = null
+                }
             )
         }
     }
