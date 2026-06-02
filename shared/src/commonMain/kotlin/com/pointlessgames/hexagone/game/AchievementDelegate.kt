@@ -19,7 +19,8 @@ internal class AchievementDelegate(
 ) {
     fun checkMergeAchievements(merge: MergeTransition, engine: GameEngine) {
         // The whole gang: triggered when the player merges all 6 neighbors with the same value
-        if (merge.totalCells >= 6 && merge.uniqueGroups == 1) {
+        // into an empty center.
+        if (merge.totalCells == 6 && merge.uniqueGroups == 1) {
             achievementManager.unlockAchievement(GameAchievement.THE_WHOLE_GANG)
         }
 
@@ -34,11 +35,12 @@ internal class AchievementDelegate(
             achievementManager.unlockAchievement(GameAchievement.CHAIN_REACTION)
         }
 
-        if (uiState.value.grid.size >= 19) {
+        val previousGridSize = uiState.value.grid.size - 1 + merge.totalCells
+        if (previousGridSize >= (engine.columns * engine.rows) - 1) {
             achievementManager.unlockAchievement(GameAchievement.LIVING_ON_THE_EDGE)
         }
 
-        if (merge.resultId == "preview_path_merge" && merge.totalCells >= 10) {
+        if (merge.resultId.contains("path_merge") && merge.totalCells >= 10) {
             achievementManager.unlockAchievement(GameAchievement.SNAKE_CHARMER)
         }
 
@@ -62,9 +64,11 @@ internal class AchievementDelegate(
 
         if (finalCombo >= ComboTier.ZENITH.threshold) {
             achievementManager.unlockAchievement(GameAchievement.ASCENSION)
-        } else if (finalCombo >= ComboTier.OVERDRIVE.threshold) {
+        }
+        if (finalCombo >= ComboTier.OVERDRIVE.threshold) {
             achievementManager.unlockAchievement(GameAchievement.MAXIMUM_OVERDRIVE)
-        } else if (finalCombo >= ComboTier.SURGE.threshold) {
+        }
+        if (finalCombo >= ComboTier.SURGE.threshold) {
             achievementManager.unlockAchievement(GameAchievement.FEELING_THE_SURGE)
         }
     }
@@ -72,12 +76,14 @@ internal class AchievementDelegate(
     fun checkLevelAchievements(level: Int) {
         if (level >= 30) {
             achievementManager.unlockAchievement(GameAchievement.HEX_MASTER)
-        } else if (level >= 15) {
+        }
+        if (level >= 15) {
             achievementManager.unlockAchievement(GameAchievement.SEASONED_PLAYER)
             if (!uiState.value.perkUsedInSession) {
                 achievementManager.unlockAchievement(GameAchievement.ASCETIC)
             }
-        } else if (level >= 5) {
+        }
+        if (level >= 5) {
             achievementManager.unlockAchievement(GameAchievement.A_NEW_BEGINNING)
             if (!uiState.value.comboTriggeredInSession) {
                 achievementManager.unlockAchievement(GameAchievement.PACIFIST)
@@ -92,9 +98,11 @@ internal class AchievementDelegate(
     fun checkScoreAchievements(score: Int) {
         if (score >= 100000) {
             achievementManager.unlockAchievement(GameAchievement.MILLIONAIRE_CLUB)
-        } else if (score >= 10000) {
+        }
+        if (score >= 10000) {
             achievementManager.unlockAchievement(GameAchievement.HEX_ARCHITECT)
-        } else if (score >= 1000) {
+        }
+        if (score >= 1000) {
             achievementManager.unlockAchievement(GameAchievement.BEGINNER_LUCK)
         }
     }
@@ -171,9 +179,12 @@ internal class AchievementDelegate(
     fun onMergeDetails(isTactical: Boolean, isBarRaised: Boolean, isSacrifice: Boolean) {
         if (isBarRaised) {
             achievementManager.unlockAchievement(GameAchievement.THE_JANITOR)
-            uiState.update { it.copy(barRaisedThisTurn = it.barRaisedThisTurn + 1) }
-            if (uiState.value.barRaisedThisTurn >= 3) {
-                achievementManager.unlockAchievement(GameAchievement.TRIPLE_THREAT)
+            uiState.update {
+                val next = it.barRaisedThisTurn + 1
+                if (next >= 3) {
+                    achievementManager.unlockAchievement(GameAchievement.TRIPLE_THREAT)
+                }
+                it.copy(barRaisedThisTurn = next)
             }
         }
         if (isSacrifice) achievementManager.unlockAchievement(GameAchievement.SACRIFICE)
