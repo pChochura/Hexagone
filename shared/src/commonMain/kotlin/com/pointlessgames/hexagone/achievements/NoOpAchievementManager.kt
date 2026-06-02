@@ -1,5 +1,6 @@
 package com.pointlessgames.hexagone.achievements
 
+import com.pointlessgames.hexagone.game.model.GameUiState
 import com.pointlessgames.hexagone.game.model.Perk
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -9,6 +10,7 @@ class NoOpAchievementManager : AchievementManager {
     override fun unlockAchievement(achievement: GameAchievement) {}
     override fun incrementAchievement(achievement: GameAchievement, amount: Int) {}
     override fun showAchievements() {}
+    override fun updateSessionData(state: GameUiState) {}
     override fun trackMerge() {}
     override fun trackPerkUsed(perk: Perk) {}
     override fun trackReroll() {}

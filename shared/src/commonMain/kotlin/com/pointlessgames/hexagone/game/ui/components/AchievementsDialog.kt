@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
@@ -43,9 +45,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.achievements.AchievementManager
@@ -54,6 +58,7 @@ import com.pointlessgames.hexagone.achievements.GameAchievement
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -74,7 +79,7 @@ fun AchievementsDialog(
     }
 
     LaunchedEffect(groupedStatuses, initialAchievement) {
-        if (initialAchievement != null && groupedStatuses.isNotEmpty()) {
+        if ((initialAchievement != null) && groupedStatuses.isNotEmpty()) {
             var targetIndex = 0
             var found = false
             
@@ -92,7 +97,7 @@ fun AchievementsDialog(
             }
             
             if (found) {
-                delay(300) // Wait for sheet to expand
+                delay(300.milliseconds) // Wait for sheet to expand
                 listState.animateScrollToItem(targetIndex)
             }
         }
@@ -170,9 +175,9 @@ private fun AchievementItem(
 ) {
     val alpha = if (status.isUnlocked) 1f else 0.4f
     
-    val highlightAlpha = if (isHighlighted) {
+    val highlightAlpha by if (isHighlighted) {
         val infiniteTransition = rememberInfiniteTransition(label = "highlight_pulse")
-        val anim by infiniteTransition.animateFloat(
+        infiniteTransition.animateFloat(
             initialValue = 0.1f,
             targetValue = 0.3f,
             animationSpec = infiniteRepeatable(
@@ -181,8 +186,7 @@ private fun AchievementItem(
             ),
             label = "alpha"
         )
-        anim
-    } else 0.05f
+    } else remember { mutableStateOf(0.05f) }
 
     Row(
         modifier = Modifier
@@ -235,6 +239,57 @@ private fun AchievementItem(
                 color = Color.White.copy(alpha = alpha * 0.7f),
                 fontSize = 12.sp
             )
+
+            if (status.maxProgress > 0 && !status.isUnlocked) {
+                Spacer(Modifier.height(MaterialTheme.spacing.small))
+                AchievementProgressBar(
+                    current = status.currentProgress,
+                    max = status.maxProgress
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun AchievementProgressBar(
+    current: Long,
+    max: Long
+) {
+    val progress = (current.toFloat() / max.toFloat()).coerceIn(0f, 1f)
+    val colorScheme = MaterialTheme.colorScheme
+    
+    Column {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(4.dp))
+                .clip(RoundedCornerShape(4.dp))
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val width = size.width * progress
+                if (width > 0) {
+                    drawRect(
+                        brush = Brush.horizontalGradient(
+                            listOf(
+                                colorScheme.scrim.copy(alpha = 0.3f),
+                                colorScheme.primary.copy(alpha = 0.6f),
+                            )
+                        ),
+                        size = Size(width, size.height)
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = "$current / $max",
+            color = Color.White.copy(alpha = 0.4f),
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.End
+        )
     }
 }

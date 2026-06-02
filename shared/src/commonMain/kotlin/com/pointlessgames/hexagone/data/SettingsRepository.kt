@@ -24,6 +24,15 @@ class SettingsRepository(
     private val perksCollectedLifetimeKey = androidx.datastore.preferences.core.intPreferencesKey("perks_collected_lifetime")
     private val gamesFinishedLifetimeKey = androidx.datastore.preferences.core.intPreferencesKey("games_finished_lifetime")
     private val rerollsLifetimeKey = androidx.datastore.preferences.core.intPreferencesKey("rerolls_lifetime")
+    private val maxComboLifetimeKey = intPreferencesKey("max_combo_lifetime")
+    private val highestLevelLifetimeKey = intPreferencesKey("highest_level_lifetime")
+    private val maxConsecutiveMergesLifetimeKey = intPreferencesKey("max_consecutive_merges_lifetime")
+    private val maxTacticalMergesLifetimeKey = intPreferencesKey("max_tactical_merges_lifetime")
+    private val maxCollectedPerksLifetimeKey = intPreferencesKey("max_collected_perks_lifetime")
+    private val maxConsecutiveUndosLifetimeKey = intPreferencesKey("max_consecutive_undos_lifetime")
+    private val maxTacticalGhostsLifetimeKey = intPreferencesKey("max_tactical_ghosts_lifetime")
+    private val maxBarRaisedLifetimeKey = intPreferencesKey("max_bar_raised_lifetime")
+    private val highestTileValueLifetimeKey = intPreferencesKey("highest_tile_value_lifetime")
 
     suspend fun getBestScore(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[bestScoreKey] ?: 0
@@ -175,6 +184,123 @@ class SettingsRepository(
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[rerollsLifetimeKey] ?: 0
                 prefs[rerollsLifetimeKey] = current + 1
+            }
+        }
+    }
+
+    suspend fun getMaxComboLifetime(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[maxComboLifetimeKey] ?: 0
+    }
+
+    suspend fun updateMaxComboLifetime(value: Int) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[maxComboLifetimeKey] ?: 0
+                if (value > current) prefs[maxComboLifetimeKey] = value
+            }
+        }
+    }
+
+    suspend fun getHighestLevelLifetime(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[highestLevelLifetimeKey] ?: 1
+    }
+
+    suspend fun updateHighestLevelLifetime(value: Int) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[highestLevelLifetimeKey] ?: 1
+                if (value > current) prefs[highestLevelLifetimeKey] = value
+            }
+        }
+    }
+
+    suspend fun getMaxConsecutiveMergesLifetime(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[maxConsecutiveMergesLifetimeKey] ?: 0
+    }
+
+    suspend fun updateMaxConsecutiveMergesLifetime(value: Int) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[maxConsecutiveMergesLifetimeKey] ?: 0
+                if (value > current) prefs[maxConsecutiveMergesLifetimeKey] = value
+            }
+        }
+    }
+
+    suspend fun getMaxTacticalMergesLifetime(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[maxTacticalMergesLifetimeKey] ?: 0
+    }
+
+    suspend fun updateMaxTacticalMergesLifetime(value: Int) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[maxTacticalMergesLifetimeKey] ?: 0
+                if (value > current) prefs[maxTacticalMergesLifetimeKey] = value
+            }
+        }
+    }
+
+    suspend fun getMaxCollectedPerksLifetime(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[maxCollectedPerksLifetimeKey] ?: 0
+    }
+
+    suspend fun updateMaxCollectedPerksLifetime(value: Int) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[maxCollectedPerksLifetimeKey] ?: 0
+                if (value > current) prefs[maxCollectedPerksLifetimeKey] = value
+            }
+        }
+    }
+
+    suspend fun getMaxConsecutiveUndosLifetime(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[maxConsecutiveUndosLifetimeKey] ?: 0
+    }
+
+    suspend fun updateMaxConsecutiveUndosLifetime(value: Int) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[maxConsecutiveUndosLifetimeKey] ?: 0
+                if (value > current) prefs[maxConsecutiveUndosLifetimeKey] = value
+            }
+        }
+    }
+
+    suspend fun getMaxTacticalGhostsLifetime(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[maxTacticalGhostsLifetimeKey] ?: 0
+    }
+
+    suspend fun updateMaxTacticalGhostsLifetime(value: Int) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[maxTacticalGhostsLifetimeKey] ?: 0
+                if (value > current) prefs[maxTacticalGhostsLifetimeKey] = value
+            }
+        }
+    }
+
+    suspend fun getMaxBarRaisedLifetime(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[maxBarRaisedLifetimeKey] ?: 0
+    }
+
+    suspend fun updateMaxBarRaisedLifetime(value: Int) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[maxBarRaisedLifetimeKey] ?: 0
+                if (value > current) prefs[maxBarRaisedLifetimeKey] = value
+            }
+        }
+    }
+
+    suspend fun getHighestTileValueLifetime(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[highestTileValueLifetimeKey] ?: 1
+    }
+
+    suspend fun updateHighestTileValueLifetime(value: Int) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[highestTileValueLifetimeKey] ?: 1
+                if (value > current) prefs[highestTileValueLifetimeKey] = value
             }
         }
     }

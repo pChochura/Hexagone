@@ -149,6 +149,12 @@ internal class GameViewModel(
                 _effects.emit(GameEffect.AchievementUnlock(achievement))
             }
         }
+
+        viewModelScope.launch {
+            _uiState.collect { state ->
+                achievementManager.updateSessionData(state)
+            }
+        }
     }
 
     fun addParticles(newParticles: List<Particle>) = effectDelegate.addParticles(newParticles)
