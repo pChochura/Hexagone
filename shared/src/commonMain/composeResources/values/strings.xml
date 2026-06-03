@@ -4,7 +4,6 @@
     <!-- UI Elements -->
     <string name="score_label">SCORE</string>
     <string name="level_label">LVL %1$d</string>
-    <string name="best_score_label">BEST </string>
     <string name="max_label">MAX</string>
     <string name="perk_active_label">PERK</string>
     <string name="level_up_title">LEVEL UP!</string>
@@ -15,6 +14,11 @@
     <string name="stat_merges">MERGES</string>
     <string name="stat_max_combo">MAX COMBO</string>
     <string name="stat_max_piece">MAX PIECE</string>
+    <string name="best_score_label">Best: %1$d</string>
+    <string name="previous_best_label">Previous best: %1$d</string>
+    <string name="label_level">Level</string>
+    <string name="label_max_piece">Max piece</string>
+    <string name="label_max_combo">Max combo</string>
     <string name="play_again_button">PLAY AGAIN</string>
     <string name="view_board_button">VIEW BOARD</string>
     <string name="view_stats_button">VIEW STATS</string>

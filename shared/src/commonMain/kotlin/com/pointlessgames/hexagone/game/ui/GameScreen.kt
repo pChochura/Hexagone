@@ -344,6 +344,7 @@ internal fun GameScreen(
             isGameOver = uiState.isGameOver,
             scoreProvider = { uiState.score },
             bestScore = uiState.bestScore,
+            sessionBestScore = uiState.sessionBestScore,
             level = uiState.level,
             maxCombo = uiState.maxCombo,
             totalMerges = uiState.totalMerges,

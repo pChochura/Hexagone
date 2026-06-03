@@ -46,6 +46,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.RankingInfo
@@ -62,7 +64,7 @@ internal fun GameOverDialog(
     bestScore: Int,
     level: Int,
     maxCombo: Int,
-    totalMerges: Int,
+    @Suppress("UNUSED_PARAMETER") totalMerges: Int,
     highestValue: Int,
     rankingInfo: RankingInfo?,
     onViewBoard: () -> Unit,
@@ -73,76 +75,53 @@ internal fun GameOverDialog(
         label = "score_count_up",
     )
 
-    val infiniteTransition = rememberInfiniteTransition(label = "gameover_glow")
-    val glowAlpha by infiniteTransition.animateFloat(
+    val infiniteTransition = rememberInfiniteTransition(label = "gameover_animations")
+    
+    val scoreGlowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "score_glow",
+    )
+
+    val maxPieceGlowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.1f,
-        targetValue = 0.3f,
+        targetValue = 0.5f,
         animationSpec = infiniteRepeatable(
             animation = tween(2000),
             repeatMode = RepeatMode.Reverse,
         ),
-        label = "glow_alpha",
+        label = "max_piece_glow",
     )
 
     val isNewBest = score >= bestScore && score > 0
-    val badgeTransition = rememberInfiniteTransition(label = "new_best_pulse")
-    val badgeScale by badgeTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.1f,
-        animationSpec = infiniteRepeatable(animation = tween(800), repeatMode = RepeatMode.Reverse),
-        label = "badge_scale",
-    )
-    val badgeRotation by badgeTransition.animateFloat(
-        initialValue = -8f,
-        targetValue = 8f,
+    
+    val badgeRotation by infiniteTransition.animateFloat(
+        initialValue = -5f,
+        targetValue = -10f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1200),
+            animation = tween(1000),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "badge_rotation",
     )
 
-    val maxPieceTransition = rememberInfiniteTransition(label = "max_piece_shift")
-    val maxPieceShift by maxPieceTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "max_piece_shift",
-    )
-
     val spacing = MaterialTheme.spacing
-    val cornerRadius = MaterialTheme.cornerRadius
-    val primaryColor = MaterialTheme.colorScheme.primary
 
     Box(
         modifier = modifier
-            .fillMaxWidth(0.9f)
-            .drawBehind {
-                val baseColor = primaryColor
-                val cr = cornerRadius.extraLarge.toPx()
-                val path = Path().apply {
-                    addRoundRect(RoundRect(Rect(0f, 0f, size.width, size.height), cr, cr))
-                }
-
-                for (i in 1..3) {
-                    drawPath(
-                        path = path,
-                        color = baseColor.copy(alpha = glowAlpha / (i * 2f)),
-                        style = Stroke(width = (spacing.extraSmall * i).toPx()),
-                    )
-                }
-            }
+            .fillMaxWidth(0.92f)
             .background(
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
-                RoundedCornerShape(cornerRadius.extraLarge),
+                MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+                RoundedCornerShape(48.dp),
             )
             .border(
-                spacing.extraTiny,
-                Color.White.copy(alpha = 0.1f),
-                RoundedCornerShape(cornerRadius.extraLarge),
+                2.dp,
+                Color.White.copy(alpha = 0.05f),
+                RoundedCornerShape(48.dp),
             )
             .padding(spacing.extraLarge),
     ) {
@@ -164,34 +143,29 @@ internal fun GameOverDialog(
         ) {
             Text(
                 text = stringResource(Res.string.game_over_title).uppercase(),
-                color = Color.White.copy(alpha = 0.3f),
+                color = Color.White.copy(alpha = 0.6f),
                 fontWeight = FontWeight.Black,
-                fontSize = 10.sp,
-                letterSpacing = 4.sp,
+                fontSize = 24.sp,
+                letterSpacing = 6.sp,
             )
 
-            Spacer(Modifier.height(spacing.small))
+            Spacer(Modifier.height(spacing.medium))
 
             AnimatedContent(rankingInfo) { rankingInfo ->
                 rankingInfo?.let { rank ->
                     Box(
                         modifier = Modifier
                             .background(
-                                Color.White.copy(alpha = 0.05f),
-                                RoundedCornerShape(cornerRadius.full),
+                                Color.White.copy(alpha = 0.08f),
+                                RoundedCornerShape(MaterialTheme.cornerRadius.full),
                             )
-                            .border(
-                                spacing.extraTiny,
-                                Color.White.copy(alpha = 0.1f),
-                                RoundedCornerShape(cornerRadius.full),
-                            )
-                            .padding(horizontal = spacing.medium, vertical = spacing.extraSmall),
+                            .padding(horizontal = spacing.large, vertical = spacing.extraSmall),
                     ) {
                         Text(
                             text = if (rank.isRegional) "#${rank.rank} in your region" else "#${rank.rank} in the world",
-                            color = MaterialTheme.colorScheme.tertiary,
+                            color = Color(0xFFFFD54F), // Yellow from screenshot
                             fontWeight = FontWeight.Black,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             letterSpacing = 1.sp,
                         )
                     }
@@ -199,138 +173,147 @@ internal fun GameOverDialog(
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(contentAlignment = Alignment.TopEnd) {
+            Spacer(Modifier.height(spacing.small))
+
+            Box(contentAlignment = Alignment.TopEnd) {
+                Text(
+                    text = animatedScore.toString(),
+                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 84.sp,
+                    textAlign = TextAlign.Center,
+                    style = androidx.compose.ui.text.TextStyle(
+                        shadow = androidx.compose.ui.graphics.Shadow(
+                            color = Color(0xFFFFD54F).copy(alpha = scoreGlowAlpha),
+                            offset = Offset(0f, 0f),
+                            blurRadius = 40f,
+                        ),
+                    ),
+                    modifier = Modifier.padding(horizontal = spacing.extraLarge),
+                )
+
+                if (isNewBest) {
+                    Box(
+                        modifier = Modifier
+                            .offset(x = 16.dp, y = -8.dp)
+                            .graphicsLayer {
+                                rotationZ = badgeRotation
+                            }
+                            .background(
+                                Color(0xFFF06292), // Pink from screenshot
+                                RoundedCornerShape(MaterialTheme.cornerRadius.full),
+                            )
+                            .padding(horizontal = spacing.medium, vertical = spacing.extraSmall),
+                    ) {
                         Text(
-                            text = animatedScore.toString(),
+                            text = stringResource(Res.string.new_best_label).uppercase(),
                             color = Color.White,
                             fontWeight = FontWeight.Black,
-                            fontSize = 72.sp,
-                            textAlign = TextAlign.Center,
-                            style = androidx.compose.ui.text.TextStyle(
-                                shadow = androidx.compose.ui.graphics.Shadow(
-                                    color = MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha * 2f),
-                                    offset = Offset(0f, 0f),
-                                    blurRadius = 30f,
-                                ),
-                            ),
-                            modifier = Modifier.padding(horizontal = spacing.semiLarge),
-                        )
-
-                        if (isNewBest) {
-                            Box(
-                                modifier = Modifier
-                                    .offset(x = spacing.semiMedium, y = -spacing.semiSmall)
-                                    .graphicsLayer {
-                                        scaleX = badgeScale
-                                        scaleY = badgeScale
-                                        rotationZ = badgeRotation
-                                    }
-                                    .background(
-                                        MaterialTheme.colorScheme.primary,
-                                        RoundedCornerShape(cornerRadius.full),
-                                    )
-                                    .padding(horizontal = spacing.small, vertical = spacing.tiny),
-                            ) {
-                                Text(
-                                    text = stringResource(Res.string.new_best_label).uppercase(),
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 8.sp,
-                                )
-                            }
-                        }
-                    }
-
-                    Text(
-                        text = "BEST: $bestScore",
-                        color = Color.White.copy(alpha = 0.4f),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        letterSpacing = 1.sp,
-                    )
-                }
-
-                Spacer(Modifier.width(spacing.extraLarge))
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(contentAlignment = Alignment.Center) {
-                        val colorScheme = MaterialTheme.colorScheme
-                        val baseColor =
-                            HexagonGridDefaults.getColorForValue(highestValue, colorScheme)
-                        val shiftColor = Color(
-                            (baseColor.red * 0.6f + 0.4f).coerceIn(0f, 1f),
-                            (baseColor.green * 0.6f + 0.4f).coerceIn(0f, 1f),
-                            (baseColor.blue * 0.6f + 0.4f).coerceIn(0f, 1f),
-                            1f,
-                        )
-
-                        val c1 =
-                            androidx.compose.ui.graphics.lerp(baseColor, shiftColor, maxPieceShift)
-                        val c2 =
-                            androidx.compose.ui.graphics.lerp(shiftColor, baseColor, maxPieceShift)
-
-                        Hexagon(
-                            value = highestValue.toString(),
-                            backgroundColor = Color.Transparent,
-                            modifier = Modifier
-                                .size(spacing.giant)
-                                .aspectRatio(1 / 0.866f)
-                                .background(
-                                    brush = Brush.linearGradient(
-                                        colors = listOf(c1, c2, c1),
-                                        start = Offset(0f, 0f),
-                                        end = Offset.Infinite,
-                                    ),
-                                    shape = FlatTopHexagonShape(),
-                                )
-                                .border(
-                                    spacing.extraTiny,
-                                    Color.White.copy(alpha = 0.15f),
-                                    FlatTopHexagonShape(),
-                                ),
+                            fontSize = 10.sp,
+                            letterSpacing = 1.sp
                         )
                     }
-                    Spacer(Modifier.height(spacing.extraSmall))
-                    Text(
-                        text = "MAX",
-                        color = Color.White.copy(alpha = 0.3f),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 9.sp,
-                        letterSpacing = 1.sp,
-                    )
                 }
             }
+
+            val bestScoreLabel = if (score > bestScore && score > 0) {
+                stringResource(Res.string.previous_best_label, bestScore)
+            } else {
+                stringResource(Res.string.best_score_label, bestScore)
+            }
+
+            Text(
+                text = bestScoreLabel,
+                color = Color.White.copy(alpha = 0.4f),
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                letterSpacing = 1.sp,
+            )
 
             Spacer(Modifier.height(spacing.extraHuge))
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = spacing.small),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                OrganicStatItem(
-                    icon = { LevelIcon(spacing) },
-                    label = stringResource(Res.string.stat_level),
+                // Level Stat
+                GameOverStatHexagon(
+                    label = stringResource(Res.string.label_level),
                     value = level.toString(),
+                    backgroundColor = Color(0xFF37474F), // Dark teal/grey
+                    size = 72.dp
                 )
-                OrganicStatItem(
-                    icon = { ComboIcon(spacing) },
-                    label = stringResource(Res.string.stat_max_combo),
-                    value = "x$maxCombo",
+
+                // Max Piece Stat (Larger and glowing)
+                GameOverStatHexagon(
+                    label = stringResource(Res.string.label_max_piece),
+                    value = highestValue.toString(),
+                    backgroundColor = Color(0xFF9345C4), // Purple
+                    size = 92.dp,
+                    labelColor = Color.White,
+                    glowAlpha = maxPieceGlowAlpha,
+                    glowColor = Color(0xFFBB86FC)
                 )
-                OrganicStatItem(
-                    icon = { MergeIcon(spacing) },
-                    label = stringResource(Res.string.stat_merges),
-                    value = totalMerges.toString(),
+
+                // Max Combo Stat
+                GameOverStatHexagon(
+                    label = stringResource(Res.string.label_max_combo),
+                    value = maxCombo.toString(),
+                    backgroundColor = Color(0xFF5D4037), // Dark brown
+                    size = 72.dp
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun GameOverStatHexagon(
+    label: String,
+    value: String,
+    backgroundColor: Color,
+    size: Dp,
+    labelColor: Color = Color.White.copy(alpha = 0.6f),
+    glowAlpha: Float = 0f,
+    glowColor: Color = Color.Transparent
+) {
+    val spacing = MaterialTheme.spacing
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(spacing.medium)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            if (glowAlpha > 0f) {
+                Box(
+                    modifier = Modifier
+                        .size(width = size + 16.dp, height = (size + 16.dp) * 0.866f)
+                        .graphicsLayer { alpha = glowAlpha }
+                        .background(glowColor.copy(alpha = 0.4f), FlatTopHexagonShape())
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(width = size, height = size * 0.866f)
+                    .background(backgroundColor, FlatTopHexagonShape())
+                    .border(2.dp, Color.White.copy(alpha = 0.1f), FlatTopHexagonShape()),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = value,
+                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    fontSize = (size.value * 0.35f).sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        Text(
+            text = label,
+            color = labelColor,
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp,
+            letterSpacing = 0.5.sp
+        )
     }
 }

@@ -28,6 +28,7 @@ data class GameUiState(
     val hoveredMerge: MergeTransition? = null,
     val score: Int = 0,
     val bestScore: Int = 0,
+    val sessionBestScore: Int = 0,
     val level: Int = 1,
     val levelProgress: Float = 0f,
     val highestValue: Int = 1,

@@ -65,6 +65,7 @@ internal fun GameOverlays(
     isGameOver: Boolean,
     scoreProvider: () -> Int,
     bestScore: Int,
+    sessionBestScore: Int,
     level: Int,
     maxCombo: Int,
     totalMerges: Int,
@@ -203,7 +204,7 @@ internal fun GameOverlays(
 
                 GameOverDialog(
                     score = scoreProvider(),
-                    bestScore = bestScore,
+                    bestScore = sessionBestScore,
                     level = level,
                     maxCombo = maxCombo,
                     totalMerges = totalMerges,
