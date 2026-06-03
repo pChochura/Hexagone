@@ -239,6 +239,7 @@ internal class GameViewModel(
 
             Perk.UNDO -> {
                 if (stateDelegate.undoLastMove()) {
+                    mergeDelegate.resetLastProcessed()
                     _uiState.update {
                         it.consumePerk(Perk.UNDO)
                             .copy(isGameOver = false, activePerk = null, selectedCellId = null)

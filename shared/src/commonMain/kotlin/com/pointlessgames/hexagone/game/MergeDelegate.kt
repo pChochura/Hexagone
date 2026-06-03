@@ -34,7 +34,11 @@ internal class MergeDelegate(
 
     fun onMergeAnimationFinished() {
         val state = uiState.value
-        val merge = state.pendingMerge ?: return
+        val merge = state.pendingMerge
+        if (merge == null) {
+            resetLastProcessed()
+            return
+        }
         val stepIndex = state.activeMergeStepIndex
 
         if (lastProcessedMergeId == merge.resultId && lastProcessedStepIndex == stepIndex) return
