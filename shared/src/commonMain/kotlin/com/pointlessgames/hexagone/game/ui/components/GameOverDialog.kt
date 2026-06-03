@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,16 +46,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.RankingInfo
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.game_over_title
-import hexagone.shared.generated.resources.new_best_label
-import hexagone.shared.generated.resources.stat_level
-import hexagone.shared.generated.resources.stat_max_combo
-import hexagone.shared.generated.resources.stat_merges
+import hexagone.shared.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -157,17 +155,12 @@ internal fun GameOverDialog(
                 .padding(spacing.small),
             contentAlignment = Alignment.Center,
         ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val stroke = spacing.extraTiny.toPx() * 1.5f
-                val color = Color.White.copy(alpha = 0.4f)
-                val path = Path().apply {
-                    moveTo(0f, size.height / 2)
-                    quadraticTo(size.width / 2, -size.height / 4, size.width, size.height / 2)
-                    quadraticTo(size.width / 2, size.height * 1.25f, 0f, size.height / 2)
-                }
-                drawPath(path, color, style = Stroke(stroke))
-                drawCircle(color, radius = size.width / 5, center = center, style = Stroke(stroke))
-            }
+            Icon(
+                painter = painterResource(Res.drawable.ic_back),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp).graphicsLayer { rotationZ = 180f }, // Pointing "back" to board
+                tint = Color.White.copy(alpha = 0.4f)
+            )
         }
 
         Column(

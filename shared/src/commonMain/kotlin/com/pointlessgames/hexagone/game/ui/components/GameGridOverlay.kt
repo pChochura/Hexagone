@@ -57,6 +57,8 @@ import com.pointlessgames.hexagone.game.model.PerkPopup
 import com.pointlessgames.hexagone.game.model.PreviewCell
 import com.pointlessgames.hexagone.game.model.ScorePopup
 import com.pointlessgames.hexagone.game.model.GhostAnimationState
+import hexagone.shared.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
@@ -168,6 +170,8 @@ internal fun GameGridOverlay(
             IntOffset(1, 1),
         )
     }
+
+    val mysteryPainter = painterResource(Res.drawable.ic_roll)
 
     BoxWithConstraints(modifier.graphicsLayer { clip = false }, Alignment.Center) {
         val cellWidth = constraints.maxWidth / (1f + (columns - 1) * 0.75f)
@@ -453,13 +457,12 @@ internal fun GameGridOverlay(
                                     translate(mysteryOffset.x, mysteryOffset.y)
                                 },
                             ) {
-                                HexagonGridDefaults.drawPerkIcon(
-                                    this,
-                                    null, // Pass null to hide the specific perk
-                                    mysterySize,
-                                    Color.White.copy(alpha = 0.4f),
-                                    spacing.extraTiny.toPx(),
-                                )
+                                with(mysteryPainter) {
+                                    draw(
+                                        size = mysterySize,
+                                        alpha = 0.4f,
+                                    )
+                                }
                             }
 
                             val textLayoutResult = textMeasurer.measure(

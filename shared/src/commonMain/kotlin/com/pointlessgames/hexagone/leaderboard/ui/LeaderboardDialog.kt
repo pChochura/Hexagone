@@ -79,7 +79,7 @@ internal fun LeaderboardOverlay(
         ) {
             SecondaryGameButton(
                 onClick = onDismiss,
-                icon = "⬅",
+                icon = Res.drawable.ic_back,
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .size(spacing.huge)

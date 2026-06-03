@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -51,28 +52,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.app_name
-import hexagone.shared.generated.resources.best_score_label
-import hexagone.shared.generated.resources.level_label
-import hexagone.shared.generated.resources.max_label
-import hexagone.shared.generated.resources.perk_active_label
-import hexagone.shared.generated.resources.perk_advance_queue_name
-import hexagone.shared.generated.resources.perk_chain_merge_name
-import hexagone.shared.generated.resources.perk_duplicate_tile_name
-import hexagone.shared.generated.resources.perk_freeze_tile_name
-import hexagone.shared.generated.resources.perk_fusion_name
-import hexagone.shared.generated.resources.perk_increment_tile_name
-import hexagone.shared.generated.resources.perk_move_tile_name
-import hexagone.shared.generated.resources.perk_path_merge_name
-import hexagone.shared.generated.resources.perk_remove_tile_name
-import hexagone.shared.generated.resources.perk_skip_spawn_name
-import hexagone.shared.generated.resources.perk_swap_tiles_name
-import hexagone.shared.generated.resources.perk_undo_name
-import hexagone.shared.generated.resources.score_label
-import hexagone.shared.generated.resources.tier_overdrive
-import hexagone.shared.generated.resources.tier_surge
-import hexagone.shared.generated.resources.tier_zenith
+import hexagone.shared.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos
@@ -123,54 +104,21 @@ fun ScoreSection(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onLeaderboardClick) {
-                    Canvas(modifier = Modifier.size(spacing.extraLarge)) {
-                        val barWidth = size.width * 0.2f
-                        val gap = size.width * 0.1f
-                        drawRect(
-                            color = Color.White.copy(alpha = 0.7f),
-                            topLeft = Offset(0f, size.height * 0.6f),
-                            size = Size(barWidth, size.height * 0.4f),
-                        )
-                        drawRect(
-                            color = Color.White.copy(alpha = 0.7f),
-                            topLeft = Offset(barWidth + gap, size.height * 0.2f),
-                            size = Size(barWidth, size.height * 0.8f),
-                        )
-                        drawRect(
-                            color = Color.White.copy(alpha = 0.7f),
-                            topLeft = Offset((barWidth + gap) * 2, size.height * 0.4f),
-                            size = Size(barWidth, size.height * 0.6f),
-                        )
-                    }
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_leaderboards),
+                        contentDescription = null,
+                        modifier = Modifier.size(spacing.large),
+                        tint = Color.White.copy(alpha = 0.7f)
+                    )
                 }
 
                 IconButton(onClick = onAchievementsClick) {
-                    Canvas(modifier = Modifier.size(spacing.extraLarge)) {
-                        val outerRadius = size.minDimension / 2.5f
-                        drawCircle(
-                            color = Color.White.copy(alpha = 0.7f),
-                            radius = outerRadius,
-                            style = Stroke(width = spacing.tiny.toPx()),
-                        )
-
-                        // Simple Star/Trophy Icon
-                        val innerRadius = outerRadius * 0.6f
-                        val path = Path().apply {
-                            val centerX = size.width / 2
-                            val centerY = size.height / 2
-                            for (i in 0 until 5) {
-                                val angle = (i * 4 * PI / 5 - PI / 2).toFloat()
-                                val x = centerX + cos(angle) * innerRadius
-                                val y = centerY + sin(angle) * innerRadius
-                                if (i == 0) moveTo(x, y) else lineTo(x, y)
-                            }
-                            close()
-                        }
-                        drawPath(
-                            path = path,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                    }
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_achievements),
+                        contentDescription = null,
+                        modifier = Modifier.size(spacing.large),
+                        tint = Color.White.copy(alpha = 0.7f)
+                    )
                 }
             }
 
@@ -188,35 +136,12 @@ fun ScoreSection(
 
             // Re-add the Gear/Settings icon on the right for symmetry
             IconButton(onClick = onSettingsClick) {
-                Canvas(modifier = Modifier.size(spacing.extraLarge)) {
-                    val outerRadius = size.minDimension / 2.5f
-                    val innerRadius = size.minDimension / 5f
-                    drawCircle(
-                        color = Color.White.copy(alpha = 0.7f),
-                        radius = outerRadius,
-                        style = Stroke(width = spacing.tiny.toPx()),
-                    )
-                    drawCircle(
-                        color = Color.White.copy(alpha = 0.7f),
-                        radius = innerRadius,
-                    )
-                    // Gear teeth
-                    for (i in 0 until 8) {
-                        val angle = i * (2 * PI / 8).toFloat()
-                        val start =
-                            center + Offset(cos(angle) * outerRadius, sin(angle) * outerRadius)
-                        val end = center + Offset(
-                            cos(angle) * (outerRadius + spacing.extraSmall.toPx()),
-                            sin(angle) * (outerRadius + spacing.extraSmall.toPx()),
-                        )
-                        drawLine(
-                            color = Color.White.copy(alpha = 0.7f),
-                            start = start,
-                            end = end,
-                            strokeWidth = spacing.extraSmall.toPx() * 0.75f,
-                        )
-                    }
-                }
+                Icon(
+                    painter = painterResource(Res.drawable.ic_settings),
+                    contentDescription = null,
+                    modifier = Modifier.size(spacing.large),
+                    tint = Color.White.copy(alpha = 0.7f)
+                )
             }
         }
 

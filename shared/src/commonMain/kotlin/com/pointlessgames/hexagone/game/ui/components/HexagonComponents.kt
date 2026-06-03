@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +34,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.zIndex
+import hexagone.shared.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -775,16 +778,29 @@ fun PerkIcon(
     perk: Perk?,
     color: Color = Color.White
 ) {
-    val spacing = MaterialTheme.spacing
-    Canvas(modifier = modifier) {
-        HexagonGridDefaults.drawPerkIcon(
-            drawScope = this,
-            perk = perk,
-            size = size,
-            color = color,
-            strokeWidth = spacing.tiny.toPx()
-        )
+    if (perk == null) return
+    
+    val iconRes = when (perk) {
+        Perk.UNDO -> Res.drawable.ic_undo
+        Perk.MOVE_TILE -> Res.drawable.ic_move
+        Perk.REMOVE_TILE -> Res.drawable.ic_delete
+        Perk.ADVANCE_QUEUE -> Res.drawable.ic_advance
+        Perk.SWAP_TILES -> Res.drawable.ic_swap
+        Perk.FUSION -> Res.drawable.ic_fusion
+        Perk.CHAIN_MERGE -> Res.drawable.ic_chain_merge
+        Perk.DUPLICATE_TILE -> Res.drawable.ic_duplicate
+        Perk.SKIP_SPAWN -> Res.drawable.ic_pause
+        Perk.INCREMENT_TILE -> Res.drawable.ic_upgrade
+        Perk.FREEZE_TILE -> Res.drawable.ic_freeze
+        Perk.PATH_MERGE -> Res.drawable.ic_path_merge
     }
+
+    Icon(
+        painter = painterResource(iconRes),
+        contentDescription = null,
+        modifier = modifier,
+        tint = color
+    )
 }
 
 @Composable

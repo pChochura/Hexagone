@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
@@ -52,13 +53,10 @@ import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.components.Tooltip
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.choose_your_perk
-import hexagone.shared.generated.resources.level_up_title
-import hexagone.shared.generated.resources.perk_selection_hint
-import hexagone.shared.generated.resources.reroll_perks
-import kotlinx.coroutines.launch
+import hexagone.shared.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -166,10 +164,11 @@ internal fun PerkSelectionDialog(
                                 .padding(spacing.small),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "🎲",
-                                fontSize = 22.sp,
-                                modifier = Modifier.graphicsLayer { alpha = 0.6f }
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_roll),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp).graphicsLayer { alpha = 0.6f },
+                                tint = Color.White
                             )
                         }
                     }

@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -57,8 +58,8 @@ import com.pointlessgames.hexagone.achievements.AchievementStatus
 import com.pointlessgames.hexagone.achievements.GameAchievement
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.achievements_title
+import hexagone.shared.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
@@ -240,10 +241,11 @@ private fun AchievementItem(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = if (status.isUnlocked) "⭐" else "🔒",
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(bottom = 2.dp)
+                Icon(
+                    painter = painterResource(if (status.isUnlocked) Res.drawable.ic_star else Res.drawable.ic_locked),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = if (status.isUnlocked) Color.Unspecified else Color.White.copy(alpha = 0.3f)
                 )
             }
 

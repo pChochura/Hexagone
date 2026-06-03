@@ -24,8 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.play_again_button
+import hexagone.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -55,7 +54,7 @@ internal fun GameOverBottomActions(
         ) {
             SecondaryGameButton(
                 onClick = onShare,
-                icon = "⤴",
+                icon = Res.drawable.ic_roll,
                 modifier = Modifier.size(spacing.giant)
             )
 
@@ -86,7 +85,7 @@ internal fun GameOverBottomActions(
 
             SecondaryGameButton(
                 onClick = onLeaderboard,
-                icon = "🏆",
+                icon = Res.drawable.ic_leaderboards,
                 modifier = Modifier.size(spacing.giant)
             )
         }
