@@ -53,6 +53,8 @@ internal class DebugDelegate(
         uiState.update { currentState ->
             var updatedGrid = currentState.grid
             var updatedPreview = currentState.preview
+            var nextCellIdCounter = currentState.cellIdCounter
+            var nextPreviewIdCounter = currentState.previewIdCounter
 
             if (value == null) {
                 updatedGrid = updatedGrid.filterNot { it.x == x && it.y == y }
@@ -66,18 +68,23 @@ internal class DebugDelegate(
                     if (existingPreview != null) {
                         updatedPreview = updatedPreview.map { if (it.id == existingPreview.id) it.copy(value = value) else it }
                     } else {
-                        updatedPreview = updatedPreview + engine.createPreviewCell(x, y, value)
+                        updatedPreview = updatedPreview + engine.createPreviewCell(x, y, value, id = "preview_${nextPreviewIdCounter++}")
                     }
                 } else {
                     updatedPreview = updatedPreview.filterNot { it.x == x && it.y == y }
                     if (existingGrid != null) {
                         updatedGrid = updatedGrid.map { if (it.id == existingGrid.id) it.copy(value = value) else it }
                     } else {
-                        updatedGrid = updatedGrid + engine.createCell(x, y, value)
+                        updatedGrid = updatedGrid + engine.createCell(x, y, value, id = "cell_${nextCellIdCounter++}")
                     }
                 }
             }
-            currentState.copy(grid = updatedGrid, preview = updatedPreview)
+            currentState.copy(
+                grid = updatedGrid,
+                preview = updatedPreview,
+                cellIdCounter = nextCellIdCounter,
+                previewIdCounter = nextPreviewIdCounter
+            )
         }
         onStateChanged()
     }

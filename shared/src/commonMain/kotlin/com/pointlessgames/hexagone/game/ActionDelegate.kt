@@ -818,20 +818,22 @@ internal class ActionDelegate(
                 achievementDelegate.onPerkCollectedFromBoard()
             }
 
+            var nextCellIdCounter = currentState.cellIdCounter
+            var nextPreviewIdCounter = currentState.previewIdCounter
+
             val updatedGrid = if (cellToCopy != null) {
-                currentState.grid + engine.createCell(x, y, value, isTactical = true)
+                currentState.grid + engine.createCell(x, y, value, id = "cell_${nextCellIdCounter++}", isTactical = true)
             } else {
-                if (previewToCopy != null) {
-                    isGhostMarkedTactical = true
-                }
                 currentState.grid
             }
 
             val updatedPreview = if (previewToCopy != null) {
+                isGhostMarkedTactical = true
                 currentState.preview.filterNot { it.x == x && it.y == y } + engine.createPreviewCell(
                     x,
                     y,
                     value,
+                    id = "preview_${nextPreviewIdCounter++}",
                     isTactical = true,
                 )
             } else {
@@ -848,6 +850,8 @@ internal class ActionDelegate(
                 preview = updatedPreview,
                 collectedPerks = currentState.collectedPerks + listOfNotNull(collectedPerk),
                 onBoardPerks = currentState.onBoardPerks.filterNot { it.x == x && it.y == y },
+                cellIdCounter = nextCellIdCounter,
+                previewIdCounter = nextPreviewIdCounter,
             ).consumePerk(Perk.DUPLICATE_TILE).copy(activePerk = null, selectedCellId = null)
         }
         if (isGhostMarkedTactical) {

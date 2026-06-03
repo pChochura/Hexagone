@@ -94,6 +94,8 @@ internal class StateDelegate(
             ghostPerkUsedInSession = state.ghostPerkUsedInSession,
             redemptionBaseline = state.redemptionBaseline,
             seed = state.seed,
+            cellIdCounter = state.cellIdCounter,
+            previewIdCounter = state.previewIdCounter,
         )
     }
 
@@ -137,6 +139,8 @@ internal class StateDelegate(
                 ghostPerkUsedInSession = previousState.ghostPerkUsedInSession,
                 redemptionBaseline = undoneMoveScore,
                 seed = previousState.seed,
+                cellIdCounter = previousState.cellIdCounter,
+                previewIdCounter = previousState.previewIdCounter,
                 earnedRewardsThisTurn = emptyList(),
                 pendingMerge = null,
                 activePerk = null,
