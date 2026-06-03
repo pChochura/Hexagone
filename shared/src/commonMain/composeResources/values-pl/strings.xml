@@ -15,6 +15,11 @@
     <string name="stat_merges">POŁĄCZENIA</string>
     <string name="stat_max_combo">MAX COMBO</string>
     <string name="stat_max_piece">MAX</string>
+    <string name="best_score_label">Rekord: %1$d</string>
+    <string name="previous_best_label">Poprzedni rekord: %1$d</string>
+    <string name="label_level">Poziom</string>
+    <string name="label_max_piece">Najwyższa wartość</string>
+    <string name="label_max_combo">Największe combo</string>
     <string name="play_again_button">ZAGRAJ PONOWNIE</string>
     <string name="view_board_button">ZOBACZ PLANSZĘ</string>
     <string name="view_stats_button">ZOBACZ STATYSTYKI</string>
@@ -22,6 +27,8 @@
     <string name="game_over_subtitle">Powodzenia następnym razem!</string>
     <string name="try_perk_subtitle">Spróbuj użyć perka.</string>
     <string name="restart_game_button">RESTARTUJ GRĘ</string>
+    <string name="share_label">UDOSTĘPNIJ</string>
+    <string name="settings_label">USTAWIENIA</string>
     <string name="perk_bar_empty_hint">Zdobywaj poziomy, aby odblokować perki i ulepszyć swoją strategię!</string>
     <string name="perk_selection_hint">Przytrzymaj perk, aby zobaczyć jego opis</string>
     <string name="no_moves_left_warning">BRAK RUCHÓW! UŻYJ PERKA</string>
@@ -88,6 +95,12 @@
     <string name="go_back">Wróć</string>
     <string name="show_tutorial">Pokaż samouczek</string>
     <string name="reroll_perks">Przelosuj wybór. Uwaga: Legendarne perki nie pojawią się w nowym wyborze.</string>
+    <string name="tooltip_share">Udostępnij wynik</string>
+    <string name="tooltip_leaderboard">Ranking</string>
+    <string name="tooltip_settings">Ustawienia</string>
+    <string name="tooltip_achievements">Osiągnięcia</string>
+    <string name="tooltip_back">Wstecz</string>
+    <string name="tooltip_view_board">Zobacz planszę</string>
 
     <!-- Content -->
     <string name="continue_where_you_left_off">Kontynuuj od miejsca, w którym skończyłeś</string>
