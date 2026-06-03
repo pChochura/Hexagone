@@ -124,10 +124,10 @@ internal fun drawHoverResult(
     val center = Offset(targetOffset.x + itemWidth / 2, targetOffset.y + itemHeight / 2)
 
     val currentCell = gridStateProvider().find { it.x == merge.targetX && it.y == merge.targetY }
-    val currentPreview = previewStateProvider().find { it.x == merge.targetX && it.y == merge.targetY }
-    val currentValue = currentCell?.value ?: currentPreview?.value ?: 0
+    val currentValue = currentCell?.value ?: 0
     val isPlacement = merge.resultId.contains("move") || merge.resultId.contains("duplicate") || merge.resultId.contains("swap") || merge.resultId.contains("highlight")
 
+    val currentPreview = previewStateProvider().find { it.x == merge.targetX && it.y == merge.targetY }
     val shouldSkipHexagon = merge.resultId == "preview_move" ||
             (merge.resultId.contains("path_merge") && (currentCell != null || currentPreview != null))
 
