@@ -63,6 +63,7 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 ### The Merge Formula
 A merge occurs when 2+ tiles of the same value touch.
 *   **Solid Only**: Only solid tiles participate in merges. Ghost tiles (previews) are ignored by the merge engine until they are solidified.
+*   **Frozen Tiles**: Frozen tiles are excluded from all merge calculations and pathfinding. They are unfrozen automatically at the end of each turn.
 *   **Path Merge (Legendary)**: Merges all connected tiles of the same value across the board into a single target.
 *   **Final Value**: $V_{max} + n - k$
     *   `Vmax`: Highest value in the group.
@@ -108,9 +109,10 @@ The game features a multi-layered achievement system integrated via a platform-a
 *   **Look-Ahead**: Simulations account for the current move plus the next 3 pieces in the queue.
 
 ### Perk Economy
-*   **Rarity Weights**: Common (Undo, Move, Remove, Increment), Rare (Advance, Swap, Duplicate, Skip), Legendary (Fusion, Chain Merge, Path Merge).
+*   **Rarity Weights**: Common (Undo, Move, Remove, Increment), Rare (Advance, Swap, Duplicate, Skip, Freeze), Legendary (Fusion, Chain Merge, Path Merge).
 *   **Strategic Behavioral Rules**:
     *   **Move & Duplicate**: Positional actions that preserve the "ghost" or "solid" status and allow for combo setup without forced merges.
+    *   **Freeze Strategy**: Allows isolating a tile to prevent accidental merges, useful for preserving high-value clusters or setting up future complex moves.
     *   **Lifespan Stability**: On-board perks only decrement lifespan during regular turn progression, not during strategic perk actions.
     *   **Pity System**: Guaranteed on-board perk spawning between 8 and 15 turns.
 
@@ -121,6 +123,7 @@ The game features a multi-layered achievement system integrated via a platform-a
 *   **Design System**: Centralized in `HexagoneTheme`, mapping Material 3 roles to "Glowing Hardware" tokens.
 *   **Stable Popups**: Notifications use **sequential IDs** and pre-calculated offsets for animation stability.
 *   **Liquid HUD**: A progress bar with a dynamic wavy edge that "splashes" based on point intensity.
+*   **Frost Effect**: Frozen tiles are visually distinct with a themed blue border and a snowflake badge.
 *   **Animated Perk Shelf**: Items trigger a scale-up "pop" (150%) when added, with smart scrolling to the latest updates.
 
 ---
