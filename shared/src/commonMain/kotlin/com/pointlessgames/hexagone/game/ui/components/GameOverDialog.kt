@@ -219,7 +219,7 @@ internal fun GameOverDialog(
             val bestScoreLabel = if (score > bestScore && score > 0) {
                 stringResource(Res.string.previous_best_label, bestScore)
             } else {
-                stringResource(Res.string.best_score_label, bestScore)
+                stringResource(Res.string.best_score_formatted, bestScore)
             }
 
             Text(

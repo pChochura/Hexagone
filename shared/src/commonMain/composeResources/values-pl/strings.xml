@@ -4,7 +4,7 @@
     <!-- UI Elements -->
     <string name="score_label">WYNIK</string>
     <string name="level_label">POZIOM %1$d</string>
-    <string name="best_score_label">REKORD </string>
+    <string name="best_score_label">REKORD</string>
     <string name="max_label">MAX</string>
     <string name="perk_active_label">PERK</string>
     <string name="level_up_title">NOWY POZIOM!</string>
@@ -15,7 +15,7 @@
     <string name="stat_merges">POŁĄCZENIA</string>
     <string name="stat_max_combo">MAX COMBO</string>
     <string name="stat_max_piece">MAX</string>
-    <string name="best_score_label">Rekord: %1$d</string>
+    <string name="best_score_formatted">Rekord: %1$d</string>
     <string name="previous_best_label">Poprzedni rekord: %1$d</string>
     <string name="label_level">Poziom</string>
     <string name="label_max_piece">Najwyższa wartość</string>
