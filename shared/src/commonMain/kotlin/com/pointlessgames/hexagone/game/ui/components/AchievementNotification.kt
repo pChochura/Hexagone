@@ -41,6 +41,9 @@ import androidx.compose.ui.window.PopupProperties
 import com.pointlessgames.hexagone.achievements.GameAchievement
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.achievement_unlocked
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -115,13 +118,13 @@ fun AchievementNotification(
 
                     Column {
                         Text(
-                            text = "Achievement Unlocked!",
+                            text = stringResource(Res.string.achievement_unlocked),
                             color = Color.White.copy(alpha = 0.7f),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = achievement.title,
+                            text = stringResource(achievement.title),
                             color = Color.White,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Black
@@ -132,3 +135,4 @@ fun AchievementNotification(
         }
     }
 }
+

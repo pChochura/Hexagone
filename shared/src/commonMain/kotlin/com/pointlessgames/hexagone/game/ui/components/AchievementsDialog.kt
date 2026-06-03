@@ -57,6 +57,9 @@ import com.pointlessgames.hexagone.achievements.AchievementStatus
 import com.pointlessgames.hexagone.achievements.GameAchievement
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.achievements_title
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -117,7 +120,7 @@ fun AchievementsDialog(
                 .padding(horizontal = MaterialTheme.spacing.extraLarge)
         ) {
             Text(
-                text = "Achievements",
+                text = stringResource(Res.string.achievements_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black,
                 color = Color.White
@@ -143,7 +146,7 @@ fun AchievementsDialog(
                                 .padding(vertical = MaterialTheme.spacing.small)
                         ) {
                             Text(
-                                text = category.title.uppercase(),
+                                text = stringResource(category.title).uppercase(),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
@@ -248,13 +251,13 @@ private fun AchievementItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = status.achievement.title,
+                    text = stringResource(status.achievement.title),
                     color = Color.White.copy(alpha = alpha),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = status.achievement.description,
+                    text = stringResource(status.achievement.description),
                     color = Color.White.copy(alpha = alpha * 0.7f),
                     fontSize = 12.sp
                 )
@@ -274,3 +277,4 @@ private fun AchievementItem(
         }
     }
 }
+
