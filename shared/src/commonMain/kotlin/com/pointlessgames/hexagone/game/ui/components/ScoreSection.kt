@@ -11,7 +11,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,10 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shadow
@@ -54,7 +50,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
-import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.app_name
@@ -65,6 +60,7 @@ import hexagone.shared.generated.resources.perk_active_label
 import hexagone.shared.generated.resources.perk_advance_queue_name
 import hexagone.shared.generated.resources.perk_chain_merge_name
 import hexagone.shared.generated.resources.perk_duplicate_tile_name
+import hexagone.shared.generated.resources.perk_freeze_tile_name
 import hexagone.shared.generated.resources.perk_fusion_name
 import hexagone.shared.generated.resources.perk_increment_tile_name
 import hexagone.shared.generated.resources.perk_move_tile_name
@@ -424,6 +420,7 @@ fun ScoreSection(
                                 Perk.SKIP_SPAWN -> Res.string.perk_skip_spawn_name
                                 Perk.INCREMENT_TILE -> Res.string.perk_increment_tile_name
                                 Perk.PATH_MERGE -> Res.string.perk_path_merge_name
+                                Perk.FREEZE_TILE -> Res.string.perk_freeze_tile_name
                             }
                             Text(
                                 text = stringResource(actionRes),

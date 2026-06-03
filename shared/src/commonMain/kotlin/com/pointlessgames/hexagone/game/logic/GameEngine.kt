@@ -117,10 +117,10 @@ internal class GameEngine(
         var currentIdCounter = idCounter
         val neighborCoords = getNeighbors(x, y)
         val neighborCells = grid.filter { cell ->
-            neighborCoords.any { it.first == cell.x && it.second == cell.y }
+            !cell.isFrozen && neighborCoords.any { it.first == cell.x && it.second == cell.y }
         }
 
-        val centerCell = grid.find { it.x == x && it.y == y }
+        val centerCell = grid.find { it.x == x && it.y == y }?.takeIf { !it.isFrozen }
 
         // Group neighbors by value
         val groups = neighborCells.groupBy { it.value }.toMutableMap()
@@ -197,7 +197,7 @@ internal class GameEngine(
 
     fun calculatePathMerge(x: Int, y: Int, value: Int, grid: List<HexagonCell>, idCounter: Int): Pair<MergeTransition?, Int> {
         var currentIdCounter = idCounter
-        val targetCellInGrid = grid.find { it.x == x && it.y == y }
+        val targetCellInGrid = grid.find { it.x == x && it.y == y }?.takeIf { !it.isFrozen }
         val targetValue = value
 
         val connectedCells = mutableSetOf<HexagonCell>()
@@ -210,7 +210,8 @@ internal class GameEngine(
 
             val neighborCoords = getNeighbors(current.x, current.y)
             grid.filter { cell ->
-                cell.value == targetValue &&
+                !cell.isFrozen &&
+                        cell.value == targetValue &&
                         !cell.id.startsWith("preview") &&
                         neighborCoords.any { it.first == cell.x && it.second == cell.y }
             }.forEach { queue.add(it) }
@@ -264,10 +265,10 @@ internal class GameEngine(
         var currentIdCounter = idCounter
         val neighborCoords = getNeighbors(x, y)
         val neighborCells = grid.filter { cell ->
-            neighborCoords.any { it.first == cell.x && it.second == cell.y }
+            !cell.isFrozen && neighborCoords.any { it.first == cell.x && it.second == cell.y }
         }
 
-        val centerCell = grid.find { it.x == x && it.y == y }
+        val centerCell = grid.find { it.x == x && it.y == y }?.takeIf { !it.isFrozen }
         val allCells = neighborCells + listOfNotNull(centerCell)
 
         // Fusion requires at least two neighbors to trigger
@@ -613,7 +614,7 @@ internal class GameEngine(
     }
 
     fun decrementTacticalFlags(grid: List<HexagonCell>): List<HexagonCell> {
-        return grid.map { it.copy(isTactical = false) }
+        return grid.map { it.copy(isTactical = false, isFrozen = false) }
     }
 
     fun canPerkResolveStuck(
@@ -723,9 +724,9 @@ internal class GameEngine(
     private fun checkMergeAt(x: Int, y: Int, grid: List<HexagonCell>): Boolean {
         val neighborCoords = getNeighbors(x, y)
         val neighborCells = grid.filter { cell ->
-            neighborCoords.any { it.first == cell.x && it.second == cell.y }
+            !cell.isFrozen && neighborCoords.any { it.first == cell.x && it.second == cell.y }
         }
-        val centerCell = grid.find { it.x == x && it.y == y }
+        val centerCell = grid.find { it.x == x && it.y == y }?.takeIf { !it.isFrozen }
         val groups = neighborCells.groupBy { it.value }.toMutableMap()
         centerCell?.let { center ->
             val group = groups[center.value] ?: emptyList()

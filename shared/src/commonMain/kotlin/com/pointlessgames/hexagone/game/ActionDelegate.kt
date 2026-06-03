@@ -149,6 +149,23 @@ internal class ActionDelegate(
                 } else null
             }
 
+            Perk.FREEZE_TILE -> {
+                if (ghostAtPos != null) {
+                    MergeTransition(
+                        targetX = x,
+                        targetY = y,
+                        steps = emptyList(),
+                        finalValue = 0,
+                        totalCells = 1,
+                        uniqueGroups = 0,
+                        baseScore = 0,
+                        resultId = "preview_freeze_queue",
+                        participatingIds = setOf(ghostAtPos.id),
+                        previewFrozenIds = setOf(ghostAtPos.id)
+                    )
+                } else null
+            }
+
             Perk.INCREMENT_TILE -> {
                 if (ghostAtPos != null) {
                     val nextValue = ghostAtPos.value + 1
@@ -306,6 +323,21 @@ internal class ActionDelegate(
                     participatingIds = setOf(cell.id),
                 )
                 m.copy(baseScore = calculatePotentialScore(m, state))
+            }
+
+            Perk.FREEZE_TILE -> {
+                MergeTransition(
+                    targetX = cell.x,
+                    targetY = cell.y,
+                    steps = emptyList(),
+                    finalValue = 0,
+                    totalCells = 1,
+                    uniqueGroups = 0,
+                    baseScore = 0,
+                    resultId = "preview_freeze",
+                    participatingIds = setOf(cell.id),
+                    previewFrozenIds = setOf(cell.id)
+                )
             }
 
             Perk.INCREMENT_TILE -> {
@@ -689,6 +721,18 @@ internal class ActionDelegate(
                 achievementDelegate.checkLevelAchievements(uiState.value.level)
                 achievementDelegate.checkPerkAchievements(Perk.REMOVE_TILE, uiState.value, isTargetGhost = false)
                 achievementDelegate.onNonUndoAction()
+                finalizeAction()
+            }
+
+            Perk.FREEZE_TILE -> {
+                stateDelegate.saveState()
+                uiState.update { currentState ->
+                    val cellToFreeze = currentState.grid.find { it.id == cell.id } ?: return@update currentState
+                    val nextGrid = currentState.grid.map {
+                        if (it.id == cellToFreeze.id) it.copy(isFrozen = true) else it
+                    }
+                    currentState.copy(grid = nextGrid).consumePerk(Perk.FREEZE_TILE).copy(activePerk = null, selectedCellId = null)
+                }
                 finalizeAction()
             }
 

@@ -15,6 +15,7 @@ import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.PreviewCell
 import com.pointlessgames.hexagone.game.model.GhostAnimationState
+import com.pointlessgames.hexagone.game.model.Perk
 
 internal fun drawGhost(
     drawScope: DrawScope,

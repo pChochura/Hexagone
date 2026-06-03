@@ -23,6 +23,7 @@ data class Colors(
     val perkFusion: Color = Color(0xFFFFB74D),
     val perkChain: Color = Color(0xFF81C784),
     val perkAdvance: Color = Color(0xFF4DB6AC),
+    val perkFreeze: Color = Color(0xFF81D4FA),
     val surge: Color = Color(0xFF00E5FF),
     val overdrive: Color = Color(0xFFFF00FF),
     val zenith: Color = Color(0xFFFFFF00),

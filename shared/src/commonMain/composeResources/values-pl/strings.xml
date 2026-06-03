@@ -52,6 +52,7 @@
     <string name="perk_skip_spawn_name">BLOKADA KOLEJKI</string>
     <string name="perk_increment_tile_name">ULEPSZENIE</string>
     <string name="perk_path_merge_name">SCALANIE ŚCIEŻKI</string>
+    <string name="perk_freeze_tile_name">ZAMROŻENIE</string>
 
     <!-- Perk Descriptions -->
     <string name="perk_undo_desc">Cofnij swój ostatni ruch.</string>
@@ -65,6 +66,7 @@
     <string name="perk_skip_spawn_desc">Rozegraj następny ruch bez dodawania nowej płytki z kolejki.</string>
     <string name="perk_increment_tile_desc">Zwiększ wartość wybranej płytki o jeden.</string>
     <string name="perk_path_merge_desc">Połącz wszystkie sąsiednie płytki o tej samej wartości w jedną ścieżkę.</string>
+    <string name="perk_freeze_tile_desc">Wybierz płytkę, aby ją zamrozić na następną turę. Zamrożone płytki nie mogą być łączone.</string>
 
     <!-- Tooltips -->
     <string name="undo_last_move">Cofnij ostatni ruch</string>

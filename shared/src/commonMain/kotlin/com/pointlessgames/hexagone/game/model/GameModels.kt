@@ -210,7 +210,8 @@ data class HexagonCell(
     val x: Int,
     val y: Int,
     val value: Int,
-    val isTactical: Boolean = false
+    val isTactical: Boolean = false,
+    val isFrozen: Boolean = false
 )
 
 @Immutable
@@ -249,6 +250,7 @@ data class MergeTransition(
     val participatingIds: Set<String>? = null,
     val forceGhostIds: Set<String>? = null,
     val forceSolidIds: Set<String>? = null,
+    val previewFrozenIds: Set<String>? = null,
     val isRemoval: Boolean = false,
     val isPerkAssisted: Boolean = false,
     val startingCombo: Int = 0
@@ -276,6 +278,7 @@ enum class Perk(
     DUPLICATE_TILE(baseWeight = 50),
     SKIP_SPAWN(baseWeight = 50, canSaveFromStuck = false),
     INCREMENT_TILE(baseWeight = 80),
+    FREEZE_TILE(baseWeight = 60, canSaveFromStuck = false),
     PATH_MERGE(baseWeight = 5);
 
     val isLegendary: Boolean get() = baseWeight <= 20

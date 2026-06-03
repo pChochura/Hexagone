@@ -171,7 +171,7 @@ internal fun AnimatedGridHexagon(
                 neighbors.any { it.value == cell.value }
             }
 
-            Perk.REMOVE_TILE, Perk.INCREMENT_TILE -> true
+            Perk.REMOVE_TILE, Perk.INCREMENT_TILE, Perk.FREEZE_TILE -> true
             Perk.SWAP_TILES -> selectedCellId != cell.id
             Perk.MOVE_TILE, Perk.DUPLICATE_TILE -> selectedCellId == null
             else -> false
@@ -182,6 +182,7 @@ internal fun AnimatedGridHexagon(
         ?: if (currentHoverMerge?.targetX == cell.x && currentHoverMerge.targetY == cell.y && currentHoverMerge.finalValue != 0) currentHoverMerge.finalValue else cell.value
 
     val isGhostedInPreview = currentHoverMerge?.forceGhostIds?.contains(cell.id) == true
+    val isFrozen = currentHoverMerge?.previewFrozenIds?.contains(cell.id) == true || cell.isFrozen
 
     Hexagon(
         value = visualValue.toString(),
@@ -191,6 +192,7 @@ internal fun AnimatedGridHexagon(
         ).let { if (isGhostedInPreview) it.copy(alpha = 0.3f) else it },
         isTactical = cell.isTactical,
         isGhost = isGhostedInPreview,
+        isFrozen = isFrozen,
         modifier = modifier.size(
             with(density) { itemWidth.toDp() },
             with(density) { itemHeight.toDp() },

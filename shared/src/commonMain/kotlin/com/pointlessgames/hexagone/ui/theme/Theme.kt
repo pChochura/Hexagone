@@ -45,6 +45,7 @@ fun HexagoneTheme(
         tertiaryContainer = colors.perkFusion,
         primaryContainer = colors.perkChain,
         onTertiaryContainer = colors.perkAdvance,
+        onSecondaryContainer = colors.perkFreeze,
         scrim = colors.surge,
         inverseSurface = colors.overdrive,
         surfaceBright = colors.zenith,

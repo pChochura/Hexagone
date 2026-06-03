@@ -52,6 +52,7 @@
     <string name="perk_skip_spawn_name">SKIP SPAWN</string>
     <string name="perk_increment_tile_name">UPGRADE TILE</string>
     <string name="perk_path_merge_name">PATH MERGE</string>
+    <string name="perk_freeze_tile_name">FREEZE TILE</string>
 
     <!-- Perk Descriptions -->
     <string name="perk_undo_desc">Undo your last move.</string>
@@ -65,6 +66,7 @@
     <string name="perk_skip_spawn_desc">Play your next move without spawning a new piece from the queue.</string>
     <string name="perk_increment_tile_desc">Select a tile to increase its value by one.</string>
     <string name="perk_path_merge_desc">Merge all connected tiles of the same value in a single path.</string>
+    <string name="perk_freeze_tile_desc">Select a solid tile to freeze it for the next turn. Frozen tiles cannot be merged.</string>
 
     <!-- Tooltips -->
     <string name="undo_last_move">Undo last move</string>

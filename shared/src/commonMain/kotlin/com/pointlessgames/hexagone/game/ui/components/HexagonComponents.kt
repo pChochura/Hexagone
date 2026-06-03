@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -66,6 +67,8 @@ import hexagone.shared.generated.resources.perk_chain_merge_desc
 import hexagone.shared.generated.resources.perk_chain_merge_name
 import hexagone.shared.generated.resources.perk_duplicate_tile_desc
 import hexagone.shared.generated.resources.perk_duplicate_tile_name
+import hexagone.shared.generated.resources.perk_freeze_tile_desc
+import hexagone.shared.generated.resources.perk_freeze_tile_name
 import hexagone.shared.generated.resources.perk_fusion_desc
 import hexagone.shared.generated.resources.perk_fusion_name
 import hexagone.shared.generated.resources.perk_increment_tile_desc
@@ -123,6 +126,7 @@ object HexagonGridDefaults {
             Perk.SKIP_SPAWN -> colorScheme.tertiary
             Perk.INCREMENT_TILE -> colorScheme.primary
             Perk.PATH_MERGE -> colorScheme.errorContainer
+            Perk.FREEZE_TILE -> colorScheme.onSecondaryContainer
         }
     }
 
@@ -408,6 +412,34 @@ object HexagonGridDefaults {
                     drawPath(path, color = color, style = Stroke(width = strokeWidth))
                     drawCircle(color, radius = size.width * 0.1f, center = Offset(size.width * 0.5f, size.height * 0.5f))
                 }
+
+                Perk.FREEZE_TILE -> {
+                    val center = Offset(size.width / 2f, size.height / 2f)
+                    val radius = size.minDimension * 0.4f
+                    for (i in 0 until 3) {
+                        val angle = (i * 60f).toDouble()
+                        val dx = (radius * kotlin.math.cos(angle * kotlin.math.PI / 180)).toFloat()
+                        val dy = (radius * kotlin.math.sin(angle * kotlin.math.PI / 180)).toFloat()
+                        drawLine(color, center - Offset(dx, dy), center + Offset(dx, dy), strokeWidth)
+                    }
+                    val smallRadius = radius * 0.3f
+                    for (i in 0 until 6) {
+                        val angle = (i * 60f).toDouble()
+                        val dx = (radius * 0.8f * kotlin.math.cos(angle * kotlin.math.PI / 180)).toFloat()
+                        val dy = (radius * 0.8f * kotlin.math.sin(angle * kotlin.math.PI / 180)).toFloat()
+                        val tip = center + Offset(dx, dy)
+
+                        val crossAngle1 = angle + 45
+                        val crossAngle2 = angle - 45
+                        val cdx1 = (smallRadius * kotlin.math.cos(crossAngle1 * kotlin.math.PI / 180)).toFloat()
+                        val cdy1 = (smallRadius * kotlin.math.sin(crossAngle1 * kotlin.math.PI / 180)).toFloat()
+                        val cdx2 = (smallRadius * kotlin.math.cos(crossAngle2 * kotlin.math.PI / 180)).toFloat()
+                        val cdy2 = (smallRadius * kotlin.math.sin(crossAngle2 * kotlin.math.PI / 180)).toFloat()
+
+                        drawLine(color, tip, tip - Offset(cdx1, cdy1), strokeWidth)
+                        drawLine(color, tip, tip - Offset(cdx2, cdy2), strokeWidth)
+                    }
+                }
             }
         }
     }
@@ -446,6 +478,7 @@ val Perk.displayNameRes get() = when(this) {
     Perk.SKIP_SPAWN -> Res.string.perk_skip_spawn_name
     Perk.INCREMENT_TILE -> Res.string.perk_increment_tile_name
     Perk.PATH_MERGE -> Res.string.perk_path_merge_name
+    Perk.FREEZE_TILE -> Res.string.perk_freeze_tile_name
 }
 
 val Perk.descriptionRes get() = when(this) {
@@ -460,6 +493,7 @@ val Perk.descriptionRes get() = when(this) {
     Perk.SKIP_SPAWN -> Res.string.perk_skip_spawn_desc
     Perk.INCREMENT_TILE -> Res.string.perk_increment_tile_desc
     Perk.PATH_MERGE -> Res.string.perk_path_merge_desc
+    Perk.FREEZE_TILE -> Res.string.perk_freeze_tile_desc
 }
 
 @Composable
@@ -471,7 +505,8 @@ fun Hexagon(
     onClick: (() -> Unit)? = null,
     isOutline: Boolean = false,
     isGhost: Boolean = false,
-    isTactical: Boolean = false
+    isTactical: Boolean = false,
+    isFrozen: Boolean = false
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "hexagon_animations")
     
@@ -528,10 +563,19 @@ fun Hexagon(
         }
     } else Modifier
 
+    val frozenModifier = if (isFrozen) {
+        Modifier.border(
+            width = spacing.tiny,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            shape = FlatTopHexagonShape(),
+        )
+    } else Modifier
+
     val baseModifier = modifier
         .clip(FlatTopHexagonShape())
         .background(backgroundColor)
         .then(ghostModifier)
+        .then(frozenModifier)
     
     val finalModifier = if (onClick != null) {
         baseModifier.clickable(onClick = onClick)
@@ -577,6 +621,18 @@ fun Hexagon(
                     .align(Alignment.BottomCenter)
                     .offset(y = -spacing.semiSmall),
                 color = Color.White.copy(alpha = 0.6f)
+            )
+        }
+
+        if (isFrozen) {
+            PerkIcon(
+                perk = Perk.FREEZE_TILE,
+                modifier = Modifier
+                    .size(spacing.semiLarge)
+                    .align(Alignment.TopCenter)
+                    .offset(y = spacing.tiny)
+                    .zIndex(5f),
+                color = Color.White
             )
         }
     }
