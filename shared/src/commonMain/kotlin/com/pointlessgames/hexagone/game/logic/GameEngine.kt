@@ -494,7 +494,7 @@ internal class GameEngine(
             for (x in 0 until columns) {
                 if (x to y !in occupied) {
                     val neighbors = getNeighbors(x, y)
-                    val neighborCells = grid.filter { cell -> neighbors.any { it.first == cell.x && it.second == cell.y } }
+                    val neighborCells = grid.filter { cell -> !cell.isFrozen && neighbors.any { it.first == cell.x && it.second == cell.y } }
                     if (neighborCells.groupBy { it.value }.any { it.value.size >= 2 }) {
                         possibleMoves++
                     }
@@ -697,24 +697,30 @@ internal class GameEngine(
             }
             Perk.FUSION -> {
                 grid.any { cell ->
-                    getNeighbors(cell.x, cell.y).any { n -> grid.any { it.x == n.first && it.y == n.second } }
+                    !cell.isFrozen &&
+                            getNeighbors(cell.x, cell.y).count { n ->
+                                grid.any { it.x == n.first && it.y == n.second && !it.isFrozen }
+                            } >= 2
                 }
             }
             Perk.PATH_MERGE -> {
                 grid.any { cell ->
-                    if (cell.id.startsWith("preview")) return@any false
-                    val neighbors = getNeighbors(cell.x, cell.y)
-                    grid.any { n -> 
-                        n.value == cell.value && 
-                        !n.id.startsWith("preview") &&
-                        neighbors.any { it.first == n.x && it.second == n.y } 
-                    }
+                    !cell.isFrozen &&
+                            !cell.id.startsWith("preview") &&
+                            getNeighbors(cell.x, cell.y).any { n ->
+                                grid.any {
+                                    it.value == cell.value &&
+                                            !it.isFrozen &&
+                                            !it.id.startsWith("preview") &&
+                                            it.x == n.first && it.y == n.second
+                                }
+                            }
                 }
             }
             Perk.ADVANCE_QUEUE -> {
                 previews.any { p ->
                     val neighbors = getNeighbors(p.x, p.y)
-                    grid.count { n -> n.value == p.value && neighbors.any { it.first == n.x && it.second == n.y } } >= 1
+                    grid.count { n -> !n.isFrozen && n.value == p.value && neighbors.any { it.first == n.x && it.second == n.y } } >= 1
                 }
             }
             else -> false

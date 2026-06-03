@@ -163,6 +163,8 @@ data class GameState(
     val seed: Long = 0L,
     val cellIdCounter: Int = 0,
     val previewIdCounter: Int = 0,
+    val activePerk: Perk? = null,
+    val selectedCellId: String? = null,
 )
 
 @Serializable

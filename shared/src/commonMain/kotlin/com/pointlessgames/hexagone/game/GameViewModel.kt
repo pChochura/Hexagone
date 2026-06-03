@@ -128,6 +128,8 @@ internal class GameViewModel(
                             seed = savedState.seed,
                             cellIdCounter = savedState.cellIdCounter,
                             previewIdCounter = savedState.previewIdCounter,
+                            activePerk = savedState.activePerk,
+                            selectedCellId = savedState.selectedCellId,
                         )
                     }
                     stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
@@ -242,7 +244,7 @@ internal class GameViewModel(
                             .copy(isGameOver = false, activePerk = null, selectedCellId = null)
                     }
                     achievementDelegate.onUndoUsed()
-                    stateDelegate.persistState(stateDelegate.getCurrentGameState())
+                    checkValidMoves()
                 }
             }
 
@@ -268,6 +270,7 @@ internal class GameViewModel(
         }
         achievementDelegate.checkArchitectsDream(_uiState.value.grid, getPotentialMerges())
         recalculateHints()
+        checkValidMoves()
     }
 
     private fun recalculateHints() {
@@ -296,7 +299,6 @@ internal class GameViewModel(
         achievementDelegate.onNonUndoAction()
         recalculateHints()
         checkValidMoves()
-        stateDelegate.persistState(stateDelegate.getCurrentGameState())
     }
 
     fun onRerollClicked() {
@@ -316,7 +318,7 @@ internal class GameViewModel(
             )
         }
         achievementDelegate.onRerollUsed()
-        stateDelegate.persistState(stateDelegate.getCurrentGameState())
+        checkValidMoves()
     }
 
     fun onRestartClicked() {
@@ -351,7 +353,6 @@ internal class GameViewModel(
         )
         updateLevel()
         checkValidMoves()
-        stateDelegate.persistState(stateDelegate.getCurrentGameState())
     }
 
     private fun checkValidMoves() {
@@ -407,6 +408,7 @@ internal class GameViewModel(
         }
         achievementDelegate.checkArchitectsDream(_uiState.value.grid, getPotentialMerges())
         recalculateHints()
+        stateDelegate.persistState(stateDelegate.getCurrentGameState())
     }
 
     private fun spawnFromQueue(
@@ -475,7 +477,6 @@ internal class GameViewModel(
             updateLevel()
             checkValidMoves()
             _uiState.update { it.copy(isBusy = false) }
-            stateDelegate.persistState(stateDelegate.getCurrentGameState())
         }
     }
 

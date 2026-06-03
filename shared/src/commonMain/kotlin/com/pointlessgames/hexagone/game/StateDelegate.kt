@@ -96,6 +96,8 @@ internal class StateDelegate(
             seed = state.seed,
             cellIdCounter = state.cellIdCounter,
             previewIdCounter = state.previewIdCounter,
+            activePerk = state.activePerk,
+            selectedCellId = state.selectedCellId,
         )
     }
 
