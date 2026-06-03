@@ -46,13 +46,14 @@ object Scoring {
     fun calculateFinalCombo(merge: MergeTransition, currentCombo: Int, activePerk: Perk?): Int {
         val isPathMerge = merge.resultId.contains("path_merge")
         val isChainMerge = activePerk == Perk.CHAIN_MERGE
+        val isChainStep = merge.resultId.endsWith("_chain")
 
         if (isPathMerge || merge.uniqueGroups > 1) {
             return currentCombo
         }
 
-        if (isChainMerge && currentCombo > 0) {
-            return currentCombo
+        if (isChainMerge || isChainStep) {
+            return currentCombo + 1
         }
 
         return 0
