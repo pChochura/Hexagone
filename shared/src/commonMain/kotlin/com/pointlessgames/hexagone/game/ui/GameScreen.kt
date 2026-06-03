@@ -51,6 +51,7 @@ import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
+import com.pointlessgames.hexagone.game.ui.components.SettingsDialog
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.utils.BackHandler
@@ -67,6 +68,7 @@ internal fun GameScreen(
 
     var showLeaderboard by remember { mutableStateOf(false) }
     var showAchievements by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
     var initiallySelectedAchievement by remember { mutableStateOf<com.pointlessgames.hexagone.achievements.GameAchievement?>(null) }
     val leaderboardViewModel: LeaderboardViewModel = koinViewModel()
 
@@ -76,9 +78,10 @@ internal fun GameScreen(
     val achievementQueue = remember { mutableStateListOf<com.pointlessgames.hexagone.achievements.GameAchievement>() }
     val activeAchievement = achievementQueue.firstOrNull()
 
-    BackHandler(enabled = showLeaderboard || showAchievements) {
+    BackHandler(enabled = showLeaderboard || showAchievements || showSettings) {
         showLeaderboard = false
         showAchievements = false
+        showSettings = false
         initiallySelectedAchievement = null
     }
 
@@ -213,7 +216,8 @@ internal fun GameScreen(
                         onAchievementsClick = { 
                             initiallySelectedAchievement = null
                             showAchievements = true 
-                        }
+                        },
+                        onSettingsClick = { showSettings = true }
                     )
 
                     Spacer(Modifier.weight(0.1f))
@@ -381,6 +385,13 @@ internal fun GameScreen(
                     showAchievements = false
                     initiallySelectedAchievement = null
                 }
+            )
+        }
+
+        if (showSettings) {
+            SettingsDialog(
+                onRestart = onRestart,
+                onDismiss = { showSettings = false }
             )
         }
     }

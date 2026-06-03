@@ -95,6 +95,7 @@ fun ScoreSection(
     onLevelClick: () -> Unit = {},
     onLeaderboardClick: () -> Unit = {},
     onAchievementsClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
 ) {
     val waveIntensity = remember { Animatable(0f) }
     var previousScore by remember { mutableStateOf(score) }
@@ -190,7 +191,7 @@ fun ScoreSection(
             Spacer(Modifier.weight(1f))
 
             // Re-add the Gear/Settings icon on the right for symmetry
-            IconButton(onClick = { /* TODO */ }) {
+            IconButton(onClick = onSettingsClick) {
                 Canvas(modifier = Modifier.size(spacing.extraLarge)) {
                     val outerRadius = size.minDimension / 2.5f
                     val innerRadius = size.minDimension / 5f
