@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pointlessgames.hexagone.game.model.DetailedGameResult
-import com.pointlessgames.hexagone.game.ui.components.SecondaryGameButton
+import com.pointlessgames.hexagone.game.ui.components.HexagonIconButton
 import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
@@ -77,12 +77,14 @@ internal fun LeaderboardOverlay(
                 .padding(bottom = spacing.large),
             contentAlignment = Alignment.Center
         ) {
-            SecondaryGameButton(
+            HexagonIconButton(
                 onClick = onDismiss,
                 icon = Res.drawable.ic_back,
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .size(spacing.huge)
+                tooltip = Res.string.tooltip_back,
+                size = 48.dp,
+                modifier = Modifier.align(Alignment.CenterStart),
+                backgroundColor = Color.White.copy(alpha = 0.05f),
+                borderColor = Color.White.copy(alpha = 0.1f)
             )
 
             Text(
@@ -229,32 +231,21 @@ private fun OnboardingContent(
 
         Spacer(modifier = Modifier.height(spacing.extraLarge))
 
-        Button(
-            onClick = onCreateProfile,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(spacing.giant),
-            enabled = !isLoading,
-            shape = RoundedCornerShape(cornerRadius.medium),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                color = MaterialTheme.colorScheme.primary,
+                strokeWidth = 2.dp
             )
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = Color.White,
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Text(
-                    text = stringResource(Res.string.onboarding_submit).uppercase(),
-                    fontWeight = FontWeight.Black,
-                    fontSize = 18.sp,
-                    letterSpacing = 1.5.sp
-                )
-            }
+        } else {
+            HexagonIconButton(
+                onClick = onCreateProfile,
+                icon = Res.drawable.ic_roll,
+                label = stringResource(Res.string.onboarding_submit),
+                size = 80.dp,
+                backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+            )
         }
     }
 }

@@ -26,8 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,8 +47,10 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
+import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
@@ -99,27 +99,32 @@ fun ScoreSection(
         val spacing = MaterialTheme.spacing
         // Top Header with Game Name and Icons
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.medium),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onLeaderboardClick) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_leaderboards),
-                        contentDescription = null,
-                        modifier = Modifier.size(spacing.large),
-                        tint = Color.White.copy(alpha = 0.7f)
-                    )
-                }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(spacing.small)
+            ) {
+                HexagonIconButton(
+                    onClick = onLeaderboardClick,
+                    icon = Res.drawable.ic_leaderboards,
+                    tooltip = Res.string.tooltip_leaderboard,
+                    tooltipPosition = Position.BELOW,
+                    size = 44.dp,
+                    backgroundColor = Color.White.copy(alpha = 0.05f),
+                    borderColor = Color.White.copy(alpha = 0.1f)
+                )
 
-                IconButton(onClick = onAchievementsClick) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_achievements),
-                        contentDescription = null,
-                        modifier = Modifier.size(spacing.large),
-                        tint = Color.White.copy(alpha = 0.7f)
-                    )
-                }
+                HexagonIconButton(
+                    onClick = onAchievementsClick,
+                    icon = Res.drawable.ic_achievements,
+                    tooltip = Res.string.tooltip_achievements,
+                    tooltipPosition = Position.BELOW,
+                    size = 44.dp,
+                    backgroundColor = Color.White.copy(alpha = 0.05f),
+                    borderColor = Color.White.copy(alpha = 0.1f)
+                )
             }
 
             Spacer(Modifier.weight(1f))
@@ -135,14 +140,15 @@ fun ScoreSection(
             Spacer(Modifier.weight(1f))
 
             // Re-add the Gear/Settings icon on the right for symmetry
-            IconButton(onClick = onSettingsClick) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_settings),
-                    contentDescription = null,
-                    modifier = Modifier.size(spacing.large),
-                    tint = Color.White.copy(alpha = 0.7f)
-                )
-            }
+            HexagonIconButton(
+                onClick = onSettingsClick,
+                icon = Res.drawable.ic_settings,
+                tooltip = Res.string.tooltip_settings,
+                tooltipPosition = Position.BELOW,
+                size = 44.dp,
+                backgroundColor = Color.White.copy(alpha = 0.05f),
+                borderColor = Color.White.copy(alpha = 0.1f)
+            )
         }
 
         Spacer(Modifier.height(spacing.large))

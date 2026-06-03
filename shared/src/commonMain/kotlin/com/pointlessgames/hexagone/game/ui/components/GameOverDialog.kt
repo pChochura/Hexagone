@@ -146,22 +146,18 @@ internal fun GameOverDialog(
             )
             .padding(spacing.extraLarge),
     ) {
-        Box(
+        HexagonIconButton(
+            onClick = onViewBoard,
+            icon = Res.drawable.ic_back,
+            tooltip = Res.string.tooltip_view_board,
+            size = 48.dp,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .size(spacing.extraHuge)
-                .clip(CircleShape)
-                .clickable { onViewBoard() }
+                .graphicsLayer { rotationZ = 180f }
                 .padding(spacing.small),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(Res.drawable.ic_back),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp).graphicsLayer { rotationZ = 180f }, // Pointing "back" to board
-                tint = Color.White.copy(alpha = 0.4f)
-            )
-        }
+            backgroundColor = Color.White.copy(alpha = 0.05f),
+            borderColor = Color.White.copy(alpha = 0.1f)
+        )
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

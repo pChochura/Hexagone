@@ -16,9 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,16 +26,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.game_over_subtitle
-import hexagone.shared.generated.resources.game_over_title
-import hexagone.shared.generated.resources.no_more_moves_title
-import hexagone.shared.generated.resources.restart_game_button
-import hexagone.shared.generated.resources.try_perk_subtitle
+import hexagone.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos
@@ -153,22 +147,14 @@ internal fun StatusDialog(
                 Spacer(Modifier.height(spacing.medium))
             }
 
-            OutlinedButton(
+            HexagonIconButton(
                 onClick = onRestart,
-                modifier = Modifier.fillMaxWidth().height(spacing.extraHuge),
-                shape = RoundedCornerShape(spacing.medium),
-                border = androidx.compose.foundation.BorderStroke(
-                    spacing.extraTiny,
-                    Color.White.copy(alpha = 0.3f),
-                ),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-            ) {
-                Text(
-                    text = stringResource(Res.string.restart_game_button),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
-            }
+                icon = Res.drawable.ic_play_again,
+                label = stringResource(Res.string.restart_game_button),
+                size = 72.dp,
+                backgroundColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
+                borderColor = MaterialTheme.colorScheme.error.copy(alpha = 0.4f)
+            )
         }
     }
 }

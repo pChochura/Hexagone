@@ -22,6 +22,8 @@
     <string name="game_over_subtitle">Better luck next time!</string>
     <string name="try_perk_subtitle">Try using a perk.</string>
     <string name="restart_game_button">RESTART GAME</string>
+    <string name="share_label">SHARE</string>
+    <string name="settings_label">SETTINGS</string>
     <string name="perk_bar_empty_hint">Level up to collect perks and enhance your strategy!</string>
     <string name="perk_selection_hint">Long press a perk to see what it does</string>
     <string name="no_moves_left_warning">NO MOVES LEFT! USE A PERK</string>
@@ -88,6 +90,12 @@
     <string name="go_back">Go back</string>
     <string name="show_tutorial">Show tutorial</string>
     <string name="reroll_perks">Reroll selection. Note: Legendary perks will not appear in the new selection.</string>
+    <string name="tooltip_share">Share score</string>
+    <string name="tooltip_leaderboard">Leaderboard</string>
+    <string name="tooltip_settings">Settings</string>
+    <string name="tooltip_achievements">Achievements</string>
+    <string name="tooltip_back">Back</string>
+    <string name="tooltip_view_board">View board</string>
 
     <!-- Content -->
     <string name="continue_where_you_left_off">Continue where you left off</string>

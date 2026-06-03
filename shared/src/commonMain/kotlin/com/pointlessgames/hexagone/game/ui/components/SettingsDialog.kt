@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,13 +29,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
+import hexagone.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,7 +61,7 @@ fun SettingsDialog(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Settings",
+                text = stringResource(Res.string.settings_label),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black,
                 color = Color.White,
@@ -69,10 +70,13 @@ fun SettingsDialog(
             Spacer(Modifier.height(MaterialTheme.spacing.extraLarge))
 
             if (!showConfirmRestart) {
-                SettingsButton(
-                    text = "Restart Game",
-                    color = MaterialTheme.colorScheme.error,
+                HexagonIconButton(
+                    label = stringResource(Res.string.restart_game_button),
+                    icon = Res.drawable.ic_play_again,
                     onClick = { showConfirmRestart = true },
+                    backgroundColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
+                    borderColor = MaterialTheme.colorScheme.error.copy(alpha = 0.4f),
+                    size = 80.dp
                 )
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -82,24 +86,28 @@ fun SettingsDialog(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                     )
-                    Spacer(Modifier.height(MaterialTheme.spacing.medium))
+                    Spacer(Modifier.height(MaterialTheme.spacing.extraLarge))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
+                        horizontalArrangement = Arrangement.Center,
                     ) {
-                        SettingsButton(
-                            text = "Cancel",
-                            modifier = Modifier.weight(1f),
+                        HexagonIconButton(
+                            label = stringResource(Res.string.cancel),
+                            icon = Res.drawable.ic_back,
                             onClick = { showConfirmRestart = false },
+                            size = 72.dp
                         )
-                        SettingsButton(
-                            text = "Restart",
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.weight(1f),
+                        Spacer(Modifier.width(MaterialTheme.spacing.extraLarge))
+                        HexagonIconButton(
+                            label = stringResource(Res.string.restart_game_button),
+                            icon = Res.drawable.ic_play_again,
                             onClick = {
                                 onRestart()
                                 onDismiss()
                             },
+                            backgroundColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
+                            borderColor = MaterialTheme.colorScheme.error.copy(alpha = 0.4f),
+                            size = 72.dp
                         )
                     }
                 }
@@ -107,36 +115,5 @@ fun SettingsDialog(
 
             Spacer(Modifier.navigationBarsPadding())
         }
-    }
-}
-
-@Composable
-private fun SettingsButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.primary,
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(MaterialTheme.cornerRadius.medium))
-            .background(color.copy(alpha = 0.1f))
-            .border(
-                1.dp,
-                color.copy(alpha = 0.4f),
-                RoundedCornerShape(MaterialTheme.cornerRadius.medium),
-            )
-            .clickable { onClick() }
-            .padding(MaterialTheme.spacing.medium),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = text.uppercase(),
-            color = color,
-            fontWeight = FontWeight.Black,
-            fontSize = 14.sp,
-            letterSpacing = 1.sp,
-        )
     }
 }
