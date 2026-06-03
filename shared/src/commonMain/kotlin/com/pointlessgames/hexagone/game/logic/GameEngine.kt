@@ -15,23 +15,21 @@ internal class GameEngine(
     val columns: Int = 5,
     val rows: Int = 4
 ) {
-    private var idCounter = 0
-    private var previewIdCounter = 0
-
-    fun generateInitialGrid(): List<HexagonCell> {
+    fun generateInitialGrid(random: Random): Pair<List<HexagonCell>, Int> {
+        var idCounter = 0
         val cells = mutableListOf<HexagonCell>()
-        val startX = Random.nextInt(columns)
-        val startY = Random.nextInt(rows)
+        val startX = random.nextInt(columns)
+        val startY = random.nextInt(rows)
         val neighbors = getNeighbors(startX, startY)
 
         if (neighbors.isNotEmpty()) {
-            val (nx, ny) = neighbors.random()
-            val startValue = Random.nextInt(1, 3)
+            val (nx, ny) = neighbors.random(random)
+            val startValue = random.nextInt(1, 3)
             cells.add(HexagonCell("cell_${idCounter++}", startX, startY, startValue))
             cells.add(HexagonCell("cell_${idCounter++}", nx, ny, startValue))
         }
 
-        val count = Random.nextInt(2, 4)
+        val count = random.nextInt(2, 4)
         repeat(count) {
             val occupied = cells.map { it.x to it.y }.toSet()
             val empty = mutableListOf<Pair<Int, Int>>()
@@ -41,21 +39,24 @@ internal class GameEngine(
                 }
             }
             if (empty.isNotEmpty()) {
-                val (rx, ry) = empty.random()
-                cells.add(HexagonCell("cell_${idCounter++}", rx, ry, Random.nextInt(1, 3)))
+                val (rx, ry) = empty.random(random)
+                cells.add(HexagonCell("cell_${idCounter++}", rx, ry, random.nextInt(1, 3)))
             }
         }
-        return cells
+        return cells to idCounter
     }
 
     fun pickRandomPreviews(
         currentGrid: List<HexagonCell>,
         existingPreviews: List<PreviewCell>,
         existingPerks: List<OnBoardPerk>,
-        count: Int
-    ): List<PreviewCell> {
-        if (existingPreviews.isNotEmpty()) return existingPreviews
+        count: Int,
+        random: Random,
+        initialPreviewIdCounter: Int
+    ): Pair<List<PreviewCell>, Int> {
+        if (existingPreviews.isNotEmpty()) return existingPreviews to initialPreviewIdCounter
 
+        var previewIdCounter = initialPreviewIdCounter
         val boardPool = if (currentGrid.isEmpty()) listOf(1, 2) else currentGrid.map { it.value }.distinct().sorted()
         val spawnPool = boardPool.take((boardPool.size * 0.7f).toInt().coerceAtLeast(2))
 
@@ -69,9 +70,9 @@ internal class GameEngine(
             }
         }
 
-        if (emptyPositions.isEmpty()) return emptyList()
+        if (emptyPositions.isEmpty()) return emptyList<PreviewCell>() to previewIdCounter
 
-        val spawnValue = spawnPool.random()
+        val spawnValue = spawnPool.random(random)
 
         // Prioritize positions that are both empty AND don't have a perk
         val bestPositions = emptyPositions.filter { it !in perkPositions }
@@ -81,20 +82,21 @@ internal class GameEngine(
         val candidates = targetPool.filter { pos ->
             val neighbors = getNeighbors(pos.first, pos.second)
             neighbors.count { it !in currentOccupied } >= 2
-        }.shuffled()
+        }.shuffled(random)
 
         val groupPositions = if (candidates.isNotEmpty()) {
             val center = candidates.first()
             val neighbors = getNeighbors(center.first, center.second).filter { it !in currentOccupied }
-            val groupSize = Random.nextInt(2, 4) // 2 or 3 tiles
+            val groupSize = random.nextInt(2, 4) // 2 or 3 tiles
             neighbors.take(groupSize)
         } else {
-            listOf(targetPool.random())
+            listOf(targetPool.random(random))
         }
 
-        return groupPositions.map { (x, y) ->
+        val previews = groupPositions.map { (x, y) ->
             PreviewCell("preview_${previewIdCounter++}", x, y, spawnValue, 0)
         }
+        return previews to previewIdCounter
     }
 
     fun getNeighbors(x: Int, y: Int): List<Pair<Int, Int>> {
@@ -111,7 +113,8 @@ internal class GameEngine(
         return cells.sumOf { it.value } + n * n - n
     }
 
-    fun calculateMerge(x: Int, y: Int, grid: List<HexagonCell>): MergeTransition? {
+    fun calculateMerge(x: Int, y: Int, grid: List<HexagonCell>, idCounter: Int): Pair<MergeTransition?, Int> {
+        var currentIdCounter = idCounter
         val neighborCoords = getNeighbors(x, y)
         val neighborCells = grid.filter { cell ->
             neighborCoords.any { it.first == cell.x && it.second == cell.y }
@@ -160,7 +163,7 @@ internal class GameEngine(
                         MergeStep(
                             groupCells,
                             currentCenterValue,
-                            calculateBaseScore(groupCells + createCell(x, y, prevCenterValue))
+                            calculateBaseScore(groupCells + createCell(x, y, prevCenterValue, id = "temp"))
                         )
                     )
                     totalCells += groupCells.size
@@ -175,7 +178,7 @@ internal class GameEngine(
                 baseScore = (baseScore * 1.5).toInt()
             }
 
-            return MergeTransition(
+            val transition = MergeTransition(
                 targetX = x,
                 targetY = y,
                 steps = steps,
@@ -183,20 +186,22 @@ internal class GameEngine(
                 totalCells = totalCells,
                 uniqueGroups = valuesToMerge.size,
                 baseScore = baseScore,
-                resultId = "cell_${idCounter++}",
+                resultId = "cell_${currentIdCounter++}",
                 isTactical = mergingCells.any { it.isTactical },
                 participatingIds = mergingCells.map { it.id }.toSet()
             )
+            return transition to currentIdCounter
         }
-        return null
+        return null to currentIdCounter
     }
 
-    fun calculatePathMerge(x: Int, y: Int, value: Int, grid: List<HexagonCell>): MergeTransition? {
+    fun calculatePathMerge(x: Int, y: Int, value: Int, grid: List<HexagonCell>, idCounter: Int): Pair<MergeTransition?, Int> {
+        var currentIdCounter = idCounter
         val targetCellInGrid = grid.find { it.x == x && it.y == y }
         val targetValue = value
 
         val connectedCells = mutableSetOf<HexagonCell>()
-        val queue = mutableListOf(targetCellInGrid ?: createCell(x, y, targetValue))
+        val queue = mutableListOf(targetCellInGrid ?: createCell(x, y, targetValue, id = "temp"))
 
         while (queue.isNotEmpty()) {
             val current = queue.removeAt(0)
@@ -211,7 +216,7 @@ internal class GameEngine(
             }.forEach { queue.add(it) }
         }
 
-        if (connectedCells.size < 2) return null
+        if (connectedCells.size < 2) return null to currentIdCounter
 
         val mergingNeighbors = connectedCells.filter { it.id != (targetCellInGrid?.id ?: "") }
         val finalValue = targetValue + connectedCells.size - 1
@@ -224,7 +229,7 @@ internal class GameEngine(
                 MergeStep(
                     mergingCells = listOf(neighbor),
                     resultValue = stepValue,
-                    baseScore = calculateBaseScore(listOf(neighbor, createCell(x, y, currentCenterValue)))
+                    baseScore = calculateBaseScore(listOf(neighbor, createCell(x, y, currentCenterValue, id = "temp")))
                 )
             )
             currentCenterValue = stepValue
@@ -235,7 +240,7 @@ internal class GameEngine(
             baseScore = (baseScore * 1.5).toInt()
         }
 
-        return MergeTransition(
+        val transition = MergeTransition(
             targetX = x,
             targetY = y,
             steps = steps,
@@ -243,18 +248,20 @@ internal class GameEngine(
             totalCells = connectedCells.size,
             uniqueGroups = mergingNeighbors.size,
             baseScore = baseScore,
-            resultId = "cell_path_merge_${idCounter++}",
+            resultId = "cell_path_merge_${currentIdCounter++}",
             isTactical = connectedCells.any { it.isTactical },
             participatingIds = connectedCells.map { it.id }.toSet()
         )
+        return transition to currentIdCounter
     }
 
-    fun calculatePathMerge(x: Int, y: Int, grid: List<HexagonCell>): MergeTransition? {
-        val targetCell = grid.find { it.x == x && it.y == y } ?: return null
-        return calculatePathMerge(x, y, targetCell.value, grid)
+    fun calculatePathMerge(x: Int, y: Int, grid: List<HexagonCell>, idCounter: Int): Pair<MergeTransition?, Int> {
+        val targetCell = grid.find { it.x == x && it.y == y } ?: return null to idCounter
+        return calculatePathMerge(x, y, targetCell.value, grid, idCounter)
     }
 
-    fun calculateFusion(x: Int, y: Int, grid: List<HexagonCell>): MergeTransition? {
+    fun calculateFusion(x: Int, y: Int, grid: List<HexagonCell>, idCounter: Int): Pair<MergeTransition?, Int> {
+        var currentIdCounter = idCounter
         val neighborCoords = getNeighbors(x, y)
         val neighborCells = grid.filter { cell ->
             neighborCoords.any { it.first == cell.x && it.second == cell.y }
@@ -297,7 +304,7 @@ internal class GameEngine(
                         MergeStep(
                             groupCells,
                             currentCenterValue,
-                            calculateBaseScore(groupCells + createCell(x, y, prevValue))
+                            calculateBaseScore(groupCells + createCell(x, y, prevValue, id = "temp"))
                         )
                     )
                     totalCells += groupCells.size
@@ -309,7 +316,7 @@ internal class GameEngine(
                 baseScore = (baseScore * 1.5).toInt()
             }
 
-            return MergeTransition(
+            val transition = MergeTransition(
                 targetX = x,
                 targetY = y,
                 steps = steps.ifEmpty { listOf(MergeStep(emptyList(), currentCenterValue)) },
@@ -317,12 +324,13 @@ internal class GameEngine(
                 totalCells = allCells.size,
                 uniqueGroups = sortedValues.size,
                 baseScore = baseScore,
-                resultId = "cell_${idCounter++}",
+                resultId = "cell_${currentIdCounter++}",
                 isTactical = allCells.any { it.isTactical },
                 participatingIds = allCells.map { it.id }.toSet()
             )
+            return transition to currentIdCounter
         }
-        return null
+        return null to currentIdCounter
     }
 
     fun findMergeHints(
@@ -338,9 +346,9 @@ internal class GameEngine(
             for (x in 0 until columns) {
                 if (x to y !in occupied) {
                     val merge = if (activePerk == Perk.FUSION) {
-                        calculateFusion(x, y, grid)
+                        calculateFusion(x, y, grid, 0).first
                     } else {
-                        calculateMerge(x, y, grid)
+                        calculateMerge(x, y, grid, 0).first
                     }
 
                     if (merge != null) {
@@ -355,18 +363,18 @@ internal class GameEngine(
                             var currentGrid = grid.filter { cell ->
                                 merge.steps.none { step -> step.mergingCells.any { it.id == cell.id } } &&
                                         (cell.x != x || cell.y != y)
-                            } + createCell(x, y, merge.finalValue)
+                            } + createCell(x, y, merge.finalValue, id = "temp")
                             
                             var chainCount = 0
                             while (chainCount < 10) { // Safety break
-                                val chain = calculateMerge(x, y, currentGrid) ?: break
+                                val chain = calculateMerge(x, y, currentGrid, 0).first ?: break
                                 immediateScore += chain.baseScore * (comboMultiplier + chainCount + 1)
                                 totalUniqueGroups += chain.uniqueGroups
                                 finalValue = chain.finalValue
                                 currentGrid = currentGrid.filter { cell ->
                                     chain.steps.none { step -> step.mergingCells.any { it.id == cell.id } } &&
                                             (cell.x != x || cell.y != y)
-                                } + createCell(x, y, chain.finalValue)
+                                } + createCell(x, y, chain.finalValue, id = "temp")
                                 chainCount++
                             }
                         }
@@ -375,19 +383,19 @@ internal class GameEngine(
                         val gridAfterMerge = grid.filter { cell ->
                             merge.steps.none { step -> step.mergingCells.any { it.id == cell.id } } &&
                                     (cell.x != x || cell.y != y)
-                        } + createCell(x, y, finalValue)
+                        } + createCell(x, y, finalValue, id = "temp")
 
                         // 4. Future Potential (Queue landing)
                         var futureScore = 0
                         val gridAfterQueue = gridAfterMerge.toMutableList()
                         previews.forEach { p ->
                             if (gridAfterQueue.none { it.x == p.x && it.y == p.y }) {
-                                gridAfterQueue.add(createCell(p.x, p.y, p.value))
+                                gridAfterQueue.add(createCell(p.x, p.y, p.value, id = "temp"))
                             }
                         }
 
                         previews.forEach { p ->
-                            val pMerge = calculateMerge(p.x, p.y, gridAfterQueue)
+                            val pMerge = calculateMerge(p.x, p.y, gridAfterQueue, 0).first
                             if (pMerge != null) {
                                 futureScore += pMerge.baseScore * (currentCombo + totalUniqueGroups)
                             }
@@ -416,25 +424,25 @@ internal class GameEngine(
     }
 
     fun simulateChainMerge(x: Int, y: Int, grid: List<HexagonCell>, combo: Int): MergeTransition? {
-        var merge = calculateMerge(x, y, grid) ?: return null
+        var merge = calculateMerge(x, y, grid, 0).first ?: return null
         var totalScore = merge.baseScore * (combo + 1)
         var finalValue = merge.finalValue
         var currentGrid = grid.filter { cell ->
             merge.steps.none { step -> step.mergingCells.any { it.id == cell.id } } &&
                     (cell.x != x || cell.y != y)
-        } + createCell(x, y, merge.finalValue)
+        } + createCell(x, y, merge.finalValue, id = "temp")
 
         val allMergingIds = merge.steps.flatMap { it.mergingCells }.map { it.id }.toMutableSet()
         var chainCount = 1
         while (chainCount < 10) {
-            val chain = calculateMerge(x, y, currentGrid) ?: break
+            val chain = calculateMerge(x, y, currentGrid, 0).first ?: break
             totalScore += chain.baseScore * (combo + chainCount + 1)
             finalValue = chain.finalValue
             allMergingIds.addAll(chain.steps.flatMap { it.mergingCells }.map { it.id })
             currentGrid = currentGrid.filter { cell ->
                 chain.steps.none { step -> step.mergingCells.any { it.id == cell.id } } &&
                         (cell.x != x || cell.y != y)
-            } + createCell(x, y, chain.finalValue)
+            } + createCell(x, y, chain.finalValue, id = "temp")
             chainCount++
         }
 
@@ -447,18 +455,18 @@ internal class GameEngine(
         )
     }
 
-    fun pickWeightedPerks(count: Int, excludeLegendary: Boolean = false): List<Perk> {
+    fun pickWeightedPerks(count: Int, random: Random, excludeLegendary: Boolean = false): List<Perk> {
         val pool = Perk.entries.filter { !excludeLegendary || !it.isLegendary }.toMutableList()
         val result = mutableListOf<Perk>()
         
         repeat(count) {
             if (pool.isEmpty()) return@repeat
             val totalWeight = pool.sumOf { it.baseWeight }
-            var random = Random.nextInt(totalWeight)
+            var r = random.nextInt(totalWeight)
             
             for (perk in pool) {
-                random -= perk.baseWeight
-                if (random < 0) {
+                r -= perk.baseWeight
+                if (r < 0) {
                     result.add(perk)
                     pool.remove(perk)
                     break
@@ -496,19 +504,15 @@ internal class GameEngine(
     }
 
     fun createCell(x: Int, y: Int, value: Int, id: String? = null, isTactical: Boolean = false): HexagonCell {
-        return HexagonCell(id ?: "cell_${idCounter++}", x, y, value, isTactical)
+        return HexagonCell(id ?: "cell_temp", x, y, value, isTactical)
     }
 
     fun createPreviewCell(x: Int, y: Int, value: Int, id: String? = null, isTactical: Boolean = false): PreviewCell {
-        return PreviewCell(id ?: "preview_${previewIdCounter++}", x, y, value, 0, isTactical)
+        return PreviewCell(id ?: "preview_temp", x, y, value, 0, isTactical)
     }
 
     fun syncCounters(grid: List<HexagonCell>, previews: List<PreviewCell>) {
-        val cellIds = grid.mapNotNull { Regex("\\d+").find(it.id)?.value?.toIntOrNull() }
-        idCounter = (cellIds.maxOrNull() ?: -1) + 1
-
-        val previewIds = previews.mapNotNull { Regex("\\d+").find(it.id)?.value?.toIntOrNull() }
-        previewIdCounter = (previewIds.maxOrNull() ?: -1) + 1
+        // No longer needed as we use state counters
     }
 
     fun calculateLevel(score: Int): Int {
@@ -536,7 +540,8 @@ internal class GameEngine(
         grid: List<HexagonCell>,
         previews: List<PreviewCell>,
         existingPerks: List<OnBoardPerk>,
-        perkSpawnCounter: Int
+        perkSpawnCounter: Int,
+        random: Random
     ): Pair<List<OnBoardPerk>, Int> {
         // Increment counter for this turn
         val newCounter = perkSpawnCounter + 1
@@ -552,7 +557,7 @@ internal class GameEngine(
         if (newCounter < minTurns) return existingPerks to newCounter
         
         val spawnChance = (newCounter - minTurns).toFloat() / (maxTurns - minTurns)
-        if (Random.nextFloat() > spawnChance) return existingPerks to newCounter
+        if (random.nextFloat() > spawnChance) return existingPerks to newCounter
         
         // 3. Rule: Don't spawn where a ghost/preview will land
         val occupied = grid.map { it.x to it.y }.toSet()
@@ -569,8 +574,8 @@ internal class GameEngine(
         
         if (emptyPositions.isEmpty()) return existingPerks to newCounter
         
-        val pos = emptyPositions.random()
-        val perk = pickWeightedPerks(1, excludeLegendary = false).filter { it != Perk.PATH_MERGE }.firstOrNull() ?: return existingPerks to newCounter
+        val pos = emptyPositions.random(random)
+        val perk = pickWeightedPerks(1, random, excludeLegendary = false).filter { it != Perk.PATH_MERGE }.firstOrNull() ?: return existingPerks to newCounter
         
         val lifespan = when {
             perk.baseWeight <= 20 -> 1 // Legendary: must be collected immediately
@@ -589,19 +594,21 @@ internal class GameEngine(
     fun spawnFromQueue(
         currentState: List<HexagonCell>,
         currentPreviews: List<PreviewCell>,
-        currentPerks: List<OnBoardPerk>
-    ): Triple<List<HexagonCell>, List<PreviewCell>, List<OnBoardPerk>> {
+        currentPerks: List<OnBoardPerk>,
+        random: Random,
+        initialPreviewIdCounter: Int
+    ): Triple<List<HexagonCell>, Pair<List<PreviewCell>, Int>, List<OnBoardPerk>> {
         var newState = currentState
         var nextPerks = currentPerks
         currentPreviews.forEach { p ->
             if (newState.none { it.x == p.x && it.y == p.y }) {
-                newState = newState + createCell(p.x, p.y, p.value, isTactical = p.isTactical)
+                newState = newState + createCell(p.x, p.y, p.value, id = p.id, isTactical = p.isTactical)
                 // Delete perk if a ghost lands on it (don't collect)
                 nextPerks = nextPerks.filterNot { it.x == p.x && it.y == p.y }
             }
         }
 
-        val nextPreviews = pickRandomPreviews(newState, emptyList(), nextPerks, 3)
+        val nextPreviews = pickRandomPreviews(newState, emptyList(), nextPerks, 3, random, initialPreviewIdCounter)
         return Triple(newState, nextPreviews, nextPerks)
     }
 
@@ -626,7 +633,7 @@ internal class GameEngine(
                     for (x in 0 until columns) {
                         if (x to y !in occupied) {
                             for (v in distinctValues) {
-                                if (checkMergeAt(x, y, grid + createCell(x, y, v))) return true
+                                if (checkMergeAt(x, y, grid + createCell(x, y, v, id = "temp"))) return true
                             }
                         }
                     }
@@ -680,7 +687,7 @@ internal class GameEngine(
                     for (x in 0 until columns) {
                         if (x to y !in occupied) {
                             for (v in distinctValues) {
-                                if (checkMergeAt(x, y, grid + createCell(x, y, v))) return true
+                                if (checkMergeAt(x, y, grid + createCell(x, y, v, id = "temp"))) return true
                             }
                         }
                     }

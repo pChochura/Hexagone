@@ -66,10 +66,10 @@ internal class ActionDelegate(
 
         if (state.grid.any { it.x == x && it.y == y }) return
 
-        val merge = if (perk == Perk.FUSION) {
-            engine.calculateFusion(x, y, state.grid)
+        val (merge, nextIdCounter) = if (perk == Perk.FUSION) {
+            engine.calculateFusion(x, y, state.grid, state.cellIdCounter)
         } else {
-            engine.calculateMerge(x, y, state.grid)
+            engine.calculateMerge(x, y, state.grid, state.cellIdCounter)
         }
 
         if (merge != null) {
@@ -96,6 +96,7 @@ internal class ActionDelegate(
                     pendingMergeScore = stepScore,
                     combo = nextComboValue,
                     isBusy = true,
+                    cellIdCounter = nextIdCounter
                 )
                 if (perk == Perk.FUSION) {
                     stateAfterMergeStart.consumePerk(Perk.FUSION)
@@ -129,10 +130,10 @@ internal class ActionDelegate(
             perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES
         if (isTileOnlyPerk && ghostAtPos == null) return
 
-        val merge = when (perk) {
+        val mergeResult = when (perk) {
             Perk.REMOVE_TILE -> {
                 if (ghostAtPos != null) {
-                    val merge = MergeTransition(
+                    val m = MergeTransition(
                         targetX = x,
                         targetY = y,
                         steps = emptyList(),
@@ -144,14 +145,14 @@ internal class ActionDelegate(
                         isRemoval = true,
                         participatingIds = setOf(ghostAtPos.id),
                     )
-                    merge.copy(baseScore = calculatePotentialScore(merge, state))
+                    m.copy(baseScore = calculatePotentialScore(m, state))
                 } else null
             }
 
             Perk.INCREMENT_TILE -> {
                 if (ghostAtPos != null) {
                     val nextValue = ghostAtPos.value + 1
-                    val merge = MergeTransition(
+                    val m = MergeTransition(
                         targetX = x,
                         targetY = y,
                         steps = emptyList(),
@@ -163,18 +164,18 @@ internal class ActionDelegate(
                         participatingIds = setOf(ghostAtPos.id),
                         previewValues = mapOf(ghostAtPos.id to nextValue),
                     )
-                    merge.copy(baseScore = calculatePotentialScore(merge, state))
+                    m.copy(baseScore = calculatePotentialScore(m, state))
                 } else null
             }
 
             Perk.PATH_MERGE -> {
-                val merge = engine.calculatePathMerge(x, y, state.grid)
-                merge?.let {
+                val (m, _) = engine.calculatePathMerge(x, y, state.grid, 0)
+                m?.let {
                     val nextId = "preview_path_merge"
                     it.copy(
                         resultId = nextId,
                         forceSolidIds = setOf(nextId),
-                        previewValues = ghostAtPos?.let { mapOf(it.id to merge.finalValue) }
+                        previewValues = ghostAtPos?.let { g -> mapOf(g.id to it.finalValue) }
                             ?: emptyMap(),
                         baseScore = calculatePotentialScore(it, state),
                         isPerkAssisted = true
@@ -239,8 +240,8 @@ internal class ActionDelegate(
             }
 
             Perk.FUSION -> {
-                val merge = engine.calculateFusion(x, y, state.grid)
-                merge?.let {
+                val (m, _) = engine.calculateFusion(x, y, state.grid, 0)
+                m?.let {
                     it.copy(
                         baseScore = calculatePotentialScore(it, state),
                         resultId = "preview_fusion",
@@ -249,12 +250,12 @@ internal class ActionDelegate(
             }
 
             null, Perk.CHAIN_MERGE, Perk.SKIP_SPAWN -> {
-                val merge = if (perk == Perk.CHAIN_MERGE) {
-                    engine.simulateChainMerge(x, y, state.grid, state.combo)
+                val (m, _) = if (perk == Perk.CHAIN_MERGE) {
+                    engine.simulateChainMerge(x, y, state.grid, state.combo) to 0
                 } else {
-                    engine.calculateMerge(x, y, state.grid)
+                    engine.calculateMerge(x, y, state.grid, 0)
                 }
-                merge?.let {
+                m?.let {
                     it.copy(
                         baseScore = calculatePotentialScore(it, state),
                         resultId = "preview_merge",
@@ -264,7 +265,7 @@ internal class ActionDelegate(
 
             else -> null
         }
-        onHoveredMergeChanged(merge)
+        onHoveredMergeChanged(mergeResult)
     }
 
     fun onCellTouchDown(cell: HexagonCell) {
@@ -276,15 +277,15 @@ internal class ActionDelegate(
 
         if (perk != null && selectedId == cell.id) return
 
-        val merge = when (perk) {
+        val mergeResult = when (perk) {
             Perk.PATH_MERGE -> {
-                val m = engine.calculatePathMerge(cell.x, cell.y, state.grid)
+                val (m, _) = engine.calculatePathMerge(cell.x, cell.y, state.grid, 0)
                 m?.let {
                     val nextId = "preview_path_merge"
                     it.copy(
                         resultId = nextId,
                         forceSolidIds = setOf(nextId),
-                        previewValues = mapOf(cell.id to m.finalValue),
+                        previewValues = mapOf(cell.id to it.finalValue),
                         baseScore = calculatePotentialScore(it, state),
                         isPerkAssisted = true
                     )
@@ -292,7 +293,7 @@ internal class ActionDelegate(
             }
 
             Perk.REMOVE_TILE -> {
-                val merge = MergeTransition(
+                val m = MergeTransition(
                     targetX = cell.x,
                     targetY = cell.y,
                     steps = emptyList(),
@@ -304,12 +305,12 @@ internal class ActionDelegate(
                     isRemoval = true,
                     participatingIds = setOf(cell.id),
                 )
-                merge.copy(baseScore = calculatePotentialScore(merge, state))
+                m.copy(baseScore = calculatePotentialScore(m, state))
             }
 
             Perk.INCREMENT_TILE -> {
                 val nextValue = cell.value + 1
-                val merge = MergeTransition(
+                val m = MergeTransition(
                     targetX = cell.x,
                     targetY = cell.y,
                     steps = emptyList(),
@@ -321,7 +322,7 @@ internal class ActionDelegate(
                     participatingIds = setOf(cell.id),
                     previewValues = mapOf(cell.id to nextValue),
                 )
-                merge.copy(baseScore = calculatePotentialScore(merge, state))
+                m.copy(baseScore = calculatePotentialScore(m, state))
             }
 
             Perk.SWAP_TILES -> {
@@ -353,7 +354,7 @@ internal class ActionDelegate(
             null -> null
             else -> null
         }
-        onHoveredMergeChanged(merge)
+        onHoveredMergeChanged(mergeResult)
     }
 
     fun onPreviewClicked(preview: PreviewCell) {
@@ -600,7 +601,7 @@ internal class ActionDelegate(
             }
 
             Perk.PATH_MERGE -> {
-                val merge = engine.calculatePathMerge(cell.x, cell.y, state.grid)
+                val (merge, nextIdCounter) = engine.calculatePathMerge(cell.x, cell.y, state.grid, state.cellIdCounter)
                 if (merge != null) {
                     stateDelegate.saveState()
                     uiState.update { currentState ->
@@ -623,6 +624,7 @@ internal class ActionDelegate(
                             pendingMergeScore = stepScore,
                             combo = nextComboValue,
                             isBusy = true,
+                            cellIdCounter = nextIdCounter
                         )
                     }
                 }
@@ -895,11 +897,11 @@ internal class ActionDelegate(
         for (x in 0 until engine.columns) {
             for (y in 0 until engine.rows) {
                 if (grid.none { it.x == x && it.y == y }) {
-                    val merge = when (perk) {
-                        Perk.FUSION -> engine.calculateFusion(x, y, grid)
-                        Perk.PATH_MERGE -> engine.calculatePathMerge(x, y, grid)
-                        Perk.CHAIN_MERGE -> engine.simulateChainMerge(x, y, grid, state.combo)
-                        else -> engine.calculateMerge(x, y, grid)
+                    val (merge, _) = when (perk) {
+                        Perk.FUSION -> engine.calculateFusion(x, y, grid, 0)
+                        Perk.PATH_MERGE -> engine.calculatePathMerge(x, y, grid, 0)
+                        Perk.CHAIN_MERGE -> engine.simulateChainMerge(x, y, grid, state.combo) to 0
+                        else -> engine.calculateMerge(x, y, grid, 0)
                     }
 
                     if (merge != null) {

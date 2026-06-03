@@ -67,6 +67,9 @@ data class GameUiState(
     val earnedRewardsThisTurn: List<GameEffect.TierReward> = emptyList(),
     val currentRank: RankingInfo? = null,
     val redemptionBaseline: Int? = null,
+    val seed: Long = 0L,
+    val cellIdCounter: Int = 0,
+    val previewIdCounter: Int = 0,
 ) {
     fun consumePerk(perk: Perk): GameUiState {
         val perkIndex = collectedPerks.indexOf(perk)
@@ -157,6 +160,9 @@ data class GameState(
     val undoUsedInSession: Boolean = false,
     val ghostPerkUsedInSession: Boolean = false,
     val redemptionBaseline: Int? = null,
+    val seed: Long = 0L,
+    val cellIdCounter: Int = 0,
+    val previewIdCounter: Int = 0,
 )
 
 @Serializable

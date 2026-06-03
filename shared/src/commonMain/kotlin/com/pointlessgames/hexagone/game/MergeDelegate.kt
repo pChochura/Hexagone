@@ -146,7 +146,8 @@ internal class MergeDelegate(
         val finalScore = currentState.score + scoreResult.totalScore
         stateDelegate.persistBestScore(finalScore)
 
-        val tierRewards = handleTierRewards(finalCombo, currentState)
+        val random = kotlin.random.Random(currentState.seed)
+        val tierRewards = handleTierRewards(finalCombo, currentState, random)
         val newlyEarnedPerks = tierRewards.map { it.second }
         val newReachedTiers = tierRewards.map { it.first }.toSet()
         val newRewardEffects = tierRewards.map { GameEffect.TierReward(it.first, it.second) }
@@ -186,6 +187,7 @@ internal class MergeDelegate(
                 isBusy = true,
                 maxCombo = maxOf(it.maxCombo, finalCombo),
                 totalMerges = it.totalMerges + 1,
+                seed = random.nextLong()
             )
         }
 
@@ -204,14 +206,15 @@ internal class MergeDelegate(
     private fun handleTierRewards(
         finalCombo: Int,
         currentState: GameUiState,
+        random: kotlin.random.Random
     ): List<Pair<ComboTier, Perk>> {
         val rewards = mutableListOf<Pair<ComboTier, Perk>>()
         ComboTier.entries.forEach { tier ->
             if (finalCombo + 1 >= tier.threshold && !currentState.reachedComboTiers.contains(tier)) {
                 val reward = when (tier) {
-                    ComboTier.SURGE -> Perk.entries.filter { it.baseWeight in 50..80 }.random()
-                    ComboTier.OVERDRIVE -> Perk.entries.filter { it.isLegendary }.random()
-                    ComboTier.ZENITH -> Perk.entries.filter { it.isLegendary }.random()
+                    ComboTier.SURGE -> Perk.entries.filter { it.baseWeight in 50..80 }.random(random)
+                    ComboTier.OVERDRIVE -> Perk.entries.filter { it.isLegendary }.random(random)
+                    ComboTier.ZENITH -> Perk.entries.filter { it.isLegendary }.random(random)
                 }
                 rewards.add(tier to reward)
             }
@@ -220,9 +223,10 @@ internal class MergeDelegate(
     }
 
     private suspend fun handleChainMerge(merge: MergeTransition, finalCombo: Int) {
-        val chainMerge = if (uiState.value.activePerk == Perk.CHAIN_MERGE) {
-            engine.calculateMerge(merge.targetX, merge.targetY, uiState.value.grid)
-        } else null
+        val stateBeforeChain = uiState.value
+        val (chainMerge, nextIdCounter) = if (stateBeforeChain.activePerk == Perk.CHAIN_MERGE) {
+            engine.calculateMerge(merge.targetX, merge.targetY, stateBeforeChain.grid, stateBeforeChain.cellIdCounter)
+        } else (null to stateBeforeChain.cellIdCounter)
 
         if (chainMerge != null) {
             delay(150)
@@ -245,6 +249,7 @@ internal class MergeDelegate(
                     ),
                     activeMergeStepIndex = 0,
                     pendingMergeScore = chainScore,
+                    cellIdCounter = nextIdCounter
                 )
             }
         } else {
@@ -287,11 +292,12 @@ internal class MergeDelegate(
         val nextStep = merge.steps[stepIndex + 1]
 
         uiState.update { state ->
+            val random = kotlin.random.Random(state.seed)
             val isPathMerge = merge.resultId.contains("path_merge")
             val nextComboValue = Scoring.getNextStepCombo(state.combo, stepIndex + 1, isPathMerge)
             val stepScore = Scoring.getStepScore(nextStep.baseScore, nextComboValue)
 
-            val tierRewards = handleTierRewards(nextComboValue, state)
+            val tierRewards = handleTierRewards(nextComboValue, state, random)
             val newReachedTiers = tierRewards.map { it.first }.toSet()
             val newlyEarnedPerks = tierRewards.map { it.second }
             val newRewardEffects = tierRewards.map { GameEffect.TierReward(it.first, it.second) }
@@ -309,6 +315,7 @@ internal class MergeDelegate(
                 },
                 activeMergeStepIndex = stepIndex + 1,
                 pendingMergeScore = state.pendingMergeScore + stepScore,
+                seed = random.nextLong()
             )
         }
     }

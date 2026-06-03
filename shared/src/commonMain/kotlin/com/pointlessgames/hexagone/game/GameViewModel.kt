@@ -125,11 +125,13 @@ internal class GameViewModel(
                             perkUsedInSession = savedState.perkUsedInSession,
                             undoUsedInSession = savedState.undoUsedInSession,
                             ghostPerkUsedInSession = savedState.ghostPerkUsedInSession,
+                            seed = savedState.seed,
+                            cellIdCounter = savedState.cellIdCounter,
+                            previewIdCounter = savedState.previewIdCounter,
                         )
                     }
                     stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
                     updateLevel()
-                    engine.syncCounters(savedState.grid, savedState.preview)
                     checkValidMoves()
                 } catch (_: Exception) {
                     stateDelegate.setAbsoluteBestScore(best)
@@ -187,10 +189,11 @@ internal class GameViewModel(
 
     private fun updateLevel() {
         _uiState.update { state ->
+            val random = kotlin.random.Random(state.seed)
             val lvl = engine.calculateLevel(state.score)
             val levelDifference = lvl - state.level
             if (levelDifference > 0) {
-                val nextPerkOptions = state.perkOptions.ifEmpty { engine.pickWeightedPerks(3) }
+                val nextPerkOptions = state.perkOptions.ifEmpty { engine.pickWeightedPerks(3, random) }
                 state.copy(
                     level = lvl,
                     levelProgress = engine.getLevelProgress(state.score, lvl),
@@ -198,6 +201,7 @@ internal class GameViewModel(
                     perkOptions = nextPerkOptions,
                     pendingLevelUps = state.pendingLevelUps + levelDifference,
                     canReroll = if (state.perkOptions.isEmpty()) true else state.canReroll,
+                    seed = random.nextLong()
                 )
             } else {
                 state.copy(
@@ -278,12 +282,14 @@ internal class GameViewModel(
 
     fun onPerkSelected(perk: Perk) {
         _uiState.update {
+            val random = kotlin.random.Random(it.seed)
             val remainingLevelUps = (it.pendingLevelUps - 1).coerceAtLeast(0)
             it.copy(
                 collectedPerks = it.collectedPerks + perk,
-                perkOptions = if (remainingLevelUps > 0) engine.pickWeightedPerks(3) else emptyList(),
+                perkOptions = if (remainingLevelUps > 0) engine.pickWeightedPerks(3, random) else emptyList(),
                 pendingLevelUps = remainingLevelUps,
                 canReroll = true,
+                seed = random.nextLong()
             )
         }
         achievementDelegate.checkPerkAchievements(perk, _uiState.value)
@@ -302,9 +308,11 @@ internal class GameViewModel(
         }
 
         _uiState.update {
+            val random = kotlin.random.Random(it.seed)
             it.copy(
-                perkOptions = engine.pickWeightedPerks(3, excludeLegendary = true),
+                perkOptions = engine.pickWeightedPerks(3, random, excludeLegendary = true),
                 canReroll = false,
+                seed = random.nextLong()
             )
         }
         achievementDelegate.onRerollUsed()
@@ -318,9 +326,10 @@ internal class GameViewModel(
     private fun restartGame() {
         stateDelegate.clearHistory()
         mergeDelegate.resetLastProcessed()
-        engine.syncCounters(emptyList(), emptyList())
-        val initialGrid = engine.generateInitialGrid()
-        val initialPreviews = engine.pickRandomPreviews(initialGrid, emptyList(), emptyList(), 3)
+        val initialSeed = kotlin.random.Random.nextLong()
+        val random = kotlin.random.Random(initialSeed)
+        val (initialGrid, nextIdCounter) = engine.generateInitialGrid(random)
+        val (initialPreviews, nextPreviewIdCounter) = engine.pickRandomPreviews(initialGrid, emptyList(), emptyList(), 3, random, 0)
         _uiState.value = GameUiState(
             grid = initialGrid,
             mergeHints = if (_uiState.value.mergeHintsEnabled) engine.findMergeHints(
@@ -336,6 +345,9 @@ internal class GameViewModel(
             onBoardPerks = emptyList(),
             perkSpawnCounter = 0,
             earnedRewardsThisTurn = emptyList(),
+            seed = random.nextLong(),
+            cellIdCounter = nextIdCounter,
+            previewIdCounter = nextPreviewIdCounter
         )
         updateLevel()
         checkValidMoves()
@@ -406,16 +418,22 @@ internal class GameViewModel(
             _uiState.update { it.copy(isBusy = true) }
             val gridWithoutTactical = engine.decrementTacticalFlags(currentState)
             val currentPerks = _uiState.value.onBoardPerks
+            val random = kotlin.random.Random(_uiState.value.seed)
+            val currentPreviewIdCounter = _uiState.value.previewIdCounter
 
-            val (newState, newPreviews, perksAfterSpawn) = if (skipSpawn) {
-                Triple(gridWithoutTactical, _uiState.value.preview, currentPerks)
+            val (newState, newPreviewsResult, perksAfterSpawn) = if (skipSpawn) {
+                Triple(gridWithoutTactical, _uiState.value.preview to currentPreviewIdCounter, currentPerks)
             } else {
                 engine.spawnFromQueue(
                     gridWithoutTactical,
                     _uiState.value.preview,
                     currentPerks,
+                    random,
+                    currentPreviewIdCounter
                 )
             }
+
+            val (newPreviews, nextPreviewIdCounter) = newPreviewsResult
 
             val updatedPerks = if (decrementLifespan) {
                 engine.updateOnBoardPerks(perksAfterSpawn)
@@ -432,6 +450,7 @@ internal class GameViewModel(
                 newPreviews,
                 updatedPerks,
                 _uiState.value.perkSpawnCounter,
+                random
             )
 
             val rewardsToEmit = _uiState.value.earnedRewardsThisTurn
@@ -442,7 +461,9 @@ internal class GameViewModel(
                     preview = newPreviews,
                     onBoardPerks = nextPerks,
                     perkSpawnCounter = nextCounter,
-                    earnedRewardsThisTurn = emptyList()
+                    earnedRewardsThisTurn = emptyList(),
+                    seed = random.nextLong(),
+                    previewIdCounter = nextPreviewIdCounter
                 )
             }
 

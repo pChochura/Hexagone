@@ -93,6 +93,7 @@ internal class StateDelegate(
             undoUsedInSession = state.undoUsedInSession,
             ghostPerkUsedInSession = state.ghostPerkUsedInSession,
             redemptionBaseline = state.redemptionBaseline,
+            seed = state.seed,
         )
     }
 
@@ -135,6 +136,7 @@ internal class StateDelegate(
                 undoUsedInSession = previousState.undoUsedInSession,
                 ghostPerkUsedInSession = previousState.ghostPerkUsedInSession,
                 redemptionBaseline = undoneMoveScore,
+                seed = previousState.seed,
                 earnedRewardsThisTurn = emptyList(),
                 pendingMerge = null,
                 activePerk = null,
