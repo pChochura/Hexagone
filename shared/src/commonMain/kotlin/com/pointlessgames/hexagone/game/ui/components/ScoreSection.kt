@@ -10,7 +10,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,11 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.TextStyle
@@ -52,12 +48,35 @@ import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.*
-import org.jetbrains.compose.resources.painterResource
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.app_name
+import hexagone.shared.generated.resources.best_score_label
+import hexagone.shared.generated.resources.ic_achievements
+import hexagone.shared.generated.resources.ic_leaderboards
+import hexagone.shared.generated.resources.ic_settings
+import hexagone.shared.generated.resources.level_label
+import hexagone.shared.generated.resources.max_label
+import hexagone.shared.generated.resources.perk_active_label
+import hexagone.shared.generated.resources.perk_advance_queue_name
+import hexagone.shared.generated.resources.perk_chain_merge_name
+import hexagone.shared.generated.resources.perk_duplicate_tile_name
+import hexagone.shared.generated.resources.perk_freeze_tile_name
+import hexagone.shared.generated.resources.perk_fusion_name
+import hexagone.shared.generated.resources.perk_increment_tile_name
+import hexagone.shared.generated.resources.perk_move_tile_name
+import hexagone.shared.generated.resources.perk_path_merge_name
+import hexagone.shared.generated.resources.perk_remove_tile_name
+import hexagone.shared.generated.resources.perk_skip_spawn_name
+import hexagone.shared.generated.resources.perk_swap_tiles_name
+import hexagone.shared.generated.resources.perk_undo_name
+import hexagone.shared.generated.resources.score_label
+import hexagone.shared.generated.resources.tier_overdrive
+import hexagone.shared.generated.resources.tier_surge
+import hexagone.shared.generated.resources.tier_zenith
+import hexagone.shared.generated.resources.tooltip_achievements
+import hexagone.shared.generated.resources.tooltip_leaderboard
+import hexagone.shared.generated.resources.tooltip_settings
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 
 @Composable
 fun ScoreSection(
@@ -104,7 +123,7 @@ fun ScoreSection(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(spacing.small)
+                horizontalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
                 HexagonIconButton(
                     onClick = onLeaderboardClick,
@@ -113,7 +132,7 @@ fun ScoreSection(
                     tooltipPosition = Position.BELOW,
                     size = 44.dp,
                     backgroundColor = Color.White.copy(alpha = 0.05f),
-                    borderColor = Color.White.copy(alpha = 0.1f)
+                    borderColor = Color.White.copy(alpha = 0.1f),
                 )
 
                 HexagonIconButton(
@@ -123,7 +142,7 @@ fun ScoreSection(
                     tooltipPosition = Position.BELOW,
                     size = 44.dp,
                     backgroundColor = Color.White.copy(alpha = 0.05f),
-                    borderColor = Color.White.copy(alpha = 0.1f)
+                    borderColor = Color.White.copy(alpha = 0.1f),
                 )
             }
 
@@ -147,7 +166,7 @@ fun ScoreSection(
                 tooltipPosition = Position.BELOW,
                 size = 44.dp,
                 backgroundColor = Color.White.copy(alpha = 0.05f),
-                borderColor = Color.White.copy(alpha = 0.1f)
+                borderColor = Color.White.copy(alpha = 0.1f),
             )
         }
 
@@ -163,7 +182,7 @@ fun ScoreSection(
             WavyProgressBar(
                 progress = progress,
                 waveIntensity = waveIntensity.value,
-                modifier = Modifier.matchParentSize()
+                modifier = Modifier.matchParentSize(),
             )
 
             Column(
@@ -214,12 +233,15 @@ fun ScoreSection(
                 }
 
                 Spacer(Modifier.height(spacing.tiny))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall),
+                ) {
                     Text(
                         text = stringResource(Res.string.best_score_label),
                         color = Color.White.copy(alpha = 0.3f),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
+                        fontSize = 16.sp,
                     )
                     Text(
                         text = bestScore.toString(),
@@ -326,7 +348,9 @@ fun ScoreSection(
                     targetState = activePerk,
                     transitionSpec = {
                         (fadeIn() + scaleIn(initialScale = 0.75f)
-                                togetherWith fadeOut() + scaleOut(targetScale = 0.75f)) using SizeTransform(clip = false)
+                                togetherWith fadeOut() + scaleOut(targetScale = 0.75f)) using SizeTransform(
+                            clip = false,
+                        )
                     },
                     contentAlignment = Alignment.Center,
                     label = "integrated_max_value",
