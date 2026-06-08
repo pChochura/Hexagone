@@ -69,19 +69,24 @@ internal fun GameScreen(
     var showLeaderboard by remember { mutableStateOf(false) }
     var showAchievements by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var showDailyChallenge by remember { mutableStateOf(false) }
     var initiallySelectedAchievement by remember { mutableStateOf<com.pointlessgames.hexagone.achievements.GameAchievement?>(null) }
     val leaderboardViewModel: LeaderboardViewModel = koinViewModel()
 
     val tierRewardQueue = remember { mutableStateListOf<Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>>() }
+    val challengeRewardQueue = remember { mutableStateListOf<com.pointlessgames.hexagone.game.model.DailyChallenge>() }
+    
     val activeTierReward = tierRewardQueue.firstOrNull()
+    val activeChallengeReward = challengeRewardQueue.firstOrNull()
 
     val achievementQueue = remember { mutableStateListOf<com.pointlessgames.hexagone.achievements.GameAchievement>() }
     val activeAchievement = achievementQueue.firstOrNull()
 
-    BackHandler(enabled = showLeaderboard || showAchievements || showSettings) {
+    BackHandler(enabled = showLeaderboard || showAchievements || showSettings || showDailyChallenge) {
         showLeaderboard = false
         showAchievements = false
         showSettings = false
+        showDailyChallenge = false
         initiallySelectedAchievement = null
     }
 
@@ -169,6 +174,9 @@ internal fun GameScreen(
                 is com.pointlessgames.hexagone.game.model.GameEffect.AchievementUnlock -> {
                     achievementQueue.add(effect.achievement)
                 }
+                is com.pointlessgames.hexagone.game.model.GameEffect.DailyChallengeComplete -> {
+                    challengeRewardQueue.add(effect.challenge)
+                }
                 else -> {}
             }
         }
@@ -217,7 +225,9 @@ internal fun GameScreen(
                             initiallySelectedAchievement = null
                             showAchievements = true 
                         },
-                        onSettingsClick = { showSettings = true }
+                        onSettingsClick = { showSettings = true },
+                        onDailyChallengeClick = { showDailyChallenge = true },
+                        isDailyChallengeCompleted = uiState.dailyChallenges.all { it.isCompleted }
                     )
 
                     Spacer(Modifier.weight(0.1f))
@@ -364,7 +374,10 @@ internal fun GameScreen(
             leaderboardViewModel = leaderboardViewModel,
             activeTierReward = activeTierReward,
             onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
-            rankingInfo = uiState.currentRank
+            activeChallengeReward = activeChallengeReward,
+            onChallengeRewardFinished = { if (challengeRewardQueue.isNotEmpty()) challengeRewardQueue.removeAt(0) },
+            rankingInfo = uiState.currentRank,
+            finalResult = uiState.finalResult
         )
 
         activeAchievement?.let { achievement ->
@@ -393,6 +406,15 @@ internal fun GameScreen(
             SettingsDialog(
                 onRestart = onRestart,
                 onDismiss = { showSettings = false }
+            )
+        }
+
+        if (showDailyChallenge) {
+            com.pointlessgames.hexagone.game.ui.components.DailyChallengeDialog(
+                challenges = uiState.dailyChallenges,
+                streak = uiState.challengeStreak,
+                globalPoints = uiState.globalPoints,
+                onDismiss = { showDailyChallenge = false }
             )
         }
     }

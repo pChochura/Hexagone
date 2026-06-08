@@ -50,6 +50,8 @@ import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.app_name
+import hexagone.shared.generated.resources.daily_challenge
+import hexagone.shared.generated.resources.ic_daily_challenge
 import hexagone.shared.generated.resources.best_score_label
 import hexagone.shared.generated.resources.ic_achievements
 import hexagone.shared.generated.resources.ic_leaderboards
@@ -88,10 +90,12 @@ fun ScoreSection(
     progress: Float,
     highestValue: Int,
     activePerk: Perk?,
+    isDailyChallengeCompleted: Boolean = false,
     onLevelClick: () -> Unit = {},
     onLeaderboardClick: () -> Unit = {},
     onAchievementsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
+    onDailyChallengeClick: () -> Unit = {},
 ) {
     val waveIntensity = remember { Animatable(0f) }
     var previousScore by remember { mutableStateOf(score) }
@@ -158,16 +162,34 @@ fun ScoreSection(
 
             Spacer(Modifier.weight(1f))
 
-            // Re-add the Gear/Settings icon on the right for symmetry
-            HexagonIconButton(
-                onClick = onSettingsClick,
-                icon = Res.drawable.ic_settings,
-                tooltip = Res.string.tooltip_settings,
-                tooltipPosition = Position.BELOW,
-                size = 44.dp,
-                backgroundColor = Color.White.copy(alpha = 0.05f),
-                borderColor = Color.White.copy(alpha = 0.1f),
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(spacing.small),
+            ) {
+                HexagonIconButton(
+                    onClick = onDailyChallengeClick,
+                    icon = Res.drawable.ic_daily_challenge,
+                    tooltip = Res.string.daily_challenge,
+                    tooltipPosition = Position.BELOW,
+                    size = 44.dp,
+                    backgroundColor = if (isDailyChallengeCompleted) 
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) 
+                    else Color.White.copy(alpha = 0.05f),
+                    borderColor = if (isDailyChallengeCompleted)
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                    else Color.White.copy(alpha = 0.1f),
+                )
+
+                HexagonIconButton(
+                    onClick = onSettingsClick,
+                    icon = Res.drawable.ic_settings,
+                    tooltip = Res.string.tooltip_settings,
+                    tooltipPosition = Position.BELOW,
+                    size = 44.dp,
+                    backgroundColor = Color.White.copy(alpha = 0.05f),
+                    borderColor = Color.White.copy(alpha = 0.1f),
+                )
+            }
         }
 
         Spacer(Modifier.height(spacing.large))

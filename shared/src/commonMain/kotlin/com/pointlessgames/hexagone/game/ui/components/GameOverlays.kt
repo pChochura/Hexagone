@@ -85,11 +85,14 @@ internal fun GameOverlays(
     leaderboardViewModel: LeaderboardViewModel,
     activeTierReward: Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>?,
     onTierRewardFinished: () -> Unit,
+    activeChallengeReward: com.pointlessgames.hexagone.game.model.DailyChallenge?,
+    onChallengeRewardFinished: () -> Unit,
     rankingInfo: RankingInfo?,
+    finalResult: com.pointlessgames.hexagone.game.model.DetailedGameResult? = null,
 ) {
-    val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver || showLeaderboard || activeTierReward != null
+    val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver || showLeaderboard || activeTierReward != null || activeChallengeReward != null
     val dimAlphaState = animateFloatAsState(
-        targetValue = if (showLeaderboard || activeTierReward != null) 0.85f else if (isAnyOverlayVisible && !showBoard) 0.6f else 0f,
+        targetValue = if (showLeaderboard || activeTierReward != null || activeChallengeReward != null) 0.85f else if (isAnyOverlayVisible && !showBoard) 0.6f else 0f,
         animationSpec = tween(500),
         label = "dim_alpha"
     )
@@ -183,7 +186,21 @@ internal fun GameOverlays(
                 }
             }
 
-            if (perkOptions.isNotEmpty() && activeTierReward == null) {
+            AnimatedVisibility(
+                visible = activeChallengeReward != null,
+                enter = fadeIn(tween(600)) + scaleIn(initialScale = 0.8f, animationSpec = tween(600, easing = EaseOutExpo)),
+                exit = fadeOut(tween(400)) + scaleOut(targetScale = 1.2f, animationSpec = tween(400, easing = EaseInExpo)),
+                modifier = Modifier.align(Alignment.Center)
+            ) {
+                activeChallengeReward?.let { challenge ->
+                    DailyChallengeRewardOverlay(
+                        challenge = challenge,
+                        onFinished = onChallengeRewardFinished
+                    )
+                }
+            }
+
+            if (perkOptions.isNotEmpty() && activeTierReward == null && activeChallengeReward == null) {
                 PerkSelectionDialog(
                     options = perkOptions,
                     pendingLevelUps = pendingLevelUps,
@@ -210,6 +227,7 @@ internal fun GameOverlays(
                     totalMerges = totalMerges,
                     highestValue = highestValue,
                     rankingInfo = displayRank,
+                    dailyChallenges = finalResult?.dailyChallenges ?: emptyList(),
                     onViewBoard = onViewBoardToggle
                 )
             }

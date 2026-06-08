@@ -1,14 +1,12 @@
 package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,8 +15,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -35,21 +31,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pointlessgames.hexagone.game.model.ChallengeGoal
+import com.pointlessgames.hexagone.game.model.DailyChallengeProgress
 import com.pointlessgames.hexagone.game.model.RankingInfo
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
@@ -67,6 +58,7 @@ internal fun GameOverDialog(
     @Suppress("UNUSED_PARAMETER") totalMerges: Int,
     highestValue: Int,
     rankingInfo: RankingInfo?,
+    dailyChallenges: List<DailyChallengeProgress> = emptyList(),
     onViewBoard: () -> Unit,
 ) {
     val animatedScore by animateIntAsState(
@@ -195,7 +187,7 @@ internal fun GameOverDialog(
                 if (isNewBest) {
                     Box(
                         modifier = Modifier
-                            .offset(x = 16.dp, y = -8.dp)
+                            .offset(x = 16.dp, y = (-8).dp)
                             .graphicsLayer {
                                 rotationZ = badgeRotation
                             }
@@ -229,6 +221,31 @@ internal fun GameOverDialog(
                 fontSize = 16.sp,
                 letterSpacing = 1.sp,
             )
+
+            if (dailyChallenges.isNotEmpty()) {
+                Spacer(Modifier.height(spacing.large))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(MaterialTheme.cornerRadius.medium))
+                        .background(Color.White.copy(alpha = 0.05f))
+                        .padding(spacing.medium),
+                    verticalArrangement = Arrangement.spacedBy(spacing.small)
+                ) {
+                    Text(
+                        text = stringResource(Res.string.daily_challenge).uppercase(),
+                        color = Color.White.copy(alpha = 0.4f),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp,
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    
+                    dailyChallenges.forEach { progress ->
+                        DailyChallengeSummaryRow(progress)
+                    }
+                }
+            }
 
             Spacer(Modifier.height(spacing.extraHuge))
 
@@ -265,6 +282,52 @@ internal fun GameOverDialog(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun DailyChallengeSummaryRow(
+    progress: DailyChallengeProgress
+) {
+    val challenge = progress.challenge
+    val isCompleted = progress.isCompleted
+    val goalText = when (challenge.goal) {
+        ChallengeGoal.MERGE_COUNT -> stringResource(Res.string.daily_challenge_goal_merge, challenge.target)
+        ChallengeGoal.LEVEL_REACHED -> stringResource(Res.string.daily_challenge_goal_level, challenge.target)
+        ChallengeGoal.COMBO_REACHED -> stringResource(Res.string.daily_challenge_goal_combo, challenge.target)
+        ChallengeGoal.SCORE_REACHED -> stringResource(Res.string.daily_challenge_goal_score, challenge.target)
+        ChallengeGoal.TACTICAL_MERGES -> stringResource(Res.string.daily_challenge_goal_tactical, challenge.target)
+        ChallengeGoal.PIECE_VALUE_REACHED -> stringResource(Res.string.daily_challenge_goal_value, challenge.target)
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+            Icon(
+                painter = painterResource(if (isCompleted) Res.drawable.ic_star else Res.drawable.ic_daily_challenge),
+                contentDescription = null,
+                tint = if (isCompleted) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.2f),
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(Modifier.width(MaterialTheme.spacing.small))
+            Text(
+                text = goalText,
+                color = if (isCompleted) Color.White else Color.White.copy(alpha = 0.5f),
+                fontWeight = if (isCompleted) FontWeight.Bold else FontWeight.Medium,
+                fontSize = 11.sp,
+                maxLines = 1
+            )
+        }
+        
+        Text(
+            text = if (isCompleted) "DONE" else "${progress.progress}/${challenge.target}",
+            color = if (isCompleted) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.3f),
+            fontWeight = FontWeight.Black,
+            fontSize = 10.sp
+        )
     }
 }
 

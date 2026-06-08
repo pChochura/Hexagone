@@ -114,6 +114,17 @@
     <string name="no_hints_available">No hints available\nTry undoing moves</string>
     <string name="need_a_hint">Need a hint?</string>
     <string name="daily_challenge">Daily\nchallenge</string>
+    <string name="daily_challenge_completed">DAILY CHALLENGE COMPLETED!</string>
+    <string name="daily_challenge_goal_merge">Merge %1$d times</string>
+    <string name="daily_challenge_goal_level">Reach Level %1$d</string>
+    <string name="daily_challenge_goal_combo">Reach a x%1$d Combo</string>
+    <string name="daily_challenge_goal_score">Reach %1$d Score</string>
+    <string name="daily_challenge_goal_tactical">Perform %1$d Tactical Merges</string>
+    <string name="daily_challenge_goal_value">Reach piece value %1$d</string>
+    <string name="reward_score_label">+%1$d Score</string>
+    <string name="reward_perk_label">Free %1$s Perk</string>
+    <string name="streak_label">%1$d Day Streak</string>
+    <string name="streak_bonus_label">+%1$d Bonus Points</string>
     <string name="easy">Easy</string>
     <string name="medium">Medium</string>
     <string name="hard">Hard</string>
