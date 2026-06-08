@@ -212,7 +212,6 @@ internal class GameEngine(
             grid.filter { cell ->
                 !cell.isFrozen &&
                         cell.value == targetValue &&
-                        !cell.id.startsWith("preview") &&
                         neighborCoords.any { it.first == cell.x && it.second == cell.y }
             }.forEach { queue.add(it) }
         }
@@ -706,12 +705,10 @@ internal class GameEngine(
             Perk.PATH_MERGE -> {
                 grid.any { cell ->
                     !cell.isFrozen &&
-                            !cell.id.startsWith("preview") &&
                             getNeighbors(cell.x, cell.y).any { n ->
                                 grid.any {
                                     it.value == cell.value &&
                                             !it.isFrozen &&
-                                            !it.id.startsWith("preview") &&
                                             it.x == n.first && it.y == n.second
                                 }
                             }
