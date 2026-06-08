@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -129,19 +130,13 @@ internal fun GameGridOverlay(
         )
     }
 
-    LaunchedEffect(effects) {
-        effects.collect { effect ->
-            when (effect) {
-                is GameEffect.Particles -> localParticles.addAll(effect.particles)
-                else -> {}
-            }
-        }
-    }
-
     LaunchedEffect(Unit) {
+        var lastTimeMillis = withFrameMillis { it }
         while (true) {
-            delay(16)
-            val dt = 0.016f
+            val currentTimeMillis = withFrameMillis { it }
+            val dt = ((currentTimeMillis - lastTimeMillis).coerceAtLeast(0L) / 1000f).coerceAtMost(0.1f)
+            lastTimeMillis = currentTimeMillis
+
             if (localParticles.isNotEmpty()) {
                 val iterator = localParticles.listIterator()
                 while (iterator.hasNext()) {
@@ -184,6 +179,7 @@ internal fun GameGridOverlay(
         LaunchedEffect(effects, cellWidth, cellHeight, gapPx, itemWidth, itemHeight) {
             effects.collect { effect ->
                 when (effect) {
+                    is GameEffect.Particles -> localParticles.addAll(effect.particles)
                     is GameEffect.ScorePopup -> {
                         val offset = HexagonGridDefaults.calculateOffset(
                             effect.gridX,
@@ -206,6 +202,41 @@ internal fun GameGridOverlay(
                                 effect.color,
                                 effect.labelRes,
                             ),
+                        )
+                    }
+
+                    is GameEffect.MergeParticles -> {
+                        val offset = HexagonGridDefaults.calculateOffset(
+                            effect.gridX,
+                            effect.gridY,
+                            cellWidth,
+                            cellHeight,
+                            gapPx,
+                        )
+                        val centerX = offset.x + itemWidth / 2
+                        val centerY = offset.y + itemHeight / 2
+                        val color = if (effect.isPerk) {
+                            HexagonGridDefaults.getColorForPerk(Perk.entries[effect.value], colorScheme)
+                        } else {
+                            HexagonGridDefaults.getColorForValue(effect.value, colorScheme)
+                        }
+                        val intensity = effect.intensity
+                        val count = (25 * intensity).toInt().coerceIn(8, 60)
+                        localParticles.addAll(
+                            List(count) {
+                                val angle = Random.nextFloat() * 2 * PI.toFloat()
+                                val speed = (Random.nextFloat() * 300f + 100f) * (0.6f + intensity * 0.4f)
+                                Particle(
+                                    Random.nextLong(),
+                                    centerX,
+                                    centerY,
+                                    cos(angle) * speed,
+                                    sin(angle) * speed,
+                                    color,
+                                    1f,
+                                    (Random.nextFloat() * 4f + 3f) * density.density * (0.7f + intensity * 0.3f),
+                                )
+                            },
                         )
                     }
 
@@ -289,40 +320,6 @@ internal fun GameGridOverlay(
                     if (currentStep.mergingCells.isEmpty()) onMergeAnimationFinished()
                     else {
                         snapshotFlow { finishedMergeCount.intValue }.first { it >= currentStep.mergingCells.size }
-                        val targetOffset = HexagonGridDefaults.calculateOffset(
-                            pendingMerge.targetX,
-                            pendingMerge.targetY,
-                            cellWidth,
-                            cellHeight,
-                            gapPx,
-                        )
-                        val center =
-                            Offset(targetOffset.x + itemWidth / 2, targetOffset.y + itemHeight / 2)
-                        val color = HexagonGridDefaults.getColorForValue(currentStep.resultValue, colorScheme)
-                        if (activeMergeStepIndex >= pendingMerge.steps.lastIndex) {
-                            val onBoardPerks = onBoardPerksProvider()
-                            val collected =
-                                onBoardPerks.find { it.x == pendingMerge.targetX && it.y == pendingMerge.targetY }
-                            if (collected != null) {
-                                val perkColor = HexagonGridDefaults.getColorForPerk(collected.perk, colorScheme)
-                                localParticles.addAll(
-                                    List(20) {
-                                        val angle = Random.nextFloat() * 2 * PI.toFloat();
-                                        val speed = Random.nextFloat() * 300f + 100f
-                                        Particle(
-                                            Random.nextLong(),
-                                            center.x,
-                                            center.y,
-                                            cos(angle) * speed,
-                                            sin(angle) * speed,
-                                            perkColor,
-                                            1f,
-                                            Random.nextFloat() * 6f + 2f,
-                                        )
-                                    },
-                                )
-                            }
-                        }
                         onMergeAnimationFinished()
                     }
                 }

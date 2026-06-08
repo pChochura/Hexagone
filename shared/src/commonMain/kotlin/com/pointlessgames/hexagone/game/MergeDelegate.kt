@@ -22,6 +22,7 @@ internal class MergeDelegate(
     private val stateDelegate: StateDelegate,
     private val effectDelegate: EffectDelegate,
     private val achievementDelegate: AchievementDelegate,
+    private val challengeDelegate: ChallengeDelegate,
     private val onSpawnRequested: (decrementLifespan: Boolean, skipSpawn: Boolean) -> Unit,
 ) {
     private var lastProcessedMergeId: String? = null
@@ -135,12 +136,15 @@ internal class MergeDelegate(
             isSacrifice,
             scoreResult.isTactical
         )
+        val mergeIntensity = (0.4f + (finalCombo * 0.1f) + (merge.totalCells - 2) * 0.2f).coerceIn(0.2f, 2f)
+        effectDelegate.addMergeParticles(merge.targetX, merge.targetY, merge.finalValue, intensity = mergeIntensity)
 
         val collectedOnBoard =
             currentState.onBoardPerks.find { it.x == merge.targetX && it.y == merge.targetY }?.perk
 
         if (collectedOnBoard != null) {
             effectDelegate.addPerkPopup(merge.targetX, merge.targetY, collectedOnBoard)
+            effectDelegate.addMergeParticles(merge.targetX, merge.targetY, collectedOnBoard.ordinal, isPerk = true)
             achievementDelegate.checkPerkAchievements(collectedOnBoard, currentState)
             achievementDelegate.onPerkCollectedFromBoard()
         }
@@ -204,6 +208,9 @@ internal class MergeDelegate(
         achievementDelegate.onMergesIncremented(uiState.value.totalMerges)
         achievementDelegate.onMergeDetails(merge.isTactical, isBarRaised, isSacrifice)
         achievementDelegate.onNonUndoAction()
+        challengeDelegate.onMerge(merge)
+        challengeDelegate.onScoreChanged(finalScore)
+        challengeDelegate.onCombo(finalCombo)
 
         handleChainMerge(merge, finalCombo)
     }

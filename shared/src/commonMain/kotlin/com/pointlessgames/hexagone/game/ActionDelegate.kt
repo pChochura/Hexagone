@@ -459,6 +459,7 @@ internal class ActionDelegate(
                             isSacrifice = scoreResult.sacrificeBonus > 0,
                             isTactical = scoreResult.isTactical
                         )
+                        effectDelegate.addMergeParticles(tx, ty, preview.value, intensity = (preview.value / 8f + 0.3f).coerceAtMost(1.5f))
                     }
                 }
 
@@ -717,6 +718,7 @@ internal class ActionDelegate(
                             isSacrifice = scoreResult.sacrificeBonus > 0,
                             isTactical = scoreResult.isTactical
                         )
+                        effectDelegate.addMergeParticles(tx, ty, cell.value, intensity = (cell.value / 8f + 0.3f).coerceAtMost(1.5f))
                     }
                 }
 

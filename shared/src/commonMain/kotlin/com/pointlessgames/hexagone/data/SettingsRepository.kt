@@ -34,6 +34,9 @@ class SettingsRepository(
     private val maxBarRaisedLifetimeKey = intPreferencesKey("max_bar_raised_lifetime")
     private val highestTileValueLifetimeKey = intPreferencesKey("highest_tile_value_lifetime")
     private val pendingScoresKey = androidx.datastore.preferences.core.stringSetPreferencesKey("pending_scores")
+    private val lastCompletedChallengeDateKey = androidx.datastore.preferences.core.longPreferencesKey("last_completed_challenge_date")
+    private val challengeStreakKey = intPreferencesKey("challenge_streak")
+    private val globalPointsKey = intPreferencesKey("global_points")
 
     suspend fun getBestScore(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[bestScoreKey] ?: 0
@@ -324,6 +327,43 @@ class SettingsRepository(
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[pendingScoresKey] ?: emptySet()
                 prefs[pendingScoresKey] = current - serializedScore
+            }
+        }
+    }
+
+    suspend fun getLastCompletedChallengeDate(): Long = withContext(Dispatchers.IO) {
+        appSettings.data.first()[lastCompletedChallengeDateKey] ?: 0L
+    }
+
+    suspend fun setLastCompletedChallengeDate(date: Long) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[lastCompletedChallengeDateKey] = date
+            }
+        }
+    }
+
+    suspend fun getChallengeStreak(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[challengeStreakKey] ?: 0
+    }
+
+    suspend fun setChallengeStreak(streak: Int) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[challengeStreakKey] = streak
+            }
+        }
+    }
+
+    suspend fun getGlobalPoints(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[globalPointsKey] ?: 0
+    }
+
+    suspend fun addGlobalPoints(amount: Int) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[globalPointsKey] ?: 0
+                prefs[globalPointsKey] = current + amount
             }
         }
     }

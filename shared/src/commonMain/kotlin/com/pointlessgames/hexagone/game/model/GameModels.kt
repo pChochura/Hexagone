@@ -64,6 +64,7 @@ data class GameUiState(
     val barRaisedThisTurn: Int = 0,
     val tacticalGhostsThisTurn: Int = 0,
     val pendingResult: DetailedGameResult? = null,
+    val finalResult: DetailedGameResult? = null,
     val achievementNotification: GameAchievement? = null,
     val earnedRewardsThisTurn: List<GameEffect.TierReward> = emptyList(),
     val currentRank: RankingInfo? = null,
@@ -71,6 +72,9 @@ data class GameUiState(
     val seed: Long = 0L,
     val cellIdCounter: Int = 0,
     val previewIdCounter: Int = 0,
+    val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
+    val challengeStreak: Int = 0,
+    val globalPoints: Int = 0,
 ) {
     fun consumePerk(perk: Perk): GameUiState {
         val perkIndex = collectedPerks.indexOf(perk)
@@ -101,6 +105,13 @@ data class PotentialMerge(
 
 sealed interface GameEffect {
     data class Particles(val particles: List<Particle>) : GameEffect
+    data class MergeParticles(
+        val gridX: Int,
+        val gridY: Int,
+        val value: Int,
+        val isPerk: Boolean = false,
+        val intensity: Float = 1f,
+    ) : GameEffect
     data class ScorePopup(
         val gridX: Int,
         val gridY: Int,
@@ -123,7 +134,37 @@ sealed interface GameEffect {
     data class AchievementUnlock(
         val achievement: com.pointlessgames.hexagone.achievements.GameAchievement,
     ) : GameEffect
+
+    data class DailyChallengeComplete(
+        val challenge: DailyChallenge,
+    ) : GameEffect
 }
+
+@Serializable
+enum class ChallengeGoal(val id: String) {
+    MERGE_COUNT("merge_count"),
+    LEVEL_REACHED("level_reached"),
+    COMBO_REACHED("combo_reached"),
+    SCORE_REACHED("score_reached"),
+    TACTICAL_MERGES("tactical_merges"),
+    PIECE_VALUE_REACHED("piece_value_reached")
+}
+
+@Serializable
+data class DailyChallenge(
+    val id: String,
+    val goal: ChallengeGoal,
+    val target: Int,
+    val rewardScore: Int = 0,
+    val rewardPerk: Perk? = null,
+)
+
+@Serializable
+data class DailyChallengeProgress(
+    val challenge: DailyChallenge,
+    val progress: Int = 0,
+    val isCompleted: Boolean = false,
+)
 
 @Serializable
 enum class ComboTier(val threshold: Int) {
@@ -166,6 +207,7 @@ data class GameState(
     val previewIdCounter: Int = 0,
     val activePerk: Perk? = null,
     val selectedCellId: String? = null,
+    val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
 )
 
 @Serializable
@@ -185,7 +227,9 @@ data class DetailedGameResult(
     @SerialName("perks_available")
     val perksAvailable: List<Perk>,
     val region: String,
-    val username: String? = null
+    val username: String? = null,
+    @SerialName("daily_challenges")
+    val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
 )
 
 @Serializable

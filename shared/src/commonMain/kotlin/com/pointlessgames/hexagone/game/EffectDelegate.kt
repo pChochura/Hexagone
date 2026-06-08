@@ -25,6 +25,10 @@ internal class EffectDelegate(
         effects.emit(GameEffect.Particles(newParticles))
     }
 
+    fun addMergeParticles(gridX: Int, gridY: Int, value: Int, isPerk: Boolean = false, intensity: Float = 1f) = scope.launch {
+        effects.emit(GameEffect.MergeParticles(gridX, gridY, value, isPerk, intensity))
+    }
+
     fun addScorePopup(
         gridX: Int,
         gridY: Int,
