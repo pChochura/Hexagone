@@ -132,7 +132,8 @@ internal class MergeDelegate(
             scoreResult.totalScore,
             redemptionBonus,
             isBarRaised,
-            isSacrifice
+            isSacrifice,
+            scoreResult.isTactical
         )
 
         val collectedOnBoard =

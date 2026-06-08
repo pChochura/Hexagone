@@ -93,6 +93,10 @@ object Scoring {
             currentCombo = nextCombo
         }
 
+        if (merge.isTactical) {
+            totalStepScore = (totalStepScore * 1.5).toInt()
+        }
+
         val finalCombo = calculateFinalCombo(merge, currentCombo, activePerk)
         val comboMultiplier = (finalCombo + 1).coerceAtMost(MAX_COMBO_MULTIPLIER)
 
@@ -140,7 +144,8 @@ object Scoring {
             sacrificeBonus = sacrificeBonus,
             finalCombo = finalCombo,
             barRaisedBonus = barRaisedBonus,
-            redemptionBonus = redemptionBonus
+            redemptionBonus = redemptionBonus,
+            isTactical = merge.isTactical
         )
     }
 }
@@ -152,5 +157,6 @@ data class ScoreResult(
     val sacrificeBonus: Int,
     val finalCombo: Int,
     val barRaisedBonus: Int,
-    val redemptionBonus: Int
+    val redemptionBonus: Int,
+    val isTactical: Boolean = false
 )

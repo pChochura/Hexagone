@@ -457,6 +457,7 @@ internal class ActionDelegate(
                             isRedemption = scoreResult.redemptionBonus > 0,
                             isBarRaised = scoreResult.barRaisedBonus > 0,
                             isSacrifice = scoreResult.sacrificeBonus > 0,
+                            isTactical = scoreResult.isTactical
                         )
                     }
                 }
@@ -536,6 +537,7 @@ internal class ActionDelegate(
                             isRedemption = scoreResult.redemptionBonus > 0,
                             isBarRaised = scoreResult.barRaisedBonus > 0,
                             isSacrifice = false,
+                            isTactical = scoreResult.isTactical
                         )
 
                         if (scoreResult.barRaisedBonus > 0) {
@@ -621,6 +623,7 @@ internal class ActionDelegate(
                             isRedemption = scoreResult.redemptionBonus > 0,
                             isBarRaised = scoreResult.barRaisedBonus > 0,
                             isSacrifice = false,
+                            isTactical = scoreResult.isTactical
                         )
 
                         if (scoreResult.barRaisedBonus > 0) {
@@ -712,6 +715,7 @@ internal class ActionDelegate(
                             isRedemption = scoreResult.redemptionBonus > 0,
                             isBarRaised = scoreResult.barRaisedBonus > 0,
                             isSacrifice = scoreResult.sacrificeBonus > 0,
+                            isTactical = scoreResult.isTactical
                         )
                     }
                 }

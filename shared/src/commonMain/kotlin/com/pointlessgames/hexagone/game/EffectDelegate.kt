@@ -7,6 +7,7 @@ import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.theme.Colors
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.label_redemption
+import hexagone.shared.generated.resources.label_tactician
 import hexagone.shared.generated.resources.label_tactical_redemption
 import hexagone.shared.generated.resources.label_bar_raised
 import hexagone.shared.generated.resources.label_sacrifice
@@ -45,15 +46,17 @@ internal class EffectDelegate(
         isRedemption: Boolean,
         isBarRaised: Boolean,
         isSacrifice: Boolean = false,
+        isTactical: Boolean = false,
     ) {
         scope.launch {
             val labelRes = when {
-                isRedemption && isSacrifice -> Res.string.label_sacrifice // Sacrifice takes precedence if both, but color will show redemption
+                isRedemption && isSacrifice -> Res.string.label_sacrifice
                 isBarRaised && isSacrifice -> Res.string.label_janitor_plus
                 isRedemption && isBarRaised -> Res.string.label_tactical_redemption
                 isRedemption -> Res.string.label_redemption
                 isSacrifice -> Res.string.label_sacrifice
                 isBarRaised -> Res.string.label_bar_raised
+                isTactical -> Res.string.label_tactician
                 else -> null
             }
             val color = when {
@@ -61,6 +64,7 @@ internal class EffectDelegate(
                 isBarRaised && isSacrifice -> Colors().gold
                 isSacrifice -> Colors().pink
                 isBarRaised -> Colors().skyBlue
+                isTactical -> Colors().purple
                 else -> Color.White
             }
             addScorePopup(targetX, targetY, totalScore, color, labelRes)
