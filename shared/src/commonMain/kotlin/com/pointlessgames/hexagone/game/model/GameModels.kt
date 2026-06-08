@@ -74,7 +74,7 @@ data class GameUiState(
     val previewIdCounter: Int = 0,
     val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
     val challengeStreak: Int = 0,
-    val globalPoints: Int = 0,
+    val isStreakCollectedToday: Boolean = false,
 ) {
     fun consumePerk(perk: Perk): GameUiState {
         val perkIndex = collectedPerks.indexOf(perk)

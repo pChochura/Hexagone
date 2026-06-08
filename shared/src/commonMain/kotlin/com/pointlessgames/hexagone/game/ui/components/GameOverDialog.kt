@@ -9,7 +9,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +20,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,7 +42,24 @@ import com.pointlessgames.hexagone.game.model.DailyChallengeProgress
 import com.pointlessgames.hexagone.game.model.RankingInfo
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.*
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.best_score_formatted
+import hexagone.shared.generated.resources.daily_challenge
+import hexagone.shared.generated.resources.daily_challenge_goal_combo
+import hexagone.shared.generated.resources.daily_challenge_goal_level
+import hexagone.shared.generated.resources.daily_challenge_goal_merge
+import hexagone.shared.generated.resources.daily_challenge_goal_score
+import hexagone.shared.generated.resources.daily_challenge_goal_tactical
+import hexagone.shared.generated.resources.daily_challenge_goal_value
+import hexagone.shared.generated.resources.game_over_title
+import hexagone.shared.generated.resources.ic_back
+import hexagone.shared.generated.resources.ic_star
+import hexagone.shared.generated.resources.label_level
+import hexagone.shared.generated.resources.label_max_combo
+import hexagone.shared.generated.resources.label_max_piece
+import hexagone.shared.generated.resources.new_best_label
+import hexagone.shared.generated.resources.previous_best_label
+import hexagone.shared.generated.resources.tooltip_view_board
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -68,7 +83,7 @@ internal fun GameOverDialog(
     )
 
     val infiniteTransition = rememberInfiniteTransition(label = "gameover_animations")
-    
+
     val scoreGlowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
         targetValue = 0.8f,
@@ -90,7 +105,7 @@ internal fun GameOverDialog(
     )
 
     val isNewBest = score >= bestScore && score > 0
-    
+
     val badgeRotation by infiniteTransition.animateFloat(
         initialValue = -5f,
         targetValue = -10f,
@@ -102,6 +117,7 @@ internal fun GameOverDialog(
     )
 
     val spacing = MaterialTheme.spacing
+    val completedChallenges = dailyChallenges.filter { it.isCompleted }
 
     Box(
         modifier = modifier
@@ -127,7 +143,7 @@ internal fun GameOverDialog(
                 .graphicsLayer { rotationZ = 180f }
                 .padding(spacing.small),
             backgroundColor = Color.White.copy(alpha = 0.05f),
-            borderColor = Color.White.copy(alpha = 0.1f)
+            borderColor = Color.White.copy(alpha = 0.1f),
         )
 
         Column(
@@ -202,7 +218,7 @@ internal fun GameOverDialog(
                             color = Color.White,
                             fontWeight = FontWeight.Black,
                             fontSize = 10.sp,
-                            letterSpacing = 1.sp
+                            letterSpacing = 1.sp,
                         )
                     }
                 }
@@ -222,7 +238,7 @@ internal fun GameOverDialog(
                 letterSpacing = 1.sp,
             )
 
-            if (dailyChallenges.isNotEmpty()) {
+            if (completedChallenges.isNotEmpty()) {
                 Spacer(Modifier.height(spacing.large))
                 Column(
                     modifier = Modifier
@@ -230,36 +246,37 @@ internal fun GameOverDialog(
                         .clip(RoundedCornerShape(MaterialTheme.cornerRadius.medium))
                         .background(Color.White.copy(alpha = 0.05f))
                         .padding(spacing.medium),
-                    verticalArrangement = Arrangement.spacedBy(spacing.small)
+                    verticalArrangement = Arrangement.spacedBy(spacing.small),
                 ) {
                     Text(
                         text = stringResource(Res.string.daily_challenge).uppercase(),
-                        color = Color.White.copy(alpha = 0.4f),
-                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.ExtraBold,
                         fontSize = 10.sp,
                         letterSpacing = 1.sp,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(),
+                        textAlign = TextAlign.Center,
                     )
-                    
-                    dailyChallenges.forEach { progress ->
+
+                    completedChallenges.forEach { progress ->
                         DailyChallengeSummaryRow(progress)
                     }
                 }
             }
 
-            Spacer(Modifier.height(spacing.extraHuge))
+            Spacer(Modifier.height(spacing.large))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 // Level Stat
                 GameOverStatHexagon(
                     label = stringResource(Res.string.label_level),
                     value = level.toString(),
                     backgroundColor = Color(0xFF37474F), // Dark teal/grey
-                    size = 72.dp
+                    size = 72.dp,
                 )
 
                 // Max Piece Stat (Larger and glowing)
@@ -270,7 +287,7 @@ internal fun GameOverDialog(
                     size = 92.dp,
                     labelColor = Color.White,
                     glowAlpha = maxPieceGlowAlpha,
-                    glowColor = Color(0xFFBB86FC)
+                    glowColor = Color(0xFFBB86FC),
                 )
 
                 // Max Combo Stat
@@ -278,7 +295,7 @@ internal fun GameOverDialog(
                     label = stringResource(Res.string.label_max_combo),
                     value = maxCombo.toString(),
                     backgroundColor = Color(0xFF5D4037), // Dark brown
-                    size = 72.dp
+                    size = 72.dp,
                 )
             }
         }
@@ -287,46 +304,74 @@ internal fun GameOverDialog(
 
 @Composable
 private fun DailyChallengeSummaryRow(
-    progress: DailyChallengeProgress
+    progress: DailyChallengeProgress,
 ) {
     val challenge = progress.challenge
-    val isCompleted = progress.isCompleted
     val goalText = when (challenge.goal) {
-        ChallengeGoal.MERGE_COUNT -> stringResource(Res.string.daily_challenge_goal_merge, challenge.target)
-        ChallengeGoal.LEVEL_REACHED -> stringResource(Res.string.daily_challenge_goal_level, challenge.target)
-        ChallengeGoal.COMBO_REACHED -> stringResource(Res.string.daily_challenge_goal_combo, challenge.target)
-        ChallengeGoal.SCORE_REACHED -> stringResource(Res.string.daily_challenge_goal_score, challenge.target)
-        ChallengeGoal.TACTICAL_MERGES -> stringResource(Res.string.daily_challenge_goal_tactical, challenge.target)
-        ChallengeGoal.PIECE_VALUE_REACHED -> stringResource(Res.string.daily_challenge_goal_value, challenge.target)
+        ChallengeGoal.MERGE_COUNT -> stringResource(
+            Res.string.daily_challenge_goal_merge,
+            challenge.target,
+        )
+
+        ChallengeGoal.LEVEL_REACHED -> stringResource(
+            Res.string.daily_challenge_goal_level,
+            challenge.target,
+        )
+
+        ChallengeGoal.COMBO_REACHED -> stringResource(
+            Res.string.daily_challenge_goal_combo,
+            challenge.target,
+        )
+
+        ChallengeGoal.SCORE_REACHED -> stringResource(
+            Res.string.daily_challenge_goal_score,
+            challenge.target,
+        )
+
+        ChallengeGoal.TACTICAL_MERGES -> stringResource(
+            Res.string.daily_challenge_goal_tactical,
+            challenge.target,
+        )
+
+        ChallengeGoal.PIECE_VALUE_REACHED -> stringResource(
+            Res.string.daily_challenge_goal_value,
+            challenge.target,
+        )
+    }
+
+    val rewardText = when {
+        challenge.rewardScore > 0 -> "+${challenge.rewardScore}"
+        challenge.rewardPerk != null -> stringResource(challenge.rewardPerk.displayNameRes).uppercase()
+        else -> "DONE"
     }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
             Icon(
-                painter = painterResource(if (isCompleted) Res.drawable.ic_star else Res.drawable.ic_daily_challenge),
+                painter = painterResource(Res.drawable.ic_star),
                 contentDescription = null,
-                tint = if (isCompleted) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.2f),
-                modifier = Modifier.size(14.dp)
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(14.dp),
             )
             Spacer(Modifier.width(MaterialTheme.spacing.small))
             Text(
                 text = goalText,
-                color = if (isCompleted) Color.White else Color.White.copy(alpha = 0.5f),
-                fontWeight = if (isCompleted) FontWeight.Bold else FontWeight.Medium,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
                 fontSize = 11.sp,
-                maxLines = 1
+                maxLines = 1,
             )
         }
-        
+
         Text(
-            text = if (isCompleted) "DONE" else "${progress.progress}/${challenge.target}",
-            color = if (isCompleted) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.3f),
+            text = rewardText,
+            color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Black,
-            fontSize = 10.sp
+            fontSize = 10.sp,
         )
     }
 }
@@ -339,12 +384,12 @@ private fun GameOverStatHexagon(
     size: Dp,
     labelColor: Color = Color.White.copy(alpha = 0.6f),
     glowAlpha: Float = 0f,
-    glowColor: Color = Color.Transparent
+    glowColor: Color = Color.Transparent,
 ) {
     val spacing = MaterialTheme.spacing
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(spacing.medium)
+        verticalArrangement = Arrangement.spacedBy(spacing.medium),
     ) {
         Box(contentAlignment = Alignment.Center) {
             if (glowAlpha > 0f) {
@@ -352,7 +397,7 @@ private fun GameOverStatHexagon(
                     modifier = Modifier
                         .size(width = size + 16.dp, height = (size + 16.dp) * 0.866f)
                         .graphicsLayer { alpha = glowAlpha }
-                        .background(glowColor.copy(alpha = 0.4f), FlatTopHexagonShape())
+                        .background(glowColor.copy(alpha = 0.4f), FlatTopHexagonShape()),
                 )
             }
             Box(
@@ -360,14 +405,14 @@ private fun GameOverStatHexagon(
                     .size(width = size, height = size * 0.866f)
                     .background(backgroundColor, FlatTopHexagonShape())
                     .border(2.dp, Color.White.copy(alpha = 0.1f), FlatTopHexagonShape()),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = value,
                     color = Color.White,
                     fontWeight = FontWeight.Black,
                     fontSize = (size.value * 0.35f).sp,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
             }
         }
@@ -376,7 +421,7 @@ private fun GameOverStatHexagon(
             color = labelColor,
             fontWeight = FontWeight.Bold,
             fontSize = 12.sp,
-            letterSpacing = 0.5.sp
+            letterSpacing = 0.5.sp,
         )
     }
 }

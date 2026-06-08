@@ -413,7 +413,7 @@ internal fun GameScreen(
             com.pointlessgames.hexagone.game.ui.components.DailyChallengeDialog(
                 challenges = uiState.dailyChallenges,
                 streak = uiState.challengeStreak,
-                globalPoints = uiState.globalPoints,
+                isStreakCollectedToday = uiState.isStreakCollectedToday,
                 onDismiss = { showDailyChallenge = false }
             )
         }

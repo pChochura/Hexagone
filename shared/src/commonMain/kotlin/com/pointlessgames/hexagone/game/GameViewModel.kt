@@ -19,8 +19,6 @@ import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PreviewCell
-import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.daily_challenge_completed
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,8 +28,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.todayIn
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.StringResource
 import kotlin.time.Clock
@@ -58,12 +58,12 @@ internal class GameViewModel(
         settingsRepository = settingsRepository,
         engine = engine,
         scope = viewModelScope,
-        onCheckValidMoves = { checkValidMoves() },
+        onCheckValidMoves = { checkValidMoves() }
     )
 
     private val effectDelegate = EffectDelegate(
         effects = _effects,
-        scope = viewModelScope,
+        scope = viewModelScope
     )
 
     private val achievementDelegate = AchievementDelegate(
@@ -77,7 +77,7 @@ internal class GameViewModel(
             viewModelScope.launch {
                 handleChallengeComplete(challenge)
             }
-        },
+        }
     )
 
     private val actionDelegate = ActionDelegate(
@@ -91,7 +91,7 @@ internal class GameViewModel(
         onCheckValidMoves = { checkValidMoves() },
         onUpdateLevel = { updateLevel() },
         onRecalculateHints = { recalculateHints() },
-        onHoveredMergeChanged = { _hoveredMerge.value = it },
+        onHoveredMergeChanged = { _hoveredMerge.value = it }
     )
 
     private val mergeDelegate = MergeDelegate(
@@ -102,9 +102,9 @@ internal class GameViewModel(
         effectDelegate = effectDelegate,
         achievementDelegate = achievementDelegate,
         challengeDelegate = challengeDelegate,
-        onSpawnRequested = { decrementLifespan, skipSpawn ->
-            spawnFromQueue(_uiState.value.grid, decrementLifespan, skipSpawn)
-        },
+        onSpawnRequested = { decrementLifespan, skipSpawn -> 
+            spawnFromQueue(_uiState.value.grid, decrementLifespan, skipSpawn) 
+        }
     )
 
     private val debugDelegate = DebugDelegate(
@@ -127,13 +127,11 @@ internal class GameViewModel(
             val hintsEnabled = settingsRepository.getMergeHintsEnabled()
             val savedStateJson = settingsRepository.getGameState()
 
-            val today = Clock.System.now()
-                .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).date
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
             val dateSeed = today.year * 10000L + (today.month.ordinal + 1) * 100L + today.dayOfMonth
             val lastCompletedDate = settingsRepository.getLastCompletedChallengeDate()
             val currentDailyChallenges = DailyChallengeProvider.getChallengesForDate(today)
             val challengeStreak = settingsRepository.getChallengeStreak()
-            val globalPoints = settingsRepository.getGlobalPoints()
 
             if (savedStateJson != null) {
                 try {
@@ -171,22 +169,13 @@ internal class GameViewModel(
                             previewIdCounter = savedState.previewIdCounter,
                             activePerk = savedState.activePerk,
                             selectedCellId = savedState.selectedCellId,
-                            dailyChallenges = if (lastCompletedDate == dateSeed) {
-                                currentDailyChallenges.map { c ->
-                                    DailyChallengeProgress(
-                                        c,
-                                        c.target,
-                                        true,
-                                    )
-                                }
+                            dailyChallenges = if (savedState.dailyChallenges.isNotEmpty()) {
+                                savedState.dailyChallenges
                             } else {
-                                currentDailyChallenges.map { challenge ->
-                                    savedState.dailyChallenges.find { it.challenge.id == challenge.id }
-                                        ?: DailyChallengeProgress(challenge)
-                                }
+                                currentDailyChallenges.map { challenge -> DailyChallengeProgress(challenge) }
                             },
                             challengeStreak = challengeStreak,
-                            globalPoints = globalPoints,
+                            isStreakCollectedToday = lastCompletedDate == dateSeed
                         )
                     }
                     stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
@@ -194,39 +183,27 @@ internal class GameViewModel(
                     checkValidMoves()
                 } catch (_: Exception) {
                     stateDelegate.setAbsoluteBestScore(best)
-                    _uiState.update {
+                    _uiState.update { 
                         it.copy(
-                            bestScore = best,
+                            bestScore = best, 
                             mergeHintsEnabled = hintsEnabled,
-                            dailyChallenges = currentDailyChallenges.map { c ->
-                                DailyChallengeProgress(
-                                    c,
-                                    if (lastCompletedDate == dateSeed) c.target else 0,
-                                    lastCompletedDate == dateSeed,
-                                )
-                            },
+                            dailyChallenges = currentDailyChallenges.map { c -> DailyChallengeProgress(c) },
                             challengeStreak = challengeStreak,
-                            globalPoints = globalPoints,
-                        )
+                            isStreakCollectedToday = lastCompletedDate == dateSeed
+                        ) 
                     }
                     restartGame()
                 }
             } else {
                 stateDelegate.setAbsoluteBestScore(best)
-                _uiState.update {
+                _uiState.update { 
                     it.copy(
-                        bestScore = best,
+                        bestScore = best, 
                         mergeHintsEnabled = hintsEnabled,
-                        dailyChallenges = currentDailyChallenges.map { c ->
-                            DailyChallengeProgress(
-                                c,
-                                if (lastCompletedDate == dateSeed) c.target else 0,
-                                lastCompletedDate == dateSeed,
-                            )
-                        },
+                        dailyChallenges = currentDailyChallenges.map { c -> DailyChallengeProgress(c) },
                         challengeStreak = challengeStreak,
-                        globalPoints = globalPoints,
-                    )
+                        isStreakCollectedToday = lastCompletedDate == dateSeed
+                    ) 
                 }
                 restartGame()
             }
@@ -247,36 +224,31 @@ internal class GameViewModel(
     }
 
     fun addParticles(newParticles: List<Particle>) = effectDelegate.addParticles(newParticles)
-
+    
     fun addScorePopup(
-        gridX: Int,
-        gridY: Int,
-        score: Int,
-        color: Color,
-        labelRes: StringResource? = null,
+        gridX: Int, 
+        gridY: Int, 
+        score: Int, 
+        color: Color, 
+        labelRes: StringResource? = null
     ) = effectDelegate.addScorePopup(gridX, gridY, score, color, labelRes)
-
-    fun addPerkPopup(gridX: Int, gridY: Int, perk: Perk) =
-        effectDelegate.addPerkPopup(gridX, gridY, perk)
+    
+    fun addPerkPopup(gridX: Int, gridY: Int, perk: Perk) = effectDelegate.addPerkPopup(gridX, gridY, perk)
 
     fun onEmptySpaceClicked(x: Int, y: Int) = actionDelegate.onEmptySpaceClicked(x, y)
-
+    
     fun onEmptySpaceTouchDown(x: Int, y: Int) = actionDelegate.onEmptySpaceTouchDown(x, y)
-
+    
     fun onCellTouchDown(cell: HexagonCell) = actionDelegate.onCellTouchDown(cell)
-
-    fun onCellTouchUp() {
-        _hoveredMerge.value = null
-    }
-
-    fun onEmptySpaceTouchUp() {
-        _hoveredMerge.value = null
-    }
-
+    
+    fun onCellTouchUp() { _hoveredMerge.value = null }
+    
+    fun onEmptySpaceTouchUp() { _hoveredMerge.value = null }
+    
     fun onPreviewClicked(preview: PreviewCell) = actionDelegate.onPreviewClicked(preview)
-
+    
     fun onCellClicked(cell: HexagonCell) = actionDelegate.onCellClicked(cell)
-
+    
     fun onMergeAnimationFinished() = mergeDelegate.onMergeAnimationFinished()
 
     private fun updateLevel() {
@@ -286,8 +258,7 @@ internal class GameViewModel(
             val levelDifference = lvl - state.level
             if (levelDifference > 0) {
                 challengeDelegate.onLevelUp(lvl)
-                val nextPerkOptions =
-                    state.perkOptions.ifEmpty { engine.pickWeightedPerks(3, random) }
+                val nextPerkOptions = state.perkOptions.ifEmpty { engine.pickWeightedPerks(3, random) }
                 state.copy(
                     level = lvl,
                     levelProgress = engine.getLevelProgress(state.score, lvl),
@@ -295,7 +266,7 @@ internal class GameViewModel(
                     perkOptions = nextPerkOptions,
                     pendingLevelUps = state.pendingLevelUps + levelDifference,
                     canReroll = if (state.perkOptions.isEmpty()) true else state.canReroll,
-                    seed = random.nextLong(),
+                    seed = random.nextLong()
                 )
             } else {
                 state.copy(
@@ -410,7 +381,7 @@ internal class GameViewModel(
             it.copy(
                 perkOptions = engine.pickWeightedPerks(3, random, excludeLegendary = true),
                 canReroll = false,
-                seed = random.nextLong(),
+                seed = random.nextLong()
             )
         }
         achievementDelegate.onRerollUsed()
@@ -427,14 +398,11 @@ internal class GameViewModel(
         val initialSeed = kotlin.random.Random.nextLong()
         val random = kotlin.random.Random(initialSeed)
         val (initialGrid, nextIdCounter) = engine.generateInitialGrid(random)
-        val (initialPreviews, nextPreviewIdCounter) = engine.pickRandomPreviews(
-            initialGrid,
-            emptyList(),
-            emptyList(),
-            3,
-            random,
-            0,
-        )
+        val (initialPreviews, nextPreviewIdCounter) = engine.pickRandomPreviews(initialGrid, emptyList(), emptyList(), 3, random, 0)
+        
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val currentDailyChallenges = DailyChallengeProvider.getChallengesForDate(today)
+
         _uiState.value = GameUiState(
             grid = initialGrid,
             mergeHints = if (_uiState.value.mergeHintsEnabled) engine.findMergeHints(
@@ -454,10 +422,10 @@ internal class GameViewModel(
             seed = random.nextLong(),
             cellIdCounter = nextIdCounter,
             previewIdCounter = nextPreviewIdCounter,
-            dailyChallenges = _uiState.value.dailyChallenges,
+            dailyChallenges = currentDailyChallenges.map { DailyChallengeProgress(it) },
             challengeStreak = _uiState.value.challengeStreak,
-            globalPoints = _uiState.value.globalPoints,
-            finalResult = null,
+            isStreakCollectedToday = _uiState.value.isStreakCollectedToday,
+            finalResult = null
         )
         updateLevel()
         checkValidMoves()
@@ -505,12 +473,12 @@ internal class GameViewModel(
                 )
 
                 val playerName = settingsRepository.getPlayerName()
-                _uiState.update {
+                _uiState.update { 
                     it.copy(
-                        isGameOver = true,
+                        isGameOver = true, 
                         pendingResult = if (playerName == null) finalResult else null,
-                        finalResult = finalResult,
-                    )
+                        finalResult = finalResult
+                    ) 
                 }
                 achievementDelegate.onGameFinished()
                 settingsRepository.setGameState(null)
@@ -539,18 +507,14 @@ internal class GameViewModel(
             val currentPreviewIdCounter = _uiState.value.previewIdCounter
 
             val (newState, newPreviewsResult, perksAfterSpawn) = if (skipSpawn) {
-                Triple(
-                    gridWithoutTactical,
-                    _uiState.value.preview to currentPreviewIdCounter,
-                    currentPerks,
-                )
+                Triple(gridWithoutTactical, _uiState.value.preview to currentPreviewIdCounter, currentPerks)
             } else {
                 engine.spawnFromQueue(
                     gridWithoutTactical,
                     _uiState.value.preview,
                     currentPerks,
                     random,
-                    currentPreviewIdCounter,
+                    currentPreviewIdCounter
                 )
             }
 
@@ -571,7 +535,7 @@ internal class GameViewModel(
                 newPreviews,
                 updatedPerks,
                 _uiState.value.perkSpawnCounter,
-                random,
+                random
             )
 
             val rewardsToEmit = _uiState.value.earnedRewardsThisTurn
@@ -584,7 +548,7 @@ internal class GameViewModel(
                     perkSpawnCounter = nextCounter,
                     earnedRewardsThisTurn = emptyList(),
                     seed = random.nextLong(),
-                    previewIdCounter = nextPreviewIdCounter,
+                    previewIdCounter = nextPreviewIdCounter
                 )
             }
 
@@ -618,48 +582,32 @@ internal class GameViewModel(
     private suspend fun handleChallengeComplete(challenge: DailyChallenge) {
         if (challenge.rewardScore > 0) {
             _uiState.update { it.copy(score = it.score + challenge.rewardScore) }
-            effectDelegate.addScorePopup(
-                3,
-                3,
-                challenge.rewardScore,
-                Color.Cyan,
-                Res.string.daily_challenge_completed,
-            )
         }
         if (challenge.rewardPerk != null) {
             _uiState.update { it.copy(collectedPerks = it.collectedPerks + challenge.rewardPerk) }
-            effectDelegate.addPerkPopup(3, 3, challenge.rewardPerk)
         }
 
-        val today = Clock.System.now()
-            .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).date
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val dateSeed = today.year * 10000L + (today.month.ordinal + 1) * 100L + today.dayOfMonth
 
-        val pointsForChallenge = 5
-        settingsRepository.addGlobalPoints(pointsForChallenge)
-        _uiState.update { it.copy(globalPoints = it.globalPoints + pointsForChallenge) }
-
+        // Check if ALL daily challenges are now completed in the CURRENT GAME to update streak
         val allCompleted = _uiState.value.dailyChallenges.all { it.isCompleted }
-        if (allCompleted) {
+        if (allCompleted && !_uiState.value.isStreakCollectedToday) {
             val lastDate = settingsRepository.getLastCompletedChallengeDate()
             if (lastDate != dateSeed) {
                 val currentStreak = settingsRepository.getChallengeStreak()
-                val yesterday = today.minus(1, kotlinx.datetime.DateTimeUnit.DAY)
-                val yesterdaySeed =
-                    yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.dayOfMonth
+                val yesterday = today.minus(1, DateTimeUnit.DAY)
+                val yesterdaySeed = yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.dayOfMonth
 
                 val newStreak = if (lastDate == yesterdaySeed) currentStreak + 1 else 1
 
                 settingsRepository.setLastCompletedChallengeDate(dateSeed)
                 settingsRepository.setChallengeStreak(newStreak)
 
-                val streakBonus = newStreak * 5
-                settingsRepository.addGlobalPoints(streakBonus)
-
-                _uiState.update {
+                _uiState.update { 
                     it.copy(
                         challengeStreak = newStreak,
-                        globalPoints = it.globalPoints + streakBonus,
+                        isStreakCollectedToday = true
                     )
                 }
             }

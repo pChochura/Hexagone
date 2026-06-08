@@ -36,7 +36,6 @@ class SettingsRepository(
     private val pendingScoresKey = androidx.datastore.preferences.core.stringSetPreferencesKey("pending_scores")
     private val lastCompletedChallengeDateKey = androidx.datastore.preferences.core.longPreferencesKey("last_completed_challenge_date")
     private val challengeStreakKey = intPreferencesKey("challenge_streak")
-    private val globalPointsKey = intPreferencesKey("global_points")
 
     suspend fun getBestScore(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[bestScoreKey] ?: 0
@@ -351,19 +350,6 @@ class SettingsRepository(
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[challengeStreakKey] = streak
-            }
-        }
-    }
-
-    suspend fun getGlobalPoints(): Int = withContext(Dispatchers.IO) {
-        appSettings.data.first()[globalPointsKey] ?: 0
-    }
-
-    suspend fun addGlobalPoints(amount: Int) = withContext(Dispatchers.IO) {
-        appSettings.updateData {
-            it.toMutablePreferences().also { prefs ->
-                val current = prefs[globalPointsKey] ?: 0
-                prefs[globalPointsKey] = current + amount
             }
         }
     }
