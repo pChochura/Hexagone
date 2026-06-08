@@ -25,6 +25,7 @@ androidx-lifecycle = "2.10.0"
 androidx-navigation3 = "1.1.1"
 androidx-material = "1.14.0"
 androidx-splashscreen = "1.2.0"
+androidx-work = "2.11.2"
 androidx-datastore = "1.2.1"
 androidx-compose-ui-tooling = "1.11.2"
 
@@ -59,6 +60,7 @@ androidx-datastore = { module = "androidx.datastore:datastore-core", version.ref
 androidx-datastore-prefs = { module = "androidx.datastore:datastore-preferences-core", version.ref = "androidx-datastore" }
 androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "androidx-compose-ui-tooling" }
 androidx-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "androidx-splashscreen" }
+androidx-work = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
 androidx-material = { module = "com.google.android.material:material", version.ref = "androidx-material" }
 
 # Compose

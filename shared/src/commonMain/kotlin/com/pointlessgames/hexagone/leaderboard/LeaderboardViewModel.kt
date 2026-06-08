@@ -38,7 +38,14 @@ internal class LeaderboardViewModel(
 
     init {
         loadPlayerInfo()
+        syncPendingScores()
         loadRankings()
+    }
+
+    private fun syncPendingScores() {
+        viewModelScope.launch {
+            leaderboardRepository.syncPendingScores()
+        }
     }
 
     private fun loadPlayerInfo() {

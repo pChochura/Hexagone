@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.pointlessgames.hexagone.data.LeaderboardRepository
 import com.pointlessgames.hexagone.ui.theme.HexagoneTheme
 import com.pointlessgames.hexagone.ui.theme.LocalCornerRadius
 import com.pointlessgames.hexagone.ui.theme.LocalIconsSize
@@ -26,6 +27,7 @@ import com.pointlessgames.hexagone.utils.LocalResultEventBus
 import com.pointlessgames.hexagone.utils.ResultEventBus
 import eu.iamkonstantin.kotlin.gadulka.GadulkaPlayer
 import eu.iamkonstantin.kotlin.gadulka.rememberGadulkaState
+import org.koin.compose.koinInject
 
 @Composable
 @Preview
@@ -40,9 +42,11 @@ fun App(modifier: Modifier = Modifier) {
             val cornerRadius = MaterialTheme.cornerRadius
             val iconsSize = MaterialTheme.iconsSize
 
+            val leaderboardRepository = koinInject<LeaderboardRepository>()
             var startingRoute by remember { mutableStateOf<Route?>(null) }
 
             LaunchedEffect(Unit) {
+                leaderboardRepository.syncPendingScores()
                 startingRoute = Route.Game
             }
 

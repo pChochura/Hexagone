@@ -70,6 +70,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.splashscreen)
+    implementation(libs.androidx.work)
     implementation(libs.androidx.material)
     implementation(libs.koin.android)
 

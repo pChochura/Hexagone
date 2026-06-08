@@ -33,6 +33,7 @@ class SettingsRepository(
     private val maxTacticalGhostsLifetimeKey = intPreferencesKey("max_tactical_ghosts_lifetime")
     private val maxBarRaisedLifetimeKey = intPreferencesKey("max_bar_raised_lifetime")
     private val highestTileValueLifetimeKey = intPreferencesKey("highest_tile_value_lifetime")
+    private val pendingScoresKey = androidx.datastore.preferences.core.stringSetPreferencesKey("pending_scores")
 
     suspend fun getBestScore(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[bestScoreKey] ?: 0
@@ -301,6 +302,28 @@ class SettingsRepository(
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[highestTileValueLifetimeKey] ?: 1
                 if (value > current) prefs[highestTileValueLifetimeKey] = value
+            }
+        }
+    }
+
+    suspend fun getPendingScores(): Set<String> = withContext(Dispatchers.IO) {
+        appSettings.data.first()[pendingScoresKey] ?: emptySet()
+    }
+
+    suspend fun addPendingScore(serializedScore: String) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[pendingScoresKey] ?: emptySet()
+                prefs[pendingScoresKey] = current + serializedScore
+            }
+        }
+    }
+
+    suspend fun removePendingScore(serializedScore: String) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[pendingScoresKey] ?: emptySet()
+                prefs[pendingScoresKey] = current - serializedScore
             }
         }
     }

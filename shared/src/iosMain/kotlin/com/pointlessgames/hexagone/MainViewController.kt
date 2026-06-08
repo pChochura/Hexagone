@@ -8,7 +8,7 @@ import platform.UIKit.UIViewController
 @OptIn(ExperimentalForeignApi::class)
 fun MainViewController(): UIViewController {
     return ComposeUIViewController {
-        initKoin()
+        com.pointlessgames.hexagone.utils.IosBackgroundSync.initializeKoin()
         App()
     }
 }

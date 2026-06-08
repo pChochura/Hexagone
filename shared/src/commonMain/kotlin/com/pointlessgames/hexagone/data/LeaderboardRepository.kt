@@ -9,6 +9,8 @@ import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class LeaderboardRepository(
     private val supabase: SupabaseClient,
@@ -25,19 +27,50 @@ class LeaderboardRepository(
             region = region
         )
         
-        supabase.from("game_results").insert(finalResult)
-        
-        // Update profile best score if needed
-        val currentBest = settingsRepository.getBestScore()
-        if (result.score >= currentBest) {
-            supabase.from("profiles").update(mapOf("best_score" to result.score)) {
-                filter {
-                    eq("id", playerId)
+        try {
+            supabase.from("game_results").insert(finalResult)
+            
+            // Update profile best score if needed
+            val currentBest = settingsRepository.getBestScore()
+            if (result.score >= currentBest) {
+                supabase.from("profiles").update(mapOf("best_score" to result.score)) {
+                    filter {
+                        eq("id", playerId)
+                    }
                 }
             }
-        }
 
-        getBestRank(result.score, region)
+            getBestRank(result.score, region)
+        } catch (e: Exception) {
+            settingsRepository.addPendingScore(Json.encodeToString(finalResult))
+            null
+        }
+    }
+
+    suspend fun syncPendingScores() = withContext(Dispatchers.IO) {
+        val pending = settingsRepository.getPendingScores()
+        pending.forEach { serialized ->
+            try {
+                val result = Json.decodeFromString<DetailedGameResult>(serialized)
+                supabase.from("game_results").insert(result)
+                
+                val playerId = result.profileId
+                if (playerId != null) {
+                    val currentBest = settingsRepository.getBestScore()
+                    if (result.score >= currentBest) {
+                        supabase.from("profiles").update(mapOf("best_score" to result.score)) {
+                            filter {
+                                eq("id", playerId)
+                            }
+                        }
+                    }
+                }
+                
+                settingsRepository.removePendingScore(serialized)
+            } catch (e: Exception) {
+                // Keep it in the queue for next time
+            }
+        }
     }
 
     private suspend fun getBestRank(score: Int, region: String): RankingInfo = withContext(Dispatchers.IO) {

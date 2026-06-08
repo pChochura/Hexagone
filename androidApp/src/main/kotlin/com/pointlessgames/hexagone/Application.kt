@@ -10,5 +10,6 @@ class Application : Application() {
         super.onCreate()
 
         initKoin { androidContext(applicationContext) }
+        com.pointlessgames.hexagone.worker.LeaderboardSyncScheduler.schedule(this)
     }
 }
