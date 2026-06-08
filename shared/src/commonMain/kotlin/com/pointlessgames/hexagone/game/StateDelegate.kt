@@ -3,6 +3,7 @@ package com.pointlessgames.hexagone.game
 import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.game.model.GameState
 import com.pointlessgames.hexagone.game.model.GameUiState
+import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.logic.GameEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -113,6 +114,19 @@ internal class StateDelegate(
         val previousState = stateHistory.removeAt(stateHistory.size - 1)
 
         val undoneMoveScore = currentState.score - previousState.score
+
+        // When undoing, we must ensure that all remaining states in history 
+        // also reflect that one UNDO perk has been consumed.
+        // Otherwise, restoring them later would bring back the original UNDO count, 
+        // leading to infinite undos.
+        stateHistory.forEachIndexed { index, state ->
+            val undos = state.collectedPerks.toMutableList()
+            val undoIndex = undos.indexOf(Perk.UNDO)
+            if (undoIndex != -1) {
+                undos.removeAt(undoIndex)
+                stateHistory[index] = state.copy(collectedPerks = undos)
+            }
+        }
 
         uiState.update { state ->
             state.copy(
