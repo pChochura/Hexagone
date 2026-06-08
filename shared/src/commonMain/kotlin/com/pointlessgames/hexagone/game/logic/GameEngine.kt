@@ -623,17 +623,19 @@ internal class GameEngine(
         previousState: GameState?
     ): Boolean {
         return when (perk) {
-            Perk.UNDO -> previousState != null && !previousState.isStuck && previousState.availableChoices > 1
+            Perk.UNDO -> previousState != null && previousState.availableChoices > 1
             Perk.REMOVE_TILE -> grid.isNotEmpty()
             Perk.MOVE_TILE -> {
                 val occupied = grid.map { it.x to it.y }.toSet()
                 if (occupied.size >= columns * rows) return false
-                val distinctValues = grid.map { it.value }.distinct()
-                for (y in 0 until rows) {
-                    for (x in 0 until columns) {
-                        if (x to y !in occupied) {
-                            for (v in distinctValues) {
-                                if (checkMergeAt(x, y, grid + createCell(x, y, v, id = "temp"))) return true
+                
+                for (cell in grid) {
+                    val otherCells = grid.filter { it.id != cell.id }
+                    for (y in 0 until rows) {
+                        for (x in 0 until columns) {
+                            if (x to y !in occupied) {
+                                val tempGrid = otherCells + cell.copy(x = x, y = y)
+                                if (isMovePossible(tempGrid) || hasAnyMergePotential(tempGrid)) return true
                             }
                         }
                     }
@@ -641,53 +643,39 @@ internal class GameEngine(
                 false
             }
             Perk.SWAP_TILES -> {
-                // Swapping two solid tiles
-                for (i in grid.indices) {
-                    for (j in i + 1 until grid.size) {
-                        val c1 = grid[i]
-                        val c2 = grid[j]
+                val allItems = grid.map { Triple(it.id, it.x, it.y) } + previews.map { Triple(it.id, it.x, it.y) }
+                for (i in allItems.indices) {
+                    for (j in i + 1 until allItems.size) {
+                        val (id1, x1, y1) = allItems[i]
+                        val (id2, x2, y2) = allItems[j]
+                        
                         val tempGrid = grid.map {
                             when (it.id) {
-                                c1.id -> it.copy(value = c2.value)
-                                c2.id -> it.copy(value = c1.value)
+                                id1 -> it.copy(x = x2, y = y2)
+                                id2 -> it.copy(x = x1, y = y1)
                                 else -> it
                             }
                         }
-                        if (checkMergeAt(c1.x, c1.y, tempGrid) || checkMergeAt(c2.x, c2.y, tempGrid)) return true
-                    }
-                }
-                // Swapping a solid tile with a ghost
-                for (cell in grid) {
-                    for (preview in previews) {
-                        val tempGrid = grid.map {
-                            if (it.id == cell.id) it.copy(value = preview.value) else it
-                        }
-                        if (checkMergeAt(cell.x, cell.y, tempGrid)) return true
-                        
-                        // Also check if the ghost's new position (cell.x, cell.y) would create a merge
-                        // but ghosts don't merge on their own, they only merge when they land.
-                        // However, if we swap, the ghost stays a ghost at the new position.
-                        // Wait, canPerkResolveStuck should check if the perk allows a merge to happen NOW.
-                        // Swapping a ghost with a solid tile changes the value of the solid tile at its position.
-                        // That's what the code above checks.
+                        if (isMovePossible(tempGrid) || hasAnyMergePotential(tempGrid)) return true
                     }
                 }
                 false
             }
             Perk.INCREMENT_TILE -> {
                 grid.any { cell ->
-                    checkMergeAt(cell.x, cell.y, grid.map { if (it.id == cell.id) it.copy(value = it.value + 1) else it })
+                    val tempGrid = grid.map { if (it.id == cell.id) it.copy(value = it.value + 1) else it }
+                    isMovePossible(tempGrid) || hasAnyMergePotential(tempGrid)
                 }
             }
             Perk.DUPLICATE_TILE -> {
                 val occupied = grid.map { it.x to it.y }.toSet()
                 if (occupied.size >= columns * rows) return false
-                val distinctValues = (grid.map { it.value } + previews.map { it.value }).distinct()
-                for (y in 0 until rows) {
-                    for (x in 0 until columns) {
-                        if (x to y !in occupied) {
-                            for (v in distinctValues) {
-                                if (checkMergeAt(x, y, grid + createCell(x, y, v, id = "temp"))) return true
+                for (cell in grid) {
+                    for (y in 0 until rows) {
+                        for (x in 0 until columns) {
+                            if (x to y !in occupied) {
+                                val tempGrid = grid + cell.copy(id = "temp", x = x, y = y)
+                                if (isMovePossible(tempGrid) || hasAnyMergePotential(tempGrid)) return true
                             }
                         }
                     }
@@ -695,32 +683,49 @@ internal class GameEngine(
                 false
             }
             Perk.FUSION -> {
-                grid.any { cell ->
+                val fromCells = grid.any { cell ->
                     !cell.isFrozen &&
                             getNeighbors(cell.x, cell.y).count { n ->
                                 grid.any { it.x == n.first && it.y == n.second && !it.isFrozen }
                             } >= 2
                 }
-            }
-            Perk.PATH_MERGE -> {
-                grid.any { cell ->
-                    !cell.isFrozen &&
-                            getNeighbors(cell.x, cell.y).any { n ->
-                                grid.any {
-                                    it.value == cell.value &&
-                                            !it.isFrozen &&
-                                            it.x == n.first && it.y == n.second
-                                }
-                            }
+                if (fromCells) return true
+                
+                val occupied = grid.map { it.x to it.y }.toSet()
+                for (y in 0 until rows) {
+                    for (x in 0 until columns) {
+                        if (x to y !in occupied) {
+                            val neighbors = getNeighbors(x, y)
+                            if (grid.count { it.x to it.y in neighbors.toSet() && !it.isFrozen } >= 2) return true
+                        }
+                    }
                 }
+                false
             }
+            Perk.PATH_MERGE -> hasAnyMergePotential(grid)
             Perk.ADVANCE_QUEUE -> {
-                previews.any { p ->
-                    val neighbors = getNeighbors(p.x, p.y)
-                    grid.count { n -> !n.isFrozen && n.value == p.value && neighbors.any { it.first == n.x && it.second == n.y } } >= 1
+                val tempGrid = grid.toMutableList()
+                previews.forEach { p ->
+                    if (tempGrid.none { it.x == p.x && it.y == p.y }) {
+                        tempGrid.add(createCell(p.x, p.y, p.value))
+                    }
                 }
+                isMovePossible(tempGrid) || hasAnyMergePotential(tempGrid) || (columns * rows - tempGrid.size) >= 3
             }
             else -> false
+        }
+    }
+
+    private fun hasAnyMergePotential(grid: List<HexagonCell>): Boolean {
+        return grid.any { cell ->
+            !cell.isFrozen &&
+                    getNeighbors(cell.x, cell.y).any { n ->
+                        grid.any {
+                            it.value == cell.value &&
+                                    !it.isFrozen &&
+                                    it.x == n.first && it.y == n.second
+                        }
+                    }
         }
     }
 
