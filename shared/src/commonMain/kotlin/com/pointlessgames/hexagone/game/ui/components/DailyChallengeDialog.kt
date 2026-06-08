@@ -72,7 +72,7 @@ fun DailyChallengeDialog(
     challenges: List<DailyChallengeProgress>,
     streak: Int,
     isStreakCollectedToday: Boolean,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     ModalBottomSheet(
         contentWindowInsets = { WindowInsets.statusBars },
@@ -80,13 +80,16 @@ fun DailyChallengeDialog(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.surface,
         scrimColor = Color.Transparent,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.2f)) }
+        dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.2f)) },
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = MaterialTheme.spacing.extraLarge)
-                .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + MaterialTheme.spacing.large)
+                .padding(
+                    bottom = WindowInsets.navigationBars.asPaddingValues()
+                        .calculateBottomPadding() + MaterialTheme.spacing.large,
+                ),
         ) {
             Text(
                 text = stringResource(Res.string.daily_challenge).uppercase(),
@@ -94,14 +97,14 @@ fun DailyChallengeDialog(
                 fontWeight = FontWeight.Black,
                 color = Color.White,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             Spacer(Modifier.height(MaterialTheme.spacing.medium))
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 items(challenges) { progress ->
                     ChallengeCard(progress)
@@ -109,7 +112,7 @@ fun DailyChallengeDialog(
 
                 item {
                     Spacer(Modifier.height(MaterialTheme.spacing.large))
-                    
+
                     Text(
                         text = stringResource(Res.string.streak_label, streak).uppercase(),
                         style = MaterialTheme.typography.labelLarge,
@@ -117,11 +120,11 @@ fun DailyChallengeDialog(
                         color = MaterialTheme.colorScheme.primary,
                         letterSpacing = 1.sp,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    
+
                     Spacer(Modifier.height(MaterialTheme.spacing.medium))
-                    
+
                     StreakRow(streak, isStreakCollectedToday)
                 }
             }
@@ -131,27 +134,31 @@ fun DailyChallengeDialog(
 
 @Composable
 private fun StreakRow(streak: Int, isStreakCollectedToday: Boolean) {
-    val today = remember { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
-    
+    val today = remember {
+        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         for (i in 0 until 5) {
             val isToday = i == 3
             val isPast = i < 3
             val isUpcoming = i > 3
-            
+
             val dateForBox = today.plus(i - 3, DateTimeUnit.DAY)
-            
+
             val isChecked = when {
                 isToday -> isStreakCollectedToday
                 isPast -> {
                     val daysAgo = 3 - i
-                    val streakOnThatDay = if (isStreakCollectedToday) streak - daysAgo else streak - (daysAgo - 1)
+                    val streakOnThatDay =
+                        if (isStreakCollectedToday) streak - daysAgo else streak - (daysAgo - 1)
                     streakOnThatDay > 0
                 }
+
                 else -> false
             }
 
@@ -160,9 +167,9 @@ private fun StreakRow(streak: Int, isStreakCollectedToday: Boolean) {
                 isToday = isToday,
                 isUpcoming = isUpcoming,
                 date = dateForBox,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
-            
+
             if (i < 4) {
                 Spacer(Modifier.width(MaterialTheme.spacing.small))
             }
@@ -176,17 +183,17 @@ private fun StreakBox(
     isToday: Boolean,
     isUpcoming: Boolean,
     date: LocalDate,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val dayName = date.dayOfWeek.name.take(3)
     val dayOfMonthString = date.dayOfMonth.toString()
-    
+
     val backgroundColor = when {
         isChecked -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
         isToday -> Color.White.copy(alpha = 0.1f)
         else -> Color.White.copy(alpha = 0.05f)
     }
-    
+
     val borderColor = when {
         isToday -> MaterialTheme.colorScheme.primary
         isChecked -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
@@ -196,15 +203,15 @@ private fun StreakBox(
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
             text = dayName,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
-            color = if (isToday) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.4f)
+            color = if (isToday) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.4f),
         )
-        
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -212,28 +219,28 @@ private fun StreakBox(
                 .clip(RoundedCornerShape(MaterialTheme.cornerRadius.small))
                 .background(backgroundColor)
                 .border(2.dp, borderColor, RoundedCornerShape(MaterialTheme.cornerRadius.small)),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             if (isChecked) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_star),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 )
             } else if (isUpcoming) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_locked),
                     contentDescription = null,
                     tint = Color.White.copy(alpha = 0.2f),
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(16.dp),
                 )
             } else {
                 Text(
                     text = dayOfMonthString,
                     color = Color.White.copy(alpha = 0.3f),
                     fontWeight = FontWeight.Black,
-                    fontSize = 14.sp
+                    fontSize = 14.sp,
                 )
             }
         }
@@ -242,20 +249,44 @@ private fun StreakBox(
 
 @Composable
 private fun ChallengeCard(
-    progress: DailyChallengeProgress
+    progress: DailyChallengeProgress,
 ) {
     val challenge = progress.challenge
     val isCompleted = progress.isCompleted
     val goalText = when (challenge.goal) {
-        ChallengeGoal.MERGE_COUNT -> stringResource(Res.string.daily_challenge_goal_merge, challenge.target)
-        ChallengeGoal.LEVEL_REACHED -> stringResource(Res.string.daily_challenge_goal_level, challenge.target)
-        ChallengeGoal.COMBO_REACHED -> stringResource(Res.string.daily_challenge_goal_combo, challenge.target)
-        ChallengeGoal.SCORE_REACHED -> stringResource(Res.string.daily_challenge_goal_score, challenge.target)
-        ChallengeGoal.TACTICAL_MERGES -> stringResource(Res.string.daily_challenge_goal_tactical, challenge.target)
-        ChallengeGoal.PIECE_VALUE_REACHED -> stringResource(Res.string.daily_challenge_goal_value, challenge.target)
+        ChallengeGoal.MERGE_COUNT -> stringResource(
+            Res.string.daily_challenge_goal_merge,
+            challenge.target,
+        )
+
+        ChallengeGoal.LEVEL_REACHED -> stringResource(
+            Res.string.daily_challenge_goal_level,
+            challenge.target,
+        )
+
+        ChallengeGoal.COMBO_REACHED -> stringResource(
+            Res.string.daily_challenge_goal_combo,
+            challenge.target,
+        )
+
+        ChallengeGoal.SCORE_REACHED -> stringResource(
+            Res.string.daily_challenge_goal_score,
+            challenge.target,
+        )
+
+        ChallengeGoal.TACTICAL_MERGES -> stringResource(
+            Res.string.daily_challenge_goal_tactical,
+            challenge.target,
+        )
+
+        ChallengeGoal.PIECE_VALUE_REACHED -> stringResource(
+            Res.string.daily_challenge_goal_value,
+            challenge.target,
+        )
     }
 
-    val progressFraction = (progress.progress.toFloat() / challenge.target.toFloat()).coerceIn(0f, 1f)
+    val progressFraction =
+        (progress.progress.toFloat() / challenge.target.toFloat()).coerceIn(0f, 1f)
     val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium)
 
     Box(
@@ -263,39 +294,57 @@ private fun ChallengeCard(
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
             .clip(shape)
-            .border(1.dp, if (isCompleted) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f), shape)
+            .border(
+                1.dp,
+                if (isCompleted) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else Color.White.copy(
+                    alpha = 0.1f,
+                ),
+                shape,
+            ),
     ) {
         WavyProgressBar(
             progress = progressFraction,
             modifier = Modifier.matchParentSize(),
             showContainer = true,
-            containerColor = if (isCompleted) MaterialTheme.colorScheme.primary.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.02f),
+            containerColor = if (isCompleted) MaterialTheme.colorScheme.primary.copy(alpha = 0.05f) else Color.White.copy(
+                alpha = 0.02f,
+            ),
             borderColor = Color.Transparent,
             shape = shape,
-            isWavy = !isCompleted
+            isWavy = !isCompleted,
         )
-        
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(MaterialTheme.spacing.medium),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
                     .background(
-                        if (isCompleted) Brush.linearGradient(listOf(Color(0xFFF2994A), Color(0xFFF2C94C)))
-                        else Brush.linearGradient(listOf(Color.White.copy(alpha = 0.1f), Color.White.copy(alpha = 0.05f)))
+                        if (isCompleted) Brush.linearGradient(
+                            listOf(
+                                Color(0xFFF2994A),
+                                Color(0xFFF2C94C),
+                            ),
+                        )
+                        else Brush.linearGradient(
+                            listOf(
+                                Color.White.copy(alpha = 0.1f),
+                                Color.White.copy(alpha = 0.05f),
+                            ),
+                        ),
                     ),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(if (isCompleted) Res.drawable.ic_star else Res.drawable.ic_daily_challenge),
                     contentDescription = null,
                     tint = if (isCompleted) Color.White else Color.White.copy(alpha = 0.5f),
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
             }
 
@@ -306,14 +355,26 @@ private fun ChallengeCard(
                     text = goalText,
                     color = if (isCompleted) Color.White else Color.White.copy(alpha = 0.8f),
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                    fontSize = 15.sp,
                 )
+
+                val statusText = if (isCompleted) {
+                    when {
+                        challenge.rewardScore > 0 -> "+${challenge.rewardScore} SCORE"
+                        challenge.rewardPerk != null -> "FREE ${stringResource(challenge.rewardPerk.displayNameRes)}"
+                        else -> stringResource(Res.string.daily_challenge_completed)
+                    }
+                } else {
+                    "${progress.progress} / ${challenge.target}"
+                }
+
                 Text(
-                    text = if (isCompleted) stringResource(Res.string.daily_challenge_completed) 
-                           else "${progress.progress} / ${challenge.target}",
-                    color = if (isCompleted) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.4f),
+                    text = statusText,
+                    color = if (isCompleted) MaterialTheme.colorScheme.primary else Color.White.copy(
+                        alpha = 0.4f,
+                    ),
                     fontWeight = FontWeight.Medium,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
                 )
             }
         }

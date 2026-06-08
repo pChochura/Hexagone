@@ -99,6 +99,7 @@ internal class StateDelegate(
             previewIdCounter = state.previewIdCounter,
             activePerk = state.activePerk,
             selectedCellId = state.selectedCellId,
+            dailyChallenges = state.dailyChallenges,
         )
     }
 
@@ -162,6 +163,7 @@ internal class StateDelegate(
                 activePerk = null,
                 selectedCellId = null,
                 isBusy = false,
+                dailyChallenges = previousState.dailyChallenges,
             )
         }
 
