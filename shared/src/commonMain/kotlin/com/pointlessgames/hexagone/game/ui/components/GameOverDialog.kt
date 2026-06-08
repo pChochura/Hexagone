@@ -25,11 +25,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
@@ -84,7 +84,7 @@ internal fun GameOverDialog(
 
     val infiniteTransition = rememberInfiniteTransition(label = "gameover_animations")
 
-    val scoreGlowAlpha by infiniteTransition.animateFloat(
+    val scoreGlowAlphaState = infiniteTransition.animateFloat(
         initialValue = 0.4f,
         targetValue = 0.8f,
         animationSpec = infiniteRepeatable(
@@ -94,7 +94,7 @@ internal fun GameOverDialog(
         label = "score_glow",
     )
 
-    val maxPieceGlowAlpha by infiniteTransition.animateFloat(
+    val maxPieceGlowAlphaState = infiniteTransition.animateFloat(
         initialValue = 0.1f,
         targetValue = 0.5f,
         animationSpec = infiniteRepeatable(
@@ -106,7 +106,7 @@ internal fun GameOverDialog(
 
     val isNewBest = score >= bestScore && score > 0
 
-    val badgeRotation by infiniteTransition.animateFloat(
+    val badgeRotationState = infiniteTransition.animateFloat(
         initialValue = -5f,
         targetValue = -10f,
         animationSpec = infiniteRepeatable(
@@ -115,6 +115,10 @@ internal fun GameOverDialog(
         ),
         label = "badge_rotation",
     )
+
+    val scoreGlowAlphaProvider = remember { { scoreGlowAlphaState.value } }
+    val maxPieceGlowAlphaProvider = remember { { maxPieceGlowAlphaState.value } }
+    val badgeRotationProvider = remember { { badgeRotationState.value } }
 
     val spacing = MaterialTheme.spacing
     val completedChallenges = dailyChallenges.filter { it.isCompleted }
@@ -183,29 +187,41 @@ internal fun GameOverDialog(
 
             Spacer(Modifier.height(spacing.small))
 
-            Box(contentAlignment = Alignment.TopEnd) {
+            Box(contentAlignment = Alignment.Center) {
+                // Score Glow - Deferred read to Draw phase via graphicsLayer
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .graphicsLayer {
+                            val alpha = scoreGlowAlphaProvider()
+                            this.alpha = alpha * 0.5f
+                            val scale = 1.2f + alpha * 0.2f
+                            scaleX = scale
+                            scaleY = scale
+                        }
+                        .background(
+                            androidx.compose.ui.graphics.Brush.radialGradient(
+                                colors = listOf(Color(0xFFFFD54F).copy(alpha = 0.4f), Color.Transparent),
+                            )
+                        )
+                )
+
                 Text(
                     text = animatedScore.toString(),
                     color = Color.White,
                     fontWeight = FontWeight.Black,
                     fontSize = 84.sp,
                     textAlign = TextAlign.Center,
-                    style = androidx.compose.ui.text.TextStyle(
-                        shadow = androidx.compose.ui.graphics.Shadow(
-                            color = Color(0xFFFFD54F).copy(alpha = scoreGlowAlpha),
-                            offset = Offset(0f, 0f),
-                            blurRadius = 40f,
-                        ),
-                    ),
                     modifier = Modifier.padding(horizontal = spacing.extraLarge),
                 )
 
                 if (isNewBest) {
                     Box(
                         modifier = Modifier
+                            .align(Alignment.TopEnd)
                             .offset(x = 16.dp, y = (-8).dp)
                             .graphicsLayer {
-                                rotationZ = badgeRotation
+                                rotationZ = badgeRotationProvider()
                             }
                             .background(
                                 Color(0xFFF06292), // Pink from screenshot
@@ -287,7 +303,7 @@ internal fun GameOverDialog(
                     backgroundColor = Color(0xFF9345C4), // Purple
                     size = 92.dp,
                     labelColor = Color.White,
-                    glowAlpha = maxPieceGlowAlpha,
+                    glowAlphaProvider = maxPieceGlowAlphaProvider,
                     glowColor = Color(0xFFBB86FC),
                 )
 
@@ -384,7 +400,7 @@ private fun GameOverStatHexagon(
     backgroundColor: Color,
     size: Dp,
     labelColor: Color = Color.White.copy(alpha = 0.6f),
-    glowAlpha: Float = 0f,
+    glowAlphaProvider: () -> Float = { 0f },
     glowColor: Color = Color.Transparent,
 ) {
     val spacing = MaterialTheme.spacing
@@ -393,14 +409,14 @@ private fun GameOverStatHexagon(
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            if (glowAlpha > 0f) {
-                Box(
-                    modifier = Modifier
-                        .size(width = size + 16.dp, height = (size + 16.dp) * 0.866f)
-                        .graphicsLayer { alpha = glowAlpha }
-                        .background(glowColor.copy(alpha = 0.4f), FlatTopHexagonShape()),
-                )
-            }
+            Box(
+                modifier = Modifier
+                    .size(width = size + 16.dp, height = (size + 16.dp) * 0.866f)
+                    .graphicsLayer { 
+                        alpha = glowAlphaProvider()
+                    }
+                    .background(glowColor.copy(alpha = 0.4f), FlatTopHexagonShape()),
+            )
             Box(
                 modifier = Modifier
                     .size(width = size, height = size * 0.866f)
