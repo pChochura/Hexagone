@@ -169,16 +169,10 @@ internal class GameViewModel(
                             previewIdCounter = savedState.previewIdCounter,
                             activePerk = savedState.activePerk,
                             selectedCellId = savedState.selectedCellId,
-                            dailyChallenges = if (lastCompletedDate == dateSeed) {
-                                currentDailyChallenges.map { c -> DailyChallengeProgress(c, c.target, true) }
-                            } else if (savedState.dailyChallenges.isNotEmpty()) {
-                                // Match saved progress with today's challenges by ID
-                                currentDailyChallenges.map { challenge ->
-                                    savedState.dailyChallenges.find { it.challenge.id == challenge.id }
-                                        ?: DailyChallengeProgress(challenge)
-                                }
+                            dailyChallenges = if (savedState.dailyChallenges.isNotEmpty()) {
+                                savedState.dailyChallenges
                             } else {
-                                currentDailyChallenges.map { DailyChallengeProgress(it) }
+                                currentDailyChallenges.map { challenge -> DailyChallengeProgress(challenge) }
                             },
                             challengeStreak = challengeStreak,
                             isStreakCollectedToday = lastCompletedDate == dateSeed
