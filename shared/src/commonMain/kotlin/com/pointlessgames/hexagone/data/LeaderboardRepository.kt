@@ -11,11 +11,18 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 
 class LeaderboardRepository(
     private val supabase: SupabaseClient,
     private val settingsRepository: SettingsRepository,
 ) {
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
+
     suspend fun submitResult(result: DetailedGameResult): RankingInfo? = withContext(Dispatchers.IO) {
         val playerId = settingsRepository.getPlayerId() ?: return@withContext null
         val username = settingsRepository.getPlayerName() ?: "Unknown"
@@ -28,7 +35,11 @@ class LeaderboardRepository(
         )
         
         try {
-            supabase.from("game_results").insert(finalResult)
+            // Convert to JSON and remove fields that might not exist in the DB schema yet
+            val jsonElement = json.encodeToJsonElement(finalResult).jsonObject.toMutableMap()
+            jsonElement.remove("daily_challenges")
+            
+            supabase.from("game_results").insert(jsonElement)
             
             // Update profile best score if needed
             val currentBest = settingsRepository.getBestScore()
@@ -42,17 +53,24 @@ class LeaderboardRepository(
 
             getBestRank(result.score, region)
         } catch (e: Exception) {
-            settingsRepository.addPendingScore(Json.encodeToString(finalResult))
+            settingsRepository.addPendingScore(json.encodeToString(finalResult))
             null
         }
     }
 
     suspend fun syncPendingScores() = withContext(Dispatchers.IO) {
         val pending = settingsRepository.getPendingScores()
+        if (pending.isEmpty()) return@withContext
+
         pending.forEach { serialized ->
             try {
-                val result = Json.decodeFromString<DetailedGameResult>(serialized)
-                supabase.from("game_results").insert(result)
+                val result = json.decodeFromString<DetailedGameResult>(serialized)
+                
+                // Same logic as submitResult to ensure compatibility with DB schema
+                val jsonElement = json.encodeToJsonElement(result).jsonObject.toMutableMap()
+                jsonElement.remove("daily_challenges")
+                
+                supabase.from("game_results").insert(jsonElement)
                 
                 val playerId = result.profileId
                 if (playerId != null) {
@@ -68,7 +86,11 @@ class LeaderboardRepository(
                 
                 settingsRepository.removePendingScore(serialized)
             } catch (e: Exception) {
-                // Keep it in the queue for next time
+                // If it's a serialization error, we might want to remove it to avoid blocking the queue
+                if (e is kotlinx.serialization.SerializationException) {
+                    settingsRepository.removePendingScore(serialized)
+                }
+                // Otherwise (network error), keep it for next time
             }
         }
     }

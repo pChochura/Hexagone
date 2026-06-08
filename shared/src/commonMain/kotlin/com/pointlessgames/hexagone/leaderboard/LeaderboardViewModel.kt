@@ -99,6 +99,9 @@ internal class LeaderboardViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
+                // Try to sync any pending scores first
+                leaderboardRepository.syncPendingScores()
+
                 val region = if (_uiState.value.filter == Filter.Regional) {
                     _uiState.value.playerRegion
                 } else {
