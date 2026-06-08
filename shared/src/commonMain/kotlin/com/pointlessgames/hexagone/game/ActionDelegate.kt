@@ -460,6 +460,7 @@ internal class ActionDelegate(
                             isTactical = scoreResult.isTactical
                         )
                         effectDelegate.addMergeParticles(tx, ty, preview.value, intensity = (preview.value / 8f + 0.3f).coerceAtMost(1.5f))
+                        achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, scoreResult.sacrificeBonus > 0)
                     }
                 }
 
@@ -544,6 +545,7 @@ internal class ActionDelegate(
                         if (scoreResult.barRaisedBonus > 0) {
                             achievementDelegate.onAdvancedJanitor()
                         }
+                        achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, false)
                     }
                 }
                 achievementDelegate.checkPerkAchievements(Perk.INCREMENT_TILE, uiState.value, isTargetGhost = true)
@@ -630,6 +632,7 @@ internal class ActionDelegate(
                         if (scoreResult.barRaisedBonus > 0) {
                             achievementDelegate.onAdvancedJanitor()
                         }
+                        achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, false)
                     }
                 }
                 achievementDelegate.checkPerkAchievements(Perk.INCREMENT_TILE, uiState.value, isTargetGhost = false)
@@ -719,6 +722,7 @@ internal class ActionDelegate(
                             isTactical = scoreResult.isTactical
                         )
                         effectDelegate.addMergeParticles(tx, ty, cell.value, intensity = (cell.value / 8f + 0.3f).coerceAtMost(1.5f))
+                        achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, scoreResult.sacrificeBonus > 0)
                     }
                 }
 
