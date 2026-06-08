@@ -23,7 +23,8 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 │   ├── logic/
 │   │   ├── GameEngine.kt         # Core math: neighbors, merges, hints
 │   │   ├── Scoring.kt            # Centralized scoring formulas & multipliers
-│   │   └── PatternRecognitionEngine.kt # Geometric achievement scanning
+│   │   ├── PatternRecognitionEngine.kt # Geometric achievement scanning
+│   │   └── DailyChallengeProvider.kt # Deterministic daily mission generator
 │   ├── model/
 │   │   ├── GameModels.kt         # Domain Models: Perk, GameUiState, MergeTransition
 │   │   └── UIModels.kt           # UI-specific state: Particles, Animation states
@@ -32,6 +33,8 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 │   │   └── components/
 │   │       ├── AchievementsDialog.kt # BottomSheet list of all rewards
 │   │       ├── AchievementNotification.kt # Top-level clickable HUD popup
+│   │       ├── DailyChallengeDialog.kt # 5-day streak tracker & mission list
+│   │       ├── DailyChallengeRewardOverlay.kt # Cinematic completion effect
 │   │       ├── PopupsLayer.kt     # Stable HUD notifications (sequential IDs)
 │   │       ├── GridDrawing.kt     # Optimized DrawScope rendering logic
 │   │       ├── GameGridOverlay.kt # Grid orchestrator & gesture handling
@@ -43,6 +46,7 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 │   ├── MergeDelegate.kt          # Delegate: Merge lifecycle & animation logic
 │   ├── StateDelegate.kt          # Delegate: History, Undo & Persistence
 │   ├── AchievementDelegate.kt    # Delegate: Rule-based milestone triggering
+│   ├── ChallengeDelegate.kt      # Delegate: Real-time mission tracking
 │   ├── GameViewModel.kt          # Coordinator: Orchestrates delegates & state
 │   └── DebugDelegate.kt          # Delegate: Developer tools & state manipulation
 ├── ui/
@@ -101,7 +105,30 @@ The game features a multi-layered achievement system integrated via a platform-a
 
 ---
 
-## 4. Strategic Features
+## 4. Daily Missions System
+
+The game features a dynamic mission system that resets per session but tracks long-term commitment via a persistent streak.
+
+### Deterministic Generation
+*   **Seeded Variety**: Uses `DailyChallengeProvider` to generate 3 distinct missions daily, seeded by the current date (`yyyyMMdd`).
+*   **Strategic Categories**:
+    *   **Fundamental**: Direct interaction targets (e.g., *Merge 25 times*, *Reach Level 8*).
+    *   **Skill & Tactics**: Advanced play requirements (e.g., *5 Tactical Merges*, *Create a Value 12 Tile*).
+    *   **Performance**: High-score or efficiency goals (e.g., *x10 Combo*, *10,000 Session Score*).
+
+### Reward Mechanics
+*   **Session-Specific Impact**: Completing a mission mid-game instantly rewards the player with either a **Score Boost** or a **Free Perk**, aiding the current run.
+*   **Per-Game Collection**: Mission progress resets every time a new game starts, allowing players to collect rewards multiple times per day.
+*   **Persistent Streak**: Completing the full set of 3 missions in any single session marks the day as "Done" in a persistent 5-day calendar view.
+
+### UI Integration
+*   **Cinematic Completion**: Completion triggers a high-impact `DailyChallengeRewardOverlay` with a star burst and glow effect.
+*   **Wavy mission Cards**: The `DailyChallengeDialog` reuses the `WavyProgressBar` design from the achievement system for visual consistency.
+*   **Post-Game Summary**: The Game Over screen provides a summary of all completed missions and their impact on the session.
+
+---
+
+## 5. Strategic Features
 
 ### Prediction & Previews
 *   **Interactive Previews**: Visually simulates Swaps, Moves, and direct Value changes before commitment.
@@ -123,7 +150,7 @@ The game features a multi-layered achievement system integrated via a platform-a
 
 ---
 
-## 5. UI & Visual Identity
+## 6. UI & Visual Identity
 
 *   **Design System**: Centralized in `HexagoneTheme`, mapping Material 3 roles to "Glowing Hardware" tokens.
 *   **Stable Popups**: Notifications use **sequential IDs** and pre-calculated offsets for animation stability.
@@ -133,7 +160,7 @@ The game features a multi-layered achievement system integrated via a platform-a
 
 ---
 
-## 6. Development Guidelines
+## 7. Development Guidelines
 1.  **ViewModel Delegation**: Extract complex logic into domain-specific delegates (State, Action, Effect, Merge, Achievement) to maintain a slim coordinator.
 2.  **State Atomicity**: Use `_uiState.update { ... }` for all gameplay changes to ensure consistency.
 3.  **Unique Merge IDs**: Always generate dynamic, unique IDs for merges (e.g., `cell_path_merge_N`) to prevent `MergeDelegate` from skipping animation steps due to ID collisions.
