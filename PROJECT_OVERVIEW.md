@@ -103,10 +103,15 @@ The game features a multi-layered achievement system integrated via a platform-a
 
 ## 4. Strategic Features
 
-### Predictive Hint System & Hover Previews
-*   **Interactive Previews**: Visually simulates Swaps, Moves, and direct Value changes (Increment/Fusion) before commitment.
+### Prediction & Previews
+*   **Interactive Previews**: Visually simulates Swaps, Moves, and direct Value changes before commitment.
 *   **Merge Isolation**: Previews at ghost positions do not trigger merges; only solid tiles are calculated.
 *   **Look-Ahead**: Simulations account for the current move plus the next 3 pieces in the queue.
+
+### Offline Persistence & Sync
+*   **Score Queue**: Failed leaderboard submissions are serialized and stored in `DataStore`.
+*   **Background Processing**: Uses `WorkManager` (Android) and `BGTaskScheduler` (iOS) to automatically sync pending scores when connectivity is restored.
+*   **Atomic State**: Full game state is persisted after every move to ensure no progress is lost.
 
 ### Perk Economy
 *   **Rarity Weights**: Common (Undo, Move, Remove, Increment), Rare (Advance, Swap, Duplicate, Skip, Freeze), Legendary (Fusion, Chain Merge, Path Merge).
