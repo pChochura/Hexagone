@@ -113,7 +113,7 @@
     <string name="height">Wysokość</string>
     <string name="no_hints_available">Brak dostępnych podpowiedzi\nSpróbuj cofnąć ruchy</string>
     <string name="need_a_hint">Potrzebujesz podpowiedzi?</string>
-    <string name="daily_challenge">Wyzwanie\ndnia</string>
+    <string name="daily_challenge">Wyzwanie dnia</string>
     <string name="easy">Łatwy</string>
     <string name="medium">Średni</string>
     <string name="hard">Trudny</string>

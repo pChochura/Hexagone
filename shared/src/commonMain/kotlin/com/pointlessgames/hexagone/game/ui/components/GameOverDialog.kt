@@ -247,6 +247,7 @@ internal fun GameOverDialog(
                         .background(Color.White.copy(alpha = 0.05f))
                         .padding(spacing.medium),
                     verticalArrangement = Arrangement.spacedBy(spacing.small),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         text = stringResource(Res.string.daily_challenge).uppercase(),
@@ -254,7 +255,7 @@ internal fun GameOverDialog(
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 10.sp,
                         letterSpacing = 1.sp,
-                        modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                     )
 
