@@ -124,18 +124,16 @@ internal fun AnimatedGridHexagon(
         label = "wiggle",
     )
 
-    val isHoveredState = remember { mutableStateOf(false) }
-    val isTargetHovered = remember { mutableStateOf(false) }
-    LaunchedEffect(hoveredMergeState) {
-        hoveredMergeState.collect { current ->
-            isHoveredState.value = current != null && (
-                    (current.targetX == cell.x && current.targetY == cell.y) ||
-                            current.participatingIds?.contains(cell.id) == true ||
-                            current.steps.any { step -> step.mergingCells.any { it.id == cell.id } }
-                    )
-            isTargetHovered.value =
-                current != null && current.targetX == cell.x && current.targetY == cell.y
-        }
+    val isHovered = remember(currentHoverMerge, cell.x, cell.y, cell.id) {
+        currentHoverMerge != null && (
+                (currentHoverMerge.targetX == cell.x && currentHoverMerge.targetY == cell.y) ||
+                        currentHoverMerge.participatingIds?.contains(cell.id) == true ||
+                        currentHoverMerge.steps.any { step -> step.mergingCells.any { it.id == cell.id } }
+                )
+    }
+
+    val isTargetHovered = remember(currentHoverMerge, cell.x, cell.y) {
+        currentHoverMerge != null && currentHoverMerge.targetX == cell.x && currentHoverMerge.targetY == cell.y
     }
 
     val shape = remember { FlatTopHexagonShape() }
@@ -143,7 +141,7 @@ internal fun AnimatedGridHexagon(
     val activePerk = activePerkProvider()
     val isSelected = selectedCellId == cell.id
 
-    val isSelectableLocal = remember(activePerk, cell.id, gridStateProvider(), selectedCellId) {
+    val isSelectableLocal = remember(activePerk, cell.x, cell.y, cell.id, gridStateProvider(), selectedCellId) {
         when (activePerk) {
             Perk.PATH_MERGE -> {
                 val neighbors = gridStateProvider().filter { n ->
@@ -206,8 +204,8 @@ internal fun AnimatedGridHexagon(
                             selectedCellId == cell.id || animatedOffset != targetOffset -> 12f
                             isTargetMerging -> 11f
                             isMergingLocal -> 10f
-                            isTargetHovered.value -> 9f
-                            isHoveredState.value -> 6f
+                            isTargetHovered -> 9f
+                            isHovered -> 6f
                             else -> 2f
                         },
                     )
@@ -215,7 +213,7 @@ internal fun AnimatedGridHexagon(
             }
             .graphicsLayer {
                 this.alpha = alpha;
-                val hovered = isHoveredState.value
+                val hovered = isHovered
                 val selectedCellId = selectedCellIdProvider()
                 val isSelectedLocal = selectedCellId == cell.id
 
@@ -225,7 +223,7 @@ internal fun AnimatedGridHexagon(
             }
             .drawWithContent {
                 drawContent()
-                if (isHoveredState.value) {
+                if (isHovered) {
                     val outline = shape.createOutline(size, layoutDirection, this)
                     if (outline is Outline.Generic) {
                         val selectedCellId = selectedCellIdProvider()
