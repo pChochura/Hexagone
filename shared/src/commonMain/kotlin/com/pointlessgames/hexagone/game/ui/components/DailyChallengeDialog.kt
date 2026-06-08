@@ -94,15 +94,9 @@ fun DailyChallengeDialog(
                     bottom = WindowInsets.navigationBars.asPaddingValues()
                         .calculateBottomPadding() + MaterialTheme.spacing.large,
                 ),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = stringResource(Res.string.daily_challenge).uppercase(),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Black,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            BottomSheetTitle(text = stringResource(Res.string.daily_challenge))
 
             Spacer(Modifier.height(MaterialTheme.spacing.medium))
 

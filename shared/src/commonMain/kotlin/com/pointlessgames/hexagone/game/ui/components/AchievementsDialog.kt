@@ -118,14 +118,10 @@ fun AchievementsDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = MaterialTheme.spacing.extraLarge)
+                .padding(horizontal = MaterialTheme.spacing.extraLarge),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = stringResource(Res.string.achievements_title),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Black,
-                color = Color.White
-            )
+            BottomSheetTitle(text = stringResource(Res.string.achievements_title))
 
             Spacer(Modifier.height(MaterialTheme.spacing.medium))
 

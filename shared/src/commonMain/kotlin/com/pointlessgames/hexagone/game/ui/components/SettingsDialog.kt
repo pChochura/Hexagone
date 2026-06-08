@@ -60,12 +60,7 @@ fun SettingsDialog(
                 .padding(bottom = MaterialTheme.spacing.extraLarge),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = stringResource(Res.string.settings_label),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Black,
-                color = Color.White,
-            )
+            BottomSheetTitle(text = stringResource(Res.string.settings_label))
 
             Spacer(Modifier.height(MaterialTheme.spacing.extraLarge))
 

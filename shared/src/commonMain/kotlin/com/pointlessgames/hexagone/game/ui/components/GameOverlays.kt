@@ -45,8 +45,6 @@ import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.ConfettiPiece
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.RankingInfo
-import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
-import com.pointlessgames.hexagone.leaderboard.ui.LeaderboardOverlay
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
@@ -80,9 +78,6 @@ internal fun GameOverlays(
     onViewBoardToggle: () -> Unit,
     onShare: () -> Unit,
     onLeaderboard: () -> Unit,
-    showLeaderboard: Boolean,
-    onLeaderboardDismiss: () -> Unit,
-    leaderboardViewModel: LeaderboardViewModel,
     activeTierReward: Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>?,
     onTierRewardFinished: () -> Unit,
     activeChallengeReward: com.pointlessgames.hexagone.game.model.DailyChallenge?,
@@ -104,9 +99,9 @@ internal fun GameOverlays(
     val canReroll = canRerollProvider()
     val rankingInfo = rankingInfoProvider()
     val finalResult = finalResultProvider()
-    val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver || showLeaderboard || activeTierReward != null || activeChallengeReward != null
+    val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver || activeTierReward != null || activeChallengeReward != null
     val dimAlphaState = animateFloatAsState(
-        targetValue = if (showLeaderboard || activeTierReward != null || activeChallengeReward != null) 0.85f else if (isAnyOverlayVisible && !showBoard) 0.6f else 0f,
+        targetValue = if (activeTierReward != null || activeChallengeReward != null) 0.85f else if (isAnyOverlayVisible && !showBoard) 0.6f else 0f,
         animationSpec = tween(500),
         label = "dim_alpha"
     )
@@ -181,7 +176,6 @@ internal fun GameOverlays(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) { 
-                        if (showLeaderboard) onLeaderboardDismiss()
                     }
             )
 
@@ -230,9 +224,6 @@ internal fun GameOverlays(
                 exit = fadeOut(tween(400)) + scaleOut(targetScale = 0.9f),
                 modifier = Modifier.align(Alignment.Center)
             ) {
-                val leaderboardUiState by leaderboardViewModel.uiState.collectAsStateWithLifecycle()
-                val displayRank = rankingInfo ?: leaderboardUiState.currentRank
-
                 GameOverDialog(
                     score = scoreProvider(),
                     bestScore = sessionBestScore,
@@ -240,26 +231,15 @@ internal fun GameOverlays(
                     maxCombo = maxCombo,
                     totalMerges = totalMerges,
                     highestValue = highestValue,
-                    rankingInfo = displayRank,
+                    rankingInfo = rankingInfo,
                     dailyChallenges = finalResult?.dailyChallenges ?: emptyList(),
                     onViewBoard = onViewBoardToggle
                 )
             }
 
-            AnimatedVisibility(
-                visible = showLeaderboard && !showBoard,
-                enter = fadeIn(tween(800)) + slideInVertically(initialOffsetY = { -it / 8 }),
-                exit = fadeOut(tween(400)) + scaleOut(targetScale = 0.9f),
-                modifier = Modifier.align(Alignment.Center)
-            ) {
-                LeaderboardOverlay(
-                    viewModel = leaderboardViewModel,
-                    onDismiss = onLeaderboardDismiss
-                )
-            }
 
             AnimatedVisibility(
-                visible = isGameOver && !showBoard && !showLeaderboard,
+                visible = isGameOver && !showBoard,
                 enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
                 modifier = Modifier.align(Alignment.BottomCenter)

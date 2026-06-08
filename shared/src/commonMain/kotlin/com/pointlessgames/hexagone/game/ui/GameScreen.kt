@@ -54,6 +54,7 @@ import com.pointlessgames.hexagone.game.ui.components.GameOverlays
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
 import com.pointlessgames.hexagone.game.ui.components.SettingsDialog
+import com.pointlessgames.hexagone.leaderboard.ui.LeaderboardDialog
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.utils.BackHandler
@@ -442,9 +443,6 @@ internal fun GameScreen(
             onViewBoardToggle = onViewBoardToggle,
             onShare = { /* TODO: Implement snapshot and share */ },
             onLeaderboard = { showLeaderboard = true },
-            showLeaderboard = showLeaderboard,
-            onLeaderboardDismiss = { showLeaderboard = false },
-            leaderboardViewModel = leaderboardViewModel,
             activeTierReward = activeTierReward,
             onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
             activeChallengeReward = activeChallengeReward,
@@ -488,6 +486,13 @@ internal fun GameScreen(
                 streakProvider = challengeStreakProvider,
                 isStreakCollectedTodayProvider = isStreakCollectedTodayProvider,
                 onDismiss = { showDailyChallenge = false }
+            )
+        }
+
+        if (showLeaderboard) {
+            LeaderboardDialog(
+                viewModel = leaderboardViewModel,
+                onDismiss = { showLeaderboard = false }
             )
         }
     }
