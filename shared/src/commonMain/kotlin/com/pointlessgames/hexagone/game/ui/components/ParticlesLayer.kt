@@ -10,9 +10,12 @@ import androidx.compose.ui.zIndex
 import com.pointlessgames.hexagone.game.model.Particle
 
 @Composable
-internal fun ParticlesLayer(particles: List<Particle>, modifier: Modifier = Modifier) {
+internal fun ParticlesLayer(
+    particlesProvider: () -> List<Particle>,
+    modifier: Modifier = Modifier
+) {
     Canvas(modifier.fillMaxSize().zIndex(200f)) {
-        particles.forEach { p ->
+        particlesProvider().forEach { p ->
             if (p.life > 0) {
                 val alpha = p.life.coerceIn(0f, 1f)
                 // Draw glow/aura

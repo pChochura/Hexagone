@@ -29,6 +29,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +42,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.GameViewModel
@@ -58,13 +60,64 @@ import com.pointlessgames.hexagone.utils.BackHandler
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.no_moves_left_warning
 import org.jetbrains.compose.resources.stringResource
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 internal fun GameScreen(
     modifier: Modifier = Modifier,
     viewModel: GameViewModel,
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    // Fine-grained state collection for reactivity and optimization.
+    // We collect individual fields into Compose State objects.
+    // Reading from these State objects in providers ensures children and snapshotFlows are reactive.
+    val uiState = viewModel.uiState
+    val isGameOverState = remember(uiState) { uiState.map { it.isGameOver }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.isGameOver)
+    val showGameOverBoardState = remember(uiState) { uiState.map { it.showGameOverBoard }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.showGameOverBoard)
+    val isStuckState = remember(uiState) { uiState.map { it.isStuck }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.isStuck)
+    val gridState = remember(uiState) { uiState.map { it.grid }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.grid)
+    val activePerkState = remember(uiState) { uiState.map { it.activePerk }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.activePerk)
+    val isDebugModeState = remember(uiState) { uiState.map { it.isDebugMode }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.isDebugMode)
+    val pendingResultState = remember(uiState) { uiState.map { it.pendingResult }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.pendingResult)
+
+    // Helper delegates for GameScreen's own logic.
+    // Accessing these 'by' variables will trigger recomposition of GameScreen.
+    val isGameOver by isGameOverState
+    val showGameOverBoard by showGameOverBoardState
+    val isStuck by isStuckState
+    val activePerk by activePerkState
+    val isDebugMode by isDebugModeState
+    val pendingResult by pendingResultState
+
+    // Other states primarily used by providers passed to children.
+    // GameScreen won't recompose when these change unless it reads them directly.
+    val scoreState = remember(uiState) { uiState.map { it.score }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.score)
+    val bestScoreState = remember(uiState) { uiState.map { it.bestScore }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.bestScore)
+    val comboState = remember(uiState) { uiState.map { it.combo }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.combo)
+    val levelState = remember(uiState) { uiState.map { it.level }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.level)
+    val highestValueState = remember(uiState) { uiState.map { it.highestValue }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.highestValue)
+    val dailyChallengesState = remember(uiState) { uiState.map { it.dailyChallenges }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.dailyChallenges)
+    val collectedPerksState = remember(uiState) { uiState.map { it.collectedPerks }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.collectedPerks)
+    val sessionBestScoreState = remember(uiState) { uiState.map { it.sessionBestScore }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.sessionBestScore)
+    val maxComboState = remember(uiState) { uiState.map { it.maxCombo }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.maxCombo)
+    val totalMergesState = remember(uiState) { uiState.map { it.totalMerges }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.totalMerges)
+    val perkOptionsState = remember(uiState) { uiState.map { it.perkOptions }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.perkOptions)
+    val pendingLevelUpsState = remember(uiState) { uiState.map { it.pendingLevelUps }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.pendingLevelUps)
+    val canRerollState = remember(uiState) { uiState.map { it.canReroll }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.canReroll)
+    val currentRankState = remember(uiState) { uiState.map { it.currentRank }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.currentRank)
+    val finalResultState = remember(uiState) { uiState.map { it.finalResult }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.finalResult)
+    val debugSelectedValueState = remember(uiState) { uiState.map { it.debugSelectedValue }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.debugSelectedValue)
+    val debugAddAsGhostState = remember(uiState) { uiState.map { it.debugAddAsGhost }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.debugAddAsGhost)
+    val challengeStreakState = remember(uiState) { uiState.map { it.challengeStreak }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.challengeStreak)
+    val isStreakCollectedTodayState = remember(uiState) { uiState.map { it.isStreakCollectedToday }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.isStreakCollectedToday)
+    val stuckPerksState = remember(uiState) { uiState.map { it.stuckPerks }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.stuckPerks)
+    val mergeHintsState = remember(uiState) { uiState.map { it.mergeHints }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.mergeHints)
+    val previewState = remember(uiState) { uiState.map { it.preview }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.preview)
+    val onBoardPerksState = remember(uiState) { uiState.map { it.onBoardPerks }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.onBoardPerks)
+    val pendingMergeState = remember(uiState) { uiState.map { it.pendingMerge }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.pendingMerge)
+    val activeMergeStepIndexState = remember(uiState) { uiState.map { it.activeMergeStepIndex }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.activeMergeStepIndex)
+    val pendingMergeScoreState = remember(uiState) { uiState.map { it.pendingMergeScore }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.pendingMergeScore)
+    val selectedCellIdState = remember(uiState) { uiState.map { it.selectedCellId }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.selectedCellId)
 
     var showLeaderboard by remember { mutableStateOf(false) }
     var showAchievements by remember { mutableStateOf(false) }
@@ -104,20 +157,23 @@ internal fun GameScreen(
     val onDebugToggle = remember(viewModel) { viewModel::toggleDebugMode }
     val onDebugCellClick = remember(viewModel) { viewModel::onDebugCellClicked }
 
-    val gridAlpha by animateFloatAsState(
-        targetValue = if (uiState.isGameOver && !uiState.showGameOverBoard) 0.1f else 1f,
+    val gridAlphaState = animateFloatAsState(
+        targetValue = if (isGameOver && !showGameOverBoard) 0.1f else 1f,
         animationSpec = spring(stiffness = Spring.StiffnessLow),
         label = "grid_alpha",
     )
 
-    val stuckDimAlpha by animateFloatAsState(
-        targetValue = if (uiState.isStuck && uiState.activePerk == null) 0.6f else 0f,
+    val stuckDimAlphaState = animateFloatAsState(
+        targetValue = if (isStuck && activePerk == null) 0.6f else 0f,
         animationSpec = tween(500),
         label = "stuck_dim_alpha",
     )
 
+    val gridAlphaProvider = remember { { gridAlphaState.value } }
+    val stuckDimAlphaProvider = remember { { stuckDimAlphaState.value } }
+
     val infiniteTransition = rememberInfiniteTransition(label = "stuck_pulse")
-    val stuckBounce by infiniteTransition.animateFloat(
+    val stuckBounceState = infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = -8f,
         animationSpec = infiniteRepeatable(
@@ -126,41 +182,57 @@ internal fun GameScreen(
         ),
         label = "stuck_bounce",
     )
+    val stuckBounceProvider = remember { { stuckBounceState.value } }
+
+    // Stable Providers for UI components - reading from collected State.
+    // These lambdas are stable, and reading .value from State ensures reactivity.
+    val scoreProvider = remember { { scoreState.value } }
+    val bestScoreProvider = remember { { bestScoreState.value } }
+    val comboProvider = remember { { comboState.value } }
+    val levelProvider = remember { { levelState.value } }
+    val highestValueProvider = remember { { highestValueState.value } }
+    val activePerkProvider = remember { { activePerkState.value } }
+    val isDailyChallengeCompletedProvider = remember { { dailyChallengesState.value.all { it.isCompleted } } }
+    val collectedPerksProvider = remember { { collectedPerksState.value } }
+    val isStuckProvider = remember { { isStuckState.value } }
+    val stuckPerksProvider = remember { { stuckPerksState.value } }
+    val isGameOverProvider = remember { { isGameOverState.value } }
+    val showGameOverBoardProvider = remember { { showGameOverBoardState.value } }
+    val sessionBestScoreProvider = remember { { sessionBestScoreState.value } }
+    val maxComboProvider = remember { { maxComboState.value } }
+    val totalMergesProvider = remember { { totalMergesState.value } }
+    val perkOptionsProvider = remember { { perkOptionsState.value } }
+    val pendingLevelUpsProvider = remember { { pendingLevelUpsState.value } }
+    val canRerollProvider = remember { { canRerollState.value } }
+    val currentRankProvider = remember { { currentRankState.value } }
+    val finalResultProvider = remember { { finalResultState.value } }
+    val isDebugModeProvider = remember { { isDebugModeState.value } }
+    val debugSelectedValueProvider = remember { { debugSelectedValueState.value } }
+    val debugAddAsGhostProvider = remember { { debugAddAsGhostState.value } }
+    val dailyChallengesProvider = remember { { dailyChallengesState.value } }
+    val challengeStreakProvider = remember { { challengeStreakState.value } }
+    val isStreakCollectedTodayProvider = remember { { isStreakCollectedTodayState.value } }
 
     // Stable Providers for GameGridOverlay
-    val mergeHintsState = androidx.compose.runtime.rememberUpdatedState(uiState.mergeHints)
-    val previewState = androidx.compose.runtime.rememberUpdatedState(uiState.preview)
-    val gridState = androidx.compose.runtime.rememberUpdatedState(uiState.grid)
-    val onBoardPerksState = androidx.compose.runtime.rememberUpdatedState(uiState.onBoardPerks)
-    val potentialMergesState = remember {
-        androidx.compose.runtime.derivedStateOf {
-            uiState.grid
-            uiState.activePerk
-            viewModel.getPotentialMerges()
-        }
-    }
-    val pendingMergeState = androidx.compose.runtime.rememberUpdatedState(uiState.pendingMerge)
-    val activeMergeStepIndexState = androidx.compose.runtime.rememberUpdatedState(uiState.activeMergeStepIndex)
-    val pendingMergeScoreState = androidx.compose.runtime.rememberUpdatedState(uiState.pendingMergeScore)
-    val comboState = androidx.compose.runtime.rememberUpdatedState(uiState.combo)
-    val activePerkState = androidx.compose.runtime.rememberUpdatedState(uiState.activePerk)
-    val selectedCellIdState = androidx.compose.runtime.rememberUpdatedState(uiState.selectedCellId)
-
     val mergeHintsProvider = remember { { mergeHintsState.value } }
     val previewStateProvider = remember { { previewState.value } }
     val gridStateProvider = remember { { gridState.value } }
     val onBoardPerksProvider = remember { { onBoardPerksState.value } }
-    val potentialMergesProvider = remember { { potentialMergesState.value } }
+    val potentialMergesProvider = remember(viewModel) {
+        derivedStateOf {
+            gridState.value
+            activePerkState.value
+            viewModel.getPotentialMerges()
+        }
+    }
     val pendingMergeProvider = remember { { pendingMergeState.value } }
     val activeMergeStepIndexProvider = remember { { activeMergeStepIndexState.value } }
     val pendingMergeScoreProvider = remember { { pendingMergeScoreState.value } }
-    val comboProvider = remember { { comboState.value } }
-    val activePerkProvider = remember { { activePerkState.value } }
     val selectedCellIdProvider = remember { { selectedCellIdState.value } }
 
-    LaunchedEffect(uiState.pendingResult) {
-        if (uiState.pendingResult != null) {
-            leaderboardViewModel.setPendingResult(uiState.pendingResult)
+    LaunchedEffect(pendingResult) {
+        if (pendingResult != null) {
+            leaderboardViewModel.setPendingResult(pendingResult)
             showLeaderboard = true
         }
     }
@@ -198,7 +270,7 @@ internal fun GameScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .graphicsLayer {
-                    alpha = gridAlpha
+                    alpha = gridAlphaProvider()
                     clip = false
                 },
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -210,15 +282,15 @@ internal fun GameScreen(
                     .padding(horizontal = MaterialTheme.spacing.large, vertical = MaterialTheme.spacing.small),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                if (!uiState.isDebugMode) {
+                if (!isDebugModeProvider()) {
                     ScoreSection(
-                        score = uiState.score,
-                        bestScore = uiState.bestScore,
-                        combo = uiState.combo,
-                        level = uiState.level,
-                        progress = viewModel.getLevelProgress(),
-                        highestValue = uiState.highestValue,
-                        activePerk = uiState.activePerk,
+                        scoreProvider = scoreProvider,
+                        bestScoreProvider = bestScoreProvider,
+                        comboProvider = comboProvider,
+                        levelProvider = levelProvider,
+                        progressProvider = { viewModel.getLevelProgress() },
+                        highestValueProvider = highestValueProvider,
+                        activePerkProvider = activePerkProvider,
                         onLevelClick = onDebugToggle,
                         onLeaderboardClick = { showLeaderboard = true },
                         onAchievementsClick = { 
@@ -227,49 +299,49 @@ internal fun GameScreen(
                         },
                         onSettingsClick = { showSettings = true },
                         onDailyChallengeClick = { showDailyChallenge = true },
-                        isDailyChallengeCompleted = uiState.dailyChallenges.all { it.isCompleted }
+                        isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider
                     )
 
                     Spacer(Modifier.weight(0.1f))
                 }
 
                 GameGridOverlay(
-                    gridStateProvider = gridStateProvider,
+                    gridState = gridState.value,
                     onBoardPerksProvider = onBoardPerksProvider,
                     mergeHintsProvider = mergeHintsProvider,
-                    previewStateProvider = previewStateProvider,
+                    previewState = previewState.value,
                     pendingMergeProvider = pendingMergeProvider,
                     hoveredMergeState = viewModel.hoveredMerge,
-                    potentialMergesProvider = potentialMergesProvider,
+                    potentialMergesProvider = { potentialMergesProvider.value },
                     activePerkProvider = activePerkProvider,
                     selectedCellIdProvider = selectedCellIdProvider,
                     activeMergeStepIndexProvider = activeMergeStepIndexProvider,
                     pendingMergeScoreProvider = pendingMergeScoreProvider,
                     comboProvider = comboProvider,
                     effects = viewModel.effects,
-                    onEmptySpaceClick = if (uiState.isDebugMode) onDebugCellClick else onEmptySpaceClick,
-                    onEmptySpaceTouchDown = if (uiState.isDebugMode) { _, _ -> } else onEmptySpaceTouchDown,
+                    onEmptySpaceClick = if (isDebugMode) onDebugCellClick else onEmptySpaceClick,
+                    onEmptySpaceTouchDown = if (isDebugMode) { _, _ -> } else onEmptySpaceTouchDown,
                     onEmptySpaceTouchUp = onEmptySpaceTouchUp,
-                    onCellTouchDown = if (uiState.isDebugMode) { _ -> } else onCellTouchDown,
+                    onCellTouchDown = if (isDebugMode) { _ -> } else onCellTouchDown,
                     onCellTouchUp = onCellTouchUp,
-                    onCellClick = if (uiState.isDebugMode) { cell -> onDebugCellClick(cell.x, cell.y) } else onCellClick,
+                    onCellClick = if (isDebugMode) { cell -> onDebugCellClick(cell.x, cell.y) } else onCellClick,
                     onMergeAnimationFinished = onMergeAnimationFinished,
                     modifier = Modifier.weight(1f, fill = false).fillMaxWidth(),
                 )
 
-                if (!uiState.isDebugMode) {
+                if (!isDebugModeProvider()) {
                     Spacer(Modifier.weight(0.1f))
                 }
             }
             
-            if (!uiState.isDebugMode) {
+            if (!isDebugModeProvider()) {
                 // Placeholder to keep space for PerkBar
                 Spacer(Modifier.height(MaterialTheme.spacing.immense))
             } else {
                 DebugOverlay(
                     isVisible = true,
-                    selectedValue = uiState.debugSelectedValue,
-                    isGhostMode = uiState.debugAddAsGhost,
+                    selectedValue = debugSelectedValueProvider(),
+                    isGhostMode = debugAddAsGhostProvider(),
                     onValueSelected = viewModel::setDebugSelectedValue,
                     onGhostModeToggled = viewModel::toggleDebugAddAsGhost,
                     onPerkClick = viewModel::addPerkManually,
@@ -280,14 +352,14 @@ internal fun GameScreen(
         }
 
         // Dimming Layer (above board, below PerkBar)
-        if (stuckDimAlpha > 0f) {
+        if (stuckDimAlphaProvider() > 0f) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer { alpha = stuckDimAlpha }
+                    .graphicsLayer { alpha = stuckDimAlphaProvider() }
                     .background(Color.Black)
                     .clickable(
-                        enabled = uiState.isStuck && uiState.activePerk == null,
+                        enabled = isStuckProvider() && activePerkProvider() == null,
                         interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                         indication = null
                     ) { /* Consume board clicks while stuck */ }
@@ -303,11 +375,12 @@ internal fun GameScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Bottom
         ) {
-            if (!uiState.isDebugMode) {
-                if (uiState.isStuck && uiState.activePerk == null) {
+            if (!isDebugModeProvider()) {
+                if (isStuckProvider() && activePerkProvider() == null) {
                     Box(
                         modifier = Modifier
-                            .offset(y = -MaterialTheme.spacing.semiMedium + stuckBounce.dp)
+                            .offset { IntOffset(0, stuckBounceProvider().dp.roundToPx()) }
+                            .offset(y = -MaterialTheme.spacing.semiMedium)
                             .shadow(
                                 elevation = MaterialTheme.spacing.medium,
                                 shape = RoundedCornerShape(MaterialTheme.cornerRadius.small)
@@ -338,10 +411,10 @@ internal fun GameScreen(
                 }
 
                 PerkBar(
-                    collectedPerks = uiState.collectedPerks,
-                    activePerk = uiState.activePerk,
-                    isStuck = uiState.isStuck,
-                    stuckPerks = uiState.stuckPerks,
+                    collectedPerksProvider = collectedPerksProvider,
+                    activePerkProvider = activePerkProvider,
+                    isStuckProvider = isStuckProvider,
+                    stuckPerksProvider = stuckPerksProvider,
                     onPerkClick = onPerkClick,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -351,18 +424,18 @@ internal fun GameScreen(
         }
 
         GameOverlays(
-            isGameOver = uiState.isGameOver,
-            scoreProvider = { uiState.score },
-            bestScore = uiState.bestScore,
-            sessionBestScore = uiState.sessionBestScore,
-            level = uiState.level,
-            maxCombo = uiState.maxCombo,
-            totalMerges = uiState.totalMerges,
-            highestValue = uiState.highestValue,
-            showBoard = uiState.showGameOverBoard,
-            perkOptions = uiState.perkOptions,
-            pendingLevelUps = uiState.pendingLevelUps,
-            canReroll = uiState.canReroll,
+            isGameOverProvider = isGameOverProvider,
+            scoreProvider = scoreProvider,
+            bestScoreProvider = bestScoreProvider,
+            sessionBestScoreProvider = sessionBestScoreProvider,
+            levelProvider = levelProvider,
+            maxComboProvider = maxComboProvider,
+            totalMergesProvider = totalMergesProvider,
+            highestValueProvider = highestValueProvider,
+            showBoardProvider = showGameOverBoardProvider,
+            perkOptionsProvider = perkOptionsProvider,
+            pendingLevelUpsProvider = pendingLevelUpsProvider,
+            canRerollProvider = canRerollProvider,
             onPerkSelected = onPerkSelected,
             onRerollClicked = viewModel::onRerollClicked,
             onRestart = onRestart,
@@ -376,8 +449,8 @@ internal fun GameScreen(
             onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
             activeChallengeReward = activeChallengeReward,
             onChallengeRewardFinished = { if (challengeRewardQueue.isNotEmpty()) challengeRewardQueue.removeAt(0) },
-            rankingInfo = uiState.currentRank,
-            finalResult = uiState.finalResult
+            rankingInfoProvider = currentRankProvider,
+            finalResultProvider = finalResultProvider
         )
 
         activeAchievement?.let { achievement ->
@@ -411,9 +484,9 @@ internal fun GameScreen(
 
         if (showDailyChallenge) {
             com.pointlessgames.hexagone.game.ui.components.DailyChallengeDialog(
-                challenges = uiState.dailyChallenges,
-                streak = uiState.challengeStreak,
-                isStreakCollectedToday = uiState.isStreakCollectedToday,
+                challengesProvider = dailyChallengesProvider,
+                streakProvider = challengeStreakProvider,
+                isStreakCollectedTodayProvider = isStreakCollectedTodayProvider,
                 onDismiss = { showDailyChallenge = false }
             )
         }

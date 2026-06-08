@@ -83,20 +83,29 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ScoreSection(
     modifier: Modifier = Modifier,
-    score: Int,
-    bestScore: Int,
-    combo: Int,
-    level: Int,
-    progress: Float,
-    highestValue: Int,
-    activePerk: Perk?,
-    isDailyChallengeCompleted: Boolean = false,
+    scoreProvider: () -> Int,
+    bestScoreProvider: () -> Int,
+    comboProvider: () -> Int,
+    levelProvider: () -> Int,
+    progressProvider: () -> Float,
+    highestValueProvider: () -> Int,
+    activePerkProvider: () -> Perk?,
+    isDailyChallengeCompletedProvider: () -> Boolean = { false },
     onLevelClick: () -> Unit = {},
     onLeaderboardClick: () -> Unit = {},
     onAchievementsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onDailyChallengeClick: () -> Unit = {},
 ) {
+    val score = scoreProvider()
+    val bestScore = bestScoreProvider()
+    val combo = comboProvider()
+    val level = levelProvider()
+    val progress = progressProvider()
+    val highestValue = highestValueProvider()
+    val activePerk = activePerkProvider()
+    val isDailyChallengeCompleted = isDailyChallengeCompletedProvider()
+
     val waveIntensity = remember { Animatable(0f) }
     var previousScore by remember { mutableStateOf(score) }
     LaunchedEffect(score) {

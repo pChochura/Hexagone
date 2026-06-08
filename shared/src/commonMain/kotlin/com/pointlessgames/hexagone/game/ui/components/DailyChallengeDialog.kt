@@ -69,11 +69,15 @@ import kotlin.time.Clock
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DailyChallengeDialog(
-    challenges: List<DailyChallengeProgress>,
-    streak: Int,
-    isStreakCollectedToday: Boolean,
+    challengesProvider: () -> List<DailyChallengeProgress>,
+    streakProvider: () -> Int,
+    isStreakCollectedTodayProvider: () -> Boolean,
     onDismiss: () -> Unit,
 ) {
+    val challenges = challengesProvider()
+    val streak = streakProvider()
+    val isStreakCollectedToday = isStreakCollectedTodayProvider()
+
     ModalBottomSheet(
         contentWindowInsets = { WindowInsets.statusBars },
         onDismissRequest = onDismiss,

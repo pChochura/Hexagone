@@ -45,8 +45,8 @@ internal fun AnimatedGridHexagon(
     gridStateProvider: () -> List<HexagonCell>,
     selectedCellIdProvider: () -> String?,
     activePerkProvider: () -> Perk?,
-    pendingMergeProvider: () -> MergeTransition?,
-    activeMergeStepIndexProvider: () -> Int,
+    pendingMerge: MergeTransition?,
+    activeMergeStepIndex: Int,
     hoveredMergeState: StateFlow<MergeTransition?>,
     density: Density,
     itemWidth: Float,
@@ -60,18 +60,8 @@ internal fun AnimatedGridHexagon(
         currentHoverMerge?.previewSwaps?.get(cell.id) ?: (cell.x to cell.y)
     }
 
-    val isMergingProvider = remember(cell.id) {
-        {
-            val pendingMerge = pendingMergeProvider()
-            val activeMergeStepIndex = activeMergeStepIndexProvider()
-            val currentStep = pendingMerge?.steps?.getOrNull(activeMergeStepIndex)
-            currentStep?.mergingCells?.any { it.id == cell.id } == true
-        }
-    }
-    val pendingMerge = pendingMergeProvider()
-    val activeMergeStepIndex = activeMergeStepIndexProvider()
     val currentStep = pendingMerge?.steps?.getOrNull(activeMergeStepIndex)
-    val isMergingLocal = currentStep?.mergingCells?.any { it.id == cell.id } == true
+    val isMerging = currentStep?.mergingCells?.any { it.id == cell.id } == true
     val isTargetMerging =
         pendingMerge != null && pendingMerge.targetX == cell.x && pendingMerge.targetY == cell.y
 
@@ -95,11 +85,11 @@ internal fun AnimatedGridHexagon(
         targetOffset,
         moveAnimationSpec,
         label = "cell_offset",
-        finishedListener = { if (isMergingProvider()) onAnimationFinished() },
+        finishedListener = { if (isMerging) onAnimationFinished() },
     )
 
-    LaunchedEffect(isMergingLocal, targetOffset) {
-        if (isMergingLocal && animatedOffset == targetOffset) {
+    LaunchedEffect(isMerging, targetOffset) {
+        if (isMerging && animatedOffset == targetOffset) {
             // Already at target, no animation will trigger finishedListener
             onAnimationFinished()
         }
@@ -203,7 +193,7 @@ internal fun AnimatedGridHexagon(
                         zIndex = when {
                             selectedCellId == cell.id || animatedOffset != targetOffset -> 12f
                             isTargetMerging -> 11f
-                            isMergingLocal -> 10f
+                            isMerging -> 10f
                             isTargetHovered -> 9f
                             isHovered -> 6f
                             else -> 2f

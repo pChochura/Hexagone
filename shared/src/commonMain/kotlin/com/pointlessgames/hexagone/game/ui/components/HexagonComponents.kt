@@ -539,30 +539,15 @@ fun Hexagon(
 
     val spacing = MaterialTheme.spacing
 
-    val ghostModifier = if (isGhost) {
+    val ghostModifier = if (isGhost && stripeOffset != null) {
         Modifier.drawWithContent {
-            val stripeAlpha = 0.15f
             drawContent()
-            val stripeWidth = spacing.extraTiny.toPx() * 1.5f
-            val gap = spacing.semiMedium.toPx()
-            val color = Color.White.copy(alpha = stripeAlpha)
-            val step = stripeWidth + gap
-            val offsetPx = (stripeOffset?.value ?: 0f).dp.toPx()
-            
-            // 60 degree slope: tan(60) = sqrt(3) ~= 1.732
-            // dx = dy / tan(60)
-            val dx = size.height / 1.732f
-            
-            val iterations = ((size.width + dx) / step).toInt() + 2
-            for (i in -iterations..iterations) {
-                val xStart = i * step + offsetPx
-                drawLine(
-                    color = color,
-                    start = Offset(xStart, 0f),
-                    end = Offset(xStart + dx, size.height),
-                    strokeWidth = stripeWidth
-                )
-            }
+            HexagonGridDefaults.drawGhostStripes(
+                drawScope = this,
+                size = size,
+                stripeOffsetPx = stripeOffset.value.dp.toPx(),
+                spacing = spacing
+            )
         }
     } else Modifier
 
@@ -586,19 +571,28 @@ fun Hexagon(
         baseModifier
     }
 
+    val tacticalPulseModifier = if (isTactical && tacticalPulse != null) {
+        val secondaryColor = MaterialTheme.colorScheme.secondary
+        val strokeWidth = spacing.tiny
+        Modifier.drawBehind {
+            HexagonGridDefaults.drawHexagonPath(
+                drawScope = this,
+                size = size,
+                color = secondaryColor,
+                alpha = tacticalPulse.value,
+                style = Stroke(width = strokeWidth.toPx())
+            )
+        }
+    } else Modifier
+
     Box(
         modifier = finalModifier
+            .then(tacticalPulseModifier)
             .then(
                 if (isOutline) {
                     Modifier.border(
                         width = spacing.extraTiny,
                         color = Color.White.copy(alpha = 0.1f),
-                        shape = FlatTopHexagonShape(),
-                    )
-                } else if (isTactical) {
-                    Modifier.border(
-                        width = spacing.tiny,
-                        color = MaterialTheme.colorScheme.secondary.copy(alpha = tacticalPulse?.value ?: 1f),
                         shape = FlatTopHexagonShape(),
                     )
                 } else Modifier

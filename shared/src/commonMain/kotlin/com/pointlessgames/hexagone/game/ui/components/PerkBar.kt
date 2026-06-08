@@ -45,12 +45,17 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun PerkBar(
     modifier: Modifier = Modifier,
-    collectedPerks: List<Perk>,
-    activePerk: Perk?,
-    isStuck: Boolean,
-    stuckPerks: Set<Perk>,
+    collectedPerksProvider: () -> List<Perk>,
+    activePerkProvider: () -> Perk?,
+    isStuckProvider: () -> Boolean,
+    stuckPerksProvider: () -> Set<Perk>,
     onPerkClick: (Perk) -> Unit,
 ) {
+    val collectedPerks = collectedPerksProvider()
+    val activePerk = activePerkProvider()
+    val isStuck = isStuckProvider()
+    val stuckPerks = stuckPerksProvider()
+
     val surfaceColor = MaterialTheme.colorScheme.surface
     val spacing = MaterialTheme.spacing
     val cornerRadius = MaterialTheme.cornerRadius

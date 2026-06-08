@@ -45,13 +45,15 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 internal fun PopupsLayer(
-    scorePopups: List<ScorePopup>,
-    perkPopups: List<PerkPopup>,
+    scorePopupsProvider: () -> List<ScorePopup>,
+    perkPopupsProvider: () -> List<PerkPopup>,
     onScoreFinished: (Long) -> Unit,
     onPerkFinished: (Long) -> Unit,
     containerWidth: Float,
     spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
 ) {
+    val scorePopups = scorePopupsProvider()
+    val perkPopups = perkPopupsProvider()
     val density = LocalDensity.current
     val popupSpacing = with(density) { spacing.massive.toPx() }
 

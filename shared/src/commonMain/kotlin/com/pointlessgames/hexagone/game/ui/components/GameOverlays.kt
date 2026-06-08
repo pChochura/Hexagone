@@ -62,18 +62,18 @@ import kotlin.random.Random
 @Composable
 internal fun GameOverlays(
     modifier: Modifier = Modifier,
-    isGameOver: Boolean,
+    isGameOverProvider: () -> Boolean,
     scoreProvider: () -> Int,
-    bestScore: Int,
-    sessionBestScore: Int,
-    level: Int,
-    maxCombo: Int,
-    totalMerges: Int,
-    highestValue: Int,
-    showBoard: Boolean,
-    perkOptions: List<Perk>,
-    pendingLevelUps: Int,
-    canReroll: Boolean,
+    bestScoreProvider: () -> Int,
+    sessionBestScoreProvider: () -> Int,
+    levelProvider: () -> Int,
+    maxComboProvider: () -> Int,
+    totalMergesProvider: () -> Int,
+    highestValueProvider: () -> Int,
+    showBoardProvider: () -> Boolean,
+    perkOptionsProvider: () -> List<Perk>,
+    pendingLevelUpsProvider: () -> Int,
+    canRerollProvider: () -> Boolean,
     onPerkSelected: (Perk) -> Unit,
     onRerollClicked: () -> Unit,
     onRestart: () -> Unit,
@@ -87,9 +87,23 @@ internal fun GameOverlays(
     onTierRewardFinished: () -> Unit,
     activeChallengeReward: com.pointlessgames.hexagone.game.model.DailyChallenge?,
     onChallengeRewardFinished: () -> Unit,
-    rankingInfo: RankingInfo?,
-    finalResult: com.pointlessgames.hexagone.game.model.DetailedGameResult? = null,
+    rankingInfoProvider: () -> RankingInfo?,
+    finalResultProvider: () -> com.pointlessgames.hexagone.game.model.DetailedGameResult? = { null },
 ) {
+    val isGameOver = isGameOverProvider()
+    val score = scoreProvider()
+    val bestScore = bestScoreProvider()
+    val sessionBestScore = sessionBestScoreProvider()
+    val level = levelProvider()
+    val maxCombo = maxComboProvider()
+    val totalMerges = totalMergesProvider()
+    val highestValue = highestValueProvider()
+    val showBoard = showBoardProvider()
+    val perkOptions = perkOptionsProvider()
+    val pendingLevelUps = pendingLevelUpsProvider()
+    val canReroll = canRerollProvider()
+    val rankingInfo = rankingInfoProvider()
+    val finalResult = finalResultProvider()
     val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver || showLeaderboard || activeTierReward != null || activeChallengeReward != null
     val dimAlphaState = animateFloatAsState(
         targetValue = if (showLeaderboard || activeTierReward != null || activeChallengeReward != null) 0.85f else if (isAnyOverlayVisible && !showBoard) 0.6f else 0f,
