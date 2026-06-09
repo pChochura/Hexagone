@@ -15,9 +15,12 @@ import com.pointlessgames.hexagone.game.model.GameState
 import com.pointlessgames.hexagone.game.model.GameUiState
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
-import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
-import com.pointlessgames.hexagone.game.model.PreviewCell
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.tip_daily_message
+import hexagone.shared.generated.resources.tip_merge_message
+import hexagone.shared.generated.resources.tip_perk_message
+import hexagone.shared.generated.resources.tip_post_game_message
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,8 +35,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
 import kotlinx.serialization.json.Json
-import org.jetbrains.compose.resources.StringResource
-import hexagone.shared.generated.resources.*
 import kotlin.time.Clock
 
 internal class GameViewModel(
@@ -156,7 +157,7 @@ internal class GameViewModel(
             val savedStateJson = settingsRepository.getGameState()
 
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-            val dateSeed = today.year * 10000L + (today.month.ordinal + 1) * 100L + today.dayOfMonth
+            val dateSeed = today.year * 10000L + (today.month.ordinal + 1) * 100L + today.day
             val lastCompletedDate = settingsRepository.getLastCompletedChallengeDate()
             val challengeStreak = settingsRepository.getChallengeStreak()
             val currentDailyChallenges = DailyChallengeProvider.getChallengesForDate(today, challengeStreak)
@@ -623,7 +624,7 @@ internal class GameViewModel(
         }
 
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        val dateSeed = today.year * 10000L + (today.month.ordinal + 1) * 100L + today.dayOfMonth
+        val dateSeed = today.year * 10000L + (today.month.ordinal + 1) * 100L + today.day
 
         // Check if ALL daily challenges are now completed in the CURRENT GAME to update streak
         val allCompleted = _uiState.value.dailyChallenges.all { it.isCompleted }
@@ -632,7 +633,7 @@ internal class GameViewModel(
             if (lastDate != dateSeed) {
                 val currentStreak = settingsRepository.getChallengeStreak()
                 val yesterday = today.minus(1, DateTimeUnit.DAY)
-                val yesterdaySeed = yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.dayOfMonth
+                val yesterdaySeed = yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.day
 
                 val newStreak = if (lastDate == yesterdaySeed) currentStreak + 1 else 1
 

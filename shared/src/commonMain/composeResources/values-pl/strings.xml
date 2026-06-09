@@ -24,9 +24,10 @@
     <string name="perk_bar_empty_hint">Zdobywaj poziomy, aby odblokować perki i ulepszyć swoją strategię!</string>
     <string name="perk_selection_hint">Przytrzymaj perk, aby zobaczyć jego opis</string>
     <string name="no_moves_left_warning">BRAK RUCHÓW! UŻYJ PERKA</string>
+    <string name="cancel">Anuluj</string>
 
     <!-- Tips -->
-    <string name="tip_merge_message">Połącz trzy lub więcej identycznych płytek, aby je scalić!</string>
+    <string name="tip_merge_message">Połącz dwie lub więcej identycznych płytek, aby je połączyć!</string>
     <string name="tip_perk_message">Zdobyłeś perka! Dotknij tutaj, aby go aktywować i wyczyścić trudne miejsca.</string>
     <string name="tip_post_game_message">Świetna gra! Sprawdź swój ranking lub zobacz odblokowane osiągnięcia.</string>
     <string name="tip_daily_message">Codziennie wykonuj unikalne cele, aby zdobywać nagrody i budować serię.</string>

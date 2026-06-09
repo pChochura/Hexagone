@@ -1,10 +1,6 @@
 package com.pointlessgames.hexagone.game.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,7 +11,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +29,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.*
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.cancel
+import hexagone.shared.generated.resources.ic_back
+import hexagone.shared.generated.resources.ic_play_again
+import hexagone.shared.generated.resources.restart_confirmation
+import hexagone.shared.generated.resources.restart_game_button
+import hexagone.shared.generated.resources.settings_label
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,7 +72,7 @@ fun SettingsDialog(
                     onClick = { showConfirmRestart = true },
                     backgroundColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
                     borderColor = MaterialTheme.colorScheme.error.copy(alpha = 0.4f),
-                    size = 80.dp
+                    size = 80.dp,
                 )
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -90,7 +91,7 @@ fun SettingsDialog(
                             label = stringResource(Res.string.cancel),
                             icon = Res.drawable.ic_back,
                             onClick = { showConfirmRestart = false },
-                            size = 72.dp
+                            size = 72.dp,
                         )
                         Spacer(Modifier.width(MaterialTheme.spacing.extraLarge))
                         HexagonIconButton(
@@ -102,7 +103,7 @@ fun SettingsDialog(
                             },
                             backgroundColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
                             borderColor = MaterialTheme.colorScheme.error.copy(alpha = 0.4f),
-                            size = 72.dp
+                            size = 72.dp,
                         )
                     }
                 }

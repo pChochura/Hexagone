@@ -8,22 +8,26 @@ import kotlin.random.Random
 
 object DailyChallengeProvider {
     fun getChallengesForDate(date: LocalDate, streak: Int = 0): List<DailyChallenge> {
-        val seed = date.year * 10000L + (date.month.ordinal + 1) * 100L + date.dayOfMonth
+        val seed = date.year * 10000L + (date.month.ordinal + 1) * 100L + date.day
         val random = Random(seed)
 
         val challenges = mutableListOf<DailyChallenge>()
-        
+
         // Mission 1: Fundamental (Merges or Level or Score)
-        val goal1 = listOf(ChallengeGoal.MERGE_COUNT, ChallengeGoal.LEVEL_REACHED, ChallengeGoal.SCORE_REACHED).random(random)
+        val goal1 = listOf(
+            ChallengeGoal.MERGE_COUNT,
+            ChallengeGoal.LEVEL_REACHED,
+            ChallengeGoal.SCORE_REACHED,
+        ).random(random)
         challenges.add(createChallenge("m1", goal1, random, streak, difficulty = 1))
 
         // Mission 2: Skill/Tactics (Tactical Merges, Piece Value, Elite Sacrifice, Moves w/o perk)
         val goal2 = listOf(
-            ChallengeGoal.TACTICAL_MERGES, 
-            ChallengeGoal.PIECE_VALUE_REACHED, 
-            ChallengeGoal.ELITE_SACRIFICE, 
+            ChallengeGoal.TACTICAL_MERGES,
+            ChallengeGoal.PIECE_VALUE_REACHED,
+            ChallengeGoal.ELITE_SACRIFICE,
             ChallengeGoal.MOVES_WITHOUT_PERK,
-            ChallengeGoal.LEGENDARY_GAMBLE
+            ChallengeGoal.LEGENDARY_GAMBLE,
         ).random(random)
         challenges.add(createChallenge("m2", goal2, random, streak, difficulty = 2))
 
@@ -36,32 +40,40 @@ object DailyChallengeProvider {
             ChallengeGoal.FRUGAL_SURVIVOR,
             ChallengeGoal.PATH_MERGE_COUNT,
             ChallengeGoal.PERK_RESTRICTED_LEVEL,
-            ChallengeGoal.FROZEN_RECOVERY
+            ChallengeGoal.FROZEN_RECOVERY,
         ).random(random)
         challenges.add(createChallenge("m3", goal3, random, streak, difficulty = 3))
 
         return challenges
     }
 
-    private fun createChallenge(id: String, goal: ChallengeGoal, random: Random, streak: Int, difficulty: Int): DailyChallenge {
+    private fun createChallenge(
+        id: String,
+        goal: ChallengeGoal,
+        random: Random,
+        streak: Int,
+        difficulty: Int,
+    ): DailyChallenge {
         var restrictedPerk: Perk? = null
         var patternId: String? = null
-        
+
         val target = when (goal) {
             ChallengeGoal.MERGE_COUNT -> random.nextInt(15, 31)
             ChallengeGoal.LEVEL_REACHED -> random.nextInt(5, 10)
             ChallengeGoal.SCORE_REACHED -> random.nextInt(2, 6) * 2500
-            
+
             ChallengeGoal.TACTICAL_MERGES -> random.nextInt(3, 7)
             ChallengeGoal.PIECE_VALUE_REACHED -> random.nextInt(10, 15)
             ChallengeGoal.ELITE_SACRIFICE -> 1
             ChallengeGoal.MOVES_WITHOUT_PERK -> random.nextInt(15, 26)
             ChallengeGoal.LEGENDARY_GAMBLE -> 1
-            
+
             ChallengeGoal.GEOMETRIC_PATTERN -> {
-                patternId = listOf("ring_of_fire", "great_wall", "twin_peaks", "the_prism").random(random)
+                patternId =
+                    listOf("ring_of_fire", "great_wall", "twin_peaks", "the_prism").random(random)
                 1
             }
+
             ChallengeGoal.COMBO_MAINTENANCE -> random.nextInt(5, 11) // Maintain x5+ for N turns
             ChallengeGoal.GHOST_HORDE -> random.nextInt(3, 5) // N ghosts of same value
             ChallengeGoal.PATH_MERGE_COUNT -> random.nextInt(8, 13) // Clear N tiles with Path Merge
@@ -71,30 +83,31 @@ object DailyChallengeProvider {
                 restrictedPerk = Perk.entries.filter { !it.isLegendary }.random(random)
                 random.nextInt(8, 13)
             }
+
             ChallengeGoal.FROZEN_RECOVERY -> 1
             ChallengeGoal.COMBO_REACHED -> random.nextInt(5, 12)
         }
 
         // Rewards: 60% Score, 40% Perk
         val hasPerkReward = random.nextFloat() < 0.4f
-        
-        val baseScore = when(difficulty) {
+
+        val baseScore = when (difficulty) {
             1 -> random.nextInt(2, 5) * 50 // 100-200
             2 -> random.nextInt(4, 9) * 50 // 200-400
             else -> random.nextInt(8, 17) * 50 // 400-800
         }
-        val streakMultiplier = when(difficulty) {
+        val streakMultiplier = when (difficulty) {
             1 -> 25
             2 -> 50
             else -> 100
         }
-        
+
         val rewardScore = if (!hasPerkReward) baseScore + (streak * streakMultiplier) else 0
-        
+
         val rewardPerk = if (hasPerkReward) {
-            val perks = Perk.entries.filter { perk -> 
+            val perks = Perk.entries.filter { perk ->
                 // Don't reward the same perk you are restricted from using
-                perk != restrictedPerk 
+                perk != restrictedPerk
             }
             perks.random(random)
         } else null
@@ -106,7 +119,7 @@ object DailyChallengeProvider {
             rewardScore = rewardScore,
             rewardPerk = rewardPerk,
             restrictedPerk = restrictedPerk,
-            patternId = patternId
+            patternId = patternId,
         )
     }
 }
