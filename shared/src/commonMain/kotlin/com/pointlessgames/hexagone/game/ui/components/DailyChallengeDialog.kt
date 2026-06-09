@@ -300,25 +300,42 @@ private fun ChallengeCard(
                     text = goalText,
                     color = if (isCompleted) Color.White else Color.White.copy(alpha = 0.8f),
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                    fontSize = 15.sp,
                 )
-                
-                val statusText = if (isCompleted) {
-                    when {
-                        challenge.rewardScore > 0 -> "+${challenge.rewardScore} SCORE"
-                        challenge.rewardPerk != null -> "FREE ${stringResource(challenge.rewardPerk.displayNameRes)}"
-                        else -> stringResource(Res.string.daily_challenge_completed)
-                    }
-                } else {
-                    "${progress.progress} / ${challenge.target}"
+
+                val rewardText = when {
+                    challenge.rewardScore > 0 -> stringResource(Res.string.reward_score_label, challenge.rewardScore)
+                    challenge.rewardPerk != null -> stringResource(
+                        Res.string.reward_perk_label,
+                        stringResource(challenge.rewardPerk.displayNameRes),
+                    )
+                    else -> ""
                 }
 
-                Text(
-                    text = statusText,
-                    color = if (isCompleted) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.4f),
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 12.sp
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (isCompleted) stringResource(Res.string.daily_challenge_completed)
+                        else "${progress.progress} / ${challenge.target}",
+                        color = if (isCompleted) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.4f),
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 12.sp,
+                    )
+                    
+                    if (rewardText.isNotEmpty()) {
+                        Text(
+                            text = "  •  ",
+                            color = Color.White.copy(alpha = 0.2f),
+                            fontSize = 12.sp,
+                        )
+                        Text(
+                            text = rewardText.uppercase(),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = if (isCompleted) 1f else 0.8f),
+                            fontWeight = FontWeight.Black,
+                            fontSize = 10.sp,
+                            letterSpacing = 0.5.sp,
+                        )
+                    }
+                }
             }
         }
     }
