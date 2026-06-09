@@ -124,6 +124,7 @@ The game features a dynamic mission system that resets per session but tracks lo
 *   **Session-Specific Impact**: Completing a mission mid-game instantly rewards the player with either a **Score Boost** or a **Free Perk**, aiding the current run.
 *   **Per-Game Collection**: Mission progress resets every time a new game starts, allowing players to collect rewards multiple times per day.
 *   **Persistent Streak**: Completing the full set of 3 missions in any single session marks the day as "Done" in a persistent 5-day calendar view.
+*   **Streak-Based Scaling**: Score rewards scale steadily with the current streak, providing higher bonuses for consistent daily play.
 
 ### UI Integration
 *   **Cinematic Completion**: Completion triggers a high-impact `DailyChallengeRewardOverlay` with a star burst and glow effect.
