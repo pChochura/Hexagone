@@ -79,6 +79,7 @@ data class GameUiState(
     val comboMaintenanceTurns: Int = 0,
     val consecutiveTacticalNoSpawn: Int = 0,
     val thawedIds: Set<String> = emptySet(),
+    val activeTip: GameTip? = null,
 ) {
     fun consumePerk(perk: Perk): GameUiState {
         val perkIndex = collectedPerks.indexOf(perk)
@@ -91,6 +92,16 @@ data class GameUiState(
         } else this
     }
 }
+
+@Immutable
+data class GameTip(
+    val id: TipId,
+    val message: StringResource,
+    val targetType: TipTarget = TipTarget.NONE
+)
+
+enum class TipId { MERGE, PERK, POST_GAME, DAILY }
+enum class TipTarget { GRID, PERK_BAR, SCORE_SECTION, GAME_OVER_BUTTONS, NONE }
 
 @Immutable
 data class RankingInfo(

@@ -34,6 +34,7 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.StringResource
+import hexagone.shared.generated.resources.*
 import kotlin.time.Clock
 
 internal class GameViewModel(
@@ -120,6 +121,33 @@ internal class GameViewModel(
             spawnFromQueue(_uiState.value.grid)
         },
     )
+
+    fun onDismissTip() {
+        val currentTip = _uiState.value.activeTip ?: return
+        viewModelScope.launch {
+            when (currentTip.id) {
+                com.pointlessgames.hexagone.game.model.TipId.MERGE -> settingsRepository.setHasShownMergeTip(true)
+                com.pointlessgames.hexagone.game.model.TipId.PERK -> settingsRepository.setHasShownPerkTip(true)
+                com.pointlessgames.hexagone.game.model.TipId.POST_GAME -> settingsRepository.setHasShownPostGameTip(true)
+                com.pointlessgames.hexagone.game.model.TipId.DAILY -> settingsRepository.setHasShownDailyChallengeTip(true)
+            }
+            _uiState.update { it.copy(activeTip = null) }
+        }
+    }
+
+    private fun triggerTip(id: com.pointlessgames.hexagone.game.model.TipId) {
+        val tipData = when (id) {
+            com.pointlessgames.hexagone.game.model.TipId.MERGE -> 
+                Res.string.tip_merge_message to com.pointlessgames.hexagone.game.model.TipTarget.GRID
+            com.pointlessgames.hexagone.game.model.TipId.PERK -> 
+                Res.string.tip_perk_message to com.pointlessgames.hexagone.game.model.TipTarget.PERK_BAR
+            com.pointlessgames.hexagone.game.model.TipId.POST_GAME -> 
+                Res.string.tip_post_game_message to com.pointlessgames.hexagone.game.model.TipTarget.GAME_OVER_BUTTONS
+            com.pointlessgames.hexagone.game.model.TipId.DAILY -> 
+                Res.string.tip_daily_message to com.pointlessgames.hexagone.game.model.TipTarget.SCORE_SECTION
+        }
+        _uiState.update { it.copy(activeTip = com.pointlessgames.hexagone.game.model.GameTip(id, tipData.first, tipData.second)) }
+    }
 
 
     init {
@@ -209,6 +237,12 @@ internal class GameViewModel(
                 restartGame()
             }
             recalculateHints()
+
+            if (!settingsRepository.getHasShownMergeTip() && _uiState.value.totalMerges == 0) {
+                triggerTip(com.pointlessgames.hexagone.game.model.TipId.MERGE)
+            } else if (!settingsRepository.getHasShownDailyChallengeTip()) {
+                triggerTip(com.pointlessgames.hexagone.game.model.TipId.DAILY)
+            }
         }
 
         viewModelScope.launch {
@@ -363,6 +397,11 @@ internal class GameViewModel(
                 seed = random.nextLong(),
             )
         }
+        viewModelScope.launch {
+            if (!settingsRepository.getHasShownPerkTip()) {
+                triggerTip(com.pointlessgames.hexagone.game.model.TipId.PERK)
+            }
+        }
         achievementDelegate.checkPerkAchievements(perk, _uiState.value)
         achievementDelegate.onNonUndoAction()
         recalculateHints()
@@ -489,6 +528,10 @@ internal class GameViewModel(
                 if (playerName != null) {
                     val rankInfo = leaderboardRepository.submitResult(finalResult)
                     _uiState.update { it.copy(currentRank = rankInfo) }
+                }
+
+                if (!settingsRepository.getHasShownPostGameTip()) {
+                    triggerTip(com.pointlessgames.hexagone.game.model.TipId.POST_GAME)
                 }
             }
         }

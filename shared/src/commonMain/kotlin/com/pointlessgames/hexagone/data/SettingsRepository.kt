@@ -36,6 +36,10 @@ class SettingsRepository(
     private val pendingScoresKey = androidx.datastore.preferences.core.stringSetPreferencesKey("pending_scores")
     private val lastCompletedChallengeDateKey = androidx.datastore.preferences.core.longPreferencesKey("last_completed_challenge_date")
     private val challengeStreakKey = intPreferencesKey("challenge_streak")
+    private val hasShownMergeTipKey = booleanPreferencesKey("has_shown_merge_tip")
+    private val hasShownPerkTipKey = booleanPreferencesKey("has_shown_perk_tip")
+    private val hasShownPostGameTipKey = booleanPreferencesKey("has_shown_post_game_tip")
+    private val hasShownDailyChallengeTipKey = booleanPreferencesKey("has_shown_daily_challenge_tip")
 
     suspend fun getBestScore(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[bestScoreKey] ?: 0
@@ -350,6 +354,54 @@ class SettingsRepository(
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[challengeStreakKey] = streak
+            }
+        }
+    }
+
+    suspend fun getHasShownMergeTip(): Boolean = withContext(Dispatchers.IO) {
+        appSettings.data.first()[hasShownMergeTipKey] ?: false
+    }
+
+    suspend fun setHasShownMergeTip(shown: Boolean) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[hasShownMergeTipKey] = shown
+            }
+        }
+    }
+
+    suspend fun getHasShownPerkTip(): Boolean = withContext(Dispatchers.IO) {
+        appSettings.data.first()[hasShownPerkTipKey] ?: false
+    }
+
+    suspend fun setHasShownPerkTip(shown: Boolean) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[hasShownPerkTipKey] = shown
+            }
+        }
+    }
+
+    suspend fun getHasShownPostGameTip(): Boolean = withContext(Dispatchers.IO) {
+        appSettings.data.first()[hasShownPostGameTipKey] ?: false
+    }
+
+    suspend fun setHasShownPostGameTip(shown: Boolean) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[hasShownPostGameTipKey] = shown
+            }
+        }
+    }
+
+    suspend fun getHasShownDailyChallengeTip(): Boolean = withContext(Dispatchers.IO) {
+        appSettings.data.first()[hasShownDailyChallengeTipKey] ?: false
+    }
+
+    suspend fun setHasShownDailyChallengeTip(shown: Boolean) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[hasShownDailyChallengeTipKey] = shown
             }
         }
     }

@@ -29,6 +29,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -41,20 +42,14 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.GameViewModel
-import com.pointlessgames.hexagone.game.ui.components.AchievementNotification
-import com.pointlessgames.hexagone.game.ui.components.AchievementsDialog
-import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
-import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
-import com.pointlessgames.hexagone.game.ui.components.DailyChallengeDialog
-import com.pointlessgames.hexagone.game.ui.components.GameOverlays
-import com.pointlessgames.hexagone.game.ui.components.PerkBar
-import com.pointlessgames.hexagone.game.ui.components.ScoreSection
-import com.pointlessgames.hexagone.game.ui.components.SettingsDialog
+import com.pointlessgames.hexagone.game.model.TipTarget
+import com.pointlessgames.hexagone.game.ui.components.*
 import com.pointlessgames.hexagone.leaderboard.ui.LeaderboardDialog
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
@@ -81,6 +76,7 @@ internal fun GameScreen(
     val activePerkState = remember(uiState) { uiState.map { it.activePerk }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.activePerk)
     val isDebugModeState = remember(uiState) { uiState.map { it.isDebugMode }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.isDebugMode)
     val pendingResultState = remember(uiState) { uiState.map { it.pendingResult }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.pendingResult)
+    val activeTipState = remember(uiState) { uiState.map { it.activeTip }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.activeTip)
 
     // Helper delegates for GameScreen's own logic.
     // Accessing these 'by' variables will trigger recomposition of GameScreen.
@@ -90,6 +86,7 @@ internal fun GameScreen(
     val activePerk by activePerkState
     val isDebugMode by isDebugModeState
     val pendingResult by pendingResultState
+    val activeTip by activeTipState
 
     // Other states primarily used by providers passed to children.
     // GameScreen won't recompose when these change unless it reads them directly.
@@ -127,6 +124,8 @@ internal fun GameScreen(
     var showDailyChallenge by remember { mutableStateOf(false) }
     var initiallySelectedAchievement by remember { mutableStateOf<com.pointlessgames.hexagone.achievements.GameAchievement?>(null) }
     val leaderboardViewModel: LeaderboardViewModel = koinViewModel()
+
+    val targetRects = remember { mutableStateMapOf<TipTarget, Rect>() }
 
     val tierRewardQueue = remember { mutableStateListOf<Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>>() }
     val challengeRewardQueue = remember { mutableStateListOf<com.pointlessgames.hexagone.game.model.DailyChallenge>() }
@@ -301,7 +300,10 @@ internal fun GameScreen(
                         },
                         onSettingsClick = { showSettings = true },
                         onDailyChallengeClick = { showDailyChallenge = true },
-                        isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider
+                        isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
+                        modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect -> 
+                            targetRects[target] = rect 
+                        }
                     )
 
                     Spacer(Modifier.weight(0.1f))
@@ -328,7 +330,12 @@ internal fun GameScreen(
                     onCellTouchUp = onCellTouchUp,
                     onCellClick = if (isDebugMode) { cell -> onDebugCellClick(cell.x, cell.y) } else onCellClick,
                     onMergeAnimationFinished = onMergeAnimationFinished,
-                    modifier = Modifier.weight(1f, fill = false).fillMaxWidth(),
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .fillMaxWidth()
+                        .trackTipTarget(TipTarget.GRID) { target, rect -> 
+                            targetRects[target] = rect 
+                        },
                 )
 
                 if (!isDebugModeProvider()) {
@@ -421,6 +428,9 @@ internal fun GameScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .graphicsLayer { clip = false }
+                        .trackTipTarget(TipTarget.PERK_BAR) { target, rect -> 
+                            targetRects[target] = rect 
+                        }
                 )
             }
         }
@@ -449,7 +459,16 @@ internal fun GameScreen(
             activeChallengeReward = activeChallengeReward,
             onChallengeRewardFinished = { if (challengeRewardQueue.isNotEmpty()) challengeRewardQueue.removeAt(0) },
             rankingInfoProvider = currentRankProvider,
-            finalResultProvider = finalResultProvider
+            finalResultProvider = finalResultProvider,
+            modifier = Modifier.trackTipTarget(TipTarget.GAME_OVER_BUTTONS) { target, rect -> 
+                targetRects[target] = rect 
+            }
+        )
+
+        TipOverlay(
+            activeTip = activeTip,
+            targetRects = targetRects,
+            onDismiss = viewModel::onDismissTip
         )
 
         activeAchievement?.let { achievement ->

@@ -33,6 +33,13 @@
     <string name="perk_selection_hint">Long press a perk to see what it does</string>
     <string name="no_moves_left_warning">NO MOVES LEFT! USE A PERK</string>
 
+    <!-- Tips -->
+    <string name="tip_merge_message">Match three or more identical tiles to merge them!</string>
+    <string name="tip_perk_message">You\'ve earned a perk! Tap here to activate it and clear difficult spots.</string>
+    <string name="tip_post_game_message">Great run! Check how you rank against others in the Leaderboards or see your Unlocked Achievements.</string>
+    <string name="tip_daily_message">Complete unique objectives every day to earn special rewards and build your streak.</string>
+    <string name="tip_button_got_it">GOT IT!</string>
+
     <!-- Combo Tiers -->
     <string name="tier_surge">SURGE</string>
     <string name="tier_overdrive">OVERDRIVE</string>
