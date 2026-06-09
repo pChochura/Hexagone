@@ -87,6 +87,7 @@ internal class GameViewModel(
         stateDelegate = stateDelegate,
         effectDelegate = effectDelegate,
         achievementDelegate = achievementDelegate,
+        challengeDelegate = challengeDelegate,
         onSpawnRequested = { spawnFromQueue(_uiState.value.grid) },
         onCheckValidMoves = { checkValidMoves() },
         onUpdateLevel = { updateLevel() },
@@ -130,8 +131,8 @@ internal class GameViewModel(
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
             val dateSeed = today.year * 10000L + (today.month.ordinal + 1) * 100L + today.dayOfMonth
             val lastCompletedDate = settingsRepository.getLastCompletedChallengeDate()
-            val currentDailyChallenges = DailyChallengeProvider.getChallengesForDate(today)
             val challengeStreak = settingsRepository.getChallengeStreak()
+            val currentDailyChallenges = DailyChallengeProvider.getChallengesForDate(today, challengeStreak)
 
             if (savedStateJson != null) {
                 try {
@@ -372,6 +373,8 @@ internal class GameViewModel(
         val state = _uiState.value
         if (!state.canReroll || state.perkOptions.isEmpty()) return
 
+        challengeDelegate.onReroll(state.perkOptions)
+
         if (state.perkOptions.any { it.isLegendary }) {
             achievementDelegate.onRerollLegendary()
         }
@@ -401,7 +404,7 @@ internal class GameViewModel(
         val (initialPreviews, nextPreviewIdCounter) = engine.pickRandomPreviews(initialGrid, emptyList(), emptyList(), 3, random, 0)
         
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        val currentDailyChallenges = DailyChallengeProvider.getChallengesForDate(today)
+        val currentDailyChallenges = DailyChallengeProvider.getChallengesForDate(today, _uiState.value.challengeStreak)
 
         _uiState.value = GameUiState(
             grid = initialGrid,
@@ -518,6 +521,7 @@ internal class GameViewModel(
                 )
             }
 
+            val thawedIds = currentState.filter { it.isFrozen }.map { it.id }.toSet()
             val (newPreviews, nextPreviewIdCounter) = newPreviewsResult
 
             val updatedPerks = if (decrementLifespan) {
@@ -548,7 +552,8 @@ internal class GameViewModel(
                     perkSpawnCounter = nextCounter,
                     earnedRewardsThisTurn = emptyList(),
                     seed = random.nextLong(),
-                    previewIdCounter = nextPreviewIdCounter
+                    previewIdCounter = nextPreviewIdCounter,
+                    thawedIds = thawedIds
                 )
             }
 
@@ -556,6 +561,8 @@ internal class GameViewModel(
                 _effects.emit(reward)
             }
 
+            challengeDelegate.onSpawnOccurred(_uiState.value.combo)
+            challengeDelegate.checkBoardState(engine)
             achievementDelegate.onSpawnOccurred()
             updateLevel()
             checkValidMoves()

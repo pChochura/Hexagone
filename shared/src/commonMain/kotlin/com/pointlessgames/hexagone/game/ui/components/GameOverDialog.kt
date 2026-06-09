@@ -42,12 +42,7 @@ import com.pointlessgames.hexagone.game.model.DailyChallengeProgress
 import com.pointlessgames.hexagone.game.model.RankingInfo
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.best_score_formatted
-import hexagone.shared.generated.resources.daily_challenge
-import hexagone.shared.generated.resources.daily_challenge_goal_combo
-import hexagone.shared.generated.resources.daily_challenge_goal_level
-import hexagone.shared.generated.resources.daily_challenge_goal_merge
+import hexagone.shared.generated.resources.*
 import hexagone.shared.generated.resources.daily_challenge_goal_score
 import hexagone.shared.generated.resources.daily_challenge_goal_tactical
 import hexagone.shared.generated.resources.daily_challenge_goal_value
@@ -325,35 +320,32 @@ private fun DailyChallengeSummaryRow(
 ) {
     val challenge = progress.challenge
     val goalText = when (challenge.goal) {
-        ChallengeGoal.MERGE_COUNT -> stringResource(
-            Res.string.daily_challenge_goal_merge,
-            challenge.target,
-        )
-
-        ChallengeGoal.LEVEL_REACHED -> stringResource(
-            Res.string.daily_challenge_goal_level,
-            challenge.target,
-        )
-
-        ChallengeGoal.COMBO_REACHED -> stringResource(
-            Res.string.daily_challenge_goal_combo,
-            challenge.target,
-        )
-
-        ChallengeGoal.SCORE_REACHED -> stringResource(
-            Res.string.daily_challenge_goal_score,
-            challenge.target,
-        )
-
-        ChallengeGoal.TACTICAL_MERGES -> stringResource(
-            Res.string.daily_challenge_goal_tactical,
-            challenge.target,
-        )
-
-        ChallengeGoal.PIECE_VALUE_REACHED -> stringResource(
-            Res.string.daily_challenge_goal_value,
-            challenge.target,
-        )
+        ChallengeGoal.MERGE_COUNT -> stringResource(Res.string.daily_challenge_goal_merge, challenge.target)
+        ChallengeGoal.LEVEL_REACHED -> stringResource(Res.string.daily_challenge_goal_level, challenge.target)
+        ChallengeGoal.COMBO_REACHED -> stringResource(Res.string.daily_challenge_goal_combo, challenge.target)
+        ChallengeGoal.SCORE_REACHED -> stringResource(Res.string.daily_challenge_goal_score, challenge.target)
+        ChallengeGoal.TACTICAL_MERGES -> stringResource(Res.string.daily_challenge_goal_tactical, challenge.target)
+        ChallengeGoal.PIECE_VALUE_REACHED -> stringResource(Res.string.daily_challenge_goal_value, challenge.target)
+        ChallengeGoal.MOVES_WITHOUT_PERK -> stringResource(Res.string.daily_challenge_goal_no_perks, challenge.target)
+        ChallengeGoal.PERK_RESTRICTED_LEVEL -> stringResource(Res.string.daily_challenge_goal_perk_restriction, challenge.target, challenge.restrictedPerk?.let { stringResource(it.displayNameRes) } ?: "")
+        ChallengeGoal.LEGENDARY_GAMBLE -> stringResource(Res.string.daily_challenge_goal_legendary_gamble)
+        ChallengeGoal.GEOMETRIC_PATTERN -> {
+            val patternName = when (challenge.patternId) {
+                "ring_of_fire" -> stringResource(Res.string.pattern_ring_of_fire)
+                "great_wall" -> stringResource(Res.string.pattern_great_wall)
+                "twin_peaks" -> stringResource(Res.string.pattern_twin_peaks)
+                "the_prism" -> stringResource(Res.string.pattern_the_prism)
+                else -> ""
+            }
+            stringResource(Res.string.daily_challenge_goal_pattern, patternName)
+        }
+        ChallengeGoal.ELITE_SACRIFICE -> stringResource(Res.string.daily_challenge_goal_elite_sacrifice)
+        ChallengeGoal.COMBO_MAINTENANCE -> stringResource(Res.string.daily_challenge_goal_combo_maintenance, challenge.target)
+        ChallengeGoal.GHOST_HORDE -> stringResource(Res.string.daily_challenge_goal_ghost_horde, challenge.target)
+        ChallengeGoal.PATH_MERGE_COUNT -> stringResource(Res.string.daily_challenge_goal_path_merge, challenge.target)
+        ChallengeGoal.DIVERSITY_STREAK -> stringResource(Res.string.daily_challenge_goal_diversity)
+        ChallengeGoal.FRUGAL_SURVIVOR -> stringResource(Res.string.daily_challenge_goal_frugal, challenge.target)
+        ChallengeGoal.FROZEN_RECOVERY -> stringResource(Res.string.daily_challenge_goal_frozen_recovery)
     }
 
     val rewardText = when {

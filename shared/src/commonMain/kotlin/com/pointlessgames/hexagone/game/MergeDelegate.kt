@@ -211,6 +211,7 @@ internal class MergeDelegate(
         challengeDelegate.onMerge(merge)
         challengeDelegate.onScoreChanged(finalScore)
         challengeDelegate.onCombo(finalCombo)
+        challengeDelegate.checkBoardState(engine)
 
         handleChainMerge(merge, finalCombo)
     }

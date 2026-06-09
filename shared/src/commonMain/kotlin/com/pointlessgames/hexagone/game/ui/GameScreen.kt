@@ -50,6 +50,7 @@ import com.pointlessgames.hexagone.game.ui.components.AchievementNotification
 import com.pointlessgames.hexagone.game.ui.components.AchievementsDialog
 import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
+import com.pointlessgames.hexagone.game.ui.components.DailyChallengeDialog
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
@@ -481,7 +482,7 @@ internal fun GameScreen(
         }
 
         if (showDailyChallenge) {
-            com.pointlessgames.hexagone.game.ui.components.DailyChallengeDialog(
+            DailyChallengeDialog(
                 challengesProvider = dailyChallengesProvider,
                 streakProvider = challengeStreakProvider,
                 isStreakCollectedTodayProvider = isStreakCollectedTodayProvider,

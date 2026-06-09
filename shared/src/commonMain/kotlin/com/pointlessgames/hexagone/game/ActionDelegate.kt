@@ -21,6 +21,7 @@ internal class ActionDelegate(
     private val stateDelegate: StateDelegate,
     private val effectDelegate: EffectDelegate,
     private val achievementDelegate: AchievementDelegate,
+    private val challengeDelegate: ChallengeDelegate,
     private val onSpawnRequested: () -> Unit,
     private val onCheckValidMoves: () -> Unit,
     private val onUpdateLevel: () -> Unit,
@@ -73,6 +74,7 @@ internal class ActionDelegate(
         }
 
         if (merge != null) {
+            challengeDelegate.onMovePerformed()
             stateDelegate.saveState()
             uiState.update { currentState ->
                 val firstStep = merge.steps.first()
@@ -393,6 +395,8 @@ internal class ActionDelegate(
         val state = uiState.value
         if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
 
+        state.activePerk?.let { challengeDelegate.onPerkUsed(it) }
+
         when (val perk = state.activePerk) {
             Perk.MOVE_TILE -> {
                 val selectedId = state.selectedCellId
@@ -559,6 +563,8 @@ internal class ActionDelegate(
     fun onCellClicked(cell: HexagonCell) {
         val state = uiState.value
         if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
+
+        state.activePerk?.let { challengeDelegate.onPerkUsed(it) }
 
         when (val perk = state.activePerk) {
             Perk.MOVE_TILE -> {
@@ -936,6 +942,8 @@ internal class ActionDelegate(
     }
 
     private fun finalizeAction() {
+        challengeDelegate.onMovePerformed()
+        challengeDelegate.checkBoardState(engine)
         achievementDelegate.onNonUndoAction()
         achievementDelegate.checkPatternAchievements(uiState.value.grid, uiState.value.preview, engine)
         onUpdateLevel()

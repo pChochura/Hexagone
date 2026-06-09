@@ -75,6 +75,10 @@ data class GameUiState(
     val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
     val challengeStreak: Int = 0,
     val isStreakCollectedToday: Boolean = false,
+    val movesWithoutPerk: Int = 0,
+    val comboMaintenanceTurns: Int = 0,
+    val consecutiveTacticalNoSpawn: Int = 0,
+    val thawedIds: Set<String> = emptySet(),
 ) {
     fun consumePerk(perk: Perk): GameUiState {
         val perkIndex = collectedPerks.indexOf(perk)
@@ -147,7 +151,18 @@ enum class ChallengeGoal(val id: String) {
     COMBO_REACHED("combo_reached"),
     SCORE_REACHED("score_reached"),
     TACTICAL_MERGES("tactical_merges"),
-    PIECE_VALUE_REACHED("piece_value_reached")
+    PIECE_VALUE_REACHED("piece_value_reached"),
+    MOVES_WITHOUT_PERK("moves_without_perk"),
+    PERK_RESTRICTED_LEVEL("perk_restricted_level"),
+    LEGENDARY_GAMBLE("legendary_gamble"),
+    GEOMETRIC_PATTERN("geometric_pattern"),
+    ELITE_SACRIFICE("elite_sacrifice"),
+    COMBO_MAINTENANCE("combo_maintenance"),
+    GHOST_HORDE("ghost_horde"),
+    PATH_MERGE_COUNT("path_merge_count"),
+    DIVERSITY_STREAK("diversity_streak"),
+    FRUGAL_SURVIVOR("frugal_survivor"),
+    FROZEN_RECOVERY("frozen_recovery")
 }
 
 @Serializable
@@ -157,6 +172,8 @@ data class DailyChallenge(
     val target: Int,
     val rewardScore: Int = 0,
     val rewardPerk: Perk? = null,
+    val restrictedPerk: Perk? = null,
+    val patternId: String? = null,
 )
 
 @Serializable
@@ -208,6 +225,10 @@ data class GameState(
     val activePerk: Perk? = null,
     val selectedCellId: String? = null,
     val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
+    val movesWithoutPerk: Int = 0,
+    val comboMaintenanceTurns: Int = 0,
+    val consecutiveTacticalNoSpawn: Int = 0,
+    val thawedIds: Set<String> = emptySet(),
 )
 
 @Serializable
