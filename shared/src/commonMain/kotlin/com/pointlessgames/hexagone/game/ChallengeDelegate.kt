@@ -1,6 +1,7 @@
 package com.pointlessgames.hexagone.game
 
 import com.pointlessgames.hexagone.game.logic.PatternRecognitionEngine
+import com.pointlessgames.hexagone.game.logic.ScoreResult
 import com.pointlessgames.hexagone.game.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -9,14 +10,17 @@ internal class ChallengeDelegate(
     private val uiState: MutableStateFlow<GameUiState>,
     private val onChallengeComplete: (DailyChallenge) -> Unit
 ) {
-    fun onMerge(merge: MergeTransition) {
+    fun onMerge(merge: MergeTransition, scoreResult: ScoreResult? = null) {
         val state = uiState.value
         updateChallenges { progress ->
             if (progress.isCompleted) return@updateChallenges progress
             
             val challenge = progress.challenge
             when (challenge.goal) {
-                ChallengeGoal.MERGE_COUNT -> progress.copy(progress = progress.progress + 1)
+                ChallengeGoal.MERGE_COUNT -> {
+                    // Only count real merges, not removals
+                    if (!merge.isRemoval) progress.copy(progress = progress.progress + 1) else progress
+                }
                 ChallengeGoal.PIECE_VALUE_REACHED -> if (merge.finalValue >= challenge.target) {
                     progress.copy(progress = challenge.target)
                 } else progress
@@ -24,9 +28,8 @@ internal class ChallengeDelegate(
                     progress.copy(progress = progress.progress + 1)
                 } else progress
                 ChallengeGoal.ELITE_SACRIFICE -> {
-                    val maxVal = state.grid.maxOfOrNull { it.value } ?: 0
-                    val secondMaxVal = state.grid.filter { it.value < maxVal }.maxOfOrNull { it.value } ?: 0
-                    if (merge.isRemoval && merge.steps.first().mergingCells.any { it.value == maxVal } && (maxVal - secondMaxVal) >= 5) {
+                    val diff = scoreResult?.sacrificeDiff ?: 0
+                    if (diff >= 5) {
                         progress.copy(progress = challenge.target)
                     } else progress
                 }
@@ -34,7 +37,8 @@ internal class ChallengeDelegate(
                     progress.copy(progress = challenge.target)
                 } else progress
                 ChallengeGoal.FROZEN_RECOVERY -> {
-                    val wasThawed = merge.steps.first().mergingCells.any { it.id in state.thawedIds }
+                    val mergingCells = merge.steps.firstOrNull()?.mergingCells ?: emptyList()
+                    val wasThawed = mergingCells.any { it.id in state.thawedIds }
                     if (wasThawed) progress.copy(progress = challenge.target) else progress
                 }
                 else -> progress
@@ -55,7 +59,8 @@ internal class ChallengeDelegate(
                     progress.copy(progress = challenge.target)
                 } else progress
                 ChallengeGoal.PERK_RESTRICTED_LEVEL -> {
-                    val perkUsed = state.perksUsedTracking[challenge.restrictedPerk] ?: 0
+                    val restrictedPerk = challenge.restrictedPerk
+                    val perkUsed = if (restrictedPerk != null) state.perksUsedTracking[restrictedPerk] ?: 0 else 0
                     if (newLevel >= challenge.target && perkUsed == 0) {
                         progress.copy(progress = challenge.target)
                     } else progress
@@ -93,11 +98,11 @@ internal class ChallengeDelegate(
     }
 
     fun onPerkUsed(perk: Perk) {
-        uiState.update { it.copy(movesWithoutPerk = 0) }
+        uiState.update { it.copy(movesWithoutPerk = -1) } // Set to -1 so onMovePerformed sets it to 0
     }
 
     fun onMovePerformed() {
-        uiState.update { it.copy(movesWithoutPerk = it.movesWithoutPerk + 1) }
+        uiState.update { it.copy(movesWithoutPerk = (it.movesWithoutPerk + 1).coerceAtLeast(0)) }
         val movesWithoutPerk = uiState.value.movesWithoutPerk
         
         updateChallenges { progress ->

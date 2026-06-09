@@ -208,7 +208,7 @@ internal class MergeDelegate(
         achievementDelegate.onMergesIncremented(uiState.value.totalMerges)
         achievementDelegate.onMergeDetails(merge.isTactical, isBarRaised, isSacrifice)
         achievementDelegate.onNonUndoAction()
-        challengeDelegate.onMerge(merge)
+        challengeDelegate.onMerge(merge, scoreResult)
         challengeDelegate.onScoreChanged(finalScore)
         challengeDelegate.onCombo(finalCombo)
         challengeDelegate.checkBoardState(engine)

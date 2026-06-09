@@ -415,6 +415,7 @@ internal class ActionDelegate(
                 stateDelegate.saveState()
                 var result: ScoreResult? = null
                 var targetPos: Pair<Int, Int>? = null
+                var mergeReport: MergeTransition? = null
 
                 uiState.update { currentState ->
                     val previewToTarget = currentState.preview.find { it.id == preview.id }
@@ -433,6 +434,7 @@ internal class ActionDelegate(
                         isRemoval = true,
                         participatingIds = setOf(previewToTarget.id),
                     )
+                    mergeReport = merge
                     val scoreResult = Scoring.calculateFinalScore(
                         merge = merge,
                         grid = currentState.grid,
@@ -465,6 +467,7 @@ internal class ActionDelegate(
                         )
                         effectDelegate.addMergeParticles(tx, ty, preview.value, intensity = (preview.value / 8f + 0.3f).coerceAtMost(1.5f))
                         achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, scoreResult.sacrificeBonus > 0)
+                        mergeReport?.let { challengeDelegate.onMerge(it, scoreResult) }
                     }
                 }
 
@@ -679,6 +682,7 @@ internal class ActionDelegate(
                 stateDelegate.saveState()
                 var result: ScoreResult? = null
                 var targetPos: Pair<Int, Int>? = null
+                var mergeReport: MergeTransition? = null
 
                 uiState.update { currentState ->
                     val cellToRemove =
@@ -697,6 +701,7 @@ internal class ActionDelegate(
                         isRemoval = true,
                         participatingIds = setOf(cellToRemove.id),
                     )
+                    mergeReport = merge
                     val scoreResult = Scoring.calculateFinalScore(
                         merge = merge,
                         grid = currentState.grid,
@@ -729,6 +734,7 @@ internal class ActionDelegate(
                         )
                         effectDelegate.addMergeParticles(tx, ty, cell.value, intensity = (cell.value / 8f + 0.3f).coerceAtMost(1.5f))
                         achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, scoreResult.sacrificeBonus > 0)
+                        mergeReport?.let { challengeDelegate.onMerge(it, scoreResult) }
                     }
                 }
 

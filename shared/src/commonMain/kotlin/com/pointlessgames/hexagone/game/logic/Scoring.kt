@@ -125,6 +125,15 @@ object Scoring {
             if (cell != null) calculateSacrificeBonus(grid, cell) else 0
         } else 0
 
+        val sacrificeDiff = if (merge.isRemoval && sacrificeBonus > 0) {
+            val cell = grid.find { it.x == merge.targetX && it.y == merge.targetY }
+            if (cell != null) {
+                val sortedValues = grid.map { it.value }.distinct().sortedDescending()
+                val secondHighest = if (sortedValues.size > 1) sortedValues[1] else 0
+                cell.value - secondHighest
+            } else 0
+        } else 0
+
         // Use a dampened multiplier so scores don't explode too much at high combos
         val dampenedMultiplier = 1 + (comboMultiplier - 1) / 3
         val multipliedBarRaised = barRaisedBonus * dampenedMultiplier
@@ -142,6 +151,7 @@ object Scoring {
             stepScore = totalStepScore,
             bonusScore = multipliedBarRaised + multipliedSacrifice + redemptionBonus,
             sacrificeBonus = sacrificeBonus,
+            sacrificeDiff = sacrificeDiff,
             finalCombo = finalCombo,
             barRaisedBonus = barRaisedBonus,
             redemptionBonus = redemptionBonus,
@@ -155,6 +165,7 @@ data class ScoreResult(
     val stepScore: Int,
     val bonusScore: Int,
     val sacrificeBonus: Int,
+    val sacrificeDiff: Int = 0,
     val finalCombo: Int,
     val barRaisedBonus: Int,
     val redemptionBonus: Int,
