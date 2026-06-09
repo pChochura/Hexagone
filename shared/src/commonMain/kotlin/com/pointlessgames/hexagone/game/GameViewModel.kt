@@ -1,6 +1,5 @@
 package com.pointlessgames.hexagone.game
 
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pointlessgames.hexagone.achievements.AchievementManager
@@ -258,18 +257,6 @@ internal class GameViewModel(
         }
     }
 
-    fun addParticles(newParticles: List<Particle>) = effectDelegate.addParticles(newParticles)
-    
-    fun addScorePopup(
-        gridX: Int, 
-        gridY: Int, 
-        score: Int, 
-        color: Color, 
-        labelRes: StringResource? = null
-    ) = effectDelegate.addScorePopup(gridX, gridY, score, color, labelRes)
-    
-    fun addPerkPopup(gridX: Int, gridY: Int, perk: Perk) = effectDelegate.addPerkPopup(gridX, gridY, perk)
-
     fun onEmptySpaceClicked(x: Int, y: Int) = actionDelegate.onEmptySpaceClicked(x, y)
     
     fun onEmptySpaceTouchDown(x: Int, y: Int) = actionDelegate.onEmptySpaceTouchDown(x, y)
@@ -279,8 +266,6 @@ internal class GameViewModel(
     fun onCellTouchUp() { _hoveredMerge.value = null }
     
     fun onEmptySpaceTouchUp() { _hoveredMerge.value = null }
-    
-    fun onPreviewClicked(preview: PreviewCell) = actionDelegate.onPreviewClicked(preview)
     
     fun onCellClicked(cell: HexagonCell) = actionDelegate.onCellClicked(cell)
     

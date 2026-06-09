@@ -152,28 +152,3 @@ fun HexagonIconButton(
         content()
     }
 }
-
-@Composable
-internal fun SecondaryGameButton(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-    icon: DrawableResource,
-) {
-    val spacing = MaterialTheme.spacing
-    val cornerRadius = MaterialTheme.cornerRadius
-    Box(
-        modifier = modifier
-            .height(spacing.extraHuge)
-            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(cornerRadius.medium))
-            .border(spacing.extraTiny, Color.White.copy(alpha = 0.1f), RoundedCornerShape(cornerRadius.medium))
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-            tint = Color.White
-        )
-    }
-}
