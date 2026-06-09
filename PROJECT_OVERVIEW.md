@@ -26,7 +26,7 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 │   │   ├── PatternRecognitionEngine.kt # Geometric achievement scanning
 │   │   └── DailyChallengeProvider.kt # Deterministic daily mission generator
 │   ├── model/
-│   │   ├── GameModels.kt         # Domain Models: Perk, GameUiState, MergeTransition
+│   │   ├── GameModels.kt         # Domain Models: Perk, GameUiState, GameTip
 │   │   └── UIModels.kt           # UI-specific state: Particles, Animation states
 │   ├── ui/
 │   │   ├── GameScreen.kt         # Root UI Layout
@@ -35,6 +35,7 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 │   │       ├── AchievementNotification.kt # Top-level clickable HUD popup
 │   │       ├── DailyChallengeDialog.kt # 5-day streak tracker & mission list
 │   │       ├── DailyChallengeRewardOverlay.kt # Cinematic completion effect
+│   │       ├── TipOverlay.kt      # Contextual onboarding with spotlight effect
 │   │       ├── PopupsLayer.kt     # Stable HUD notifications (sequential IDs)
 │   │       ├── GridDrawing.kt     # Optimized DrawScope rendering logic
 │   │       ├── GameGridOverlay.kt # Grid orchestrator & gesture handling
@@ -68,6 +69,7 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 A merge occurs when 2+ tiles of the same value touch.
 *   **Solid Only**: Only solid tiles participate in merges. Ghost tiles (previews) are ignored by the merge engine until they are solidified.
 *   **Frozen Tiles**: Frozen tiles are excluded from all merge calculations and pathfinding. They are unfrozen automatically at the end of each turn.
+*   **Removals**: Actions that remove tiles (e.g., *Remove Tile* perk) are excluded from merge-count statistics for challenge tracking.
 *   **Path Merge (Legendary)**: Merges all connected tiles of the same value across the board into a single target.
 *   **Final Value**: $V_{max} + n - k$
     *   `Vmax`: Highest value in the group.
@@ -113,8 +115,10 @@ The game features a dynamic mission system that resets per session but tracks lo
 *   **Seeded Variety**: Uses `DailyChallengeProvider` to generate 3 distinct missions daily, seeded by the current date (`yyyyMMdd`).
 *   **Strategic Categories**:
     *   **Fundamental**: Direct interaction targets (e.g., *Merge 25 times*, *Reach Level 8*).
-    *   **Skill & Tactics**: Advanced play requirements (e.g., *5 Tactical Merges*, *Create a Value 12 Tile*).
-    *   **Performance**: High-score or efficiency goals (e.g., *x10 Combo*, *10,000 Session Score*).
+    *   **Skill & Tactics**: Advanced play requirements (e.g., *5 Tactical Merges*, *Create a Value 12 Tile*, *Frozen Recovery*).
+    *   **Performance**: High-score or efficiency goals (e.g., *x10 Combo*, *10,000 Session Score*, *Combo Maintenance*).
+    *   **Geometric & Pattern**: Board state layout goals (e.g., *Ring of Fire*, *The Prism*, *Ghost Horde*).
+    *   **Restricted**: Conditional achievements (e.g., *Perk Restricted Level*, *Frugal Survivor*).
 
 ### Reward Mechanics
 *   **Session-Specific Impact**: Completing a mission mid-game instantly rewards the player with either a **Score Boost** or a **Free Perk**, aiding the current run.
@@ -124,11 +128,29 @@ The game features a dynamic mission system that resets per session but tracks lo
 ### UI Integration
 *   **Cinematic Completion**: Completion triggers a high-impact `DailyChallengeRewardOverlay` with a star burst and glow effect.
 *   **Wavy mission Cards**: The `DailyChallengeDialog` reuses the `WavyProgressBar` design from the achievement system for visual consistency.
+*   **Reward Preview**: Mission cards explicitly state the reward (Score or Perk) to encourage completion.
 *   **Post-Game Summary**: The Game Over screen provides a summary of all completed missions and their impact on the session.
 
 ---
 
-## 5. Strategic Features
+## 5. Interactive Tip System
+
+The game implements a contextual onboarding system to guide players through its deep mechanics without intrusive tutorials.
+
+### Component Architecture
+*   **TipOverlay**: A full-screen overlay that uses a **Spotlight Effect** to highlight specific UI elements while dimming the rest of the screen.
+*   **Spotlight Mechanics**: Implemented using `ClipOp.Difference` on a `Path` containing the target element's bounding box.
+*   **Target Tracking**: Uses a custom `trackTipTarget` modifier and `Modifier.onGloballyPositioned` to dynamically send screen coordinates of HUD elements back to the overlay coordinator.
+
+### Contextual Triggers
+1.  **First Merge**: Guided merging instruction for new players.
+2.  **Daily Challenge Intro**: Points out the challenge system in the first session.
+3.  **Perk Mastery**: Triggers when the first perk is collected, explaining the `PerkBar` mechanics.
+4.  **Post-Game Discovery**: Highlights Leaderboards and Achievements on the first Game Over screen.
+
+---
+
+## 6. Strategic Features
 
 ### Prediction & Previews
 *   **Interactive Previews**: Visually simulates Swaps, Moves, and direct Value changes before commitment.
@@ -150,7 +172,7 @@ The game features a dynamic mission system that resets per session but tracks lo
 
 ---
 
-## 6. UI & Visual Identity
+## 7. UI & Visual Identity
 
 *   **Design System**: Centralized in `HexagoneTheme`, mapping Material 3 roles to "Glowing Hardware" tokens.
 *   **Stable Popups**: Notifications use **sequential IDs** and pre-calculated offsets for animation stability.
@@ -160,7 +182,7 @@ The game features a dynamic mission system that resets per session but tracks lo
 
 ---
 
-## 7. Development Guidelines
+## 8. Development Guidelines
 1.  **ViewModel Delegation**: Extract complex logic into domain-specific delegates (State, Action, Effect, Merge, Achievement) to maintain a slim coordinator.
 2.  **State Atomicity**: Use `_uiState.update { ... }` for all gameplay changes to ensure consistency.
 3.  **Unique Merge IDs**: Always generate dynamic, unique IDs for merges (e.g., `cell_path_merge_N`) to prevent `MergeDelegate` from skipping animation steps due to ID collisions.
