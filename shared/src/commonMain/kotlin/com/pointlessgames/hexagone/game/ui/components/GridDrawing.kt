@@ -114,6 +114,7 @@ internal fun drawHoverResult(
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
     colorScheme: androidx.compose.material3.ColorScheme,
     spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
+    scoreText: String = "",
 ) {
     val targetOffset = HexagonGridDefaults.calculateOffset(
         merge.targetX,
@@ -191,8 +192,7 @@ internal fun drawHoverResult(
         }
         else -> merge.baseScore
     }
-    if (displayScore > 0) {
-        val scoreText = "+$displayScore"
+    if (scoreText.isNotEmpty()) {
         val scoreTextLayout = textMeasurer.measure(
             text = scoreText,
             style = TextStyle(color = Color.White, fontWeight = FontWeight.Black, fontSize = 16.sp),

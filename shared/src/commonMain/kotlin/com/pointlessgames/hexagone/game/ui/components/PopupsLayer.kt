@@ -38,6 +38,7 @@ import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.label_redemption
 import hexagone.shared.generated.resources.label_tactical_redemption
 import hexagone.shared.generated.resources.label_tactician
+import hexagone.shared.generated.resources.score_popup
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -165,7 +166,7 @@ internal fun StandardScorePopup(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            "+${popup.score}",
+            stringResource(Res.string.score_popup, popup.score),
             color = Color.White,
             fontWeight = FontWeight.Black,
             fontSize = 24.sp,
@@ -251,7 +252,7 @@ internal fun SpecialScorePopup(
                 )
             }
             Text(
-                "+${popup.score}",
+                stringResource(Res.string.score_popup, popup.score),
                 color = Color.White,
                 fontWeight = FontWeight.Black,
                 fontSize = 28.sp,

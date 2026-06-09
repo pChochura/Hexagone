@@ -33,6 +33,13 @@
     <string name="perk_selection_hint">Przytrzymaj perk, aby zobaczyć jego opis</string>
     <string name="no_moves_left_warning">BRAK RUCHÓW! UŻYJ PERKA</string>
 
+    <!-- Tips -->
+    <string name="tip_merge_message">Połącz trzy lub więcej identycznych płytek, aby je scalić!</string>
+    <string name="tip_perk_message">Zdobyłeś perka! Dotknij tutaj, aby go aktywować i wyczyścić trudne miejsca.</string>
+    <string name="tip_post_game_message">Świetna gra! Sprawdź swój ranking lub zobacz odblokowane osiągnięcia.</string>
+    <string name="tip_daily_message">Codziennie wykonuj unikalne cele, aby zdobywać nagrody i budować serię.</string>
+    <string name="tip_button_got_it">ROZUMIEM!</string>
+
     <!-- Combo Tiers -->
     <string name="tier_surge">PRZYPŁYW</string>
     <string name="tier_overdrive">PRZECIĄŻENIE</string>
@@ -114,6 +121,21 @@
     <string name="no_hints_available">Brak dostępnych podpowiedzi\nSpróbuj cofnąć ruchy</string>
     <string name="need_a_hint">Potrzebujesz podpowiedzi?</string>
     <string name="daily_challenge">Wyzwanie dnia</string>
+    <string name="daily_challenge_completed">WYZWANIE DNIA UKOŃCZONE!</string>
+    <string name="daily_reward_granted">NAGRODA DNIA PRZYZNANA</string>
+    <string name="rank_regional">#%1$d w Twoim regionie</string>
+    <string name="rank_global">#%1$d na świecie</string>
+    <string name="done">GOTOWE</string>
+    <string name="score_popup">+%1$d</string>
+    <string name="pending_levels">+%1$d</string>
+    <string name="combo_multiplier">x%1$d</string>
+    <string name="restart_confirmation">Czy na pewno chcesz zacząć od nowa?</string>
+    <string name="perk_unlocked">PERK ODBLOKOWANY</string>
+    <string name="all_tiles_upgrade">+1 DO WSZYSTKICH PŁYTEK!</string>
+    <string name="rank_formatted">#%1$d</string>
+    <string name="unknown">Nieznany</string>
+    <string name="progress_fraction">%1$d / %2$d</string>
+    <string name="reward_score_added">+%1$d PUNKTÓW</string>
     <string name="easy">Łatwy</string>
     <string name="medium">Średni</string>
     <string name="hard">Trudny</string>

@@ -141,7 +141,7 @@ internal fun PerkSelectionDialog(
                                 .padding(horizontal = spacing.small, vertical = spacing.tiny)
                         ) {
                             Text(
-                                text = "+$pendingLevelUps",
+                                text = stringResource(Res.string.pending_levels, pendingLevelUps),
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp

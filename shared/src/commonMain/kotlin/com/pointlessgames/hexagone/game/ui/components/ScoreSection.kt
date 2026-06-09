@@ -48,36 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.app_name
-import hexagone.shared.generated.resources.daily_challenge
-import hexagone.shared.generated.resources.ic_daily_challenge
-import hexagone.shared.generated.resources.best_score_label
-import hexagone.shared.generated.resources.ic_achievements
-import hexagone.shared.generated.resources.ic_leaderboards
-import hexagone.shared.generated.resources.ic_settings
-import hexagone.shared.generated.resources.level_label
-import hexagone.shared.generated.resources.max_label
-import hexagone.shared.generated.resources.perk_active_label
-import hexagone.shared.generated.resources.perk_advance_queue_name
-import hexagone.shared.generated.resources.perk_chain_merge_name
-import hexagone.shared.generated.resources.perk_duplicate_tile_name
-import hexagone.shared.generated.resources.perk_freeze_tile_name
-import hexagone.shared.generated.resources.perk_fusion_name
-import hexagone.shared.generated.resources.perk_increment_tile_name
-import hexagone.shared.generated.resources.perk_move_tile_name
-import hexagone.shared.generated.resources.perk_path_merge_name
-import hexagone.shared.generated.resources.perk_remove_tile_name
-import hexagone.shared.generated.resources.perk_skip_spawn_name
-import hexagone.shared.generated.resources.perk_swap_tiles_name
-import hexagone.shared.generated.resources.perk_undo_name
-import hexagone.shared.generated.resources.score_label
-import hexagone.shared.generated.resources.tier_overdrive
-import hexagone.shared.generated.resources.tier_surge
-import hexagone.shared.generated.resources.tier_zenith
-import hexagone.shared.generated.resources.tooltip_achievements
-import hexagone.shared.generated.resources.tooltip_leaderboard
-import hexagone.shared.generated.resources.tooltip_settings
+import hexagone.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -337,7 +308,7 @@ fun ScoreSection(
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "x$targetCombo",
+                                text = stringResource(Res.string.combo_multiplier, targetCombo),
                                 color = comboColor,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 24.sp,

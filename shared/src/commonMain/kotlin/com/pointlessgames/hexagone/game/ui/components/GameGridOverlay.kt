@@ -60,6 +60,7 @@ import com.pointlessgames.hexagone.game.model.ScorePopup
 import com.pointlessgames.hexagone.game.model.GhostAnimationState
 import hexagone.shared.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
@@ -111,6 +112,21 @@ internal fun GameGridOverlay(
 
     val hoverProgress = remember { Animatable(0f) }
     val activeHoverMerge = remember { mutableStateOf<MergeTransition?>(null) }
+    val scoreText = activeHoverMerge.value?.let { merge ->
+        val potentialMerge = potentialMergesProvider()[merge.targetX to merge.targetY]
+        val isPlacementPerk = merge.resultId.contains("move") ||
+                merge.resultId.contains("swap") ||
+                merge.resultId.contains("duplicate") ||
+                merge.resultId.contains("increment") ||
+                merge.resultId.contains("highlight")
+        val displayScore = if (isPlacementPerk) {
+            merge.baseScore
+        } else {
+            potentialMerge?.baseScore ?: merge.baseScore
+        }
+        if (displayScore > 0) stringResource(Res.string.score_popup, displayScore) else ""
+    } ?: ""
+
     LaunchedEffect(hoveredMergeState) {
         hoveredMergeState.collect {
             activeHoverMerge.value = it
@@ -561,6 +577,7 @@ internal fun GameGridOverlay(
                                 textMeasurer = textMeasurer,
                                 colorScheme = colorScheme,
                                 spacing = spacing,
+                                scoreText = scoreText,
                             )
                         }
 

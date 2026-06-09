@@ -29,6 +29,8 @@ import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.all_tiles_upgrade
+import hexagone.shared.generated.resources.perk_unlocked
 import hexagone.shared.generated.resources.tier_overdrive
 import hexagone.shared.generated.resources.tier_surge
 import hexagone.shared.generated.resources.tier_zenith
@@ -106,7 +108,7 @@ internal fun TierRewardOverlay(
             Spacer(Modifier.height(spacing.medium))
 
             Text(
-                text = "PERK UNLOCKED",
+                text = stringResource(Res.string.perk_unlocked),
                 color = Color.White.copy(alpha = 0.6f),
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
@@ -162,7 +164,7 @@ internal fun TierRewardOverlay(
             if (tier == ComboTier.ZENITH) {
                 Spacer(Modifier.height(spacing.large))
                 Text(
-                    text = "+1 TO ALL TILES ON BOARD!",
+                    text = stringResource(Res.string.all_tiles_upgrade),
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Black,
                     fontSize = 16.sp,

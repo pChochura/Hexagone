@@ -315,7 +315,7 @@ private fun ChallengeCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = if (isCompleted) stringResource(Res.string.daily_challenge_completed)
-                        else "${progress.progress} / ${challenge.target}",
+                        else stringResource(Res.string.progress_fraction, progress.progress, challenge.target),
                         color = if (isCompleted) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.4f),
                         fontWeight = FontWeight.Medium,
                         fontSize = 12.sp,

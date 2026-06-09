@@ -152,6 +152,21 @@
     <string name="hard">Hard</string>
     <string name="today">Today</string>
 
+    <string name="daily_reward_granted">DAILY REWARD GRANTED</string>
+    <string name="rank_regional">#%1$d in your region</string>
+    <string name="rank_global">#%1$d in the world</string>
+    <string name="done">DONE</string>
+    <string name="score_popup">+%1$d</string>
+    <string name="pending_levels">+%1$d</string>
+    <string name="combo_multiplier">x%1$d</string>
+    <string name="restart_confirmation">Are you sure you want to restart?</string>
+    <string name="perk_unlocked">PERK UNLOCKED</string>
+    <string name="all_tiles_upgrade">+1 TO ALL TILES ON BOARD!</string>
+    <string name="rank_formatted">#%1$d</string>
+    <string name="unknown">Unknown</string>
+    <string name="progress_fraction">%1$d / %2$d</string>
+    <string name="reward_score_added">+%1$d SCORE</string>
+
     <!-- Tutorial -->
     <string name="tutorial_1">Swipe across the screen to move</string>
     <string name="tutorial_2">The adjacent tile will change color</string>

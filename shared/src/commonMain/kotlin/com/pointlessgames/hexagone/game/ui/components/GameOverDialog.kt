@@ -169,7 +169,7 @@ internal fun GameOverDialog(
                             .padding(horizontal = spacing.large, vertical = spacing.extraSmall),
                     ) {
                         Text(
-                            text = if (rank.isRegional) "#${rank.rank} in your region" else "#${rank.rank} in the world",
+                            text = if (rank.isRegional) stringResource(Res.string.rank_regional, rank.rank) else stringResource(Res.string.rank_global, rank.rank),
                             color = Color(0xFFFFD54F), // Yellow from screenshot
                             fontWeight = FontWeight.Black,
                             fontSize = 12.sp,
@@ -349,9 +349,9 @@ private fun DailyChallengeSummaryRow(
     }
 
     val rewardText = when {
-        challenge.rewardScore > 0 -> "+${challenge.rewardScore}"
+        challenge.rewardScore > 0 -> stringResource(Res.string.score_popup, challenge.rewardScore)
         challenge.rewardPerk != null -> stringResource(challenge.rewardPerk.displayNameRes).uppercase()
-        else -> "DONE"
+        else -> stringResource(Res.string.done)
     }
 
     Row(

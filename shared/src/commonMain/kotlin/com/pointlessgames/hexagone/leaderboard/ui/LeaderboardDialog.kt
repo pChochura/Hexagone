@@ -59,6 +59,8 @@ import hexagone.shared.generated.resources.onboarding_submit
 import hexagone.shared.generated.resources.onboarding_subtitle
 import hexagone.shared.generated.resources.onboarding_title
 import hexagone.shared.generated.resources.onboarding_username_placeholder
+import hexagone.shared.generated.resources.rank_formatted
+import hexagone.shared.generated.resources.unknown
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -337,7 +339,7 @@ private fun RankItem(rank: Int, result: DetailedGameResult) {
             contentAlignment = Alignment.CenterStart,
         ) {
             Text(
-                text = "#$rank",
+                text = stringResource(Res.string.rank_formatted, rank),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (rank <= 3) MaterialTheme.colorScheme.tertiary else Color.White.copy(
                     alpha = 0.6f,
@@ -346,7 +348,7 @@ private fun RankItem(rank: Int, result: DetailedGameResult) {
             )
         }
         Text(
-            text = result.username ?: "Unknown",
+            text = result.username ?: stringResource(Res.string.unknown),
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White,

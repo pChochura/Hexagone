@@ -27,10 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.DailyChallenge
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.daily_challenge_completed
-import hexagone.shared.generated.resources.ic_daily_challenge
-import hexagone.shared.generated.resources.ic_star
+import hexagone.shared.generated.resources.*
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.milliseconds
@@ -122,7 +119,7 @@ internal fun DailyChallengeRewardOverlay(
                     Column {
                         if (challenge.rewardScore > 0) {
                             Text(
-                                text = "+${challenge.rewardScore} SCORE",
+                                text = stringResource(Res.string.reward_score_added, challenge.rewardScore),
                                 color = Color.White,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 18.sp,
@@ -139,7 +136,7 @@ internal fun DailyChallengeRewardOverlay(
                             )
                         }
                         Text(
-                            text = "DAILY REWARD GRANTED",
+                            text = stringResource(Res.string.daily_reward_granted),
                             color = Color.White.copy(alpha = 0.5f),
                             fontSize = 12.sp,
                             lineHeight = 16.sp

@@ -76,7 +76,7 @@ fun SettingsDialog(
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Are you sure you want to restart?",
+                        text = stringResource(Res.string.restart_confirmation),
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
