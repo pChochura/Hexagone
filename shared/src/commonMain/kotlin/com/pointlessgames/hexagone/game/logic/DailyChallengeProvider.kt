@@ -75,8 +75,8 @@ object DailyChallengeProvider {
             }
 
             ChallengeGoal.COMBO_MAINTENANCE -> random.nextInt(5, 11) // Maintain x5+ for N turns
-            ChallengeGoal.GHOST_HORDE -> random.nextInt(3, 5) // N ghosts of same value
-            ChallengeGoal.PATH_MERGE_COUNT -> random.nextInt(8, 13) // Clear N tiles with Path Merge
+            ChallengeGoal.GHOST_HORDE -> random.nextInt(4, 5) // N ghosts of same value
+            ChallengeGoal.PATH_MERGE_COUNT -> random.nextInt(4, 7) // Clear N tiles with Path Merge
             ChallengeGoal.DIVERSITY_STREAK -> 1 // 1-7 sequence
             ChallengeGoal.FRUGAL_SURVIVOR -> random.nextInt(5, 9) // Reach Level N with 8 perks
             ChallengeGoal.PERK_RESTRICTED_LEVEL -> {
