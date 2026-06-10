@@ -177,16 +177,6 @@ internal fun GameOverDialog(
     ) {
         val isLandscape = maxWidth > maxHeight
 
-        HexagonIconButton(
-            onClick = onViewBoard,
-            icon = Res.drawable.ic_hide,
-            tooltip = Res.string.tooltip_view_board,
-            size = 36.dp.scaled,
-            modifier = Modifier.align(Alignment.TopEnd),
-            backgroundColor = Color.White.copy(alpha = 0.05f),
-            borderColor = Color.White.copy(alpha = 0.1f),
-        )
-
         Column(
             modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -291,6 +281,16 @@ internal fun GameOverDialog(
                 )
             }
         }
+
+        HexagonIconButton(
+            onClick = onViewBoard,
+            icon = Res.drawable.ic_hide,
+            tooltip = Res.string.tooltip_view_board,
+            size = 36.dp.scaled,
+            modifier = Modifier.align(Alignment.TopEnd),
+            backgroundColor = Color.White.copy(alpha = 0.05f),
+            borderColor = Color.White.copy(alpha = 0.1f),
+        )
     }
 }
 
