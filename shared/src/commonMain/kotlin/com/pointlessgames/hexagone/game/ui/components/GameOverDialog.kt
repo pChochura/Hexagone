@@ -42,6 +42,7 @@ import com.pointlessgames.hexagone.game.model.DailyChallengeProgress
 import com.pointlessgames.hexagone.game.model.RankingInfo
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.ui.theme.scaled
 import hexagone.shared.generated.resources.*
 import hexagone.shared.generated.resources.daily_challenge_goal_score
 import hexagone.shared.generated.resources.daily_challenge_goal_tactical
@@ -123,24 +124,24 @@ internal fun GameOverDialog(
             .fillMaxWidth(0.92f)
             .background(
                 MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
-                RoundedCornerShape(48.dp),
+                RoundedCornerShape(48.dp.scaled),
             )
             .border(
-                2.dp,
+                2.dp.scaled,
                 Color.White.copy(alpha = 0.05f),
-                RoundedCornerShape(48.dp),
+                RoundedCornerShape(48.dp.scaled),
             )
-            .padding(spacing.extraLarge),
+            .padding(spacing.extraLarge.scaled),
     ) {
         HexagonIconButton(
             onClick = onViewBoard,
             icon = Res.drawable.ic_back,
             tooltip = Res.string.tooltip_view_board,
-            size = 48.dp,
+            size = 48.dp.scaled,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .graphicsLayer { rotationZ = 180f }
-                .padding(spacing.small),
+                .padding(spacing.small.scaled),
             backgroundColor = Color.White.copy(alpha = 0.05f),
             borderColor = Color.White.copy(alpha = 0.1f),
         )
@@ -152,11 +153,11 @@ internal fun GameOverDialog(
                 text = stringResource(Res.string.game_over_title).uppercase(),
                 color = Color.White.copy(alpha = 0.6f),
                 fontWeight = FontWeight.Black,
-                fontSize = 24.sp,
-                letterSpacing = 6.sp,
+                fontSize = 24.sp.scaled,
+                letterSpacing = 6.sp.scaled,
             )
 
-            Spacer(Modifier.height(spacing.medium))
+            Spacer(Modifier.height(spacing.medium.scaled))
 
             AnimatedContent(rankingInfo) { rankingInfo ->
                 rankingInfo?.let { rank ->
@@ -166,21 +167,21 @@ internal fun GameOverDialog(
                                 Color.White.copy(alpha = 0.08f),
                                 RoundedCornerShape(MaterialTheme.cornerRadius.full),
                             )
-                            .padding(horizontal = spacing.large, vertical = spacing.extraSmall),
+                            .padding(horizontal = spacing.large.scaled, vertical = spacing.extraSmall.scaled),
                     ) {
                         Text(
                             text = if (rank.isRegional) stringResource(Res.string.rank_regional, rank.rank) else stringResource(Res.string.rank_global, rank.rank),
                             color = Color(0xFFFFD54F), // Yellow from screenshot
                             fontWeight = FontWeight.Black,
-                            fontSize = 12.sp,
-                            letterSpacing = 1.sp,
+                            fontSize = 12.sp.scaled,
+                            letterSpacing = 1.sp.scaled,
                         )
                     }
-                    Spacer(Modifier.height(spacing.medium))
+                    Spacer(Modifier.height(spacing.medium.scaled))
                 }
             }
 
-            Spacer(Modifier.height(spacing.small))
+            Spacer(Modifier.height(spacing.small.scaled))
 
             Box(contentAlignment = Alignment.Center) {
                 // Score Glow - Deferred read to Draw phase via graphicsLayer
@@ -205,16 +206,16 @@ internal fun GameOverDialog(
                     text = animatedScore.toString(),
                     color = Color.White,
                     fontWeight = FontWeight.Black,
-                    fontSize = 84.sp,
+                    fontSize = 84.sp.scaled,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = spacing.extraLarge),
+                    modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled),
                 )
 
                 if (isNewBest) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .offset(x = 16.dp, y = (-8).dp)
+                            .offset(x = 16.dp.scaled, y = (-8).dp.scaled)
                             .graphicsLayer {
                                 rotationZ = badgeRotationProvider()
                             }
@@ -222,14 +223,14 @@ internal fun GameOverDialog(
                                 Color(0xFFF06292), // Pink from screenshot
                                 RoundedCornerShape(MaterialTheme.cornerRadius.full),
                             )
-                            .padding(horizontal = spacing.medium, vertical = spacing.extraSmall),
+                            .padding(horizontal = spacing.medium.scaled, vertical = spacing.extraSmall.scaled),
                     ) {
                         Text(
                             text = stringResource(Res.string.new_best_label).uppercase(),
                             color = Color.White,
                             fontWeight = FontWeight.Black,
-                            fontSize = 10.sp,
-                            letterSpacing = 1.sp,
+                            fontSize = 10.sp.scaled,
+                            letterSpacing = 1.sp.scaled,
                         )
                     }
                 }
@@ -245,27 +246,27 @@ internal fun GameOverDialog(
                 text = bestScoreLabel,
                 color = Color.White.copy(alpha = 0.4f),
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                letterSpacing = 1.sp,
+                fontSize = 16.sp.scaled,
+                letterSpacing = 1.sp.scaled,
             )
 
             if (completedChallenges.isNotEmpty()) {
-                Spacer(Modifier.height(spacing.large))
+                Spacer(Modifier.height(spacing.large.scaled))
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(MaterialTheme.cornerRadius.medium))
                         .background(Color.White.copy(alpha = 0.05f))
-                        .padding(spacing.medium),
-                    verticalArrangement = Arrangement.spacedBy(spacing.small),
+                        .padding(spacing.medium.scaled),
+                    verticalArrangement = Arrangement.spacedBy(spacing.small.scaled),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         text = stringResource(Res.string.daily_challenge).uppercase(),
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.ExtraBold,
-                        fontSize = 10.sp,
-                        letterSpacing = 1.sp,
+                        fontSize = 10.sp.scaled,
+                        letterSpacing = 1.sp.scaled,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                     )
@@ -276,7 +277,7 @@ internal fun GameOverDialog(
                 }
             }
 
-            Spacer(Modifier.height(spacing.large))
+            Spacer(Modifier.height(spacing.large.scaled))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -288,7 +289,7 @@ internal fun GameOverDialog(
                     label = stringResource(Res.string.label_level),
                     value = level.toString(),
                     backgroundColor = Color(0xFF37474F), // Dark teal/grey
-                    size = 72.dp,
+                    size = 72.dp.scaled,
                 )
 
                 // Max Piece Stat (Larger and glowing)
@@ -296,7 +297,7 @@ internal fun GameOverDialog(
                     label = stringResource(Res.string.label_max_piece),
                     value = highestValue.toString(),
                     backgroundColor = Color(0xFF9345C4), // Purple
-                    size = 92.dp,
+                    size = 92.dp.scaled,
                     labelColor = Color.White,
                     glowAlphaProvider = maxPieceGlowAlphaProvider,
                     glowColor = Color(0xFFBB86FC),
@@ -307,7 +308,7 @@ internal fun GameOverDialog(
                     label = stringResource(Res.string.label_max_combo),
                     value = maxCombo.toString(),
                     backgroundColor = Color(0xFF5D4037), // Dark brown
-                    size = 72.dp,
+                    size = 72.dp.scaled,
                 )
             }
         }
@@ -364,14 +365,14 @@ private fun DailyChallengeSummaryRow(
                 painter = painterResource(Res.drawable.ic_star),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(14.dp),
+                modifier = Modifier.size(14.dp.scaled),
             )
-            Spacer(Modifier.width(MaterialTheme.spacing.small))
+            Spacer(Modifier.width(MaterialTheme.spacing.small.scaled))
             Text(
                 text = goalText,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 11.sp,
+                fontSize = 11.sp.scaled,
                 maxLines = 1,
             )
         }
@@ -380,7 +381,7 @@ private fun DailyChallengeSummaryRow(
             text = rewardText,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Black,
-            fontSize = 10.sp,
+            fontSize = 10.sp.scaled,
         )
     }
 }
@@ -398,12 +399,12 @@ private fun GameOverStatHexagon(
     val spacing = MaterialTheme.spacing
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Box(
                 modifier = Modifier
-                    .size(width = size + 16.dp, height = (size + 16.dp) * 0.866f)
+                    .size(width = size + 16.dp.scaled, height = (size + 16.dp.scaled) * 0.866f)
                     .graphicsLayer { 
                         alpha = glowAlphaProvider()
                     }
@@ -413,14 +414,14 @@ private fun GameOverStatHexagon(
                 modifier = Modifier
                     .size(width = size, height = size * 0.866f)
                     .background(backgroundColor, FlatTopHexagonShape())
-                    .border(2.dp, Color.White.copy(alpha = 0.1f), FlatTopHexagonShape()),
+                    .border(2.dp.scaled, Color.White.copy(alpha = 0.1f), FlatTopHexagonShape()),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = value,
                     color = Color.White,
                     fontWeight = FontWeight.Black,
-                    fontSize = (size.value * 0.35f).sp,
+                    fontSize = (size.value * 0.35f).sp, // This is already relative to size
                     textAlign = TextAlign.Center,
                 )
             }
@@ -429,8 +430,8 @@ private fun GameOverStatHexagon(
             text = label,
             color = labelColor,
             fontWeight = FontWeight.Bold,
-            fontSize = 12.sp,
-            letterSpacing = 0.5.sp,
+            fontSize = 12.sp.scaled,
+            letterSpacing = 0.5.sp.scaled,
         )
     }
 }

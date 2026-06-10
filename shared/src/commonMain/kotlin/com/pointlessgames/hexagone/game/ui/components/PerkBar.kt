@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.ui.theme.scaled
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.perk_bar_empty_hint
 import org.jetbrains.compose.resources.stringResource
@@ -112,17 +113,17 @@ fun PerkBar(
                         RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge),
                     )
                     .navigationBarsPadding()
-                    .padding(spacing.large),
+                    .padding(spacing.large.scaled),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = stringResource(Res.string.perk_bar_empty_hint),
                     color = Color.White.copy(alpha = 0.3f),
-                    fontSize = 13.sp,
+                    fontSize = 13.sp.scaled,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
-                    lineHeight = 18.sp,
-                    modifier = Modifier.padding(spacing.large),
+                    lineHeight = 18.sp.scaled,
+                    modifier = Modifier.padding(spacing.large.scaled),
                 )
             }
         } else {
@@ -138,8 +139,8 @@ fun PerkBar(
                     )
                     .clip(RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge))
                     .navigationBarsPadding(),
-                contentPadding = PaddingValues(horizontal = spacing.large, vertical = spacing.medium),
-                horizontalArrangement = Arrangement.spacedBy(spacing.medium, Alignment.CenterHorizontally),
+                contentPadding = PaddingValues(horizontal = spacing.large.scaled, vertical = spacing.medium.scaled),
+                horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 items(distinctPerks, key = { it.name }) { perk ->

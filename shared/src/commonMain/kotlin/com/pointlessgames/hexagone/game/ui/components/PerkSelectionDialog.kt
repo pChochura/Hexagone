@@ -53,6 +53,7 @@ import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.components.Tooltip
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.ui.theme.scaled
 import hexagone.shared.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -97,12 +98,12 @@ internal fun PerkSelectionDialog(
         scrimColor = Color.Black.copy(alpha = 0.2f),
         containerColor = MaterialTheme.colorScheme.surface,
         contentColor = Color.White,
-        tonalElevation = 8.dp,
+        tonalElevation = 8.dp.scaled,
         dragHandle = {
             BottomSheetDefaults.DragHandle(
                 color = Color.White.copy(alpha = 0.2f),
-                width = spacing.extraHuge,
-                height = spacing.extraSmall
+                width = spacing.extraHuge.scaled,
+                height = spacing.extraSmall.scaled
             )
         },
         shape = RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge),
@@ -111,8 +112,8 @@ internal fun PerkSelectionDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = spacing.extraLarge)
-                .padding(bottom = spacing.extraLarge),
+                .padding(horizontal = spacing.extraLarge.scaled)
+                .padding(bottom = spacing.extraLarge.scaled),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(
@@ -124,7 +125,7 @@ internal fun PerkSelectionDialog(
                         text = stringResource(Res.string.level_up_title),
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Black,
-                        fontSize = 32.sp,
+                        fontSize = 32.sp.scaled,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.graphicsLayer {
                             scaleX = pulseScale
@@ -133,18 +134,18 @@ internal fun PerkSelectionDialog(
                     )
 
                     if (pendingLevelUps > 1) {
-                        Spacer(Modifier.width(spacing.medium))
+                        Spacer(Modifier.width(spacing.medium.scaled))
                         Box(
                             modifier = Modifier
                                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), CircleShape)
-                                .border(spacing.extraTiny, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape)
-                                .padding(horizontal = spacing.small, vertical = spacing.tiny)
+                                .border(spacing.extraTiny.scaled, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape)
+                                .padding(horizontal = spacing.small.scaled, vertical = spacing.tiny.scaled)
                         ) {
                             Text(
                                 text = stringResource(Res.string.pending_levels, pendingLevelUps),
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
+                                fontSize = 12.sp.scaled
                             )
                         }
                     }
@@ -158,16 +159,16 @@ internal fun PerkSelectionDialog(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(spacing.extraHuge)
+                                .size(spacing.extraHuge.scaled)
                                 .clip(CircleShape)
                                 .clickable { onRerollClicked() }
-                                .padding(spacing.small),
+                                .padding(spacing.small.scaled),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_roll),
                                 contentDescription = null,
-                                modifier = Modifier.size(24.dp).graphicsLayer { alpha = 0.6f },
+                                modifier = Modifier.size(24.dp.scaled).graphicsLayer { alpha = 0.6f },
                                 tint = Color.White
                             )
                         }
@@ -175,17 +176,17 @@ internal fun PerkSelectionDialog(
                 }
             }
 
-            Spacer(Modifier.height(spacing.small))
+            Spacer(Modifier.height(spacing.small.scaled))
 
             Text(
                 text = stringResource(Res.string.choose_your_perk),
                 color = Color.White.copy(alpha = 0.8f),
-                fontSize = 18.sp,
+                fontSize = 18.sp.scaled,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
             )
 
-            Spacer(Modifier.height(spacing.extraHuge))
+            Spacer(Modifier.height(spacing.extraHuge.scaled))
 
             AnimatedContent(
                 targetState = options,
@@ -198,7 +199,7 @@ internal fun PerkSelectionDialog(
             ) { perkOptions ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
                 ) {
                     perkOptions.forEach { perk ->
                         PerkButton(
@@ -211,18 +212,18 @@ internal fun PerkSelectionDialog(
                             },
                             modifier = Modifier.weight(1f),
                             tooltipDescription = perk.descriptionRes,
-                            buttonSize = spacing.giant
+                            buttonSize = spacing.giant.scaled
                         )
                     }
                 }
             }
 
-            Spacer(Modifier.height(spacing.extraLarge))
+            Spacer(Modifier.height(spacing.extraLarge.scaled))
 
             Text(
                 text = stringResource(Res.string.perk_selection_hint),
                 color = Color.White.copy(alpha = 0.4f),
-                fontSize = 12.sp,
+                fontSize = 12.sp.scaled,
                 textAlign = TextAlign.Center,
             )
         }

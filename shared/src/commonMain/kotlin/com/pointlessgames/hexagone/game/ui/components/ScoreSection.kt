@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ContextualFlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.ui.theme.scaled
 import hexagone.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
@@ -105,16 +107,18 @@ fun ScoreSection(
             modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.medium),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val iconSize = 44.dp.scaled
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(spacing.small),
+                horizontalArrangement = Arrangement.spacedBy(spacing.small.scaled),
             ) {
                 HexagonIconButton(
                     onClick = onLeaderboardClick,
                     icon = Res.drawable.ic_leaderboards,
                     tooltip = Res.string.tooltip_leaderboard,
                     tooltipPosition = Position.BELOW,
-                    size = 44.dp,
+                    size = iconSize,
                     backgroundColor = Color.White.copy(alpha = 0.05f),
                     borderColor = Color.White.copy(alpha = 0.1f),
                 )
@@ -124,7 +128,7 @@ fun ScoreSection(
                     icon = Res.drawable.ic_achievements,
                     tooltip = Res.string.tooltip_achievements,
                     tooltipPosition = Position.BELOW,
-                    size = 44.dp,
+                    size = iconSize,
                     backgroundColor = Color.White.copy(alpha = 0.05f),
                     borderColor = Color.White.copy(alpha = 0.1f),
                 )
@@ -136,22 +140,23 @@ fun ScoreSection(
                 text = stringResource(Res.string.app_name).uppercase(),
                 color = MaterialTheme.colorScheme.outlineVariant,
                 fontWeight = FontWeight.ExtraBold,
-                fontSize = 22.sp,
-                letterSpacing = 2.sp,
+                fontSize = 22.sp.scaled,
+                letterSpacing = 2.sp.scaled,
+                maxLines = 1,
             )
 
             Spacer(Modifier.weight(1f))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(spacing.small),
+                horizontalArrangement = Arrangement.spacedBy(spacing.small.scaled),
             ) {
                 HexagonIconButton(
                     onClick = onDailyChallengeClick,
                     icon = Res.drawable.ic_daily_challenge,
                     tooltip = Res.string.daily_challenge,
                     tooltipPosition = Position.BELOW,
-                    size = 44.dp,
+                    size = iconSize,
                     backgroundColor = if (isDailyChallengeCompleted) 
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) 
                     else Color.White.copy(alpha = 0.05f),
@@ -165,14 +170,14 @@ fun ScoreSection(
                     icon = Res.drawable.ic_settings,
                     tooltip = Res.string.tooltip_settings,
                     tooltipPosition = Position.BELOW,
-                    size = 44.dp,
+                    size = iconSize,
                     backgroundColor = Color.White.copy(alpha = 0.05f),
                     borderColor = Color.White.copy(alpha = 0.1f),
                 )
             }
         }
 
-        Spacer(Modifier.height(spacing.large))
+        Spacer(Modifier.height(spacing.large.scaled))
 
         // Unified Score Section with Progress and Max/Perk Integrated
         Box(
@@ -190,7 +195,7 @@ fun ScoreSection(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = spacing.extraLarge, vertical = spacing.large),
+                    .padding(horizontal = spacing.extraLarge.scaled, vertical = spacing.large.scaled),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
@@ -199,22 +204,22 @@ fun ScoreSection(
                         text = stringResource(Res.string.score_label),
                         color = Color.White.copy(alpha = 0.4f),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        letterSpacing = 1.sp,
+                        fontSize = 14.sp.scaled,
+                        letterSpacing = 1.sp.scaled,
                     )
-                    Spacer(Modifier.width(spacing.small))
+                    Spacer(Modifier.width(spacing.small.scaled))
                     Text(
                         text = "•",
                         color = Color.White.copy(alpha = 0.2f),
-                        fontSize = 14.sp,
+                        fontSize = 14.sp.scaled,
                     )
-                    Spacer(Modifier.width(spacing.small))
+                    Spacer(Modifier.width(spacing.small.scaled))
                     Text(
                         text = stringResource(Res.string.level_label, level),
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        letterSpacing = 1.sp,
+                        fontSize = 14.sp.scaled,
+                        letterSpacing = 1.sp.scaled,
                         modifier = Modifier.clickable(
                             interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                             indication = null,
@@ -229,27 +234,28 @@ fun ScoreSection(
                         text = score.toString(),
                         color = Color.White,
                         fontWeight = FontWeight.Black,
-                        fontSize = 48.sp,
+                        fontSize = 48.sp.scaled,
                         textAlign = TextAlign.Center,
+                        maxLines = 1,
                     )
                 }
 
-                Spacer(Modifier.height(spacing.tiny))
+                Spacer(Modifier.height(spacing.tiny.scaled))
                 Row(
                     verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall.scaled),
                 ) {
                     Text(
                         text = stringResource(Res.string.best_score_label),
                         color = Color.White.copy(alpha = 0.3f),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
+                        fontSize = 16.sp.scaled,
                     )
                     Text(
                         text = bestScore.toString(),
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                         fontWeight = FontWeight.ExtraBold,
-                        fontSize = 16.sp,
+                        fontSize = 16.sp.scaled,
                     )
                 }
             }
@@ -258,8 +264,8 @@ fun ScoreSection(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .padding(start = spacing.extraLarge)
-                    .width(spacing.giant),
+                    .padding(start = spacing.extraLarge.scaled)
+                    .width(spacing.giant.scaled),
                 contentAlignment = Alignment.Center,
             ) {
                 val comboMultiplier = combo + 1
@@ -311,7 +317,7 @@ fun ScoreSection(
                                 text = stringResource(Res.string.combo_multiplier, targetCombo),
                                 color = comboColor,
                                 fontWeight = FontWeight.Black,
-                                fontSize = 24.sp,
+                                fontSize = 24.sp.scaled,
                                 style = TextStyle(
                                     shadow = Shadow(
                                         color = Color.Black.copy(alpha = 0.5f),
@@ -328,9 +334,9 @@ fun ScoreSection(
                                     text = stringResource(tier),
                                     color = comboColor,
                                     fontWeight = FontWeight.Black,
-                                    fontSize = 10.sp,
-                                    letterSpacing = 2.sp,
-                                    modifier = Modifier.offset(y = -spacing.extraSmall),
+                                    fontSize = 10.sp.scaled,
+                                    letterSpacing = 2.sp.scaled,
+                                    modifier = Modifier.offset(y = -spacing.extraSmall.scaled),
                                 )
                             }
                         }
@@ -342,8 +348,8 @@ fun ScoreSection(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = spacing.extraLarge)
-                    .width(spacing.giant),
+                    .padding(end = spacing.extraLarge.scaled)
+                    .width(spacing.giant.scaled),
                 contentAlignment = Alignment.Center,
             ) {
                 AnimatedContent(
@@ -363,7 +369,7 @@ fun ScoreSection(
                                 text = stringResource(Res.string.perk_active_label),
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp,
+                                fontSize = 10.sp.scaled,
                             )
                             val actionRes = when (perk) {
                                 Perk.UNDO -> Res.string.perk_undo_name
@@ -382,9 +388,9 @@ fun ScoreSection(
                             Text(
                                 text = stringResource(actionRes),
                                 color = Color.White.copy(alpha = 0.6f),
-                                fontSize = 10.sp,
+                                fontSize = 10.sp.scaled,
                                 textAlign = TextAlign.Center,
-                                lineHeight = 12.sp,
+                                lineHeight = 12.sp.scaled,
                             )
                         }
                     } else {
@@ -393,9 +399,9 @@ fun ScoreSection(
                                 text = stringResource(Res.string.max_label),
                                 color = Color.White.copy(alpha = 0.3f),
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp,
+                                fontSize = 10.sp.scaled,
                             )
-                            Spacer(Modifier.height(spacing.extraSmall))
+                            Spacer(Modifier.height(spacing.extraSmall.scaled))
                             val colorScheme = MaterialTheme.colorScheme
                             Hexagon(
                                 value = highestValue.toString(),
@@ -404,7 +410,7 @@ fun ScoreSection(
                                     colorScheme,
                                 ).copy(alpha = 0.2f),
                                 isOutline = true,
-                                modifier = Modifier.size(spacing.huge).aspectRatio(1 / 0.866f),
+                                modifier = Modifier.size(spacing.huge.scaled).aspectRatio(1 / 0.866f),
                             )
                         }
                     }

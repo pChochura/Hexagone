@@ -58,6 +58,7 @@ import com.pointlessgames.hexagone.achievements.AchievementStatus
 import com.pointlessgames.hexagone.achievements.GameAchievement
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.ui.theme.scaled
 import hexagone.shared.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -118,20 +119,20 @@ fun AchievementsDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = MaterialTheme.spacing.extraLarge),
+                .padding(horizontal = MaterialTheme.spacing.extraLarge.scaled),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             BottomSheetTitle(text = stringResource(Res.string.achievements_title))
 
-            Spacer(Modifier.height(MaterialTheme.spacing.medium))
+            Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
 
             LazyColumn(
                 state = listState,
                 contentPadding = PaddingValues(
                     bottom = WindowInsets.navigationBars.asPaddingValues()
-                        .calculateBottomPadding() + MaterialTheme.spacing.large
+                        .calculateBottomPadding() + MaterialTheme.spacing.large.scaled
                 ),
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small.scaled),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 groupedStatuses.forEach { (category, categoryStatuses) ->
@@ -140,14 +141,16 @@ fun AchievementsDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(MaterialTheme.colorScheme.surface)
-                                .padding(vertical = MaterialTheme.spacing.small)
+                                .padding(vertical = MaterialTheme.spacing.small.scaled)
                         ) {
                             Text(
                                 text = stringResource(category.title).uppercase(),
-                                style = MaterialTheme.typography.labelMedium,
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontSize = MaterialTheme.typography.labelMedium.fontSize.scaled
+                                ),
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
-                                letterSpacing = 1.sp
+                                letterSpacing = 1.sp.scaled
                             )
                         }
                     }
@@ -160,7 +163,7 @@ fun AchievementsDialog(
                     }
 
                     item {
-                        Spacer(Modifier.height(MaterialTheme.spacing.medium))
+                        Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
                     }
                 }
             }
@@ -221,12 +224,12 @@ private fun AchievementItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(MaterialTheme.spacing.medium),
+                .padding(MaterialTheme.spacing.medium.scaled),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(40.dp.scaled)
                     .clip(CircleShape)
                     .background(
                         if (status.isUnlocked) {
@@ -240,24 +243,24 @@ private fun AchievementItem(
                 Icon(
                     painter = painterResource(if (status.isUnlocked) Res.drawable.ic_star else Res.drawable.ic_locked),
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(20.dp.scaled),
                     tint = if (status.isUnlocked) Color.Unspecified else Color.White.copy(alpha = 0.3f)
                 )
             }
 
-            Spacer(Modifier.width(MaterialTheme.spacing.medium))
+            Spacer(Modifier.width(MaterialTheme.spacing.medium.scaled))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(status.achievement.title),
                     color = Color.White.copy(alpha = alpha),
-                    fontSize = 16.sp,
+                    fontSize = 16.sp.scaled,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = stringResource(status.achievement.description),
                     color = Color.White.copy(alpha = alpha * 0.7f),
-                    fontSize = 12.sp
+                    fontSize = 12.sp.scaled
                 )
             }
         }
@@ -266,11 +269,11 @@ private fun AchievementItem(
             Text(
                 text = "${status.currentProgress} / ${status.maxProgress}",
                 color = Color.White.copy(alpha = 0.4f),
-                fontSize = 9.sp,
+                fontSize = 9.sp.scaled,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(MaterialTheme.spacing.small)
+                    .padding(MaterialTheme.spacing.small.scaled)
             )
         }
     }

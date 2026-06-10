@@ -53,6 +53,8 @@ import com.pointlessgames.hexagone.game.ui.components.*
 import com.pointlessgames.hexagone.leaderboard.ui.LeaderboardDialog
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.ui.theme.IsSmallDevice
+import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.utils.BackHandler
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.no_moves_left_warning
@@ -282,7 +284,7 @@ internal fun GameScreen(
                 modifier = Modifier
                     .weight(1f)
                     .graphicsLayer { clip = false }
-                    .padding(horizontal = MaterialTheme.spacing.large, vertical = MaterialTheme.spacing.small),
+                    .padding(horizontal = MaterialTheme.spacing.large.scaled, vertical = MaterialTheme.spacing.small.scaled),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 if (!isDebugModeProvider()) {
@@ -308,7 +310,7 @@ internal fun GameScreen(
                         }
                     )
 
-                    Spacer(Modifier.weight(0.1f))
+                    Spacer(Modifier.weight(if (IsSmallDevice) 0.05f else 0.1f))
                 }
 
                 GameGridOverlay(
@@ -341,13 +343,13 @@ internal fun GameScreen(
                 )
 
                 if (!isDebugModeProvider()) {
-                    Spacer(Modifier.weight(0.1f))
+                    Spacer(Modifier.weight(if (IsSmallDevice) 0.05f else 0.1f))
                 }
             }
             
             if (!isDebugModeProvider()) {
                 // Placeholder to keep space for PerkBar
-                Spacer(Modifier.height(MaterialTheme.spacing.immense))
+                Spacer(Modifier.height(MaterialTheme.spacing.immense.scaled))
             } else {
                 DebugOverlay(
                     isVisible = true,
@@ -414,11 +416,11 @@ internal fun GameScreen(
                             text = stringResource(Res.string.no_moves_left_warning),
                             color = Color.White,
                             fontWeight = FontWeight.Black,
-                            fontSize = 11.sp,
-                            letterSpacing = 1.sp,
+                            fontSize = 11.sp.scaled,
+                            letterSpacing = 1.sp.scaled,
                         )
                     }
-                    Spacer(Modifier.height(MaterialTheme.spacing.medium))
+                    Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
                 }
 
                 PerkBar(

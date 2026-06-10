@@ -44,6 +44,7 @@ import com.pointlessgames.hexagone.game.model.ChallengeGoal
 import com.pointlessgames.hexagone.game.model.DailyChallengeProgress
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.ui.theme.scaled
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.daily_challenge
 import hexagone.shared.generated.resources.daily_challenge_completed
@@ -113,25 +114,27 @@ fun DailyChallengeDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = MaterialTheme.spacing.extraLarge)
+                .padding(horizontal = MaterialTheme.spacing.extraLarge.scaled)
                 .padding(
                     bottom = WindowInsets.navigationBars.asPaddingValues()
-                        .calculateBottomPadding() + MaterialTheme.spacing.large,
+                        .calculateBottomPadding() + MaterialTheme.spacing.large.scaled,
                 ),
         ) {
             Text(
                 text = stringResource(Res.string.daily_challenge).uppercase(),
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontSize = MaterialTheme.typography.headlineMedium.fontSize.scaled
+                ),
                 fontWeight = FontWeight.Black,
                 color = Color.White,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Spacer(Modifier.height(MaterialTheme.spacing.medium))
+            Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
 
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small.scaled),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 items(challenges) { progress ->
@@ -139,19 +142,21 @@ fun DailyChallengeDialog(
                 }
 
                 item {
-                    Spacer(Modifier.height(MaterialTheme.spacing.large))
+                    Spacer(Modifier.height(MaterialTheme.spacing.large.scaled))
 
                     Text(
                         text = stringResource(Res.string.streak_label, streak).uppercase(),
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontSize = MaterialTheme.typography.labelLarge.fontSize.scaled
+                        ),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
-                        letterSpacing = 1.sp,
+                        letterSpacing = 1.sp.scaled,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth(),
                     )
 
-                    Spacer(Modifier.height(MaterialTheme.spacing.medium))
+                    Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
 
                     StreakRow(streak, isStreakCollectedToday, completedDates)
                 }
@@ -229,11 +234,11 @@ private fun StreakBox(
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp.scaled),
     ) {
         Text(
             text = dayName,
-            fontSize = 10.sp,
+            fontSize = 10.sp.scaled,
             fontWeight = FontWeight.Bold,
             color = if (isToday) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.4f),
         )
@@ -244,7 +249,7 @@ private fun StreakBox(
                 .aspectRatio(1f)
                 .clip(RoundedCornerShape(MaterialTheme.cornerRadius.small))
                 .background(backgroundColor)
-                .border(2.dp, borderColor, RoundedCornerShape(MaterialTheme.cornerRadius.small)),
+                .border(2.dp.scaled, borderColor, RoundedCornerShape(MaterialTheme.cornerRadius.small)),
             contentAlignment = Alignment.Center,
         ) {
             if (isChecked) {
@@ -252,26 +257,26 @@ private fun StreakBox(
                     painter = painterResource(Res.drawable.ic_star),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(24.dp.scaled),
                 )
             } else if (isUpcoming) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_locked),
                     contentDescription = null,
                     tint = Color.White.copy(alpha = 0.2f),
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(16.dp.scaled),
                 )
             } else {
                 Text(
                     text = dayOfMonthString,
                     color = Color.White.copy(alpha = 0.3f),
                     fontWeight = FontWeight.Black,
-                    fontSize = 14.sp,
+                    fontSize = 14.sp.scaled,
                 )
             }
 
             if (reward != null) {
-                RewardTag(reward, Modifier.align(Alignment.BottomEnd).padding(4.dp))
+                RewardTag(reward, Modifier.align(Alignment.BottomEnd).padding(4.dp.scaled))
             }
         }
     }
@@ -284,23 +289,23 @@ private fun RewardTag(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
+            .clip(RoundedCornerShape(4.dp.scaled))
             .background(MaterialTheme.colorScheme.primaryContainer)
-            .padding(horizontal = 4.dp, vertical = 2.dp),
+            .padding(horizontal = 4.dp.scaled, vertical = 2.dp.scaled),
         contentAlignment = Alignment.Center,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp.scaled),
         ) {
             if (reward.diamonds > 0) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp.scaled),
                 ) {
                     Text(
                         text = reward.diamonds.toString(),
-                        fontSize = 8.sp,
+                        fontSize = 8.sp.scaled,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
@@ -308,7 +313,7 @@ private fun RewardTag(
                         painter = painterResource(Res.drawable.ic_diamond),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(10.dp),
+                        modifier = Modifier.size(10.dp.scaled),
                     )
                 }
             }
@@ -321,12 +326,12 @@ private fun RewardTag(
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp.scaled),
                 ) {
                     if (count > 1) {
                         Text(
                             text = count.toString(),
-                            fontSize = 8.sp,
+                            fontSize = 8.sp.scaled,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
@@ -335,7 +340,7 @@ private fun RewardTag(
                         painter = painterResource(icon),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(10.dp),
+                        modifier = Modifier.size(10.dp.scaled),
                     )
                 }
             }
@@ -461,12 +466,12 @@ private fun ChallengeCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(MaterialTheme.spacing.medium),
+                .padding(MaterialTheme.spacing.medium.scaled),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(40.dp.scaled)
                     .clip(CircleShape)
                     .background(
                         if (isCompleted) Brush.linearGradient(
@@ -488,18 +493,18 @@ private fun ChallengeCard(
                     painter = painterResource(if (isCompleted) Res.drawable.ic_star else Res.drawable.ic_daily_challenge),
                     contentDescription = null,
                     tint = if (isCompleted) Color.White else Color.White.copy(alpha = 0.5f),
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(20.dp.scaled),
                 )
             }
 
-            Spacer(Modifier.width(MaterialTheme.spacing.medium))
+            Spacer(Modifier.width(MaterialTheme.spacing.medium.scaled))
 
             Column {
                 Text(
                     text = goalText,
                     color = if (isCompleted) Color.White else Color.White.copy(alpha = 0.8f),
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
+                    fontSize = 15.sp.scaled,
                 )
 
                 val rewardText = when {
@@ -528,21 +533,21 @@ private fun ChallengeCard(
                             alpha = 0.4f,
                         ),
                         fontWeight = FontWeight.Medium,
-                        fontSize = 12.sp,
+                        fontSize = 12.sp.scaled,
                     )
 
                     if (rewardText.isNotEmpty()) {
                         Text(
                             text = "  •  ",
                             color = Color.White.copy(alpha = 0.2f),
-                            fontSize = 12.sp,
+                            fontSize = 12.sp.scaled,
                         )
                         Text(
                             text = rewardText.uppercase(),
                             color = MaterialTheme.colorScheme.primary.copy(alpha = if (isCompleted) 1f else 0.8f),
                             fontWeight = FontWeight.Black,
-                            fontSize = 10.sp,
-                            letterSpacing = 0.5.sp,
+                            fontSize = 10.sp.scaled,
+                            letterSpacing = 0.5.sp.scaled,
                         )
                     }
                 }

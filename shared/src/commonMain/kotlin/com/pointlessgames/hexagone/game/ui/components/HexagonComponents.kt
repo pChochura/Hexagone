@@ -61,6 +61,7 @@ import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.components.Tooltip
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.ui.theme.scaled
 import hexagone.shared.generated.resources.Res
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -553,7 +554,7 @@ fun Hexagon(
 
     val frozenModifier = if (isFrozen) {
         Modifier.border(
-            width = spacing.tiny,
+            width = spacing.tiny.scaled,
             color = MaterialTheme.colorScheme.onSecondaryContainer,
             shape = FlatTopHexagonShape(),
         )
@@ -573,7 +574,7 @@ fun Hexagon(
 
     val tacticalPulseModifier = if (isTactical && tacticalPulse != null) {
         val secondaryColor = MaterialTheme.colorScheme.secondary
-        val strokeWidth = spacing.tiny
+        val strokeWidth = spacing.tiny.scaled
         Modifier.drawBehind {
             HexagonGridDefaults.drawHexagonPath(
                 drawScope = this,
@@ -591,7 +592,7 @@ fun Hexagon(
             .then(
                 if (isOutline) {
                     Modifier.border(
-                        width = spacing.extraTiny,
+                        width = spacing.extraTiny.scaled,
                         color = Color.White.copy(alpha = 0.1f),
                         shape = FlatTopHexagonShape(),
                     )
@@ -604,9 +605,9 @@ fun Hexagon(
                 text = value,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
+                fontSize = 24.sp.scaled,
                 maxLines = 1,
-                autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 24.sp)
+                autoSize = TextAutoSize.StepBased(minFontSize = 8.sp.scaled, maxFontSize = 24.sp.scaled)
             )
         }
 
@@ -614,9 +615,9 @@ fun Hexagon(
             PerkIcon(
                 perk = perk,
                 modifier = Modifier
-                    .size(spacing.large)
+                    .size(spacing.large.scaled)
                     .align(Alignment.BottomCenter)
-                    .offset(y = -spacing.semiSmall),
+                    .offset(y = (-6).dp.scaled),
                 color = Color.White.copy(alpha = 0.6f)
             )
         }
@@ -625,9 +626,9 @@ fun Hexagon(
             PerkIcon(
                 perk = Perk.FREEZE_TILE,
                 modifier = Modifier
-                    .size(spacing.semiLarge)
+                    .size(spacing.semiLarge.scaled)
                     .align(Alignment.TopCenter)
-                    .offset(y = spacing.tiny)
+                    .offset(y = spacing.tiny.scaled)
                     .zIndex(5f),
                 color = Color.White
             )
@@ -645,7 +646,7 @@ fun PerkButton(
     isActive: Boolean = false,
     isEnabled: Boolean = true,
     tooltipDescription: StringResource? = null,
-    buttonSize: Dp = MaterialTheme.spacing.extraHuge
+    buttonSize: Dp = MaterialTheme.spacing.extraHuge.scaled
 ) {
     val spacing = MaterialTheme.spacing
     val colorScheme = MaterialTheme.colorScheme
@@ -658,7 +659,7 @@ fun PerkButton(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
-            .padding(horizontal = spacing.tiny)
+            .padding(horizontal = spacing.tiny.scaled)
             .graphicsLayer { alpha = if (isEnabled) 1f else 0.1f }
     ) {
         val hexagonContent = @Composable {
@@ -681,7 +682,7 @@ fun PerkButton(
                     
                     Box(
                         modifier = Modifier
-                            .size(width = buttonSize + spacing.small, height = (buttonSize + spacing.small) * heightScale)
+                            .size(width = buttonSize + spacing.small.scaled, height = (buttonSize + spacing.small.scaled) * heightScale)
                             .clip(FlatTopHexagonShape())
                             .drawBehind {
                                 drawRect(perkColor.copy(alpha = glowAlpha.value * 0.4f))
@@ -706,7 +707,7 @@ fun PerkButton(
                         .clip(FlatTopHexagonShape())
                         .background(brush)
                         .border(
-                            width = if (isActive) spacing.tiny else if (isLegendary) spacing.tiny else spacing.extraTiny,
+                            width = if (isActive) spacing.tiny.scaled else if (isLegendary) spacing.tiny.scaled else spacing.extraTiny.scaled,
                             color = if (isActive) Color.White.copy(alpha = 0.5f) else if (isLegendary) perkColor else perkColor.copy(alpha = 0.3f),
                             shape = FlatTopHexagonShape(),
                         )
@@ -725,16 +726,16 @@ fun PerkButton(
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .offset(x = spacing.semiSmall, y = -spacing.tiny)
-                            .size(spacing.semiLarge)
+                            .offset(x = spacing.semiSmall.scaled, y = -spacing.tiny.scaled)
+                            .size(spacing.semiLarge.scaled)
                             .background(perkColor, CircleShape)
-                            .border(spacing.extraTiny, MaterialTheme.colorScheme.surface, CircleShape),
+                            .border(spacing.extraTiny.scaled, MaterialTheme.colorScheme.surface, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = count.toString(),
                             color = Color.White,
-                            fontSize = 10.sp,
+                            fontSize = 10.sp.scaled,
                             fontWeight = FontWeight.Black
                         )
                     }
@@ -752,16 +753,16 @@ fun PerkButton(
             hexagonContent()
         }
 
-        Spacer(Modifier.height(spacing.medium))
+        Spacer(Modifier.height(spacing.medium.scaled))
 
         Text(
             text = stringResource(perk.displayNameRes),
             color = if (isActive) perkColor else Color.White.copy(alpha = 0.8f),
-            fontSize = 11.sp,
+            fontSize = 11.sp.scaled,
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center,
-            lineHeight = 11.sp,
-            modifier = Modifier.width(buttonSize + spacing.semiMedium)
+            lineHeight = 11.sp.scaled,
+            modifier = Modifier.width(buttonSize + spacing.semiMedium.scaled)
         )
     }
 }

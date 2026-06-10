@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.ui.theme.scaled
 import hexagone.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
@@ -39,7 +40,7 @@ internal fun GameOverBottomActions(
                 )
             )
             .navigationBarsPadding()
-            .padding(horizontal = spacing.extraLarge, vertical = spacing.huge)
+            .padding(horizontal = spacing.extraLarge.scaled, vertical = spacing.huge.scaled)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -51,14 +52,14 @@ internal fun GameOverBottomActions(
                 icon = Res.drawable.ic_share,
                 label = stringResource(Res.string.share_label),
                 tooltip = Res.string.tooltip_share,
-                size = 56.dp
+                size = 56.dp.scaled
             )
 
             HexagonIconButton(
                 onClick = onRestart,
                 icon = Res.drawable.ic_play_again,
                 label = stringResource(Res.string.play_again_button),
-                size = 72.dp,
+                size = 72.dp.scaled,
                 backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                 borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
             )
@@ -68,7 +69,7 @@ internal fun GameOverBottomActions(
                 icon = Res.drawable.ic_leaderboards,
                 label = stringResource(Res.string.leaderboard_title),
                 tooltip = Res.string.tooltip_leaderboard,
-                size = 56.dp
+                size = 56.dp.scaled
             )
         }
     }

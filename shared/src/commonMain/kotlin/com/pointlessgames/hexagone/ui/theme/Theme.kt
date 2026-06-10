@@ -3,6 +3,7 @@ package com.pointlessgames.hexagone.ui.theme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -16,8 +17,10 @@ import org.jetbrains.compose.resources.Font
 
 @Composable
 fun HexagoneTheme(
+    adaptiveScale: AdaptiveScale = AdaptiveScale(),
     content: @Composable () -> Unit
 ) {
+    val scaleFactor = adaptiveScale.factor
     val fontFamily = FontFamily(
         Font(Res.font.Poppins_Bold, FontWeight.Bold),
         Font(Res.font.Poppins_Regular, FontWeight.Normal),
@@ -67,30 +70,32 @@ fun HexagoneTheme(
 
     val typography = MaterialTheme.typography.copy(
         headlineLarge = TextStyle(
-            fontSize = 32.sp,
-            lineHeight = 39.sp,
+            fontSize = (32 * scaleFactor).sp,
+            lineHeight = (39 * scaleFactor).sp,
             fontWeight = FontWeight.Normal,
             fontFamily = fontFamily,
         ),
         labelMedium = TextStyle(
-            fontSize = 16.sp,
-            lineHeight = 19.5f.sp,
+            fontSize = (16 * scaleFactor).sp,
+            lineHeight = (19.5f * scaleFactor).sp,
             fontWeight = FontWeight.Normal,
             fontFamily = fontFamily,
-            letterSpacing = 2.sp,
+            letterSpacing = (2 * scaleFactor).sp,
         ),
         bodySmall = TextStyle(
-            fontSize = 12.sp,
-            lineHeight = 18.sp,
+            fontSize = (12 * scaleFactor).sp,
+            lineHeight = (18 * scaleFactor).sp,
             fontWeight = FontWeight.Light,
             fontFamily = fontFamily,
         ),
     )
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        shapes = shapes,
-        typography = typography,
-        content = content
-    )
+    CompositionLocalProvider(LocalAdaptiveScale provides adaptiveScale) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            shapes = shapes,
+            typography = typography,
+            content = content
+        )
+    }
 }
