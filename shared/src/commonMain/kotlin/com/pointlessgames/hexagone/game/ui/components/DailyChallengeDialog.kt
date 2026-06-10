@@ -45,8 +45,8 @@ import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.ChallengeGoal
 import com.pointlessgames.hexagone.game.model.DailyChallengeProgress
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
-import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.ui.theme.scaled
+import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.daily_challenge
 import hexagone.shared.generated.resources.daily_challenge_completed
@@ -116,7 +116,6 @@ fun DailyChallengeDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = MaterialTheme.spacing.extraLarge.scaled)
                 .padding(
                     bottom = WindowInsets.navigationBars.asPaddingValues()
                         .calculateBottomPadding() + MaterialTheme.spacing.large.scaled,
@@ -125,12 +124,14 @@ fun DailyChallengeDialog(
             Text(
                 text = stringResource(Res.string.daily_challenge).uppercase(),
                 style = MaterialTheme.typography.headlineMedium.copy(
-                    fontSize = MaterialTheme.typography.headlineMedium.fontSize.scaled
+                    fontSize = MaterialTheme.typography.headlineMedium.fontSize.scaled,
                 ),
                 fontWeight = FontWeight.Black,
                 color = Color.White,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = MaterialTheme.spacing.extraLarge.scaled),
             )
 
             Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
@@ -149,7 +150,7 @@ fun DailyChallengeDialog(
                     Text(
                         text = stringResource(Res.string.streak_label, streak).uppercase(),
                         style = MaterialTheme.typography.labelLarge.copy(
-                            fontSize = MaterialTheme.typography.labelLarge.fontSize.scaled
+                            fontSize = MaterialTheme.typography.labelLarge.fontSize.scaled,
                         ),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
@@ -173,10 +174,13 @@ private fun StreakRow(streak: Int, isStreakCollectedToday: Boolean, completedDat
         Clock.System.todayIn(TimeZone.currentSystemDefault())
     }
 
-    val nextReward = com.pointlessgames.hexagone.game.logic.StreakMilestones.getRewardForStreak(streak + 1)
+    val nextReward =
+        com.pointlessgames.hexagone.game.logic.StreakMilestones.getRewardForStreak(streak + 1)
 
     Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        modifier = Modifier.fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = MaterialTheme.spacing.extraLarge.scaled),
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small.scaled),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -185,13 +189,14 @@ private fun StreakRow(streak: Int, isStreakCollectedToday: Boolean, completedDat
             val isUpcoming = i > 3
 
             val dateForBox = today.plus(i - 3, DateTimeUnit.DAY)
-            val dateSeed = dateForBox.year * 10000L + (dateForBox.month.ordinal + 1) * 100L + dateForBox.day
+            val dateSeed =
+                dateForBox.year * 10000L + (dateForBox.month.ordinal + 1) * 100L + dateForBox.day
 
             val isChecked = completedDates.contains(dateSeed)
             val showReward = nextReward != null && (
-                (isToday && !isStreakCollectedToday) || 
-                (i == 4 && isStreakCollectedToday)
-            )
+                    (isToday && !isStreakCollectedToday) ||
+                            (i == 4 && isStreakCollectedToday)
+                    )
 
             StreakBox(
                 isChecked = isChecked,
@@ -247,7 +252,11 @@ private fun StreakBox(
                 .aspectRatio(1f)
                 .clip(RoundedCornerShape(MaterialTheme.cornerRadius.small))
                 .background(backgroundColor)
-                .border(2.dp.scaled, borderColor, RoundedCornerShape(MaterialTheme.cornerRadius.small)),
+                .border(
+                    2.dp.scaled,
+                    borderColor,
+                    RoundedCornerShape(MaterialTheme.cornerRadius.small),
+                ),
             contentAlignment = Alignment.Center,
         ) {
             if (isChecked) {
@@ -439,6 +448,7 @@ private fun ChallengeCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = MaterialTheme.spacing.extraLarge.scaled)
             .height(IntrinsicSize.Min)
             .clip(shape)
             .border(

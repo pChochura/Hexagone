@@ -259,14 +259,6 @@ internal fun GameScreen(
         remember { mutableStateListOf<com.pointlessgames.hexagone.achievements.GameAchievement>() }
     val activeAchievement = achievementQueue.firstOrNull()
 
-    BackHandler(enabled = showLeaderboard || showAchievements || showSettings || showDailyChallenge) {
-        showLeaderboard = false
-        showAchievements = false
-        showSettings = false
-        showDailyChallenge = false
-        initiallySelectedAchievement = null
-    }
-
     val onEmptySpaceClick = remember(viewModel) { viewModel::onEmptySpaceClicked }
     val onEmptySpaceTouchDown = remember(viewModel) { viewModel::onEmptySpaceTouchDown }
     val onEmptySpaceTouchUp = remember(viewModel) { viewModel::onEmptySpaceTouchUp }
@@ -280,6 +272,22 @@ internal fun GameScreen(
     val onViewBoardToggle = remember(viewModel) { viewModel::onViewBoardToggled }
     val onDebugToggle = remember(viewModel) { viewModel::toggleDebugMode }
     val onDebugCellClick = remember(viewModel) { viewModel::onDebugCellClicked }
+
+    BackHandler(enabled = showLeaderboard || showAchievements || showSettings || showDailyChallenge) {
+        showLeaderboard = false
+        showAchievements = false
+        showSettings = false
+        showDailyChallenge = false
+        initiallySelectedAchievement = null
+    }
+
+    BackHandler(enabled = isGameOver && !showLeaderboard && !showAchievements && !showSettings && !showDailyChallenge && activeTierReward == null && activeChallengeReward == null) {
+        if (showGameOverBoard) {
+            onViewBoardToggle()
+        } else {
+            onRestart()
+        }
+    }
 
     val gridAlphaState = animateFloatAsState(
         targetValue = if (isGameOver && !showGameOverBoard) 0.1f else 1f,
