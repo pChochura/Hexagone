@@ -13,7 +13,7 @@ data class GameItem(
     val x: Int,
     val y: Int,
     val value: Int,
-    val isGhost: Boolean
+    val isGhost: Boolean,
 )
 
 @Immutable
@@ -97,7 +97,7 @@ data class GameUiState(
 data class GameTip(
     val id: TipId,
     val message: StringResource,
-    val targetType: TipTarget = TipTarget.NONE
+    val targetType: TipTarget = TipTarget.NONE,
 )
 
 enum class TipId { MERGE, PERK, POST_GAME, DAILY }
@@ -106,7 +106,7 @@ enum class TipTarget { GRID, PERK_BAR, SCORE_SECTION, GAME_OVER_BUTTONS, NONE }
 @Immutable
 data class RankingInfo(
     val rank: Int,
-    val isRegional: Boolean
+    val isRegional: Boolean,
 )
 
 @Immutable
@@ -127,6 +127,7 @@ sealed interface GameEffect {
         val isPerk: Boolean = false,
         val intensity: Float = 1f,
     ) : GameEffect
+
     data class ScorePopup(
         val gridX: Int,
         val gridY: Int,
@@ -270,7 +271,7 @@ data class PlayerProfile(
     val username: String,
     val region: String,
     @SerialName("best_score")
-    val bestScore: Int = 0
+    val bestScore: Int = 0,
 )
 
 @Immutable
@@ -290,7 +291,7 @@ data class HexagonCell(
     val y: Int,
     val value: Int,
     val isTactical: Boolean = false,
-    val isFrozen: Boolean = false
+    val isFrozen: Boolean = false,
 )
 
 @Immutable
@@ -299,7 +300,7 @@ data class OnBoardPerk(
     val x: Int,
     val y: Int,
     val perk: Perk,
-    val lifespan: Int
+    val lifespan: Int,
 )
 
 @Immutable
@@ -310,7 +311,7 @@ data class PreviewCell(
     val y: Int,
     val value: Int,
     val rank: Int,
-    val isTactical: Boolean = false
+    val isTactical: Boolean = false,
 )
 
 @Immutable
@@ -332,33 +333,30 @@ data class MergeTransition(
     val previewFrozenIds: Set<String>? = null,
     val isRemoval: Boolean = false,
     val isPerkAssisted: Boolean = false,
-    val startingCombo: Int = 0
+    val startingCombo: Int = 0,
 )
 
 @Immutable
 data class MergeStep(
     val mergingCells: List<HexagonCell>,
     val resultValue: Int,
-    val baseScore: Int = 0
+    val baseScore: Int = 0,
 )
 
 @Serializable
-enum class Perk(
-    val baseWeight: Int,
-    val canSaveFromStuck: Boolean = true
-) {
+enum class Perk(val baseWeight: Int) {
     UNDO(baseWeight = 100),
     MOVE_TILE(baseWeight = 80),
     REMOVE_TILE(baseWeight = 80),
     ADVANCE_QUEUE(baseWeight = 50),
     SWAP_TILES(baseWeight = 50),
     FUSION(baseWeight = 20),
-    CHAIN_MERGE(baseWeight = 20, canSaveFromStuck = false),
+    CHAIN_MERGE(baseWeight = 20),
     DUPLICATE_TILE(baseWeight = 50),
-    SKIP_SPAWN(baseWeight = 50, canSaveFromStuck = false),
+    SKIP_SPAWN(baseWeight = 50),
     INCREMENT_TILE(baseWeight = 80),
-    FREEZE_TILE(baseWeight = 60, canSaveFromStuck = false),
-    PATH_MERGE(baseWeight = 5);
+    FREEZE_TILE(baseWeight = 60),
+    PATH_MERGE(baseWeight = 10);
 
     val isLegendary: Boolean get() = baseWeight <= 20
 }
@@ -367,7 +365,7 @@ enum class Perk(
 data class MergeHint(
     val x: Int,
     val y: Int,
-    val weight: Float // 0.0 to 1.0
+    val weight: Float, // 0.0 to 1.0
 )
 
 @Immutable
@@ -379,7 +377,7 @@ data class Particle(
     val vy: Float,
     val color: Color,
     val life: Float,
-    val size: Float
+    val size: Float,
 )
 
 @Immutable
@@ -392,7 +390,7 @@ data class ScorePopup(
     val score: Int,
     val life: Float,
     val color: Color,
-    val labelRes: StringResource? = null
+    val labelRes: StringResource? = null,
 ) : GridPopup
 
 @Immutable
@@ -403,5 +401,5 @@ data class PerkPopup(
     override val gridX: Int,
     override val gridY: Int,
     val perk: Perk,
-    val life: Float
+    val life: Float,
 ) : GridPopup
