@@ -27,8 +27,8 @@
     <string name="cancel">Cancel</string>
 
     <!-- Tips -->
-    <string name="tip_merge_message">Match two or more identical tiles to merge them!</string>
-    <string name="tip_perk_message">You\'ve earned a perk! Tap here to activate it and clear difficult spots.</string>
+    <string name="tip_merge_message">Tap between two or more identical hexes to merge them!</string>
+    <string name="tip_perk_message">You've earned a perk! Tap here to activate it and improve your board state.</string>
     <string name="tip_post_game_message">Great run! Check how you rank against others in the Leaderboards or see your Unlocked Achievements.</string>
     <string name="tip_daily_message">Complete unique objectives every day to earn special rewards and build your streak.</string>
     <string name="tip_button_got_it">GOT IT!</string>
@@ -48,31 +48,31 @@
 
     <!-- Perk Names -->
     <string name="perk_undo_name">UNDO</string>
-    <string name="perk_move_tile_name">MOVE TILE</string>
-    <string name="perk_remove_tile_name">REMOVE TILE</string>
-    <string name="perk_advance_queue_name">ADVANCE QUEUE</string>
-    <string name="perk_swap_tiles_name">SWAP TILES</string>
-    <string name="perk_fusion_name">FUSION</string>
-    <string name="perk_chain_merge_name">CHAIN MERGE</string>
-    <string name="perk_duplicate_tile_name">DUPLICATE TILE</string>
-    <string name="perk_skip_spawn_name">SKIP SPAWN</string>
-    <string name="perk_increment_tile_name">UPGRADE TILE</string>
-    <string name="perk_path_merge_name">PATH MERGE</string>
-    <string name="perk_freeze_tile_name">FREEZE TILE</string>
+    <string name="perk_move_tile_name">MOVE</string>
+    <string name="perk_remove_tile_name">REMOVE</string>
+    <string name="perk_advance_queue_name">ADVANCE</string>
+    <string name="perk_swap_tiles_name">SWAP</string>
+    <string name="perk_fusion_name">FUSE</string>
+    <string name="perk_chain_merge_name">CHAIN</string>
+    <string name="perk_duplicate_tile_name">DUPLICATE</string>
+    <string name="perk_skip_spawn_name">PAUSE</string>
+    <string name="perk_increment_tile_name">UPGRADE</string>
+    <string name="perk_path_merge_name">MERGE</string>
+    <string name="perk_freeze_tile_name">FREEZE</string>
 
     <!-- Perk Descriptions -->
     <string name="perk_undo_desc">Undo your last move.</string>
-    <string name="perk_move_tile_desc">Select a tile and move it to any empty spot.</string>
-    <string name="perk_remove_tile_desc">Select a tile and remove it from the board.</string>
-    <string name="perk_advance_queue_desc">Instantly spawn the next piece from your queue.</string>
-    <string name="perk_swap_tiles_desc">Select two tiles to swap their positions.</string>
-    <string name="perk_fusion_desc">Merge all surrounding tiles into a single superior tile.</string>
+    <string name="perk_move_tile_desc">Select a hex and move it to any empty spot.</string>
+    <string name="perk_remove_tile_desc">Select a hex and remove it from the board.</string>
+    <string name="perk_advance_queue_desc">Instantly spawn the next hexes from your queue.</string>
+    <string name="perk_swap_tiles_desc">Select two hexes to swap their positions.</string>
+    <string name="perk_fusion_desc">Merge all surrounding hexes into a single place.</string>
     <string name="perk_chain_merge_desc">Your next move will trigger chain reactions.</string>
-    <string name="perk_duplicate_tile_desc">Select a tile and place its copy anywhere on the board.</string>
-    <string name="perk_skip_spawn_desc">Play your next move without spawning a new piece from the queue.</string>
-    <string name="perk_increment_tile_desc">Select a tile to increase its value by one.</string>
-    <string name="perk_path_merge_desc">Merge all connected tiles of the same value in a single path.</string>
-    <string name="perk_freeze_tile_desc">Select a solid tile to freeze it for the next turn. Frozen tiles cannot be merged.</string>
+    <string name="perk_duplicate_tile_desc">Select a hex and place its copy anywhere on the board.</string>
+    <string name="perk_skip_spawn_desc">Play your next move without spawning a new hex from the queue.</string>
+    <string name="perk_increment_tile_desc">Select a hex to increase its value by one.</string>
+    <string name="perk_path_merge_desc">Merge all connected tiles of the same value into a single place.</string>
+    <string name="perk_freeze_tile_desc">Select a solid hex to freeze it for the next turn. Frozen hexes cannot be merged.</string>
 
     <!-- Tooltips -->
     <string name="reroll_perks">Reroll selection. Note: Legendary perks will not appear in the new selection.</string>
@@ -123,12 +123,6 @@
     <string name="unknown">Unknown</string>
     <string name="progress_fraction">%1$d / %2$d</string>
     <string name="reward_score_added">+%1$d SCORE</string>
-
-    <!-- Tutorial -->
-    <string name="tutorial_1">Swipe across the screen to move</string>
-    <string name="tutorial_2">The adjacent tile will change color</string>
-    <string name="tutorial_3">Paint the empty tiles across</string>
-    <string name="tutorial_4">Move only onto a tile with a different color</string>
 
     <!-- Onboarding -->
     <string name="onboarding_title">WELCOME</string>

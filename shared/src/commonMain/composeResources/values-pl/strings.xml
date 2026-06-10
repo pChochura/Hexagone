@@ -27,15 +27,15 @@
     <string name="cancel">Anuluj</string>
 
     <!-- Tips -->
-    <string name="tip_merge_message">Połącz dwie lub więcej identycznych płytek, aby je połączyć!</string>
-    <string name="tip_perk_message">Zdobyłeś perka! Dotknij tutaj, aby go aktywować i wyczyścić trudne miejsca.</string>
+    <string name="tip_merge_message">Kliknij pomiędzy co najmniej dwoma identycznymi hexami, aby je połączyć!</string>
+    <string name="tip_perk_message">Zdobyłeś perka! Dotknij tutaj, aby go aktywować i ulepszyć swoją planszę.</string>
     <string name="tip_post_game_message">Świetna gra! Sprawdź swój ranking lub zobacz odblokowane osiągnięcia.</string>
     <string name="tip_daily_message">Codziennie wykonuj unikalne cele, aby zdobywać nagrody i budować serię.</string>
     <string name="tip_button_got_it">ROZUMIEM!</string>
 
     <!-- Combo Tiers -->
-    <string name="tier_surge">PRZYPŁYW</string>
-    <string name="tier_overdrive">PRZECIĄŻENIE</string>
+    <string name="tier_surge">NATARCIE</string>
+    <string name="tier_overdrive">SZAŁ</string>
     <string name="tier_zenith">ZENIT</string>
 
     <!-- Game Effects / Popup Labels -->
@@ -44,35 +44,35 @@
     <string name="label_tactician">TAKTYK</string>
     <string name="label_janitor_plus">WOŹNY+</string>
     <string name="label_sacrifice">POŚWIĘCENIE</string>
-    <string name="label_bar_raised">POPRZECZKA W GÓRĘ</string>
+    <string name="label_bar_raised">POPRZECZKA PODNIESIONA</string>
 
     <!-- Perk Names -->
-    <string name="perk_undo_name">COFNIJ</string>
-    <string name="perk_move_tile_name">PRZENIEŚ PŁYTKĘ</string>
-    <string name="perk_remove_tile_name">USUŃ PŁYTKĘ</string>
-    <string name="perk_advance_queue_name">DODAJ Z KOLEJKI</string>
-    <string name="perk_swap_tiles_name">ZAMIEŃ PŁYTKI</string>
-    <string name="perk_fusion_name">FUZJA</string>
-    <string name="perk_chain_merge_name">ŁAŃCUCH</string>
-    <string name="perk_duplicate_tile_name">KLONOWANIE</string>
-    <string name="perk_skip_spawn_name">BLOKADA KOLEJKI</string>
-    <string name="perk_increment_tile_name">ULEPSZENIE</string>
-    <string name="perk_path_merge_name">SCALANIE ŚCIEŻKI</string>
-    <string name="perk_freeze_tile_name">ZAMROŻENIE</string>
+    <string name="perk_undo_name">Cofnięcie</string>
+    <string name="perk_move_tile_name">Przeniesienie</string>
+    <string name="perk_remove_tile_name">Usunięcie</string>
+    <string name="perk_advance_queue_name">Przyspieszenie</string>
+    <string name="perk_swap_tiles_name">Zamiana</string>
+    <string name="perk_fusion_name">Połączenie</string>
+    <string name="perk_chain_merge_name">Łańcuch</string>
+    <string name="perk_duplicate_tile_name">Duplikacja</string>
+    <string name="perk_skip_spawn_name">Pauza</string>
+    <string name="perk_increment_tile_name">Ulepszenie</string>
+    <string name="perk_path_merge_name">Scalenie</string>
+    <string name="perk_freeze_tile_name">Zamrożenie</string>
 
     <!-- Perk Descriptions -->
     <string name="perk_undo_desc">Cofnij swój ostatni ruch.</string>
-    <string name="perk_move_tile_desc">Wybierz płytkę i przesuń ją w dowolne wolne miejsce.</string>
-    <string name="perk_remove_tile_desc">Wybierz płytkę i usuń ją z planszy.</string>
-    <string name="perk_advance_queue_desc">Natychmiast pobierz kolejną płytkę z kolejki.</string>
-    <string name="perk_swap_tiles_desc">Wybierz dwie płytki, aby zamienić je miejscami.</string>
-    <string name="perk_fusion_desc">Połącz wszystkie sąsiednie płytki w jedną potężną.</string>
+    <string name="perk_move_tile_desc">Wybierz hex i przesuń go w dowolne wolne miejsce.</string>
+    <string name="perk_remove_tile_desc">Wybierz hex i usuń go z planszy.</string>
+    <string name="perk_advance_queue_desc">Natychmiast dodaj do planszy hexy z kolejki.</string>
+    <string name="perk_swap_tiles_desc">Wybierz dwa hexy, aby zamienić je miejscami.</string>
+    <string name="perk_fusion_desc">Połącz wszystkie sąsiednie hexy w jedno miejsce.</string>
     <string name="perk_chain_merge_desc">Twój następny ruch wywoła reakcje łańcuchowe.</string>
-    <string name="perk_duplicate_tile_desc">Wybierz płytkę i umieść jej kopię w dowolnym miejscu na planszy.</string>
-    <string name="perk_skip_spawn_desc">Rozegraj następny ruch bez dodawania nowej płytki z kolejki.</string>
-    <string name="perk_increment_tile_desc">Zwiększ wartość wybranej płytki o jeden.</string>
-    <string name="perk_path_merge_desc">Połącz wszystkie sąsiednie płytki o tej samej wartości w jedną ścieżkę.</string>
-    <string name="perk_freeze_tile_desc">Wybierz płytkę, aby ją zamrozić na następną turę. Zamrożone płytki nie mogą być łączone.</string>
+    <string name="perk_duplicate_tile_desc">Wybierz hexa i umieść jego kopię w dowolnym miejscu na planszy.</string>
+    <string name="perk_skip_spawn_desc">Rozegraj następny ruch bez dodawania nowych hexów z kolejki.</string>
+    <string name="perk_increment_tile_desc">Zwiększ wartość wybranego hexa o jeden.</string>
+    <string name="perk_path_merge_desc">Połącz wszystkie hexy o tej samej wartości tworzące ścieżkę w jedno miejsce.</string>
+    <string name="perk_freeze_tile_desc">Wybierz hexa, aby go zamrozić na następną turę. Zamrożone hexy nie mogą być łączone.</string>
 
     <!-- Tooltips -->
     <string name="reroll_perks">Przelosuj wybór. Uwaga: Legendarne perki nie pojawią się w nowym wyborze.</string>
@@ -99,12 +99,6 @@
     <string name="unknown">Nieznany</string>
     <string name="progress_fraction">%1$d / %2$d</string>
     <string name="reward_score_added">+%1$d PUNKTÓW</string>
-
-    <!-- Tutorial -->
-    <string name="tutorial_1">Przesuń palcem po ekranie, aby się poruszać</string>
-    <string name="tutorial_2">Sąsiednia płytka zmieni kolor</string>
-    <string name="tutorial_3">Pomaluj puste płytki</string>
-    <string name="tutorial_4">Poruszaj się tylko na płytkę o innym kolorze</string>
 
     <!-- Onboarding -->
     <string name="onboarding_title">WITAJ</string>
@@ -158,10 +152,10 @@
     <string name="achievement_hex_master_desc">Osiągnij 30 poziom</string>
     <string name="achievement_deep_pockets_title">Głębokie kieszenie</string>
     <string name="achievement_deep_pockets_desc">Zbierz 10 perków w jednej grze</string>
-    <string name="achievement_feeling_the_surge_title">Czując przypływ</string>
-    <string name="achievement_feeling_the_surge_desc">Osiągnij poziom combo Przypływ (11+)</string>
-    <string name="achievement_maximum_overdrive_title">Maksymalne przeciążenie</string>
-    <string name="achievement_maximum_overdrive_desc">Osiągnij poziom combo Przeciążenie (21+)</string>
+    <string name="achievement_feeling_the_surge_title">Czując natarcie</string>
+    <string name="achievement_feeling_the_surge_desc">Osiągnij poziom combo Natarcie (11+)</string>
+    <string name="achievement_maximum_overdrive_title">Maksymalny szał</string>
+    <string name="achievement_maximum_overdrive_desc">Osiągnij poziom combo Szał (21+)</string>
     <string name="achievement_ascension_title">Wzniesienie</string>
     <string name="achievement_ascension_desc">Osiągnij poziom combo Zenit (31+)</string>
     <string name="achievement_efficiency_expert_title">Ekspert wydajności</string>
