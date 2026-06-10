@@ -153,6 +153,9 @@ internal class GameViewModel(
     init {
         viewModelScope.launch {
             val best = settingsRepository.getBestScore()
+            val diamonds = settingsRepository.getDiamonds()
+            val bankedPerksJson = settingsRepository.getBankedPerks()
+            val bankedPerks = bankedPerksJson?.let { Json.decodeFromString<Map<Perk, Int>>(it) } ?: emptyMap()
             val hintsEnabled = settingsRepository.getMergeHintsEnabled()
             val savedStateJson = settingsRepository.getGameState()
 
@@ -193,6 +196,8 @@ internal class GameViewModel(
                             perkOptions = savedState.perkOptions,
                             canReroll = savedState.canReroll,
                             bestScore = maxOf(best, savedState.score),
+                            diamonds = diamonds,
+                            bankedPerks = bankedPerks,
                             sessionBestScore = savedState.sessionBestScore,
                             mergeHintsEnabled = hintsEnabled,
                             isStuck = savedState.isStuck,
@@ -231,6 +236,8 @@ internal class GameViewModel(
                         it.copy(
                             bestScore = best, 
                             sessionBestScore = best,
+                            diamonds = diamonds,
+                            bankedPerks = bankedPerks,
                             mergeHintsEnabled = hintsEnabled,
                             dailyChallenges = currentDailyChallenges.map { c -> DailyChallengeProgress(c) },
                             completedChallengeDates = completedDates,
@@ -246,6 +253,7 @@ internal class GameViewModel(
                     it.copy(
                         bestScore = best, 
                         sessionBestScore = best,
+                        diamonds = diamonds,
                         mergeHintsEnabled = hintsEnabled,
                         dailyChallenges = currentDailyChallenges.map { c -> DailyChallengeProgress(c) },
                         completedChallengeDates = completedDates,
@@ -664,11 +672,37 @@ internal class GameViewModel(
                 settingsRepository.setChallengeStreak(newStreak)
                 settingsRepository.addCompletedChallengeDate(dateSeed.toString())
 
+                val reward = com.pointlessgames.hexagone.game.logic.StreakMilestones.getRewardForStreak(newStreak)
+                val awardedPerks = mutableMapOf<Perk, Int>()
+                if (reward != null) {
+                    val random = kotlin.random.Random(_uiState.value.seed)
+                    reward.perkRewards.forEach { (category, count) ->
+                        repeat(count) {
+                            val perk = com.pointlessgames.hexagone.game.logic.StreakMilestones.getRandomPerkFromCategory(category, random)
+                            awardedPerks[perk] = (awardedPerks[perk] ?: 0) + 1
+                        }
+                    }
+                    val currentDiamonds = settingsRepository.getDiamonds()
+                    settingsRepository.setDiamonds(currentDiamonds + reward.diamonds)
+                    
+                    val currentBanked = _uiState.value.bankedPerks.toMutableMap()
+                    awardedPerks.forEach { (perk, count) ->
+                        currentBanked[perk] = (currentBanked[perk] ?: 0) + count
+                    }
+                    settingsRepository.setBankedPerks(Json.encodeToString(currentBanked))
+                }
+
                 _uiState.update { 
+                    val newBanked = it.bankedPerks.toMutableMap()
+                    awardedPerks.forEach { (perk, count) ->
+                        newBanked[perk] = (newBanked[perk] ?: 0) + count
+                    }
                     it.copy(
                         challengeStreak = newStreak,
                         completedChallengeDates = it.completedChallengeDates + dateSeed,
-                        isStreakCollectedToday = true
+                        isStreakCollectedToday = true,
+                        diamonds = it.diamonds + (reward?.diamonds ?: 0),
+                        bankedPerks = newBanked
                     )
                 }
             }

@@ -44,6 +44,8 @@ class SettingsRepository(
     private val hasShownMergeTipKey = booleanPreferencesKey("has_shown_merge_tip")
     private val hasShownPerkTipKey = booleanPreferencesKey("has_shown_perk_tip")
     private val hasShownPostGameTipKey = booleanPreferencesKey("has_shown_post_game_tip")
+    private val diamondsKey = intPreferencesKey("diamonds")
+    private val bankedPerksKey = stringPreferencesKey("banked_perks")
     private val hasShownDailyChallengeTipKey =
         booleanPreferencesKey("has_shown_daily_challenge_tip")
 
@@ -375,6 +377,30 @@ class SettingsRepository(
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[challengeStreakKey] = streak
+            }
+        }
+    }
+
+    suspend fun getDiamonds(): Int = withContext(Dispatchers.IO) {
+        appSettings.data.first()[diamondsKey] ?: 0
+    }
+
+    suspend fun setDiamonds(diamonds: Int) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[diamondsKey] = diamonds
+            }
+        }
+    }
+
+    suspend fun getBankedPerks(): String? = withContext(Dispatchers.IO) {
+        appSettings.data.first()[bankedPerksKey]
+    }
+
+    suspend fun setBankedPerks(perksJson: String) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[bankedPerksKey] = perksJson
             }
         }
     }

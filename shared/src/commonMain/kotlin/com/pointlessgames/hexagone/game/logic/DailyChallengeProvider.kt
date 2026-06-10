@@ -102,7 +102,7 @@ object DailyChallengeProvider {
             else -> 100
         }
 
-        val rewardScore = if (!hasPerkReward) baseScore + (streak * streakMultiplier) else 0
+        val rewardScore = if (!hasPerkReward) baseScore + (minOf(streak, 25) * streakMultiplier) else 0
 
         val rewardPerk = if (hasPerkReward) {
             val perks = Perk.entries.filter { perk ->

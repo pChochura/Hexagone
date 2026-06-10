@@ -65,7 +65,11 @@ import hexagone.shared.generated.resources.daily_challenge_goal_score
 import hexagone.shared.generated.resources.daily_challenge_goal_tactical
 import hexagone.shared.generated.resources.daily_challenge_goal_value
 import hexagone.shared.generated.resources.ic_daily_challenge
+import hexagone.shared.generated.resources.ic_diamond
+import hexagone.shared.generated.resources.ic_legendary_perk
 import hexagone.shared.generated.resources.ic_locked
+import hexagone.shared.generated.resources.ic_rare_perk
+import hexagone.shared.generated.resources.ic_roll
 import hexagone.shared.generated.resources.ic_star
 import hexagone.shared.generated.resources.pattern_great_wall
 import hexagone.shared.generated.resources.pattern_ring_of_fire
@@ -90,12 +94,13 @@ fun DailyChallengeDialog(
     challengesProvider: () -> List<DailyChallengeProgress>,
     streakProvider: () -> Int,
     completedDatesProvider: () -> Set<Long>,
-    @Suppress("UNUSED_PARAMETER") isStreakCollectedTodayProvider: () -> Boolean,
+    isStreakCollectedTodayProvider: () -> Boolean,
     onDismiss: () -> Unit,
 ) {
     val challenges = challengesProvider()
     val streak = streakProvider()
     val completedDates = completedDatesProvider()
+    val isStreakCollectedToday = isStreakCollectedTodayProvider()
 
     ModalBottomSheet(
         contentWindowInsets = { WindowInsets.statusBars },
@@ -148,7 +153,7 @@ fun DailyChallengeDialog(
 
                     Spacer(Modifier.height(MaterialTheme.spacing.medium))
 
-                    StreakRow(completedDates)
+                    StreakRow(streak, isStreakCollectedToday, completedDates)
                 }
             }
         }
@@ -156,10 +161,12 @@ fun DailyChallengeDialog(
 }
 
 @Composable
-private fun StreakRow(completedDates: Set<Long>) {
+private fun StreakRow(streak: Int, isStreakCollectedToday: Boolean, completedDates: Set<Long>) {
     val today = remember<LocalDate> {
         Clock.System.todayIn(TimeZone.currentSystemDefault())
     }
+
+    val nextReward = com.pointlessgames.hexagone.game.logic.StreakMilestones.getRewardForStreak(streak + 1)
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -174,12 +181,17 @@ private fun StreakRow(completedDates: Set<Long>) {
             val dateSeed = dateForBox.year * 10000L + (dateForBox.month.ordinal + 1) * 100L + dateForBox.day
 
             val isChecked = completedDates.contains(dateSeed)
+            val showReward = nextReward != null && (
+                (isToday && !isStreakCollectedToday) || 
+                (i == 4 && isStreakCollectedToday)
+            )
 
             StreakBox(
                 isChecked = isChecked,
                 isToday = isToday,
                 isUpcoming = isUpcoming,
                 date = dateForBox,
+                reward = if (showReward) nextReward else null,
                 modifier = Modifier.weight(1f),
             )
 
@@ -196,6 +208,7 @@ private fun StreakBox(
     isToday: Boolean,
     isUpcoming: Boolean,
     date: LocalDate,
+    reward: com.pointlessgames.hexagone.game.logic.StreakReward?,
     modifier: Modifier = Modifier,
 ) {
     val dayName = date.dayOfWeek.name.take(3)
@@ -255,6 +268,76 @@ private fun StreakBox(
                     fontWeight = FontWeight.Black,
                     fontSize = 14.sp,
                 )
+            }
+
+            if (reward != null) {
+                RewardTag(reward, Modifier.align(Alignment.BottomEnd).padding(4.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun RewardTag(
+    reward: com.pointlessgames.hexagone.game.logic.StreakReward,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .padding(horizontal = 4.dp, vertical = 2.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            if (reward.diamonds > 0) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text(
+                        text = reward.diamonds.toString(),
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_diamond),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(10.dp),
+                    )
+                }
+            }
+
+            reward.perkRewards.forEach { (category, count) ->
+                val icon = when (category) {
+                    com.pointlessgames.hexagone.game.logic.PerkCategory.COMMON -> Res.drawable.ic_roll
+                    com.pointlessgames.hexagone.game.logic.PerkCategory.RARE -> Res.drawable.ic_rare_perk
+                    com.pointlessgames.hexagone.game.logic.PerkCategory.LEGENDARY -> Res.drawable.ic_legendary_perk
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    if (count > 1) {
+                        Text(
+                            text = count.toString(),
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
+                    }
+                    Icon(
+                        painter = painterResource(icon),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(10.dp),
+                    )
+                }
             }
         }
     }
