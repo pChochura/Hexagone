@@ -15,7 +15,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentWithReceiverOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -105,6 +107,7 @@ fun HexagonIconButton(
     borderColor: Color = Color(0xFFD63F7B).copy(alpha = 0.4f),
     size: Dp = 64.dp,
 ) {
+    val onClick by rememberUpdatedState(onClick)
     val spacing = MaterialTheme.spacing
     val content = movableContentWithReceiverOf<Modifier> {
         Column(
@@ -117,7 +120,7 @@ fun HexagonIconButton(
                     .clip(FlatTopHexagonShape())
                     .background(backgroundColor)
                     .border(spacing.extraTiny, borderColor, FlatTopHexagonShape())
-                    .clickable { onClick() },
+                    .clickable(onClick = onClick),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(

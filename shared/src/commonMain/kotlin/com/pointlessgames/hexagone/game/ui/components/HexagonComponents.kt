@@ -862,7 +862,15 @@ fun HexagonGrid(
         val gapPx = itemGap.toPx()
         val cellCount = columns * rows
 
-        val cellWidth = constraints.maxWidth / (1f + (columns - 1) * 0.75f)
+        // Calculate width-based constraints
+        val cellWidthFromWidth = constraints.maxWidth / (1f + (columns - 1) * 0.75f)
+
+        // Calculate height-based constraints
+        val cellHeightFromHeight = constraints.maxHeight / (rows + 0.5f)
+        val cellWidthFromHeight = cellHeightFromHeight / (sqrt(3f) / 2f)
+
+        // Take the smaller one to fit in both
+        val cellWidth = minOf(cellWidthFromWidth, cellWidthFromHeight)
         val cellHeight = cellWidth * (sqrt(3f) / 2f)
 
         val itemWidthMeasured = (cellWidth - gapPx).coerceAtLeast(0f)

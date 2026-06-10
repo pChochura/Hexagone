@@ -2,6 +2,7 @@ package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
@@ -174,8 +176,8 @@ private fun StreakRow(streak: Int, isStreakCollectedToday: Boolean, completedDat
     val nextReward = com.pointlessgames.hexagone.game.logic.StreakMilestones.getRewardForStreak(streak + 1)
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small.scaled),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         for (i in 0 until 5) {
@@ -197,12 +199,8 @@ private fun StreakRow(streak: Int, isStreakCollectedToday: Boolean, completedDat
                 isUpcoming = isUpcoming,
                 date = dateForBox,
                 reward = if (showReward) nextReward else null,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.width(64.dp.scaled),
             )
-
-            if (i < 4) {
-                Spacer(Modifier.width(MaterialTheme.spacing.small))
-            }
         }
     }
 }

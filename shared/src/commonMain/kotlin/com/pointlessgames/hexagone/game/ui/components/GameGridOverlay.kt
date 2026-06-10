@@ -187,8 +187,17 @@ internal fun GameGridOverlay(
     val mysteryPainter = painterResource(Res.drawable.ic_roll)
 
     BoxWithConstraints(modifier.graphicsLayer { clip = false }, Alignment.Center) {
-        val cellWidth = constraints.maxWidth / (1f + (columns - 1) * 0.75f)
+        // Calculate width-based constraints
+        val cellWidthFromWidth = constraints.maxWidth / (1f + (columns - 1) * 0.75f)
+        
+        // Calculate height-based constraints
+        val cellHeightFromHeight = constraints.maxHeight / (rows + 0.5f)
+        val cellWidthFromHeight = cellHeightFromHeight / (sqrt(3f) / 2f)
+
+        // Take the smaller one to fit in both
+        val cellWidth = minOf(cellWidthFromWidth, cellWidthFromHeight)
         val cellHeight = cellWidth * (sqrt(3f) / 2f)
+
         val itemWidth = (cellWidth - gapPx).coerceAtLeast(0f)
         val itemHeight = (cellHeight - gapPx).coerceAtLeast(0f)
         val totalWidth = (cellWidth * (1f + (columns - 1) * 0.75f))

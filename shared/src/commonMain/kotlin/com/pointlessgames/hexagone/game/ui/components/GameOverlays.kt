@@ -16,13 +16,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -99,11 +99,12 @@ internal fun GameOverlays(
     val canReroll = canRerollProvider()
     val rankingInfo = rankingInfoProvider()
     val finalResult = finalResultProvider()
-    val isAnyOverlayVisible = perkOptions.isNotEmpty() || isGameOver || activeTierReward != null || activeChallengeReward != null
+    val isAnyOverlayVisible =
+        perkOptions.isNotEmpty() || isGameOver || activeTierReward != null || activeChallengeReward != null
     val dimAlphaState = animateFloatAsState(
         targetValue = if (activeTierReward != null || activeChallengeReward != null) 0.85f else if (isAnyOverlayVisible && !showBoard) 0.6f else 0f,
         animationSpec = tween(500),
-        label = "dim_alpha"
+        label = "dim_alpha",
     )
 
     val currentScore = scoreProvider()
@@ -114,7 +115,7 @@ internal fun GameOverlays(
     val spacing = MaterialTheme.spacing
     val cornerRadius = MaterialTheme.cornerRadius
     val primaryColor = MaterialTheme.colorScheme.primary
-    
+
     LaunchedEffect(isNewBest) {
         if (isNewBest && !hasSpawnedConfetti) {
             repeat(60) {
@@ -131,12 +132,12 @@ internal fun GameOverlays(
                         color = if (Random.nextBoolean()) primaryColor else Color.White,
                         life = 2.5f + Random.nextFloat() * 2f,
                         size = 8f + Random.nextFloat() * 8f,
-                        flipSpeed = 3f + Random.nextFloat() * 5f
-                    )
+                        flipSpeed = 3f + Random.nextFloat() * 5f,
+                    ),
                 )
             }
             hasSpawnedConfetti = true
-            
+
             while (confettiPieces.isNotEmpty()) {
                 delay(16)
                 val dt = 0.016f
@@ -153,8 +154,8 @@ internal fun GameOverlays(
                                 vy = c.vy + 600f * dt,
                                 vx = c.vx * 0.98f,
                                 rotation = c.rotation + c.rotationSpeed * dt,
-                                life = c.life - dt
-                            )
+                                life = c.life - dt,
+                            ),
                         )
                     }
                 }
@@ -165,7 +166,9 @@ internal fun GameOverlays(
     }
 
     if (isAnyOverlayVisible || dimAlphaState.value > 0f) {
-        Box(modifier = modifier.fillMaxSize()) {
+        BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+            val isLandscape = maxWidth > maxHeight
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -174,36 +177,48 @@ internal fun GameOverlays(
                     .clickable(
                         enabled = isAnyOverlayVisible && !showBoard,
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { 
-                    }
+                        indication = null,
+                    ) {
+                    },
             )
 
             AnimatedVisibility(
                 visible = activeTierReward != null,
-                enter = fadeIn(tween(600)) + scaleIn(initialScale = 0.8f, animationSpec = tween(600, easing = EaseOutExpo)),
-                exit = fadeOut(tween(400)) + scaleOut(targetScale = 1.2f, animationSpec = tween(400, easing = EaseInExpo)),
-                modifier = Modifier.align(Alignment.Center)
+                enter = fadeIn(tween(600)) + scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = tween(600, easing = EaseOutExpo),
+                ),
+                exit = fadeOut(tween(400)) + scaleOut(
+                    targetScale = 1.2f,
+                    animationSpec = tween(400, easing = EaseInExpo),
+                ),
+                modifier = Modifier.align(Alignment.Center),
             ) {
                 activeTierReward?.let { (tier, perk) ->
                     TierRewardOverlay(
                         tier = tier,
                         perk = perk,
-                        onFinished = onTierRewardFinished
+                        onFinished = onTierRewardFinished,
                     )
                 }
             }
 
             AnimatedVisibility(
                 visible = activeChallengeReward != null,
-                enter = fadeIn(tween(600)) + scaleIn(initialScale = 0.8f, animationSpec = tween(600, easing = EaseOutExpo)),
-                exit = fadeOut(tween(400)) + scaleOut(targetScale = 1.2f, animationSpec = tween(400, easing = EaseInExpo)),
-                modifier = Modifier.align(Alignment.Center)
+                enter = fadeIn(tween(600)) + scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = tween(600, easing = EaseOutExpo),
+                ),
+                exit = fadeOut(tween(400)) + scaleOut(
+                    targetScale = 1.2f,
+                    animationSpec = tween(400, easing = EaseInExpo),
+                ),
+                modifier = Modifier.align(Alignment.Center),
             ) {
                 activeChallengeReward?.let { challenge ->
                     DailyChallengeRewardOverlay(
                         challenge = challenge,
-                        onFinished = onChallengeRewardFinished
+                        onFinished = onChallengeRewardFinished,
                     )
                 }
             }
@@ -222,7 +237,7 @@ internal fun GameOverlays(
                 visible = isGameOver && !showBoard,
                 enter = fadeIn(tween(800)) + slideInVertically(initialOffsetY = { -it / 8 }),
                 exit = fadeOut(tween(400)) + scaleOut(targetScale = 0.9f),
-                modifier = Modifier.align(Alignment.Center)
+                modifier = Modifier.align(Alignment.Center),
             ) {
                 GameOverDialog(
                     score = scoreProvider(),
@@ -233,21 +248,24 @@ internal fun GameOverlays(
                     highestValue = highestValue,
                     rankingInfo = rankingInfo,
                     dailyChallenges = finalResult?.dailyChallenges ?: emptyList(),
-                    onViewBoard = onViewBoardToggle
+                    onViewBoard = onViewBoardToggle,
+                    onRestart = onRestart,
+                    onShare = onShare,
+                    onLeaderboard = onLeaderboard,
                 )
             }
 
 
             AnimatedVisibility(
-                visible = isGameOver && !showBoard,
+                visible = !isLandscape && isGameOver && !showBoard,
                 enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-                modifier = Modifier.align(Alignment.BottomCenter)
+                modifier = Modifier.align(Alignment.BottomCenter),
             ) {
                 GameOverBottomActions(
                     onRestart = onRestart,
                     onShare = onShare,
-                    onLeaderboard = onLeaderboard
+                    onLeaderboard = onLeaderboard,
                 )
             }
 
@@ -256,21 +274,31 @@ internal fun GameOverlays(
                     modifier = Modifier
                         .fillMaxSize()
                         .drawWithContent {
-                            withTransform({
-                                translate(size.width / 2, size.height / 3)
-                            }) {
+                            withTransform(
+                                {
+                                    translate(size.width / 2, size.height / 3)
+                                },
+                            ) {
                                 confettiPieces.forEach { c ->
                                     rotate(c.rotation, Offset(c.x, c.y)) {
                                         val flipScale = abs(sin(c.life * c.flipSpeed))
                                         drawRect(
-                                            color = c.color.copy(alpha = (c.life * 1.5f).coerceIn(0f, 1f)),
-                                            topLeft = Offset(c.x - c.size / 2, c.y - (c.size * flipScale) / 2),
-                                            size = Size(c.size, c.size * flipScale)
+                                            color = c.color.copy(
+                                                alpha = (c.life * 1.5f).coerceIn(
+                                                    0f,
+                                                    1f,
+                                                ),
+                                            ),
+                                            topLeft = Offset(
+                                                c.x - c.size / 2,
+                                                c.y - (c.size * flipScale) / 2,
+                                            ),
+                                            size = Size(c.size, c.size * flipScale),
                                         )
                                     }
                                 }
                             }
-                        }
+                        },
                 )
             }
 
@@ -280,23 +308,27 @@ internal fun GameOverlays(
                         .fillMaxSize()
                         .navigationBarsPadding()
                         .padding(bottom = spacing.massive),
-                    contentAlignment = Alignment.BottomCenter
+                    contentAlignment = Alignment.BottomCenter,
                 ) {
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(cornerRadius.full))
                             .background(Color.Black.copy(alpha = 0.6f))
-                            .border(spacing.extraTiny, Color.White.copy(alpha = 0.2f), RoundedCornerShape(cornerRadius.full))
+                            .border(
+                                spacing.extraTiny,
+                                Color.White.copy(alpha = 0.2f),
+                                RoundedCornerShape(cornerRadius.full),
+                            )
                             .clickable { onViewBoardToggle() }
                             .padding(horizontal = spacing.extraLarge, vertical = spacing.medium),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = stringResource(Res.string.view_stats_button).uppercase(),
                             color = Color.White,
                             fontWeight = FontWeight.Black,
                             fontSize = 12.sp,
-                            letterSpacing = 1.sp
+                            letterSpacing = 1.sp,
                         )
                     }
                 }

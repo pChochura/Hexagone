@@ -13,14 +13,20 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -277,172 +283,269 @@ internal fun GameScreen(
                 ),
             )
     ) {
-        // Main Board Content
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .graphicsLayer {
-                    alpha = gridAlphaProvider()
-                    clip = false
-                },
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .graphicsLayer { clip = false }
-                    .padding(horizontal = MaterialTheme.spacing.large.scaled, vertical = MaterialTheme.spacing.small.scaled),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                if (!isDebugModeProvider()) {
-                    ScoreSection(
-                        scoreProvider = scoreProvider,
-                        bestScoreProvider = bestScoreProvider,
-                        comboProvider = comboProvider,
-                        levelProvider = levelProvider,
-                        progressProvider = { viewModel.getLevelProgress() },
-                        highestValueProvider = highestValueProvider,
-                        activePerkProvider = activePerkProvider,
-                        onLevelClick = onDebugToggle,
-                        onLeaderboardClick = { showLeaderboard = true },
-                        onAchievementsClick = { 
-                            initiallySelectedAchievement = null
-                            showAchievements = true 
-                        },
-                        onSettingsClick = { showSettings = true },
-                        onDailyChallengeClick = { showDailyChallenge = true },
-                        isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
-                        modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect -> 
-                            targetRects[target] = rect 
+        BoxWithConstraints(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+            val isLandscape = maxWidth > maxHeight
+
+            if (isLandscape) {
+                Row(
+                    modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Left Column: Score Section
+                    if (!isDebugModeProvider()) {
+                        Box(
+                            modifier = Modifier
+                                .width(IntrinsicSize.Min)
+                                .fillMaxHeight()
+                                .padding(MaterialTheme.spacing.medium.scaled),
+                            contentAlignment = Alignment.TopCenter
+                        ) {
+                            ScoreSection(
+                                scoreProvider = scoreProvider,
+                                bestScoreProvider = bestScoreProvider,
+                                comboProvider = comboProvider,
+                                levelProvider = levelProvider,
+                                progressProvider = { viewModel.getLevelProgress() },
+                                highestValueProvider = highestValueProvider,
+                                activePerkProvider = activePerkProvider,
+                                isVertical = true,
+                                onLevelClick = onDebugToggle,
+                                onLeaderboardClick = { showLeaderboard = true },
+                                onAchievementsClick = { 
+                                    initiallySelectedAchievement = null
+                                    showAchievements = true 
+                                },
+                                onSettingsClick = { showSettings = true },
+                                onDailyChallengeClick = { showDailyChallenge = true },
+                                isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
+                                modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect -> 
+                                    targetRects[target] = rect 
+                                }
+                            )
                         }
-                    )
+                    }
 
-                    Spacer(Modifier.weight(if (IsSmallDevice) 0.05f else 0.1f))
-                }
-
-                GameGridOverlay(
-                    gridState = gridState.value,
-                    onBoardPerksProvider = onBoardPerksProvider,
-                    mergeHintsProvider = mergeHintsProvider,
-                    previewState = previewState.value,
-                    pendingMergeProvider = pendingMergeProvider,
-                    hoveredMergeState = viewModel.hoveredMerge,
-                    potentialMergesProvider = { potentialMergesProvider.value },
-                    activePerkProvider = activePerkProvider,
-                    selectedCellIdProvider = selectedCellIdProvider,
-                    activeMergeStepIndexProvider = activeMergeStepIndexProvider,
-                    pendingMergeScoreProvider = pendingMergeScoreProvider,
-                    comboProvider = comboProvider,
-                    effects = viewModel.effects,
-                    onEmptySpaceClick = if (isDebugMode) onDebugCellClick else onEmptySpaceClick,
-                    onEmptySpaceTouchDown = if (isDebugMode) { _, _ -> } else onEmptySpaceTouchDown,
-                    onEmptySpaceTouchUp = onEmptySpaceTouchUp,
-                    onCellTouchDown = if (isDebugMode) { _ -> } else onCellTouchDown,
-                    onCellTouchUp = onCellTouchUp,
-                    onCellClick = if (isDebugMode) { cell -> onDebugCellClick(cell.x, cell.y) } else onCellClick,
-                    onMergeAnimationFinished = onMergeAnimationFinished,
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .fillMaxWidth()
-                        .trackTipTarget(TipTarget.GRID) { target, rect -> 
-                            targetRects[target] = rect 
-                        },
-                )
-
-                if (!isDebugModeProvider()) {
-                    Spacer(Modifier.weight(if (IsSmallDevice) 0.05f else 0.1f))
-                }
-            }
-            
-            if (!isDebugModeProvider()) {
-                // Placeholder to keep space for PerkBar
-                Spacer(Modifier.height(MaterialTheme.spacing.immense.scaled))
-            } else {
-                DebugOverlay(
-                    isVisible = true,
-                    selectedValue = debugSelectedValueProvider(),
-                    isGhostMode = debugAddAsGhostProvider(),
-                    onValueSelected = viewModel::setDebugSelectedValue,
-                    onGhostModeToggled = viewModel::toggleDebugAddAsGhost,
-                    onPerkClick = viewModel::addPerkManually,
-                    onClose = onDebugToggle,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-
-        // Dimming Layer (above board, below PerkBar)
-        if (stuckDimAlphaProvider() > 0f) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer { alpha = stuckDimAlphaProvider() }
-                    .background(Color.Black)
-                    .clickable(
-                        enabled = isStuckProvider() && activePerkProvider() == null,
-                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                        indication = null
-                    ) { /* Consume board clicks while stuck */ }
-            )
-        }
-
-        // Floating UI Elements (Always on top)
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer { clip = false }
-                .statusBarsPadding(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Bottom
-        ) {
-            if (!isDebugModeProvider()) {
-                if (isStuckProvider() && activePerkProvider() == null) {
+                    // Center: Grid
                     Box(
                         modifier = Modifier
-                            .offset { IntOffset(0, stuckBounceProvider().dp.roundToPx()) }
-                            .offset(y = -MaterialTheme.spacing.semiMedium)
-                            .shadow(
-                                elevation = MaterialTheme.spacing.medium,
-                                shape = RoundedCornerShape(MaterialTheme.cornerRadius.small)
-                            )
-                            .background(
-                                MaterialTheme.colorScheme.primary,
-                                RoundedCornerShape(MaterialTheme.cornerRadius.small)
-                            )
-                            .border(
-                                MaterialTheme.spacing.tiny,
-                                Color.White.copy(alpha = 0.5f),
-                                RoundedCornerShape(MaterialTheme.cornerRadius.small)
-                            )
-                            .padding(
-                                horizontal = MaterialTheme.spacing.medium,
-                                vertical = MaterialTheme.spacing.semiSmall
-                            ),
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(MaterialTheme.spacing.medium.scaled),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = stringResource(Res.string.no_moves_left_warning),
-                            color = Color.White,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 11.sp.scaled,
-                            letterSpacing = 1.sp.scaled,
+                        GameGridOverlay(
+                            gridState = gridState.value,
+                            onBoardPerksProvider = onBoardPerksProvider,
+                            mergeHintsProvider = mergeHintsProvider,
+                            previewState = previewState.value,
+                            pendingMergeProvider = pendingMergeProvider,
+                            hoveredMergeState = viewModel.hoveredMerge,
+                            potentialMergesProvider = { potentialMergesProvider.value },
+                            activePerkProvider = activePerkProvider,
+                            selectedCellIdProvider = selectedCellIdProvider,
+                            activeMergeStepIndexProvider = activeMergeStepIndexProvider,
+                            pendingMergeScoreProvider = pendingMergeScoreProvider,
+                            comboProvider = comboProvider,
+                            effects = viewModel.effects,
+                            onEmptySpaceClick = if (isDebugMode) onDebugCellClick else onEmptySpaceClick,
+                            onEmptySpaceTouchDown = if (isDebugMode) { _, _ -> } else onEmptySpaceTouchDown,
+                            onEmptySpaceTouchUp = onEmptySpaceTouchUp,
+                            onCellTouchDown = if (isDebugMode) { _ -> } else onCellTouchDown,
+                            onCellTouchUp = onCellTouchUp,
+                            onCellClick = if (isDebugMode) { cell -> onDebugCellClick(cell.x, cell.y) } else onCellClick,
+                            onMergeAnimationFinished = onMergeAnimationFinished,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .trackTipTarget(TipTarget.GRID) { target, rect -> 
+                                    targetRects[target] = rect 
+                                },
                         )
                     }
-                    Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
+
+                    // Right Column: Perk Bar
+                    if (!isDebugModeProvider()) {
+                        PerkBar(
+                            collectedPerksProvider = collectedPerksProvider,
+                            activePerkProvider = activePerkProvider,
+                            isStuckProvider = isStuckProvider,
+                            stuckPerksProvider = stuckPerksProvider,
+                            onPerkClick = onPerkClick,
+                            isVertical = true,
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .trackTipTarget(TipTarget.PERK_BAR) { target, rect -> 
+                                    targetRects[target] = rect 
+                                }
+                        )
+                    }
+                }
+            } else {
+                // Portrait (Existing Layout)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            alpha = gridAlphaProvider()
+                            clip = false
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .graphicsLayer { clip = false }
+                            .padding(horizontal = MaterialTheme.spacing.large.scaled, vertical = MaterialTheme.spacing.small.scaled),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        if (!isDebugModeProvider()) {
+                            ScoreSection(
+                                scoreProvider = scoreProvider,
+                                bestScoreProvider = bestScoreProvider,
+                                comboProvider = comboProvider,
+                                levelProvider = levelProvider,
+                                progressProvider = { viewModel.getLevelProgress() },
+                                highestValueProvider = highestValueProvider,
+                                activePerkProvider = activePerkProvider,
+                                onLevelClick = onDebugToggle,
+                                onLeaderboardClick = { showLeaderboard = true },
+                                onAchievementsClick = { 
+                                    initiallySelectedAchievement = null
+                                    showAchievements = true 
+                                },
+                                onSettingsClick = { showSettings = true },
+                                onDailyChallengeClick = { showDailyChallenge = true },
+                                isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
+                                modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect -> 
+                                    targetRects[target] = rect 
+                                }
+                            )
+
+                            Spacer(Modifier.weight(if (IsSmallDevice) 0.05f else 0.1f))
+                        }
+
+                        GameGridOverlay(
+                            gridState = gridState.value,
+                            onBoardPerksProvider = onBoardPerksProvider,
+                            mergeHintsProvider = mergeHintsProvider,
+                            previewState = previewState.value,
+                            pendingMergeProvider = pendingMergeProvider,
+                            hoveredMergeState = viewModel.hoveredMerge,
+                            potentialMergesProvider = { potentialMergesProvider.value },
+                            activePerkProvider = activePerkProvider,
+                            selectedCellIdProvider = selectedCellIdProvider,
+                            activeMergeStepIndexProvider = activeMergeStepIndexProvider,
+                            pendingMergeScoreProvider = pendingMergeScoreProvider,
+                            comboProvider = comboProvider,
+                            effects = viewModel.effects,
+                            onEmptySpaceClick = if (isDebugMode) onDebugCellClick else onEmptySpaceClick,
+                            onEmptySpaceTouchDown = if (isDebugMode) { _, _ -> } else onEmptySpaceTouchDown,
+                            onEmptySpaceTouchUp = onEmptySpaceTouchUp,
+                            onCellTouchDown = if (isDebugMode) { _ -> } else onCellTouchDown,
+                            onCellTouchUp = onCellTouchUp,
+                            onCellClick = if (isDebugMode) { cell -> onDebugCellClick(cell.x, cell.y) } else onCellClick,
+                            onMergeAnimationFinished = onMergeAnimationFinished,
+                            modifier = Modifier
+                                .weight(1f, fill = false)
+                                .fillMaxWidth()
+                                .trackTipTarget(TipTarget.GRID) { target, rect -> 
+                                    targetRects[target] = rect 
+                                },
+                        )
+
+                        if (!isDebugModeProvider()) {
+                            Spacer(Modifier.weight(if (IsSmallDevice) 0.05f else 0.1f))
+                        }
+                    }
+                    
+                    if (!isDebugModeProvider()) {
+                        // Placeholder to keep space for PerkBar
+                        Spacer(Modifier.height(MaterialTheme.spacing.immense.scaled))
+                    } else {
+                        DebugOverlay(
+                            isVisible = true,
+                            selectedValue = debugSelectedValueProvider(),
+                            isGhostMode = debugAddAsGhostProvider(),
+                            onValueSelected = viewModel::setDebugSelectedValue,
+                            onGhostModeToggled = viewModel::toggleDebugAddAsGhost,
+                            onPerkClick = viewModel::addPerkManually,
+                            onClose = onDebugToggle,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
 
-                PerkBar(
-                    collectedPerksProvider = collectedPerksProvider,
-                    activePerkProvider = activePerkProvider,
-                    isStuckProvider = isStuckProvider,
-                    stuckPerksProvider = stuckPerksProvider,
-                    onPerkClick = onPerkClick,
+                // Floating PerkBar for Portrait
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .graphicsLayer { clip = false }
-                        .trackTipTarget(TipTarget.PERK_BAR) { target, rect -> 
-                            targetRects[target] = rect 
+                        .fillMaxSize()
+                        .graphicsLayer { clip = false },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Bottom
+                ) {
+                    if (!isDebugModeProvider()) {
+                        if (isStuckProvider() && activePerkProvider() == null) {
+                            Box(
+                                modifier = Modifier
+                                    .offset { IntOffset(0, stuckBounceProvider().dp.roundToPx()) }
+                                    .offset(y = -MaterialTheme.spacing.semiMedium)
+                                    .shadow(
+                                        elevation = MaterialTheme.spacing.medium,
+                                        shape = RoundedCornerShape(MaterialTheme.cornerRadius.small)
+                                    )
+                                    .background(
+                                        MaterialTheme.colorScheme.primary,
+                                        RoundedCornerShape(MaterialTheme.cornerRadius.small)
+                                    )
+                                    .border(
+                                        MaterialTheme.spacing.tiny,
+                                        Color.White.copy(alpha = 0.5f),
+                                        RoundedCornerShape(MaterialTheme.cornerRadius.small)
+                                    )
+                                    .padding(
+                                        horizontal = MaterialTheme.spacing.medium,
+                                        vertical = MaterialTheme.spacing.semiSmall
+                                    ),
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.no_moves_left_warning),
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 11.sp.scaled,
+                                    letterSpacing = 1.sp.scaled,
+                                )
+                            }
+                            Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
                         }
+
+                        PerkBar(
+                            collectedPerksProvider = collectedPerksProvider,
+                            activePerkProvider = activePerkProvider,
+                            isStuckProvider = isStuckProvider,
+                            stuckPerksProvider = stuckPerksProvider,
+                            onPerkClick = onPerkClick,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .graphicsLayer { clip = false }
+                                .trackTipTarget(TipTarget.PERK_BAR) { target, rect -> 
+                                    targetRects[target] = rect 
+                                }
+                        )
+                    }
+                }
+            }
+
+            // Dimming Layer (above board, below PerkBar/Overlays)
+            if (stuckDimAlphaProvider() > 0f) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { alpha = stuckDimAlphaProvider() }
+                        .background(Color.Black)
+                        .clickable(
+                            enabled = isStuckProvider() && activePerkProvider() == null,
+                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                            indication = null
+                        ) { /* Consume board clicks while stuck */ }
                 )
             }
         }

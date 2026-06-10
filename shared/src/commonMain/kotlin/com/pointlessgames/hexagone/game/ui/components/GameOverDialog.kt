@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -22,7 +23,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -68,19 +71,27 @@ import hexagone.shared.generated.resources.daily_challenge_goal_value
 import hexagone.shared.generated.resources.done
 import hexagone.shared.generated.resources.game_over_title
 import hexagone.shared.generated.resources.ic_hide
+import hexagone.shared.generated.resources.ic_leaderboards
+import hexagone.shared.generated.resources.ic_play_again
+import hexagone.shared.generated.resources.ic_share
 import hexagone.shared.generated.resources.ic_star
 import hexagone.shared.generated.resources.label_level
 import hexagone.shared.generated.resources.label_max_combo
 import hexagone.shared.generated.resources.label_max_piece
+import hexagone.shared.generated.resources.leaderboard_title
 import hexagone.shared.generated.resources.new_best_label
 import hexagone.shared.generated.resources.pattern_great_wall
 import hexagone.shared.generated.resources.pattern_ring_of_fire
 import hexagone.shared.generated.resources.pattern_the_prism
 import hexagone.shared.generated.resources.pattern_twin_peaks
+import hexagone.shared.generated.resources.play_again_button
 import hexagone.shared.generated.resources.previous_best_label
 import hexagone.shared.generated.resources.rank_global
 import hexagone.shared.generated.resources.rank_regional
 import hexagone.shared.generated.resources.score_popup
+import hexagone.shared.generated.resources.share_label
+import hexagone.shared.generated.resources.tooltip_leaderboard
+import hexagone.shared.generated.resources.tooltip_share
 import hexagone.shared.generated.resources.tooltip_view_board
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -97,6 +108,9 @@ internal fun GameOverDialog(
     rankingInfo: RankingInfo?,
     dailyChallenges: List<DailyChallengeProgress> = emptyList(),
     onViewBoard: () -> Unit,
+    onRestart: () -> Unit,
+    onShare: () -> Unit,
+    onLeaderboard: () -> Unit,
 ) {
     val animatedScore by animateIntAsState(
         targetValue = score,
@@ -145,7 +159,7 @@ internal fun GameOverDialog(
     val spacing = MaterialTheme.spacing
     val completedChallenges = dailyChallenges.filter { it.isCompleted }
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth(0.92f)
             .background(
@@ -159,17 +173,20 @@ internal fun GameOverDialog(
             )
             .padding(spacing.extraLarge.scaled),
     ) {
+        val isLandscape = maxWidth > maxHeight
+
         HexagonIconButton(
             onClick = onViewBoard,
             icon = Res.drawable.ic_hide,
             tooltip = Res.string.tooltip_view_board,
-            size = 48.dp.scaled,
+            size = 36.dp.scaled,
             modifier = Modifier.align(Alignment.TopEnd),
             backgroundColor = Color.White.copy(alpha = 0.05f),
             borderColor = Color.White.copy(alpha = 0.1f),
         )
 
         Column(
+            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -182,177 +199,320 @@ internal fun GameOverDialog(
 
             Spacer(Modifier.height(spacing.medium.scaled))
 
-            AnimatedContent(rankingInfo) { rankingInfo ->
-                rankingInfo?.let { rank ->
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                Color.White.copy(alpha = 0.08f),
-                                RoundedCornerShape(MaterialTheme.cornerRadius.full),
-                            )
-                            .padding(
-                                horizontal = spacing.large.scaled,
-                                vertical = spacing.extraSmall.scaled,
-                            ),
-                    ) {
-                        Text(
-                            text = if (rank.isRegional) stringResource(
-                                Res.string.rank_regional,
-                                rank.rank,
-                            ) else stringResource(Res.string.rank_global, rank.rank),
-                            color = Color(0xFFFFD54F), // Yellow from screenshot
-                            fontWeight = FontWeight.Black,
-                            fontSize = 12.sp.scaled,
-                            letterSpacing = 1.sp.scaled,
-                        )
-                    }
-                    Spacer(Modifier.height(spacing.medium.scaled))
-                }
-            }
-
-            Spacer(Modifier.height(spacing.small.scaled))
-
-            Box(contentAlignment = Alignment.Center) {
-                // Score Glow - Deferred read to Draw phase via graphicsLayer
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .graphicsLayer {
-                            val alpha = scoreGlowAlphaProvider()
-                            this.alpha = alpha * 0.5f
-                            val scale = 1.2f + alpha * 0.2f
-                            scaleX = scale
-                            scaleY = scale
-                        }
-                        .background(
-                            androidx.compose.ui.graphics.Brush.radialGradient(
-                                colors = listOf(
-                                    Color(0xFFFFD54F).copy(alpha = 0.4f),
-                                    Color.Transparent,
-                                ),
-                            ),
-                        ),
-                )
-
-                Text(
-                    text = animatedScore.toString(),
-                    color = Color.White,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 84.sp.scaled,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled),
-                )
-
-                if (isNewBest) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .offset(x = 16.dp.scaled, y = (-8).dp.scaled)
-                            .graphicsLayer {
-                                rotationZ = badgeRotationProvider()
-                            }
-                            .background(
-                                Color(0xFFF06292), // Pink from screenshot
-                                RoundedCornerShape(MaterialTheme.cornerRadius.full),
-                            )
-                            .padding(
-                                horizontal = spacing.medium.scaled,
-                                vertical = spacing.extraSmall.scaled,
-                            ),
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.new_best_label).uppercase(),
-                            color = Color.White,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 10.sp.scaled,
-                            letterSpacing = 1.sp.scaled,
-                        )
-                    }
-                }
-            }
-
-            val bestScoreLabel = if (score > bestScore && score > 0) {
-                stringResource(Res.string.previous_best_label, bestScore)
-            } else {
-                stringResource(Res.string.best_score_formatted, bestScore)
-            }
-
-            Text(
-                text = bestScoreLabel,
-                color = Color.White.copy(alpha = 0.4f),
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp.scaled,
-                letterSpacing = 1.sp.scaled,
-            )
-
-            if (completedChallenges.isNotEmpty()) {
-                Spacer(Modifier.height(spacing.large.scaled))
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(MaterialTheme.cornerRadius.medium))
-                        .background(Color.White.copy(alpha = 0.05f))
-                        .padding(
-                            horizontal = spacing.medium.scaled,
-                            vertical = spacing.small.scaled,
-                        ),
-                    verticalArrangement = Arrangement.spacedBy(spacing.extraSmall.scaled),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+            if (isLandscape) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(spacing.extraLarge.scaled)
                 ) {
-                    Text(
-                        text = stringResource(Res.string.daily_challenge).uppercase(),
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 10.sp.scaled,
-                        letterSpacing = 1.sp.scaled,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                    )
+                    // Left Column: Score
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        ScoreSectionContent(
+                            rankingInfo = rankingInfo,
+                            animatedScore = animatedScore,
+                            isNewBest = isNewBest,
+                            scoreGlowAlphaProvider = scoreGlowAlphaProvider,
+                            badgeRotationProvider = badgeRotationProvider,
+                            bestScore = bestScore,
+                            score = score,
+                            spacing = spacing
+                        )
+                    }
 
-                    completedChallenges.forEach { progress ->
-                        DailyChallengeSummaryRow(progress)
+                    // Right Column: Stats & Challenges
+                    Column(
+                        modifier = Modifier.weight(1.2f).height(IntrinsicSize.Max),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled)
+                        ) {
+                            StatsRow(
+                                level = level,
+                                highestValue = highestValue,
+                                maxCombo = maxCombo,
+                                maxPieceGlowAlphaProvider = maxPieceGlowAlphaProvider
+                            )
+
+                            if (completedChallenges.isNotEmpty()) {
+                                ChallengesSummary(
+                                    completedChallenges = completedChallenges,
+                                    spacing = spacing
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(spacing.medium.scaled))
+
+                        DialogActions(
+                            onRestart = onRestart,
+                            onShare = onShare,
+                            onLeaderboard = onLeaderboard
+                        )
                     }
                 }
-            }
-
-            Spacer(Modifier.height(spacing.large.scaled))
-
-            Row(
-                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                // Level Stat
-                GameOverStatHexagon(
-                    modifier = Modifier.fillMaxHeight(),
-                    label = stringResource(Res.string.label_level),
-                    value = level.toString(),
-                    backgroundColor = Color(0xFF37474F), // Dark teal/grey
-                    size = 48.dp.scaled,
+            } else {
+                // Portrait Layout
+                ScoreSectionContent(
+                    rankingInfo = rankingInfo,
+                    animatedScore = animatedScore,
+                    isNewBest = isNewBest,
+                    scoreGlowAlphaProvider = scoreGlowAlphaProvider,
+                    badgeRotationProvider = badgeRotationProvider,
+                    bestScore = bestScore,
+                    score = score,
+                    spacing = spacing
                 )
 
-                // Max Piece Stat (Larger and glowing)
-                GameOverStatHexagon(
-                    modifier = Modifier.fillMaxHeight(),
-                    label = stringResource(Res.string.label_max_piece),
-                    value = highestValue.toString(),
-                    backgroundColor = Color(0xFF9345C4), // Purple
-                    size = 64.dp.scaled,
-                    labelColor = Color.White,
-                    glowAlphaProvider = maxPieceGlowAlphaProvider,
-                    glowColor = Color(0xFFBB86FC),
-                )
+                if (completedChallenges.isNotEmpty()) {
+                    Spacer(Modifier.height(spacing.large.scaled))
+                    ChallengesSummary(
+                        completedChallenges = completedChallenges,
+                        spacing = spacing
+                    )
+                }
 
-                // Max Combo Stat
-                GameOverStatHexagon(
-                    modifier = Modifier.fillMaxHeight(),
-                    label = stringResource(Res.string.label_max_combo),
-                    value = maxCombo.toString(),
-                    backgroundColor = Color(0xFF5D4037), // Dark brown
-                    size = 48.dp.scaled,
+                Spacer(Modifier.height(spacing.large.scaled))
+
+                StatsRow(
+                    level = level,
+                    highestValue = highestValue,
+                    maxCombo = maxCombo,
+                    maxPieceGlowAlphaProvider = maxPieceGlowAlphaProvider
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun DialogActions(
+    onRestart: () -> Unit,
+    onShare: () -> Unit,
+    onLeaderboard: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        HexagonIconButton(
+            onClick = onShare,
+            icon = Res.drawable.ic_share,
+            label = stringResource(Res.string.share_label),
+            tooltip = Res.string.tooltip_share,
+            size = 50.dp.scaled
+        )
+
+        HexagonIconButton(
+            onClick = onRestart,
+            icon = Res.drawable.ic_play_again,
+            label = stringResource(Res.string.play_again_button),
+            size = 64.dp.scaled,
+            backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+            borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+        )
+
+        HexagonIconButton(
+            onClick = onLeaderboard,
+            icon = Res.drawable.ic_leaderboards,
+            label = stringResource(Res.string.leaderboard_title),
+            tooltip = Res.string.tooltip_leaderboard,
+            size = 50.dp.scaled
+        )
+    }
+}
+
+@Composable
+private fun ScoreSectionContent(
+    rankingInfo: RankingInfo?,
+    animatedScore: Int,
+    isNewBest: Boolean,
+    scoreGlowAlphaProvider: () -> Float,
+    badgeRotationProvider: () -> Float,
+    bestScore: Int,
+    score: Int,
+    spacing: com.pointlessgames.hexagone.ui.theme.Spacing
+) {
+    AnimatedContent(rankingInfo) { rankingInfo ->
+        rankingInfo?.let { rank ->
+            Box(
+                modifier = Modifier
+                    .background(
+                        Color.White.copy(alpha = 0.08f),
+                        RoundedCornerShape(MaterialTheme.cornerRadius.full),
+                    )
+                    .padding(
+                        horizontal = spacing.large.scaled,
+                        vertical = spacing.extraSmall.scaled,
+                    ),
+            ) {
+                Text(
+                    text = if (rank.isRegional) stringResource(
+                        Res.string.rank_regional,
+                        rank.rank,
+                    ) else stringResource(Res.string.rank_global, rank.rank),
+                    color = Color(0xFFFFD54F),
+                    fontWeight = FontWeight.Black,
+                    fontSize = 12.sp.scaled,
+                    letterSpacing = 1.sp.scaled,
+                )
+            }
+            Spacer(Modifier.height(spacing.medium.scaled))
+        }
+    }
+
+    Spacer(Modifier.height(spacing.small.scaled))
+
+    Box(contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .graphicsLayer {
+                    val alpha = scoreGlowAlphaProvider()
+                    this.alpha = alpha * 0.5f
+                    val scale = 1.2f + alpha * 0.2f
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .background(
+                    androidx.compose.ui.graphics.Brush.radialGradient(
+                        colors = listOf(
+                            Color(0xFFFFD54F).copy(alpha = 0.4f),
+                            Color.Transparent,
+                        ),
+                    ),
+                ),
+        )
+
+        Text(
+            text = animatedScore.toString(),
+            color = Color.White,
+            fontWeight = FontWeight.Black,
+            fontSize = 84.sp.scaled,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled),
+        )
+
+        if (isNewBest) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 16.dp.scaled, y = (-8).dp.scaled)
+                    .graphicsLayer {
+                        rotationZ = badgeRotationProvider()
+                    }
+                    .background(
+                        Color(0xFFF06292),
+                        RoundedCornerShape(MaterialTheme.cornerRadius.full),
+                    )
+                    .padding(
+                        horizontal = spacing.medium.scaled,
+                        vertical = spacing.extraSmall.scaled,
+                    ),
+            ) {
+                Text(
+                    text = stringResource(Res.string.new_best_label).uppercase(),
+                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 10.sp.scaled,
+                    letterSpacing = 1.sp.scaled,
+                )
+            }
+        }
+    }
+
+    val bestScoreLabel = if (score > bestScore && score > 0) {
+        stringResource(Res.string.previous_best_label, bestScore)
+    } else {
+        stringResource(Res.string.best_score_formatted, bestScore)
+    }
+
+    Text(
+        text = bestScoreLabel,
+        color = Color.White.copy(alpha = 0.4f),
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp.scaled,
+        letterSpacing = 1.sp.scaled,
+    )
+}
+
+@Composable
+private fun ChallengesSummary(
+    completedChallenges: List<DailyChallengeProgress>,
+    spacing: com.pointlessgames.hexagone.ui.theme.Spacing
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(MaterialTheme.cornerRadius.medium))
+            .background(Color.White.copy(alpha = 0.05f))
+            .padding(
+                horizontal = spacing.medium.scaled,
+                vertical = spacing.small.scaled,
+            ),
+        verticalArrangement = Arrangement.spacedBy(spacing.extraSmall.scaled),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(Res.string.daily_challenge).uppercase(),
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 10.sp.scaled,
+            letterSpacing = 1.sp.scaled,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
+
+        completedChallenges.forEach { progress ->
+            DailyChallengeSummaryRow(progress)
+        }
+    }
+}
+
+@Composable
+private fun StatsRow(
+    level: Int,
+    highestValue: Int,
+    maxCombo: Int,
+    maxPieceGlowAlphaProvider: () -> Float
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
+        GameOverStatHexagon(
+            modifier = Modifier.fillMaxHeight(),
+            label = stringResource(Res.string.label_level),
+            value = level.toString(),
+            backgroundColor = Color(0xFF37474F),
+            size = 48.dp.scaled,
+        )
+
+        GameOverStatHexagon(
+            modifier = Modifier.fillMaxHeight(),
+            label = stringResource(Res.string.label_max_piece),
+            value = highestValue.toString(),
+            backgroundColor = Color(0xFF9345C4),
+            size = 64.dp.scaled,
+            labelColor = Color.White,
+            glowAlphaProvider = maxPieceGlowAlphaProvider,
+            glowColor = Color(0xFFBB86FC),
+        )
+
+        GameOverStatHexagon(
+            modifier = Modifier.fillMaxHeight(),
+            label = stringResource(Res.string.label_max_combo),
+            value = maxCombo.toString(),
+            backgroundColor = Color(0xFF5D4037),
+            size = 48.dp.scaled,
+        )
     }
 }
 

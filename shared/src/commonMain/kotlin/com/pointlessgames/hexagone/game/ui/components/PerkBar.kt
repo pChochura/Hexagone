@@ -10,9 +10,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -34,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
@@ -51,6 +56,7 @@ fun PerkBar(
     isStuckProvider: () -> Boolean,
     stuckPerksProvider: () -> Set<Perk>,
     onPerkClick: (Perk) -> Unit,
+    isVertical: Boolean = false,
 ) {
     val collectedPerks = collectedPerksProvider()
     val activePerk = activePerkProvider()
@@ -96,21 +102,27 @@ fun PerkBar(
         previousCounts.putAll(counts)
     }
 
+    val shape = if (isVertical) {
+        RoundedCornerShape(topStart = cornerRadius.extraLarge, bottomStart = cornerRadius.extraLarge)
+    } else {
+        RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge)
+    }
+
     Box(
         modifier = modifier
-            .fillMaxWidth()
+            .then(if (isVertical) Modifier.fillMaxHeight() else Modifier.fillMaxWidth())
             .graphicsLayer { clip = false },
-        contentAlignment = Alignment.BottomCenter
+        contentAlignment = if (isVertical) Alignment.CenterEnd else Alignment.BottomCenter
     ) {
         if (collectedPerks.isEmpty()) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(surfaceColor, RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge))
+                    .then(if (isVertical) Modifier.width(100.dp.scaled).fillMaxHeight() else Modifier.fillMaxWidth())
+                    .background(surfaceColor, shape)
                     .border(
                         spacing.extraTiny,
                         Color.White.copy(alpha = 0.08f),
-                        RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge),
+                        shape,
                     )
                     .navigationBarsPadding()
                     .padding(spacing.large.scaled),
@@ -127,22 +139,7 @@ fun PerkBar(
                 )
             }
         } else {
-            LazyRow(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(surfaceColor, RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge))
-                    .border(
-                        spacing.extraTiny,
-                        Color.White.copy(alpha = 0.08f),
-                        RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge),
-                    )
-                    .clip(RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge))
-                    .navigationBarsPadding(),
-                contentPadding = PaddingValues(horizontal = spacing.large.scaled, vertical = spacing.medium.scaled),
-                horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            val content: LazyListScope.() -> Unit = {
                 items(distinctPerks, key = { it.name }) { perk ->
                     val isActive = activePerk == perk
                     val isEnabled = !isStuck || stuckPerks.contains(perk)
@@ -163,6 +160,45 @@ fun PerkBar(
                             },
                     )
                 }
+            }
+
+            if (isVertical) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .width(100.dp.scaled)
+                        .fillMaxHeight()
+                        .background(surfaceColor, shape)
+                        .border(
+                            spacing.extraTiny,
+                            Color.White.copy(alpha = 0.08f),
+                            shape,
+                        )
+                        .clip(shape)
+                        .navigationBarsPadding(),
+                    contentPadding = PaddingValues(vertical = spacing.large.scaled, horizontal = spacing.medium.scaled),
+                    verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterVertically),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    content = content
+                )
+            } else {
+                LazyRow(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(surfaceColor, shape)
+                        .border(
+                            spacing.extraTiny,
+                            Color.White.copy(alpha = 0.08f),
+                            shape,
+                        )
+                        .clip(shape)
+                        .navigationBarsPadding(),
+                    contentPadding = PaddingValues(horizontal = spacing.large.scaled, vertical = spacing.medium.scaled),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically,
+                    content = content
+                )
             }
         }
     }
