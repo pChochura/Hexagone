@@ -223,6 +223,7 @@ internal class GameViewModel(
                                 perkUsedInSession = savedState.perkUsedInSession,
                                 undoUsedInSession = savedState.undoUsedInSession,
                                 ghostPerkUsedInSession = savedState.ghostPerkUsedInSession,
+                                debugUsed = savedState.debugUsed,
                                 seed = savedState.seed,
                                 cellIdCounter = savedState.cellIdCounter,
                                 previewIdCounter = savedState.previewIdCounter,
@@ -497,6 +498,7 @@ internal class GameViewModel(
             completedChallengeDates = _uiState.value.completedChallengeDates,
             challengeStreak = _uiState.value.challengeStreak,
             isStreakCollectedToday = _uiState.value.isStreakCollectedToday,
+            debugUsed = false,
             finalResult = null
         )
         updateLevel()
@@ -542,20 +544,21 @@ internal class GameViewModel(
                     perksAvailable = state.collectedPerks,
                     region = settingsRepository.getPlayerRegion() ?: "Global",
                     dailyChallenges = state.dailyChallenges,
+                    debugUsed = state.debugUsed,
                 )
 
                 val playerName = settingsRepository.getPlayerName()
                 _uiState.update { 
                     it.copy(
                         isGameOver = true, 
-                        pendingResult = if (playerName == null) finalResult else null,
+                        pendingResult = if (playerName == null && !state.debugUsed) finalResult else null,
                         finalResult = finalResult
                     ) 
                 }
                 achievementDelegate.onGameFinished()
                 settingsRepository.setGameState(null)
 
-                if (playerName != null) {
+                if (playerName != null && !state.debugUsed) {
                     val rankInfo = leaderboardRepository.submitResult(finalResult)
                     _uiState.update { it.copy(currentRank = rankInfo) }
                 }

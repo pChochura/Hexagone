@@ -83,10 +83,10 @@ internal fun GameOverlays(
     activeChallengeReward: com.pointlessgames.hexagone.game.model.DailyChallenge?,
     onChallengeRewardFinished: () -> Unit,
     rankingInfoProvider: () -> RankingInfo?,
+    debugUsedProvider: () -> Boolean = { false },
     finalResultProvider: () -> com.pointlessgames.hexagone.game.model.DetailedGameResult? = { null },
 ) {
     val isGameOver = isGameOverProvider()
-    val score = scoreProvider()
     val bestScore = bestScoreProvider()
     val sessionBestScore = sessionBestScoreProvider()
     val level = levelProvider()
@@ -248,6 +248,7 @@ internal fun GameOverlays(
                     highestValue = highestValue,
                     rankingInfo = rankingInfo,
                     dailyChallenges = finalResult?.dailyChallenges ?: emptyList(),
+                    debugUsed = debugUsedProvider(),
                     onViewBoard = onViewBoardToggle,
                     onRestart = onRestart,
                     onShare = onShare,

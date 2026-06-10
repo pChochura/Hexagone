@@ -21,6 +21,7 @@ internal class DebugDelegate(
             val newDebugMode = !state.isDebugMode
             state.copy(
                 isDebugMode = newDebugMode,
+                debugUsed = state.debugUsed || newDebugMode,
                 isStuck = if (newDebugMode) false else state.isStuck,
                 isGameOver = if (newDebugMode) false else state.isGameOver,
                 selectedCellId = null,
@@ -90,7 +91,7 @@ internal class DebugDelegate(
     }
 
     fun addPerkManually(perk: Perk) {
-        uiState.update { it.copy(collectedPerks = it.collectedPerks + perk) }
+        uiState.update { it.copy(collectedPerks = it.collectedPerks + perk, debugUsed = true) }
         onStateChanged()
     }
 }

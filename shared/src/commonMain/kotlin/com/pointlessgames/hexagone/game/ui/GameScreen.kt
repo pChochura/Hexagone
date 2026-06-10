@@ -10,7 +10,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -87,14 +86,36 @@ internal fun GameScreen(
     // We collect individual fields into Compose State objects.
     // Reading from these State objects in providers ensures children and snapshotFlows are reactive.
     val uiState = viewModel.uiState
-    val isGameOverState = remember(uiState) { uiState.map { it.isGameOver }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.isGameOver)
-    val showGameOverBoardState = remember(uiState) { uiState.map { it.showGameOverBoard }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.showGameOverBoard)
-    val isStuckState = remember(uiState) { uiState.map { it.isStuck }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.isStuck)
-    val gridState = remember(uiState) { uiState.map { it.grid }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.grid)
-    val activePerkState = remember(uiState) { uiState.map { it.activePerk }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.activePerk)
-    val isDebugModeState = remember(uiState) { uiState.map { it.isDebugMode }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.isDebugMode)
-    val pendingResultState = remember(uiState) { uiState.map { it.pendingResult }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.pendingResult)
-    val activeTipState = remember(uiState) { uiState.map { it.activeTip }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.activeTip)
+    val isGameOverState =
+        remember(uiState) { uiState.map { it.isGameOver }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.isGameOver,
+        )
+    val showGameOverBoardState = remember(uiState) {
+        uiState.map { it.showGameOverBoard }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.showGameOverBoard)
+    val isStuckState =
+        remember(uiState) { uiState.map { it.isStuck }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.isStuck,
+        )
+    val gridState =
+        remember(uiState) { uiState.map { it.grid }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.grid,
+        )
+    val activePerkState =
+        remember(uiState) { uiState.map { it.activePerk }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.activePerk,
+        )
+    val isDebugModeState =
+        remember(uiState) { uiState.map { it.isDebugMode }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.isDebugMode,
+        )
+    val pendingResultState = remember(uiState) {
+        uiState.map { it.pendingResult }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.pendingResult)
+    val activeTipState =
+        remember(uiState) { uiState.map { it.activeTip }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.activeTip,
+        )
 
     // Helper delegates for GameScreen's own logic.
     // Accessing these 'by' variables will trigger recomposition of GameScreen.
@@ -108,51 +129,134 @@ internal fun GameScreen(
 
     // Other states primarily used by providers passed to children.
     // GameScreen won't recompose when these change unless it reads them directly.
-    val scoreState = remember(uiState) { uiState.map { it.score }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.score)
-    val bestScoreState = remember(uiState) { uiState.map { it.bestScore }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.bestScore)
-    val comboState = remember(uiState) { uiState.map { it.combo }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.combo)
-    val levelState = remember(uiState) { uiState.map { it.level }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.level)
-    val highestValueState = remember(uiState) { uiState.map { it.highestValue }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.highestValue)
-    val dailyChallengesState = remember(uiState) { uiState.map { it.dailyChallenges }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.dailyChallenges)
-    val collectedPerksState = remember(uiState) { uiState.map { it.collectedPerks }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.collectedPerks)
-    val sessionBestScoreState = remember(uiState) { uiState.map { it.sessionBestScore }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.sessionBestScore)
-    val maxComboState = remember(uiState) { uiState.map { it.maxCombo }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.maxCombo)
-    val totalMergesState = remember(uiState) { uiState.map { it.totalMerges }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.totalMerges)
-    val perkOptionsState = remember(uiState) { uiState.map { it.perkOptions }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.perkOptions)
-    val pendingLevelUpsState = remember(uiState) { uiState.map { it.pendingLevelUps }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.pendingLevelUps)
-    val canRerollState = remember(uiState) { uiState.map { it.canReroll }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.canReroll)
-    val currentRankState = remember(uiState) { uiState.map { it.currentRank }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.currentRank)
-    val finalResultState = remember(uiState) { uiState.map { it.finalResult }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.finalResult)
-    val debugSelectedValueState = remember(uiState) { uiState.map { it.debugSelectedValue }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.debugSelectedValue)
-    val debugAddAsGhostState = remember(uiState) { uiState.map { it.debugAddAsGhost }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.debugAddAsGhost)
-    val challengeStreakState = remember(uiState) { uiState.map { it.challengeStreak }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.challengeStreak)
-    val completedChallengeDatesState = remember(uiState) { uiState.map { it.completedChallengeDates }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.completedChallengeDates)
-    val isStreakCollectedTodayState = remember(uiState) { uiState.map { it.isStreakCollectedToday }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.isStreakCollectedToday)
-    val stuckPerksState = remember(uiState) { uiState.map { it.stuckPerks }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.stuckPerks)
-    val mergeHintsState = remember(uiState) { uiState.map { it.mergeHints }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.mergeHints)
-    val previewState = remember(uiState) { uiState.map { it.preview }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.preview)
-    val onBoardPerksState = remember(uiState) { uiState.map { it.onBoardPerks }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.onBoardPerks)
-    val pendingMergeState = remember(uiState) { uiState.map { it.pendingMerge }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.pendingMerge)
-    val activeMergeStepIndexState = remember(uiState) { uiState.map { it.activeMergeStepIndex }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.activeMergeStepIndex)
-    val pendingMergeScoreState = remember(uiState) { uiState.map { it.pendingMergeScore }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.pendingMergeScore)
-    val selectedCellIdState = remember(uiState) { uiState.map { it.selectedCellId }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.selectedCellId)
+    val scoreState =
+        remember(uiState) { uiState.map { it.score }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.score,
+        )
+    val bestScoreState =
+        remember(uiState) { uiState.map { it.bestScore }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.bestScore,
+        )
+    val comboState =
+        remember(uiState) { uiState.map { it.combo }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.combo,
+        )
+    val levelState =
+        remember(uiState) { uiState.map { it.level }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.level,
+        )
+    val highestValueState =
+        remember(uiState) { uiState.map { it.highestValue }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.highestValue,
+        )
+    val dailyChallengesState = remember(uiState) {
+        uiState.map { it.dailyChallenges }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.dailyChallenges)
+    val collectedPerksState = remember(uiState) {
+        uiState.map { it.collectedPerks }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.collectedPerks)
+    val sessionBestScoreState = remember(uiState) {
+        uiState.map { it.sessionBestScore }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.sessionBestScore)
+    val maxComboState =
+        remember(uiState) { uiState.map { it.maxCombo }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.maxCombo,
+        )
+    val totalMergesState =
+        remember(uiState) { uiState.map { it.totalMerges }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.totalMerges,
+        )
+    val perkOptionsState =
+        remember(uiState) { uiState.map { it.perkOptions }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.perkOptions,
+        )
+    val pendingLevelUpsState = remember(uiState) {
+        uiState.map { it.pendingLevelUps }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.pendingLevelUps)
+    val canRerollState =
+        remember(uiState) { uiState.map { it.canReroll }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.canReroll,
+        )
+    val currentRankState =
+        remember(uiState) { uiState.map { it.currentRank }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.currentRank,
+        )
+    val finalResultState =
+        remember(uiState) { uiState.map { it.finalResult }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.finalResult,
+        )
+    val debugSelectedValueState = remember(uiState) {
+        uiState.map { it.debugSelectedValue }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.debugSelectedValue)
+    val debugAddAsGhostState = remember(uiState) {
+        uiState.map { it.debugAddAsGhost }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.debugAddAsGhost)
+    val challengeStreakState = remember(uiState) {
+        uiState.map { it.challengeStreak }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.challengeStreak)
+    val completedChallengeDatesState = remember(uiState) {
+        uiState.map { it.completedChallengeDates }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.completedChallengeDates)
+    val isStreakCollectedTodayState = remember(uiState) {
+        uiState.map { it.isStreakCollectedToday }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.isStreakCollectedToday)
+    val debugUsedState =
+        remember(uiState) { uiState.map { it.debugUsed }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.debugUsed,
+        )
+    val stuckPerksState =
+        remember(uiState) { uiState.map { it.stuckPerks }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.stuckPerks,
+        )
+    val mergeHintsState =
+        remember(uiState) { uiState.map { it.mergeHints }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.mergeHints,
+        )
+    val previewState =
+        remember(uiState) { uiState.map { it.preview }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.preview,
+        )
+    val onBoardPerksState =
+        remember(uiState) { uiState.map { it.onBoardPerks }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.onBoardPerks,
+        )
+    val pendingMergeState =
+        remember(uiState) { uiState.map { it.pendingMerge }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.pendingMerge,
+        )
+    val activeMergeStepIndexState = remember(uiState) {
+        uiState.map { it.activeMergeStepIndex }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.activeMergeStepIndex)
+    val pendingMergeScoreState = remember(uiState) {
+        uiState.map { it.pendingMergeScore }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.pendingMergeScore)
+    val selectedCellIdState = remember(uiState) {
+        uiState.map { it.selectedCellId }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.selectedCellId)
 
     var showLeaderboard by remember { mutableStateOf(false) }
     var showAchievements by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showDailyChallenge by remember { mutableStateOf(false) }
-    var initiallySelectedAchievement by remember { mutableStateOf<com.pointlessgames.hexagone.achievements.GameAchievement?>(null) }
+    var initiallySelectedAchievement by remember {
+        mutableStateOf<com.pointlessgames.hexagone.achievements.GameAchievement?>(
+            null,
+        )
+    }
     val leaderboardViewModel: LeaderboardViewModel = koinViewModel()
 
     val targetRects = remember { mutableStateMapOf<TipTarget, Rect>() }
 
-    val tierRewardQueue = remember { mutableStateListOf<Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>>() }
-    val challengeRewardQueue = remember { mutableStateListOf<com.pointlessgames.hexagone.game.model.DailyChallenge>() }
-    
+    val tierRewardQueue =
+        remember { mutableStateListOf<Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>>() }
+    val challengeRewardQueue =
+        remember { mutableStateListOf<com.pointlessgames.hexagone.game.model.DailyChallenge>() }
+
     val activeTierReward = tierRewardQueue.firstOrNull()
     val activeChallengeReward = challengeRewardQueue.firstOrNull()
 
-    val achievementQueue = remember { mutableStateListOf<com.pointlessgames.hexagone.achievements.GameAchievement>() }
+    val achievementQueue =
+        remember { mutableStateListOf<com.pointlessgames.hexagone.achievements.GameAchievement>() }
     val activeAchievement = achievementQueue.firstOrNull()
 
     BackHandler(enabled = showLeaderboard || showAchievements || showSettings || showDailyChallenge) {
@@ -183,14 +287,7 @@ internal fun GameScreen(
         label = "grid_alpha",
     )
 
-    val stuckDimAlphaState = animateFloatAsState(
-        targetValue = if (isStuck && activePerk == null) 0.6f else 0f,
-        animationSpec = tween(500),
-        label = "stuck_dim_alpha",
-    )
-
     val gridAlphaProvider = remember { { gridAlphaState.value } }
-    val stuckDimAlphaProvider = remember { { stuckDimAlphaState.value } }
 
     val infiniteTransition = rememberInfiniteTransition(label = "stuck_pulse")
     val stuckBounceState = infiniteTransition.animateFloat(
@@ -212,7 +309,8 @@ internal fun GameScreen(
     val levelProvider = remember { { levelState.value } }
     val highestValueProvider = remember { { highestValueState.value } }
     val activePerkProvider = remember { { activePerkState.value } }
-    val isDailyChallengeCompletedProvider = remember { { dailyChallengesState.value.all { it.isCompleted } } }
+    val isDailyChallengeCompletedProvider =
+        remember { { dailyChallengesState.value.all { it.isCompleted } } }
     val collectedPerksProvider = remember { { collectedPerksState.value } }
     val isStuckProvider = remember { { isStuckState.value } }
     val stuckPerksProvider = remember { { stuckPerksState.value } }
@@ -233,6 +331,7 @@ internal fun GameScreen(
     val challengeStreakProvider = remember { { challengeStreakState.value } }
     val completedChallengeDatesProvider = remember { { completedChallengeDatesState.value } }
     val isStreakCollectedTodayProvider = remember { { isStreakCollectedTodayState.value } }
+    val debugUsedProvider = remember { { debugUsedState.value } }
 
     // Stable Providers for GameGridOverlay
     val mergeHintsProvider = remember { { mergeHintsState.value } }
@@ -262,12 +361,15 @@ internal fun GameScreen(
                 is com.pointlessgames.hexagone.game.model.GameEffect.TierReward -> {
                     tierRewardQueue.add(effect.tier to effect.perk)
                 }
+
                 is com.pointlessgames.hexagone.game.model.GameEffect.AchievementUnlock -> {
                     achievementQueue.add(effect.achievement)
                 }
+
                 is com.pointlessgames.hexagone.game.model.GameEffect.DailyChallengeComplete -> {
                     challengeRewardQueue.add(effect.challenge)
                 }
+
                 else -> {}
             }
         }
@@ -281,7 +383,7 @@ internal fun GameScreen(
                 Brush.verticalGradient(
                     listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.background),
                 ),
-            )
+            ),
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
             val isLandscape = maxWidth > maxHeight
@@ -289,7 +391,7 @@ internal fun GameScreen(
             if (isLandscape) {
                 Row(
                     modifier = Modifier.fillMaxSize().safeDrawingPadding(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     // Left Column: Score Section
                     if (!isDebugModeProvider()) {
@@ -298,7 +400,7 @@ internal fun GameScreen(
                                 .width(IntrinsicSize.Min)
                                 .fillMaxHeight()
                                 .padding(MaterialTheme.spacing.medium.scaled),
-                            contentAlignment = Alignment.TopCenter
+                            contentAlignment = Alignment.TopCenter,
                         ) {
                             ScoreSection(
                                 scoreProvider = scoreProvider,
@@ -309,18 +411,18 @@ internal fun GameScreen(
                                 highestValueProvider = highestValueProvider,
                                 activePerkProvider = activePerkProvider,
                                 isVertical = true,
-                                onLevelClick = onDebugToggle,
+                                onLevelClick = if (com.pointlessgames.hexagone.utils.isDebug) onDebugToggle else ({}),
                                 onLeaderboardClick = { showLeaderboard = true },
-                                onAchievementsClick = { 
+                                onAchievementsClick = {
                                     initiallySelectedAchievement = null
-                                    showAchievements = true 
+                                    showAchievements = true
                                 },
                                 onSettingsClick = { showSettings = true },
                                 onDailyChallengeClick = { showDailyChallenge = true },
                                 isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
-                                modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect -> 
-                                    targetRects[target] = rect 
-                                }
+                                modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
+                                    targetRects[target] = rect
+                                },
                             )
                         }
                     }
@@ -331,7 +433,7 @@ internal fun GameScreen(
                             .weight(1f)
                             .fillMaxHeight()
                             .padding(MaterialTheme.spacing.medium.scaled),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         GameGridOverlay(
                             gridState = gridState.value,
@@ -352,12 +454,17 @@ internal fun GameScreen(
                             onEmptySpaceTouchUp = onEmptySpaceTouchUp,
                             onCellTouchDown = if (isDebugMode) { _ -> } else onCellTouchDown,
                             onCellTouchUp = onCellTouchUp,
-                            onCellClick = if (isDebugMode) { cell -> onDebugCellClick(cell.x, cell.y) } else onCellClick,
+                            onCellClick = if (isDebugMode) { cell ->
+                                onDebugCellClick(
+                                    cell.x,
+                                    cell.y,
+                                )
+                            } else onCellClick,
                             onMergeAnimationFinished = onMergeAnimationFinished,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .trackTipTarget(TipTarget.GRID) { target, rect -> 
-                                    targetRects[target] = rect 
+                                .trackTipTarget(TipTarget.GRID) { target, rect ->
+                                    targetRects[target] = rect
                                 },
                         )
                     }
@@ -373,9 +480,9 @@ internal fun GameScreen(
                             isVertical = true,
                             modifier = Modifier
                                 .fillMaxHeight()
-                                .trackTipTarget(TipTarget.PERK_BAR) { target, rect -> 
-                                    targetRects[target] = rect 
-                                }
+                                .trackTipTarget(TipTarget.PERK_BAR) { target, rect ->
+                                    targetRects[target] = rect
+                                },
                         )
                     }
                 }
@@ -394,7 +501,10 @@ internal fun GameScreen(
                         modifier = Modifier
                             .weight(1f)
                             .graphicsLayer { clip = false }
-                            .padding(horizontal = MaterialTheme.spacing.large.scaled, vertical = MaterialTheme.spacing.small.scaled),
+                            .padding(
+                                horizontal = MaterialTheme.spacing.large.scaled,
+                                vertical = MaterialTheme.spacing.small.scaled,
+                            ),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         if (!isDebugModeProvider()) {
@@ -406,18 +516,18 @@ internal fun GameScreen(
                                 progressProvider = { viewModel.getLevelProgress() },
                                 highestValueProvider = highestValueProvider,
                                 activePerkProvider = activePerkProvider,
-                                onLevelClick = onDebugToggle,
+                                onLevelClick = if (com.pointlessgames.hexagone.utils.isDebug) onDebugToggle else ({}),
                                 onLeaderboardClick = { showLeaderboard = true },
-                                onAchievementsClick = { 
+                                onAchievementsClick = {
                                     initiallySelectedAchievement = null
-                                    showAchievements = true 
+                                    showAchievements = true
                                 },
                                 onSettingsClick = { showSettings = true },
                                 onDailyChallengeClick = { showDailyChallenge = true },
                                 isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
-                                modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect -> 
-                                    targetRects[target] = rect 
-                                }
+                                modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
+                                    targetRects[target] = rect
+                                },
                             )
 
                             Spacer(Modifier.weight(if (IsSmallDevice) 0.05f else 0.1f))
@@ -442,13 +552,18 @@ internal fun GameScreen(
                             onEmptySpaceTouchUp = onEmptySpaceTouchUp,
                             onCellTouchDown = if (isDebugMode) { _ -> } else onCellTouchDown,
                             onCellTouchUp = onCellTouchUp,
-                            onCellClick = if (isDebugMode) { cell -> onDebugCellClick(cell.x, cell.y) } else onCellClick,
+                            onCellClick = if (isDebugMode) { cell ->
+                                onDebugCellClick(
+                                    cell.x,
+                                    cell.y,
+                                )
+                            } else onCellClick,
                             onMergeAnimationFinished = onMergeAnimationFinished,
                             modifier = Modifier
                                 .weight(1f, fill = false)
                                 .fillMaxWidth()
-                                .trackTipTarget(TipTarget.GRID) { target, rect -> 
-                                    targetRects[target] = rect 
+                                .trackTipTarget(TipTarget.GRID) { target, rect ->
+                                    targetRects[target] = rect
                                 },
                         )
 
@@ -456,7 +571,7 @@ internal fun GameScreen(
                             Spacer(Modifier.weight(if (IsSmallDevice) 0.05f else 0.1f))
                         }
                     }
-                    
+
                     if (!isDebugModeProvider()) {
                         // Placeholder to keep space for PerkBar
                         Spacer(Modifier.height(MaterialTheme.spacing.immense.scaled))
@@ -469,7 +584,7 @@ internal fun GameScreen(
                             onGhostModeToggled = viewModel::toggleDebugAddAsGhost,
                             onPerkClick = viewModel::addPerkManually,
                             onClose = onDebugToggle,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
@@ -480,7 +595,7 @@ internal fun GameScreen(
                         .fillMaxSize()
                         .graphicsLayer { clip = false },
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Bottom
+                    verticalArrangement = Arrangement.Bottom,
                 ) {
                     if (!isDebugModeProvider()) {
                         if (isStuckProvider() && activePerkProvider() == null) {
@@ -490,20 +605,20 @@ internal fun GameScreen(
                                     .offset(y = -MaterialTheme.spacing.semiMedium)
                                     .shadow(
                                         elevation = MaterialTheme.spacing.medium,
-                                        shape = RoundedCornerShape(MaterialTheme.cornerRadius.small)
+                                        shape = RoundedCornerShape(MaterialTheme.cornerRadius.small),
                                     )
                                     .background(
                                         MaterialTheme.colorScheme.primary,
-                                        RoundedCornerShape(MaterialTheme.cornerRadius.small)
+                                        RoundedCornerShape(MaterialTheme.cornerRadius.small),
                                     )
                                     .border(
                                         MaterialTheme.spacing.tiny,
                                         Color.White.copy(alpha = 0.5f),
-                                        RoundedCornerShape(MaterialTheme.cornerRadius.small)
+                                        RoundedCornerShape(MaterialTheme.cornerRadius.small),
                                     )
                                     .padding(
                                         horizontal = MaterialTheme.spacing.medium,
-                                        vertical = MaterialTheme.spacing.semiSmall
+                                        vertical = MaterialTheme.spacing.semiSmall,
                                     ),
                             ) {
                                 Text(
@@ -526,27 +641,12 @@ internal fun GameScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .graphicsLayer { clip = false }
-                                .trackTipTarget(TipTarget.PERK_BAR) { target, rect -> 
-                                    targetRects[target] = rect 
-                                }
+                                .trackTipTarget(TipTarget.PERK_BAR) { target, rect ->
+                                    targetRects[target] = rect
+                                },
                         )
                     }
                 }
-            }
-
-            // Dimming Layer (above board, below PerkBar/Overlays)
-            if (stuckDimAlphaProvider() > 0f) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer { alpha = stuckDimAlphaProvider() }
-                        .background(Color.Black)
-                        .clickable(
-                            enabled = isStuckProvider() && activePerkProvider() == null,
-                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                            indication = null
-                        ) { /* Consume board clicks while stuck */ }
-                )
             }
         }
 
@@ -572,28 +672,32 @@ internal fun GameScreen(
             activeTierReward = activeTierReward,
             onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
             activeChallengeReward = activeChallengeReward,
-            onChallengeRewardFinished = { if (challengeRewardQueue.isNotEmpty()) challengeRewardQueue.removeAt(0) },
+            onChallengeRewardFinished = {
+                if (challengeRewardQueue.isNotEmpty())
+                    challengeRewardQueue.removeAt(0)
+            },
             rankingInfoProvider = currentRankProvider,
+            debugUsedProvider = debugUsedProvider,
             finalResultProvider = finalResultProvider,
-            modifier = Modifier.trackTipTarget(TipTarget.GAME_OVER_BUTTONS) { target, rect -> 
-                targetRects[target] = rect 
-            }
+            modifier = Modifier.trackTipTarget(TipTarget.GAME_OVER_BUTTONS) { target, rect ->
+                targetRects[target] = rect
+            },
         )
 
         TipOverlay(
             activeTip = activeTip,
             targetRects = targetRects,
-            onDismiss = viewModel::onDismissTip
+            onDismiss = viewModel::onDismissTip,
         )
 
         activeAchievement?.let { achievement ->
             AchievementNotification(
                 achievement = achievement,
-                onClick = { 
+                onClick = {
                     initiallySelectedAchievement = achievement
-                    showAchievements = true 
+                    showAchievements = true
                 },
-                onFinished = { if (achievementQueue.isNotEmpty()) achievementQueue.removeAt(0) }
+                onFinished = { if (achievementQueue.isNotEmpty()) achievementQueue.removeAt(0) },
             )
         }
 
@@ -601,17 +705,17 @@ internal fun GameScreen(
             AchievementsDialog(
                 achievementManager = viewModel.getAchievementManager(),
                 initialAchievement = initiallySelectedAchievement,
-                onDismiss = { 
+                onDismiss = {
                     showAchievements = false
                     initiallySelectedAchievement = null
-                }
+                },
             )
         }
 
         if (showSettings) {
             SettingsDialog(
                 onRestart = onRestart,
-                onDismiss = { showSettings = false }
+                onDismiss = { showSettings = false },
             )
         }
 
@@ -621,14 +725,14 @@ internal fun GameScreen(
                 streakProvider = challengeStreakProvider,
                 completedDatesProvider = completedChallengeDatesProvider,
                 isStreakCollectedTodayProvider = isStreakCollectedTodayProvider,
-                onDismiss = { showDailyChallenge = false }
+                onDismiss = { showDailyChallenge = false },
             )
         }
 
         if (showLeaderboard) {
             LeaderboardDialog(
                 viewModel = leaderboardViewModel,
-                onDismiss = { showLeaderboard = false }
+                onDismiss = { showLeaderboard = false },
             )
         }
     }

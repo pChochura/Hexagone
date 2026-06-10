@@ -86,6 +86,7 @@
     <string name="daily_challenge">Wyzwanie dnia</string>
     <string name="daily_challenge_completed">WYZWANIE DNIA UKOŃCZONE!</string>
     <string name="daily_reward_granted">NAGRODA DNIA PRZYZNANA</string>
+    <string name="leaderboard_disabled_debug">Ranking wyłączony (użyto trybu debugowania)</string>
     <string name="rank_regional">#%1$d w Twoim regionie</string>
     <string name="rank_global">#%1$d na świecie</string>
     <string name="done">GOTOWE</string>

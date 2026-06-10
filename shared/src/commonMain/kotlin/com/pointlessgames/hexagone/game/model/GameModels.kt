@@ -53,6 +53,7 @@ data class GameUiState(
     val canReroll: Boolean = true,
     val availableChoices: Int = 0,
     val isDebugMode: Boolean = false,
+    val debugUsed: Boolean = false,
     val debugSelectedValue: Int? = 1,
     val debugAddAsGhost: Boolean = false,
     val perksUsedTracking: Map<Perk, Int> = emptyMap(),
@@ -235,6 +236,7 @@ data class GameState(
     val perkUsedInSession: Boolean = false,
     val undoUsedInSession: Boolean = false,
     val ghostPerkUsedInSession: Boolean = false,
+    val debugUsed: Boolean = false,
     val redemptionBaseline: Int? = null,
     val seed: Long = 0L,
     val cellIdCounter: Int = 0,
@@ -267,6 +269,7 @@ data class DetailedGameResult(
     val perksAvailable: List<Perk>,
     val region: String,
     val username: String? = null,
+    val debugUsed: Boolean = false,
     @SerialName("daily_challenges")
     val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
 )

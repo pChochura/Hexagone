@@ -110,6 +110,7 @@
     <string name="reward_perk_label">Free %1$s Perk</string>
     <string name="streak_label">%1$d Day Streak</string>
     <string name="daily_reward_granted">DAILY REWARD GRANTED</string>
+    <string name="leaderboard_disabled_debug">Leaderboard disabled (Debug used)</string>
     <string name="rank_regional">#%1$d in your region</string>
     <string name="rank_global">#%1$d in the world</string>
     <string name="done">DONE</string>

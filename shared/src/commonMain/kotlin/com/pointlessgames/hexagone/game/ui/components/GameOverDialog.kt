@@ -78,6 +78,7 @@ import hexagone.shared.generated.resources.ic_star
 import hexagone.shared.generated.resources.label_level
 import hexagone.shared.generated.resources.label_max_combo
 import hexagone.shared.generated.resources.label_max_piece
+import hexagone.shared.generated.resources.leaderboard_disabled_debug
 import hexagone.shared.generated.resources.leaderboard_title
 import hexagone.shared.generated.resources.new_best_label
 import hexagone.shared.generated.resources.pattern_great_wall
@@ -107,6 +108,7 @@ internal fun GameOverDialog(
     highestValue: Int,
     rankingInfo: RankingInfo?,
     dailyChallenges: List<DailyChallengeProgress> = emptyList(),
+    debugUsed: Boolean = false,
     onViewBoard: () -> Unit,
     onRestart: () -> Unit,
     onShare: () -> Unit,
@@ -218,6 +220,7 @@ internal fun GameOverDialog(
                             badgeRotationProvider = badgeRotationProvider,
                             bestScore = bestScore,
                             score = score,
+                            debugUsed = debugUsed,
                             spacing = spacing
                         )
                     }
@@ -266,6 +269,7 @@ internal fun GameOverDialog(
                     badgeRotationProvider = badgeRotationProvider,
                     bestScore = bestScore,
                     score = score,
+                    debugUsed = debugUsed,
                     spacing = spacing
                 )
 
@@ -337,6 +341,7 @@ private fun ScoreSectionContent(
     badgeRotationProvider: () -> Float,
     bestScore: Int,
     score: Int,
+    debugUsed: Boolean,
     spacing: com.pointlessgames.hexagone.ui.theme.Spacing
 ) {
     AnimatedContent(rankingInfo) { rankingInfo ->
@@ -440,6 +445,17 @@ private fun ScoreSectionContent(
         fontSize = 16.sp.scaled,
         letterSpacing = 1.sp.scaled,
     )
+
+    if (debugUsed) {
+        Spacer(Modifier.height(spacing.extraSmall.scaled))
+        Text(
+            text = stringResource(Res.string.leaderboard_disabled_debug).uppercase(),
+            color = MaterialTheme.colorScheme.error,
+            fontWeight = FontWeight.Black,
+            fontSize = 10.sp.scaled,
+            letterSpacing = 1.sp.scaled,
+        )
+    }
 }
 
 @Composable

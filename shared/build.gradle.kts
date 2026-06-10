@@ -21,6 +21,7 @@ buildkonfig {
     defaultConfigs {
         buildConfigField(FieldSpec.Type.STRING, "SUPABASE_URL", supabaseUrl)
         buildConfigField(FieldSpec.Type.STRING, "SUPABASE_KEY", supabaseKey)
+        buildConfigField(FieldSpec.Type.BOOLEAN, "IS_DEBUG", "true")
     }
 }
 
