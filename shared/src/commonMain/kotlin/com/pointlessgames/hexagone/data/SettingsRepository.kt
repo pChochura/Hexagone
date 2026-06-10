@@ -4,6 +4,9 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.first
@@ -14,32 +17,35 @@ class SettingsRepository(
 ) {
     private val bestScoreKey = intPreferencesKey("best_score")
     private val mergeHintsEnabledKey = booleanPreferencesKey("merge_hints_enabled")
-    private val gameStateKey = androidx.datastore.preferences.core.stringPreferencesKey("game_state")
-    private val playerIdKey = androidx.datastore.preferences.core.stringPreferencesKey("player_id")
-    private val playerNameKey = androidx.datastore.preferences.core.stringPreferencesKey("player_name")
-    private val playerRegionKey = androidx.datastore.preferences.core.stringPreferencesKey("player_region")
-    private val totalMergesLifetimeKey = androidx.datastore.preferences.core.longPreferencesKey("total_merges_lifetime")
-    private val perksUsedLifetimeKey = androidx.datastore.preferences.core.stringSetPreferencesKey("perks_used_lifetime")
-    private val unlockedAchievementsKey = androidx.datastore.preferences.core.stringSetPreferencesKey("unlocked_achievements")
-    private val perksCollectedLifetimeKey = androidx.datastore.preferences.core.intPreferencesKey("perks_collected_lifetime")
-    private val gamesFinishedLifetimeKey = androidx.datastore.preferences.core.intPreferencesKey("games_finished_lifetime")
-    private val rerollsLifetimeKey = androidx.datastore.preferences.core.intPreferencesKey("rerolls_lifetime")
+    private val gameStateKey = stringPreferencesKey("game_state")
+    private val playerIdKey = stringPreferencesKey("player_id")
+    private val playerNameKey = stringPreferencesKey("player_name")
+    private val playerRegionKey = stringPreferencesKey("player_region")
+    private val totalMergesLifetimeKey = longPreferencesKey("total_merges_lifetime")
+    private val perksUsedLifetimeKey = stringSetPreferencesKey("perks_used_lifetime")
+    private val unlockedAchievementsKey = stringSetPreferencesKey("unlocked_achievements")
+    private val perksCollectedLifetimeKey = intPreferencesKey("perks_collected_lifetime")
+    private val gamesFinishedLifetimeKey = intPreferencesKey("games_finished_lifetime")
+    private val rerollsLifetimeKey = intPreferencesKey("rerolls_lifetime")
     private val maxComboLifetimeKey = intPreferencesKey("max_combo_lifetime")
     private val highestLevelLifetimeKey = intPreferencesKey("highest_level_lifetime")
-    private val maxConsecutiveMergesLifetimeKey = intPreferencesKey("max_consecutive_merges_lifetime")
+    private val maxConsecutiveMergesLifetimeKey =
+        intPreferencesKey("max_consecutive_merges_lifetime")
     private val maxTacticalMergesLifetimeKey = intPreferencesKey("max_tactical_merges_lifetime")
     private val maxCollectedPerksLifetimeKey = intPreferencesKey("max_collected_perks_lifetime")
     private val maxConsecutiveUndosLifetimeKey = intPreferencesKey("max_consecutive_undos_lifetime")
     private val maxTacticalGhostsLifetimeKey = intPreferencesKey("max_tactical_ghosts_lifetime")
     private val maxBarRaisedLifetimeKey = intPreferencesKey("max_bar_raised_lifetime")
     private val highestTileValueLifetimeKey = intPreferencesKey("highest_tile_value_lifetime")
-    private val pendingScoresKey = androidx.datastore.preferences.core.stringSetPreferencesKey("pending_scores")
-    private val lastCompletedChallengeDateKey = androidx.datastore.preferences.core.longPreferencesKey("last_completed_challenge_date")
+    private val pendingScoresKey = stringSetPreferencesKey("pending_scores")
+    private val lastCompletedChallengeDateKey = longPreferencesKey("last_completed_challenge_date")
+    private val completedChallengeDatesKey = stringSetPreferencesKey("completed_challenge_dates")
     private val challengeStreakKey = intPreferencesKey("challenge_streak")
     private val hasShownMergeTipKey = booleanPreferencesKey("has_shown_merge_tip")
     private val hasShownPerkTipKey = booleanPreferencesKey("has_shown_perk_tip")
     private val hasShownPostGameTipKey = booleanPreferencesKey("has_shown_post_game_tip")
-    private val hasShownDailyChallengeTipKey = booleanPreferencesKey("has_shown_daily_challenge_tip")
+    private val hasShownDailyChallengeTipKey =
+        booleanPreferencesKey("has_shown_daily_challenge_tip")
 
     suspend fun getBestScore(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[bestScoreKey] ?: 0
@@ -342,6 +348,21 @@ class SettingsRepository(
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[lastCompletedChallengeDateKey] = date
+            }
+        }
+    }
+
+    suspend fun getCompletedChallengeDates(): Set<String> = withContext(Dispatchers.IO) {
+        appSettings.data.first()[completedChallengeDatesKey] ?: emptySet()
+    }
+
+    suspend fun addCompletedChallengeDate(dateSeed: String) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[completedChallengeDatesKey] ?: emptySet()
+                // Keep only last 30 entries to prevent bloat
+                val next = (current + dateSeed).toList().takeLast(30).toSet()
+                prefs[completedChallengeDatesKey] = next
             }
         }
     }

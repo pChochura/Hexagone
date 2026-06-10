@@ -158,8 +158,18 @@ internal class GameViewModel(
 
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
             val dateSeed = today.year * 10000L + (today.month.ordinal + 1) * 100L + today.day
+            val yesterday = today.minus(1, DateTimeUnit.DAY)
+            val yesterdaySeed = yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.day
+
             val lastCompletedDate = settingsRepository.getLastCompletedChallengeDate()
-            val challengeStreak = settingsRepository.getChallengeStreak()
+            var challengeStreak = settingsRepository.getChallengeStreak()
+            val completedDates = settingsRepository.getCompletedChallengeDates().mapNotNull { it.toLongOrNull() }.toSet()
+
+            if (lastCompletedDate != 0L && lastCompletedDate != dateSeed && lastCompletedDate != yesterdaySeed) {
+                challengeStreak = 0
+                settingsRepository.setChallengeStreak(0)
+            }
+
             val currentDailyChallenges = DailyChallengeProvider.getChallengesForDate(today, challengeStreak)
 
             if (savedStateJson != null) {
@@ -203,6 +213,11 @@ internal class GameViewModel(
                             } else {
                                 currentDailyChallenges.map { challenge -> DailyChallengeProgress(challenge) }
                             },
+                            completedChallengeDates = if (savedState.completedChallengeDates.isNotEmpty()) {
+                                savedState.completedChallengeDates
+                            } else {
+                                completedDates
+                            },
                             challengeStreak = challengeStreak,
                             isStreakCollectedToday = lastCompletedDate == dateSeed
                         )
@@ -218,6 +233,7 @@ internal class GameViewModel(
                             sessionBestScore = best,
                             mergeHintsEnabled = hintsEnabled,
                             dailyChallenges = currentDailyChallenges.map { c -> DailyChallengeProgress(c) },
+                            completedChallengeDates = completedDates,
                             challengeStreak = challengeStreak,
                             isStreakCollectedToday = lastCompletedDate == dateSeed
                         ) 
@@ -232,6 +248,7 @@ internal class GameViewModel(
                         sessionBestScore = best,
                         mergeHintsEnabled = hintsEnabled,
                         dailyChallenges = currentDailyChallenges.map { c -> DailyChallengeProgress(c) },
+                        completedChallengeDates = completedDates,
                         challengeStreak = challengeStreak,
                         isStreakCollectedToday = lastCompletedDate == dateSeed
                     ) 
@@ -453,6 +470,7 @@ internal class GameViewModel(
             cellIdCounter = nextIdCounter,
             previewIdCounter = nextPreviewIdCounter,
             dailyChallenges = currentDailyChallenges.map { DailyChallengeProgress(it) },
+            completedChallengeDates = _uiState.value.completedChallengeDates,
             challengeStreak = _uiState.value.challengeStreak,
             isStreakCollectedToday = _uiState.value.isStreakCollectedToday,
             finalResult = null
@@ -644,10 +662,12 @@ internal class GameViewModel(
 
                 settingsRepository.setLastCompletedChallengeDate(dateSeed)
                 settingsRepository.setChallengeStreak(newStreak)
+                settingsRepository.addCompletedChallengeDate(dateSeed.toString())
 
                 _uiState.update { 
                     it.copy(
                         challengeStreak = newStreak,
+                        completedChallengeDates = it.completedChallengeDates + dateSeed,
                         isStreakCollectedToday = true
                     )
                 }

@@ -89,12 +89,13 @@ import kotlin.time.Clock
 fun DailyChallengeDialog(
     challengesProvider: () -> List<DailyChallengeProgress>,
     streakProvider: () -> Int,
-    isStreakCollectedTodayProvider: () -> Boolean,
+    completedDatesProvider: () -> Set<Long>,
+    @Suppress("UNUSED_PARAMETER") isStreakCollectedTodayProvider: () -> Boolean,
     onDismiss: () -> Unit,
 ) {
     val challenges = challengesProvider()
     val streak = streakProvider()
-    val isStreakCollectedToday = isStreakCollectedTodayProvider()
+    val completedDates = completedDatesProvider()
 
     ModalBottomSheet(
         contentWindowInsets = { WindowInsets.statusBars },
@@ -147,7 +148,7 @@ fun DailyChallengeDialog(
 
                     Spacer(Modifier.height(MaterialTheme.spacing.medium))
 
-                    StreakRow(streak, isStreakCollectedToday)
+                    StreakRow(completedDates)
                 }
             }
         }
@@ -155,7 +156,7 @@ fun DailyChallengeDialog(
 }
 
 @Composable
-private fun StreakRow(streak: Int, isStreakCollectedToday: Boolean) {
+private fun StreakRow(completedDates: Set<Long>) {
     val today = remember<LocalDate> {
         Clock.System.todayIn(TimeZone.currentSystemDefault())
     }
@@ -167,22 +168,12 @@ private fun StreakRow(streak: Int, isStreakCollectedToday: Boolean) {
     ) {
         for (i in 0 until 5) {
             val isToday = i == 3
-            val isPast = i < 3
             val isUpcoming = i > 3
 
             val dateForBox = today.plus(i - 3, DateTimeUnit.DAY)
+            val dateSeed = dateForBox.year * 10000L + (dateForBox.month.ordinal + 1) * 100L + dateForBox.day
 
-            val isChecked = when {
-                isToday -> isStreakCollectedToday
-                isPast -> {
-                    val daysAgo = 3 - i
-                    val streakOnThatDay =
-                        if (isStreakCollectedToday) streak - daysAgo else streak - (daysAgo - 1)
-                    streakOnThatDay > 0
-                }
-
-                else -> false
-            }
+            val isChecked = completedDates.contains(dateSeed)
 
             StreakBox(
                 isChecked = isChecked,

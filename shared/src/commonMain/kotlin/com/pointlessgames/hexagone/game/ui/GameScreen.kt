@@ -108,6 +108,7 @@ internal fun GameScreen(
     val debugSelectedValueState = remember(uiState) { uiState.map { it.debugSelectedValue }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.debugSelectedValue)
     val debugAddAsGhostState = remember(uiState) { uiState.map { it.debugAddAsGhost }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.debugAddAsGhost)
     val challengeStreakState = remember(uiState) { uiState.map { it.challengeStreak }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.challengeStreak)
+    val completedChallengeDatesState = remember(uiState) { uiState.map { it.completedChallengeDates }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.completedChallengeDates)
     val isStreakCollectedTodayState = remember(uiState) { uiState.map { it.isStreakCollectedToday }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.isStreakCollectedToday)
     val stuckPerksState = remember(uiState) { uiState.map { it.stuckPerks }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.stuckPerks)
     val mergeHintsState = remember(uiState) { uiState.map { it.mergeHints }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.mergeHints)
@@ -212,6 +213,7 @@ internal fun GameScreen(
     val debugAddAsGhostProvider = remember { { debugAddAsGhostState.value } }
     val dailyChallengesProvider = remember { { dailyChallengesState.value } }
     val challengeStreakProvider = remember { { challengeStreakState.value } }
+    val completedChallengeDatesProvider = remember { { completedChallengeDatesState.value } }
     val isStreakCollectedTodayProvider = remember { { isStreakCollectedTodayState.value } }
 
     // Stable Providers for GameGridOverlay
@@ -504,6 +506,7 @@ internal fun GameScreen(
             DailyChallengeDialog(
                 challengesProvider = dailyChallengesProvider,
                 streakProvider = challengeStreakProvider,
+                completedDatesProvider = completedChallengeDatesProvider,
                 isStreakCollectedTodayProvider = isStreakCollectedTodayProvider,
                 onDismiss = { showDailyChallenge = false }
             )
