@@ -106,14 +106,6 @@ internal class ActionDelegate(
                     stateAfterMergeStart
                 }
             }
-        } else {
-            if (perk == Perk.CHAIN_MERGE) {
-                stateDelegate.saveState()
-                val oldCombo = uiState.value.combo
-                uiState.update { it.consumePerk(Perk.CHAIN_MERGE).copy(activePerk = null, combo = 0) }
-                achievementDelegate.checkComboBroken(oldCombo, 0)
-                finalizeAction()
-            }
         }
     }
 
