@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,32 +18,27 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material3.Badge
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.zIndex
-import hexagone.shared.generated.resources.*
-import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
@@ -56,15 +50,25 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.components.Tooltip
-import com.pointlessgames.hexagone.ui.theme.cornerRadius
-import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.ui.theme.scaled
+import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
-import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.stringResource
+import hexagone.shared.generated.resources.ic_advance
+import hexagone.shared.generated.resources.ic_chain_merge
+import hexagone.shared.generated.resources.ic_delete
+import hexagone.shared.generated.resources.ic_duplicate
+import hexagone.shared.generated.resources.ic_freeze
+import hexagone.shared.generated.resources.ic_fusion
+import hexagone.shared.generated.resources.ic_move
+import hexagone.shared.generated.resources.ic_path_merge
+import hexagone.shared.generated.resources.ic_pause
+import hexagone.shared.generated.resources.ic_swap
+import hexagone.shared.generated.resources.ic_undo
+import hexagone.shared.generated.resources.ic_upgrade
 import hexagone.shared.generated.resources.perk_advance_queue_desc
 import hexagone.shared.generated.resources.perk_advance_queue_name
 import hexagone.shared.generated.resources.perk_chain_merge_desc
@@ -89,6 +93,8 @@ import hexagone.shared.generated.resources.perk_swap_tiles_desc
 import hexagone.shared.generated.resources.perk_swap_tiles_name
 import hexagone.shared.generated.resources.perk_undo_desc
 import hexagone.shared.generated.resources.perk_undo_name
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -96,16 +102,16 @@ import kotlin.math.sqrt
 object HexagonGridDefaults {
     fun getColorForValue(value: Int, colorScheme: ColorScheme): Color {
         if (value <= 0) return Color.Transparent
-        
+
         // Base signature colors from screenshot
         val baseColors = mapOf(
             1 to colorScheme.surfaceContainerLowest,
             2 to colorScheme.surfaceContainerLow,
             4 to colorScheme.surfaceContainer,
             8 to colorScheme.surfaceContainerHigh,
-            16 to colorScheme.surfaceContainerHighest
+            16 to colorScheme.surfaceContainerHighest,
         )
-        
+
         baseColors[value]?.let { return it }
 
         // Algorithmic color generation for infinite granularity
@@ -113,7 +119,7 @@ object HexagonGridDefaults {
         val hue = (value * 137.508f) % 360f
         val saturation = 0.6f + (value % 4) * 0.1f
         val brightness = 0.7f + (value % 3) * 0.1f
-        
+
         return Color.hsv(hue, saturation.coerceAtMost(1f), brightness.coerceAtMost(1f))
     }
 
@@ -153,7 +159,7 @@ object HexagonGridDefaults {
         size: Size,
         color: Color,
         alpha: Float = 1f,
-        style: androidx.compose.ui.graphics.drawscope.DrawStyle = androidx.compose.ui.graphics.drawscope.Fill
+        style: androidx.compose.ui.graphics.drawscope.DrawStyle = androidx.compose.ui.graphics.drawscope.Fill,
     ) {
         drawScope.drawPath(getHexagonPath(size), color, alpha = alpha, style = style)
     }
@@ -163,7 +169,7 @@ object HexagonGridDefaults {
         size: Size,
         stripeOffsetPx: Float,
         spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
-        alpha: Float = 0.15f
+        alpha: Float = 0.15f,
     ) {
         val stripeWidth = with(drawScope) { spacing.extraTiny.toPx() * 1.5f }
         val gap = with(drawScope) { spacing.semiMedium.toPx() }
@@ -178,7 +184,7 @@ object HexagonGridDefaults {
                 color = color,
                 start = Offset(xStart, 0f),
                 end = Offset(xStart + dx, size.height),
-                strokeWidth = stripeWidth
+                strokeWidth = stripeWidth,
             )
         }
     }
@@ -188,7 +194,7 @@ object HexagonGridDefaults {
         row: Int,
         cellWidth: Float,
         cellHeight: Float,
-        gapPx: Float
+        gapPx: Float,
     ): IntOffset {
         val x = (col * 0.75f * cellWidth + gapPx / 2).roundToInt()
         val yOffset = if (col % 2 == 1) cellHeight / 2 else 0f
@@ -201,7 +207,7 @@ object HexagonGridDefaults {
         perk: Perk?,
         size: Size,
         color: Color,
-        strokeWidth: Float
+        strokeWidth: Float,
     ) {
         with(drawScope) {
             if (perk == null) {
@@ -209,8 +215,22 @@ object HexagonGridDefaults {
                 val path = Path().apply {
                     // Stylized ?
                     moveTo(size.width * 0.35f, size.height * 0.25f)
-                    cubicTo(size.width * 0.35f, 0f, size.width * 0.75f, 0f, size.width * 0.75f, size.height * 0.3f)
-                    cubicTo(size.width * 0.75f, size.height * 0.45f, size.width * 0.55f, size.height * 0.45f, size.width * 0.55f, size.height * 0.6f)
+                    cubicTo(
+                        size.width * 0.35f,
+                        0f,
+                        size.width * 0.75f,
+                        0f,
+                        size.width * 0.75f,
+                        size.height * 0.3f,
+                    )
+                    cubicTo(
+                        size.width * 0.75f,
+                        size.height * 0.45f,
+                        size.width * 0.55f,
+                        size.height * 0.45f,
+                        size.width * 0.55f,
+                        size.height * 0.6f,
+                    )
                     moveTo(size.width * 0.55f, size.height * 0.75f)
                     lineTo(size.width * 0.55f, size.height * 0.85f)
                 }
@@ -275,38 +295,38 @@ object HexagonGridDefaults {
                         color,
                         Offset(0f, size.height * 0.3f),
                         Offset(size.width, size.height * 0.3f),
-                        strokeWidth
+                        strokeWidth,
                     )
                     drawLine(
                         color,
                         Offset(size.width, size.height * 0.3f),
                         Offset(size.width - arrowSize, size.height * 0.15f),
-                        strokeWidth
+                        strokeWidth,
                     )
                     drawLine(
                         color,
                         Offset(size.width, size.height * 0.3f),
                         Offset(size.width - arrowSize, size.height * 0.45f),
-                        strokeWidth
+                        strokeWidth,
                     )
 
                     drawLine(
                         color,
                         Offset(0f, size.height * 0.7f),
                         Offset(size.width, size.height * 0.7f),
-                        strokeWidth
+                        strokeWidth,
                     )
                     drawLine(
                         color,
                         Offset(0f, size.height * 0.7f),
                         Offset(arrowSize, size.height * 0.55f),
-                        strokeWidth
+                        strokeWidth,
                     )
                     drawLine(
                         color,
                         Offset(0f, size.height * 0.7f),
                         Offset(arrowSize, size.height * 0.85f),
-                        strokeWidth
+                        strokeWidth,
                     )
                 }
 
@@ -315,19 +335,19 @@ object HexagonGridDefaults {
                         color,
                         radius = size.width * 0.15f,
                         center = Offset(size.width * 0.25f, size.height * 0.25f),
-                        style = Stroke(width = strokeWidth)
+                        style = Stroke(width = strokeWidth),
                     )
                     drawLine(
                         color,
                         Offset(size.width * 0.35f, size.height * 0.35f),
                         Offset(size.width * 0.65f, size.height * 0.65f),
-                        strokeWidth
+                        strokeWidth,
                     )
                     drawCircle(
                         color,
                         radius = size.width * 0.15f,
                         center = Offset(size.width * 0.75f, size.height * 0.75f),
-                        style = Stroke(width = strokeWidth)
+                        style = Stroke(width = strokeWidth),
                     )
                 }
 
@@ -339,7 +359,10 @@ object HexagonGridDefaults {
                         useCenter = false,
                         topLeft = Offset(size.width * 0.15f, size.height * 0.15f),
                         size = Size(size.width * 0.7f, size.height * 0.7f),
-                        style = Stroke(width = strokeWidth, cap = androidx.compose.ui.graphics.StrokeCap.Round),
+                        style = Stroke(
+                            width = strokeWidth,
+                            cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                        ),
                     )
                     val arrowSize = size.width * 0.2f
                     val arrowPath = Path().apply {
@@ -356,13 +379,13 @@ object HexagonGridDefaults {
                         color = color,
                         topLeft = Offset(size.width * 0.15f, size.height * 0.15f),
                         size = Size(size.width * 0.45f, size.height * 0.45f),
-                        style = Stroke(width = strokeWidth)
+                        style = Stroke(width = strokeWidth),
                     )
                     drawRect(
                         color = color,
                         topLeft = Offset(size.width * 0.4f, size.height * 0.4f),
                         size = Size(size.width * 0.45f, size.height * 0.45f),
-                        style = Stroke(width = strokeWidth)
+                        style = Stroke(width = strokeWidth),
                     )
                 }
 
@@ -372,13 +395,13 @@ object HexagonGridDefaults {
                         startAngle = 0f,
                         sweepAngle = 360f,
                         useCenter = false,
-                        style = Stroke(width = strokeWidth)
+                        style = Stroke(width = strokeWidth),
                     )
                     drawLine(
                         color = color,
                         start = Offset(size.width * 0.3f, size.height * 0.3f),
                         end = Offset(size.width * 0.7f, size.height * 0.7f),
-                        strokeWidth = strokeWidth
+                        strokeWidth = strokeWidth,
                     )
                     val arrowPath = Path().apply {
                         moveTo(size.width * 0.8f, size.height * 0.5f)
@@ -394,13 +417,13 @@ object HexagonGridDefaults {
                         color = color,
                         start = Offset(size.width * 0.5f, size.height * 0.2f),
                         end = Offset(size.width * 0.5f, size.height * 0.8f),
-                        strokeWidth = strokeWidth
+                        strokeWidth = strokeWidth,
                     )
                     drawLine(
                         color = color,
                         start = Offset(size.width * 0.2f, size.height * 0.5f),
                         end = Offset(size.width * 0.8f, size.height * 0.5f),
-                        strokeWidth = strokeWidth
+                        strokeWidth = strokeWidth,
                     )
                 }
 
@@ -414,7 +437,11 @@ object HexagonGridDefaults {
                         lineTo(size.width * 0.8f, size.height * 0.8f)
                     }
                     drawPath(path, color = color, style = Stroke(width = strokeWidth))
-                    drawCircle(color, radius = size.width * 0.1f, center = Offset(size.width * 0.5f, size.height * 0.5f))
+                    drawCircle(
+                        color,
+                        radius = size.width * 0.1f,
+                        center = Offset(size.width * 0.5f, size.height * 0.5f),
+                    )
                 }
 
                 Perk.FREEZE_TILE -> {
@@ -424,21 +451,32 @@ object HexagonGridDefaults {
                         val angle = (i * 60f).toDouble()
                         val dx = (radius * kotlin.math.cos(angle * kotlin.math.PI / 180)).toFloat()
                         val dy = (radius * kotlin.math.sin(angle * kotlin.math.PI / 180)).toFloat()
-                        drawLine(color, center - Offset(dx, dy), center + Offset(dx, dy), strokeWidth)
+                        drawLine(
+                            color,
+                            center - Offset(dx, dy),
+                            center + Offset(dx, dy),
+                            strokeWidth,
+                        )
                     }
                     val smallRadius = radius * 0.3f
                     for (i in 0 until 6) {
                         val angle = (i * 60f).toDouble()
-                        val dx = (radius * 0.8f * kotlin.math.cos(angle * kotlin.math.PI / 180)).toFloat()
-                        val dy = (radius * 0.8f * kotlin.math.sin(angle * kotlin.math.PI / 180)).toFloat()
+                        val dx =
+                            (radius * 0.8f * kotlin.math.cos(angle * kotlin.math.PI / 180)).toFloat()
+                        val dy =
+                            (radius * 0.8f * kotlin.math.sin(angle * kotlin.math.PI / 180)).toFloat()
                         val tip = center + Offset(dx, dy)
 
                         val crossAngle1 = angle + 45
                         val crossAngle2 = angle - 45
-                        val cdx1 = (smallRadius * kotlin.math.cos(crossAngle1 * kotlin.math.PI / 180)).toFloat()
-                        val cdy1 = (smallRadius * kotlin.math.sin(crossAngle1 * kotlin.math.PI / 180)).toFloat()
-                        val cdx2 = (smallRadius * kotlin.math.cos(crossAngle2 * kotlin.math.PI / 180)).toFloat()
-                        val cdy2 = (smallRadius * kotlin.math.sin(crossAngle2 * kotlin.math.PI / 180)).toFloat()
+                        val cdx1 =
+                            (smallRadius * kotlin.math.cos(crossAngle1 * kotlin.math.PI / 180)).toFloat()
+                        val cdy1 =
+                            (smallRadius * kotlin.math.sin(crossAngle1 * kotlin.math.PI / 180)).toFloat()
+                        val cdx2 =
+                            (smallRadius * kotlin.math.cos(crossAngle2 * kotlin.math.PI / 180)).toFloat()
+                        val cdy2 =
+                            (smallRadius * kotlin.math.sin(crossAngle2 * kotlin.math.PI / 180)).toFloat()
 
                         drawLine(color, tip, tip - Offset(cdx1, cdy1), strokeWidth)
                         drawLine(color, tip, tip - Offset(cdx2, cdy2), strokeWidth)
@@ -470,35 +508,37 @@ class FlatTopHexagonShape : Shape {
     }
 }
 
-val Perk.displayNameRes get() = when(this) {
-    Perk.UNDO -> Res.string.perk_undo_name
-    Perk.MOVE_TILE -> Res.string.perk_move_tile_name
-    Perk.REMOVE_TILE -> Res.string.perk_remove_tile_name
-    Perk.ADVANCE_QUEUE -> Res.string.perk_advance_queue_name
-    Perk.SWAP_TILES -> Res.string.perk_swap_tiles_name
-    Perk.FUSION -> Res.string.perk_fusion_name
-    Perk.CHAIN_MERGE -> Res.string.perk_chain_merge_name
-    Perk.DUPLICATE_TILE -> Res.string.perk_duplicate_tile_name
-    Perk.SKIP_SPAWN -> Res.string.perk_skip_spawn_name
-    Perk.INCREMENT_TILE -> Res.string.perk_increment_tile_name
-    Perk.PATH_MERGE -> Res.string.perk_path_merge_name
-    Perk.FREEZE_TILE -> Res.string.perk_freeze_tile_name
-}
+val Perk.displayNameRes
+    get() = when (this) {
+        Perk.UNDO -> Res.string.perk_undo_name
+        Perk.MOVE_TILE -> Res.string.perk_move_tile_name
+        Perk.REMOVE_TILE -> Res.string.perk_remove_tile_name
+        Perk.ADVANCE_QUEUE -> Res.string.perk_advance_queue_name
+        Perk.SWAP_TILES -> Res.string.perk_swap_tiles_name
+        Perk.FUSION -> Res.string.perk_fusion_name
+        Perk.CHAIN_MERGE -> Res.string.perk_chain_merge_name
+        Perk.DUPLICATE_TILE -> Res.string.perk_duplicate_tile_name
+        Perk.SKIP_SPAWN -> Res.string.perk_skip_spawn_name
+        Perk.INCREMENT_TILE -> Res.string.perk_increment_tile_name
+        Perk.PATH_MERGE -> Res.string.perk_path_merge_name
+        Perk.FREEZE_TILE -> Res.string.perk_freeze_tile_name
+    }
 
-val Perk.descriptionRes get() = when(this) {
-    Perk.UNDO -> Res.string.perk_undo_desc
-    Perk.MOVE_TILE -> Res.string.perk_move_tile_desc
-    Perk.REMOVE_TILE -> Res.string.perk_remove_tile_desc
-    Perk.ADVANCE_QUEUE -> Res.string.perk_advance_queue_desc
-    Perk.SWAP_TILES -> Res.string.perk_swap_tiles_desc
-    Perk.FUSION -> Res.string.perk_fusion_desc
-    Perk.CHAIN_MERGE -> Res.string.perk_chain_merge_desc
-    Perk.DUPLICATE_TILE -> Res.string.perk_duplicate_tile_desc
-    Perk.SKIP_SPAWN -> Res.string.perk_skip_spawn_desc
-    Perk.INCREMENT_TILE -> Res.string.perk_increment_tile_desc
-    Perk.PATH_MERGE -> Res.string.perk_path_merge_desc
-    Perk.FREEZE_TILE -> Res.string.perk_freeze_tile_desc
-}
+val Perk.descriptionRes
+    get() = when (this) {
+        Perk.UNDO -> Res.string.perk_undo_desc
+        Perk.MOVE_TILE -> Res.string.perk_move_tile_desc
+        Perk.REMOVE_TILE -> Res.string.perk_remove_tile_desc
+        Perk.ADVANCE_QUEUE -> Res.string.perk_advance_queue_desc
+        Perk.SWAP_TILES -> Res.string.perk_swap_tiles_desc
+        Perk.FUSION -> Res.string.perk_fusion_desc
+        Perk.CHAIN_MERGE -> Res.string.perk_chain_merge_desc
+        Perk.DUPLICATE_TILE -> Res.string.perk_duplicate_tile_desc
+        Perk.SKIP_SPAWN -> Res.string.perk_skip_spawn_desc
+        Perk.INCREMENT_TILE -> Res.string.perk_increment_tile_desc
+        Perk.PATH_MERGE -> Res.string.perk_path_merge_desc
+        Perk.FREEZE_TILE -> Res.string.perk_freeze_tile_desc
+    }
 
 @Composable
 fun Hexagon(
@@ -510,19 +550,19 @@ fun Hexagon(
     isOutline: Boolean = false,
     isGhost: Boolean = false,
     isTactical: Boolean = false,
-    isFrozen: Boolean = false
+    isFrozen: Boolean = false,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "hexagon_animations")
-    
+
     val stripeOffset = if (isGhost) {
         infiniteTransition.animateFloat(
             initialValue = 0f,
             targetValue = 11.5f, // step = stripeWidth(1.5) + gap(10)
             animationSpec = infiniteRepeatable(
                 animation = tween(3000, easing = LinearEasing),
-                repeatMode = androidx.compose.animation.core.RepeatMode.Restart
+                repeatMode = androidx.compose.animation.core.RepeatMode.Restart,
             ),
-            label = "stripe_offset"
+            label = "stripe_offset",
         )
     } else null
 
@@ -532,9 +572,9 @@ fun Hexagon(
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
                 animation = tween(1000),
-                repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+                repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
             ),
-            label = "tactical_pulse"
+            label = "tactical_pulse",
         )
     } else null
 
@@ -547,7 +587,7 @@ fun Hexagon(
                 drawScope = this,
                 size = size,
                 stripeOffsetPx = stripeOffset.value.dp.toPx(),
-                spacing = spacing
+                spacing = spacing,
             )
         }
     } else Modifier
@@ -565,7 +605,7 @@ fun Hexagon(
         .background(backgroundColor)
         .then(ghostModifier)
         .then(frozenModifier)
-    
+
     val finalModifier = if (onClick != null) {
         baseModifier.clickable(onClick = onClick)
     } else {
@@ -581,7 +621,7 @@ fun Hexagon(
                 size = size,
                 color = secondaryColor,
                 alpha = tacticalPulse.value,
-                style = Stroke(width = strokeWidth.toPx())
+                style = Stroke(width = strokeWidth.toPx()),
             )
         }
     } else Modifier
@@ -596,7 +636,7 @@ fun Hexagon(
                         color = Color.White.copy(alpha = 0.1f),
                         shape = FlatTopHexagonShape(),
                     )
-                } else Modifier
+                } else Modifier,
             ),
         contentAlignment = Alignment.Center,
     ) {
@@ -607,7 +647,10 @@ fun Hexagon(
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp.scaled,
                 maxLines = 1,
-                autoSize = TextAutoSize.StepBased(minFontSize = 8.sp.scaled, maxFontSize = 24.sp.scaled)
+                autoSize = TextAutoSize.StepBased(
+                    minFontSize = 8.sp.scaled,
+                    maxFontSize = 24.sp.scaled,
+                ),
             )
         }
 
@@ -618,7 +661,7 @@ fun Hexagon(
                     .size(spacing.large.scaled)
                     .align(Alignment.BottomCenter)
                     .offset(y = (-6).dp.scaled),
-                color = Color.White.copy(alpha = 0.6f)
+                color = Color.White.copy(alpha = 0.6f),
             )
         }
 
@@ -630,7 +673,7 @@ fun Hexagon(
                     .align(Alignment.TopCenter)
                     .offset(y = spacing.tiny.scaled)
                     .zIndex(5f),
-                color = Color.White
+                color = Color.White,
             )
         }
     }
@@ -646,7 +689,7 @@ fun PerkButton(
     isActive: Boolean = false,
     isEnabled: Boolean = true,
     tooltipDescription: StringResource? = null,
-    buttonSize: Dp = MaterialTheme.spacing.extraHuge.scaled
+    buttonSize: Dp = MaterialTheme.spacing.extraHuge.scaled,
 ) {
     val spacing = MaterialTheme.spacing
     val colorScheme = MaterialTheme.colorScheme
@@ -655,17 +698,17 @@ fun PerkButton(
     }
     val isLegendary = perk.isLegendary
     val heightScale = 0.866f // Flat-top hexagon height/width ratio
-    
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .padding(horizontal = spacing.tiny.scaled)
-            .graphicsLayer { alpha = if (isEnabled) 1f else 0.1f }
+            .graphicsLayer { alpha = if (isEnabled) 1f else 0.1f },
     ) {
         val hexagonContent = @Composable {
             Box(
                 modifier = Modifier.size(width = buttonSize, height = buttonSize * heightScale),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 // Legendary Glow
                 if (isLegendary && isEnabled) {
@@ -675,18 +718,21 @@ fun PerkButton(
                         targetValue = 0.8f,
                         animationSpec = infiniteRepeatable(
                             animation = tween(1000),
-                            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+                            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
                         ),
-                        label = "glow"
+                        label = "glow",
                     )
-                    
+
                     Box(
                         modifier = Modifier
-                            .size(width = buttonSize + spacing.small.scaled, height = (buttonSize + spacing.small.scaled) * heightScale)
+                            .size(
+                                width = buttonSize + spacing.small.scaled,
+                                height = (buttonSize + spacing.small.scaled) * heightScale,
+                            )
                             .clip(FlatTopHexagonShape())
                             .drawBehind {
                                 drawRect(perkColor.copy(alpha = glowAlpha.value * 0.4f))
-                            }
+                            },
                     )
                 }
 
@@ -697,10 +743,10 @@ fun PerkButton(
                             listOf(perkColor, perkColor.copy(alpha = 0.7f))
                         } else {
                             listOf(perkColor.copy(alpha = 0.2f), perkColor.copy(alpha = 0.05f))
-                        }
+                        },
                     )
                 }
-                
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -708,36 +754,31 @@ fun PerkButton(
                         .background(brush)
                         .border(
                             width = if (isActive) spacing.tiny.scaled else if (isLegendary) spacing.tiny.scaled else spacing.extraTiny.scaled,
-                            color = if (isActive) Color.White.copy(alpha = 0.5f) else if (isLegendary) perkColor else perkColor.copy(alpha = 0.3f),
+                            color = if (isActive) Color.White.copy(alpha = 0.5f) else if (isLegendary) perkColor else perkColor.copy(
+                                alpha = 0.3f,
+                            ),
                             shape = FlatTopHexagonShape(),
                         )
                         .clickable(enabled = isEnabled, onClick = onClick),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     PerkIcon(
                         perk = perk,
                         modifier = Modifier.size(buttonSize * 0.45f),
-                        color = Color.White.copy(alpha = if (isActive) 1f else if (isEnabled) 0.7f else 0.3f)
+                        color = Color.White.copy(alpha = if (isActive) 1f else if (isEnabled) 0.7f else 0.3f),
                     )
                 }
 
                 // Badge counter
                 if (count != null) {
-                    Box(
+                    Badge(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .offset(x = spacing.semiSmall.scaled, y = -spacing.tiny.scaled)
-                            .size(spacing.semiLarge.scaled)
-                            .background(perkColor, CircleShape)
-                            .border(spacing.extraTiny.scaled, MaterialTheme.colorScheme.surface, CircleShape),
-                        contentAlignment = Alignment.Center
+                            .offset(x = spacing.small.scaled, y = -spacing.tiny.scaled),
+                        containerColor = perkColor,
+                        contentColor = Color.White,
                     ) {
-                        Text(
-                            text = count.toString(),
-                            color = Color.White,
-                            fontSize = 10.sp.scaled,
-                            fontWeight = FontWeight.Black
-                        )
+                        Text(text = count.toString(), fontSize = 20.sp.scaled)
                     }
                 }
             }
@@ -747,7 +788,7 @@ fun PerkButton(
             Tooltip(
                 position = Position.ABOVE,
                 contentDescription = tooltipDescription,
-                content = hexagonContent
+                content = hexagonContent,
             )
         } else {
             hexagonContent()
@@ -762,7 +803,7 @@ fun PerkButton(
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center,
             lineHeight = 11.sp.scaled,
-            modifier = Modifier.width(buttonSize + spacing.semiMedium.scaled)
+            modifier = Modifier.width(buttonSize + spacing.semiMedium.scaled),
         )
     }
 }
@@ -771,10 +812,10 @@ fun PerkButton(
 fun PerkIcon(
     modifier: Modifier = Modifier,
     perk: Perk?,
-    color: Color = Color.White
+    color: Color = Color.White,
 ) {
     if (perk == null) return
-    
+
     val iconRes = when (perk) {
         Perk.UNDO -> Res.drawable.ic_undo
         Perk.MOVE_TILE -> Res.drawable.ic_move
@@ -794,7 +835,7 @@ fun PerkIcon(
         painter = painterResource(iconRes),
         contentDescription = null,
         modifier = modifier,
-        tint = color
+        tint = color,
     )
 }
 
@@ -838,8 +879,8 @@ fun HexagonGrid(
         val contentMeasurables = measurables.drop(cellCount)
 
         val outlinePlaceables = outlineMeasurables.map { it.measure(childConstraints) }
-        val contentPlaceables = contentMeasurables.map { 
-            it.measure(constraints.copy(minWidth = 0, minHeight = 0)) 
+        val contentPlaceables = contentMeasurables.map {
+            it.measure(constraints.copy(minWidth = 0, minHeight = 0))
         }
 
         val totalWidth = (cellWidth * (1f + (columns - 1) * 0.75f)).toInt()
@@ -849,7 +890,8 @@ fun HexagonGrid(
             outlinePlaceables.forEachIndexed { index, placeable ->
                 val row = index / columns
                 val col = index % columns
-                val offset = HexagonGridDefaults.calculateOffset(col, row, cellWidth, cellHeight, gapPx)
+                val offset =
+                    HexagonGridDefaults.calculateOffset(col, row, cellWidth, cellHeight, gapPx)
                 placeable.placeRelative(offset)
             }
             contentPlaceables.forEach { it.placeRelative(0, 0) }

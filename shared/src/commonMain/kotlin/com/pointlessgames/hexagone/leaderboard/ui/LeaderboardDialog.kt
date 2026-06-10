@@ -44,6 +44,7 @@ import com.pointlessgames.hexagone.game.ui.components.BottomSheetTitle
 import com.pointlessgames.hexagone.game.ui.components.DialogTabButton
 import com.pointlessgames.hexagone.game.ui.components.HexagonIconButton
 import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
+import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.ic_roll
@@ -288,6 +289,7 @@ private fun RankHeader() {
             .fillMaxWidth()
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraSmall.scaled),
     ) {
         Text(
             text = stringResource(Res.string.leaderboard_rank).uppercase(),

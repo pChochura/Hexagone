@@ -14,7 +14,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ContextualFlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -48,9 +47,39 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.components.Position
-import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.ui.theme.scaled
-import hexagone.shared.generated.resources.*
+import com.pointlessgames.hexagone.ui.theme.spacing
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.app_name
+import hexagone.shared.generated.resources.best_score_label
+import hexagone.shared.generated.resources.combo_multiplier
+import hexagone.shared.generated.resources.daily_challenge
+import hexagone.shared.generated.resources.ic_achievements
+import hexagone.shared.generated.resources.ic_daily_challenge
+import hexagone.shared.generated.resources.ic_leaderboards
+import hexagone.shared.generated.resources.ic_settings
+import hexagone.shared.generated.resources.level_label
+import hexagone.shared.generated.resources.max_label
+import hexagone.shared.generated.resources.perk_active_label
+import hexagone.shared.generated.resources.perk_advance_queue_name
+import hexagone.shared.generated.resources.perk_chain_merge_name
+import hexagone.shared.generated.resources.perk_duplicate_tile_name
+import hexagone.shared.generated.resources.perk_freeze_tile_name
+import hexagone.shared.generated.resources.perk_fusion_name
+import hexagone.shared.generated.resources.perk_increment_tile_name
+import hexagone.shared.generated.resources.perk_move_tile_name
+import hexagone.shared.generated.resources.perk_path_merge_name
+import hexagone.shared.generated.resources.perk_remove_tile_name
+import hexagone.shared.generated.resources.perk_skip_spawn_name
+import hexagone.shared.generated.resources.perk_swap_tiles_name
+import hexagone.shared.generated.resources.perk_undo_name
+import hexagone.shared.generated.resources.score_label
+import hexagone.shared.generated.resources.tier_overdrive
+import hexagone.shared.generated.resources.tier_surge
+import hexagone.shared.generated.resources.tier_zenith
+import hexagone.shared.generated.resources.tooltip_achievements
+import hexagone.shared.generated.resources.tooltip_leaderboard
+import hexagone.shared.generated.resources.tooltip_settings
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -104,14 +133,22 @@ fun ScoreSection(
         val spacing = MaterialTheme.spacing
         // Top Header with Game Name and Icons
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.medium),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(
+                space = spacing.small.scaled,
+                alignment = Alignment.CenterHorizontally,
+            ),
         ) {
-            val iconSize = 44.dp.scaled
+            val iconSize = 36.dp.scaled
 
             Row(
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(spacing.small.scaled),
+                horizontalArrangement = Arrangement.spacedBy(
+                    space = spacing.small.scaled,
+                    alignment = Alignment.Start,
+                ),
             ) {
                 HexagonIconButton(
                     onClick = onLeaderboardClick,
@@ -134,8 +171,6 @@ fun ScoreSection(
                 )
             }
 
-            Spacer(Modifier.weight(1f))
-
             Text(
                 text = stringResource(Res.string.app_name).uppercase(),
                 color = MaterialTheme.colorScheme.outlineVariant,
@@ -145,11 +180,13 @@ fun ScoreSection(
                 maxLines = 1,
             )
 
-            Spacer(Modifier.weight(1f))
-
             Row(
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(spacing.small.scaled),
+                horizontalArrangement = Arrangement.spacedBy(
+                    space = spacing.small.scaled,
+                    alignment = Alignment.End,
+                ),
             ) {
                 HexagonIconButton(
                     onClick = onDailyChallengeClick,
@@ -157,8 +194,8 @@ fun ScoreSection(
                     tooltip = Res.string.daily_challenge,
                     tooltipPosition = Position.BELOW,
                     size = iconSize,
-                    backgroundColor = if (isDailyChallengeCompleted) 
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) 
+                    backgroundColor = if (isDailyChallengeCompleted)
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                     else Color.White.copy(alpha = 0.05f),
                     borderColor = if (isDailyChallengeCompleted)
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
@@ -195,7 +232,10 @@ fun ScoreSection(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = spacing.extraLarge.scaled, vertical = spacing.large.scaled),
+                    .padding(
+                        horizontal = spacing.extraLarge.scaled,
+                        vertical = spacing.large.scaled,
+                    ),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
@@ -410,7 +450,8 @@ fun ScoreSection(
                                     colorScheme,
                                 ).copy(alpha = 0.2f),
                                 isOutline = true,
-                                modifier = Modifier.size(spacing.huge.scaled).aspectRatio(1 / 0.866f),
+                                modifier = Modifier.size(spacing.huge.scaled)
+                                    .aspectRatio(1 / 0.866f),
                             )
                         }
                     }

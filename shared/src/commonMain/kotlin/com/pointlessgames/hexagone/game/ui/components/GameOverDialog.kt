@@ -12,8 +12,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -25,8 +27,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,20 +43,44 @@ import com.pointlessgames.hexagone.game.model.ChallengeGoal
 import com.pointlessgames.hexagone.game.model.DailyChallengeProgress
 import com.pointlessgames.hexagone.game.model.RankingInfo
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
-import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.ui.theme.scaled
-import hexagone.shared.generated.resources.*
+import com.pointlessgames.hexagone.ui.theme.spacing
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.best_score_formatted
+import hexagone.shared.generated.resources.daily_challenge
+import hexagone.shared.generated.resources.daily_challenge_goal_combo
+import hexagone.shared.generated.resources.daily_challenge_goal_combo_maintenance
+import hexagone.shared.generated.resources.daily_challenge_goal_diversity
+import hexagone.shared.generated.resources.daily_challenge_goal_elite_sacrifice
+import hexagone.shared.generated.resources.daily_challenge_goal_frozen_recovery
+import hexagone.shared.generated.resources.daily_challenge_goal_frugal
+import hexagone.shared.generated.resources.daily_challenge_goal_ghost_horde
+import hexagone.shared.generated.resources.daily_challenge_goal_legendary_gamble
+import hexagone.shared.generated.resources.daily_challenge_goal_level
+import hexagone.shared.generated.resources.daily_challenge_goal_merge
+import hexagone.shared.generated.resources.daily_challenge_goal_no_perks
+import hexagone.shared.generated.resources.daily_challenge_goal_path_merge
+import hexagone.shared.generated.resources.daily_challenge_goal_pattern
+import hexagone.shared.generated.resources.daily_challenge_goal_perk_restriction
 import hexagone.shared.generated.resources.daily_challenge_goal_score
 import hexagone.shared.generated.resources.daily_challenge_goal_tactical
 import hexagone.shared.generated.resources.daily_challenge_goal_value
+import hexagone.shared.generated.resources.done
 import hexagone.shared.generated.resources.game_over_title
-import hexagone.shared.generated.resources.ic_back
+import hexagone.shared.generated.resources.ic_hide
 import hexagone.shared.generated.resources.ic_star
 import hexagone.shared.generated.resources.label_level
 import hexagone.shared.generated.resources.label_max_combo
 import hexagone.shared.generated.resources.label_max_piece
 import hexagone.shared.generated.resources.new_best_label
+import hexagone.shared.generated.resources.pattern_great_wall
+import hexagone.shared.generated.resources.pattern_ring_of_fire
+import hexagone.shared.generated.resources.pattern_the_prism
+import hexagone.shared.generated.resources.pattern_twin_peaks
 import hexagone.shared.generated.resources.previous_best_label
+import hexagone.shared.generated.resources.rank_global
+import hexagone.shared.generated.resources.rank_regional
+import hexagone.shared.generated.resources.score_popup
 import hexagone.shared.generated.resources.tooltip_view_board
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -135,13 +161,10 @@ internal fun GameOverDialog(
     ) {
         HexagonIconButton(
             onClick = onViewBoard,
-            icon = Res.drawable.ic_back,
+            icon = Res.drawable.ic_hide,
             tooltip = Res.string.tooltip_view_board,
             size = 48.dp.scaled,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .graphicsLayer { rotationZ = 180f }
-                .padding(spacing.small.scaled),
+            modifier = Modifier.align(Alignment.TopEnd),
             backgroundColor = Color.White.copy(alpha = 0.05f),
             borderColor = Color.White.copy(alpha = 0.1f),
         )
@@ -167,10 +190,16 @@ internal fun GameOverDialog(
                                 Color.White.copy(alpha = 0.08f),
                                 RoundedCornerShape(MaterialTheme.cornerRadius.full),
                             )
-                            .padding(horizontal = spacing.large.scaled, vertical = spacing.extraSmall.scaled),
+                            .padding(
+                                horizontal = spacing.large.scaled,
+                                vertical = spacing.extraSmall.scaled,
+                            ),
                     ) {
                         Text(
-                            text = if (rank.isRegional) stringResource(Res.string.rank_regional, rank.rank) else stringResource(Res.string.rank_global, rank.rank),
+                            text = if (rank.isRegional) stringResource(
+                                Res.string.rank_regional,
+                                rank.rank,
+                            ) else stringResource(Res.string.rank_global, rank.rank),
                             color = Color(0xFFFFD54F), // Yellow from screenshot
                             fontWeight = FontWeight.Black,
                             fontSize = 12.sp.scaled,
@@ -197,9 +226,12 @@ internal fun GameOverDialog(
                         }
                         .background(
                             androidx.compose.ui.graphics.Brush.radialGradient(
-                                colors = listOf(Color(0xFFFFD54F).copy(alpha = 0.4f), Color.Transparent),
-                            )
-                        )
+                                colors = listOf(
+                                    Color(0xFFFFD54F).copy(alpha = 0.4f),
+                                    Color.Transparent,
+                                ),
+                            ),
+                        ),
                 )
 
                 Text(
@@ -223,7 +255,10 @@ internal fun GameOverDialog(
                                 Color(0xFFF06292), // Pink from screenshot
                                 RoundedCornerShape(MaterialTheme.cornerRadius.full),
                             )
-                            .padding(horizontal = spacing.medium.scaled, vertical = spacing.extraSmall.scaled),
+                            .padding(
+                                horizontal = spacing.medium.scaled,
+                                vertical = spacing.extraSmall.scaled,
+                            ),
                     ) {
                         Text(
                             text = stringResource(Res.string.new_best_label).uppercase(),
@@ -257,8 +292,11 @@ internal fun GameOverDialog(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(MaterialTheme.cornerRadius.medium))
                         .background(Color.White.copy(alpha = 0.05f))
-                        .padding(spacing.medium.scaled),
-                    verticalArrangement = Arrangement.spacedBy(spacing.small.scaled),
+                        .padding(
+                            horizontal = spacing.medium.scaled,
+                            vertical = spacing.small.scaled,
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(spacing.extraSmall.scaled),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
@@ -280,24 +318,26 @@ internal fun GameOverDialog(
             Spacer(Modifier.height(spacing.large.scaled))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 // Level Stat
                 GameOverStatHexagon(
+                    modifier = Modifier.fillMaxHeight(),
                     label = stringResource(Res.string.label_level),
                     value = level.toString(),
                     backgroundColor = Color(0xFF37474F), // Dark teal/grey
-                    size = 72.dp.scaled,
+                    size = 48.dp.scaled,
                 )
 
                 // Max Piece Stat (Larger and glowing)
                 GameOverStatHexagon(
+                    modifier = Modifier.fillMaxHeight(),
                     label = stringResource(Res.string.label_max_piece),
                     value = highestValue.toString(),
                     backgroundColor = Color(0xFF9345C4), // Purple
-                    size = 92.dp.scaled,
+                    size = 64.dp.scaled,
                     labelColor = Color.White,
                     glowAlphaProvider = maxPieceGlowAlphaProvider,
                     glowColor = Color(0xFFBB86FC),
@@ -305,10 +345,11 @@ internal fun GameOverDialog(
 
                 // Max Combo Stat
                 GameOverStatHexagon(
+                    modifier = Modifier.fillMaxHeight(),
                     label = stringResource(Res.string.label_max_combo),
                     value = maxCombo.toString(),
                     backgroundColor = Color(0xFF5D4037), // Dark brown
-                    size = 72.dp.scaled,
+                    size = 48.dp.scaled,
                 )
             }
         }
@@ -321,14 +362,47 @@ private fun DailyChallengeSummaryRow(
 ) {
     val challenge = progress.challenge
     val goalText = when (challenge.goal) {
-        ChallengeGoal.MERGE_COUNT -> stringResource(Res.string.daily_challenge_goal_merge, challenge.target)
-        ChallengeGoal.LEVEL_REACHED -> stringResource(Res.string.daily_challenge_goal_level, challenge.target)
-        ChallengeGoal.COMBO_REACHED -> stringResource(Res.string.daily_challenge_goal_combo, challenge.target)
-        ChallengeGoal.SCORE_REACHED -> stringResource(Res.string.daily_challenge_goal_score, challenge.target)
-        ChallengeGoal.TACTICAL_MERGES -> stringResource(Res.string.daily_challenge_goal_tactical, challenge.target)
-        ChallengeGoal.PIECE_VALUE_REACHED -> stringResource(Res.string.daily_challenge_goal_value, challenge.target)
-        ChallengeGoal.MOVES_WITHOUT_PERK -> stringResource(Res.string.daily_challenge_goal_no_perks, challenge.target)
-        ChallengeGoal.PERK_RESTRICTED_LEVEL -> stringResource(Res.string.daily_challenge_goal_perk_restriction, challenge.target, challenge.restrictedPerk?.let { stringResource(it.displayNameRes) } ?: "")
+        ChallengeGoal.MERGE_COUNT -> stringResource(
+            Res.string.daily_challenge_goal_merge,
+            challenge.target,
+        )
+
+        ChallengeGoal.LEVEL_REACHED -> stringResource(
+            Res.string.daily_challenge_goal_level,
+            challenge.target,
+        )
+
+        ChallengeGoal.COMBO_REACHED -> stringResource(
+            Res.string.daily_challenge_goal_combo,
+            challenge.target,
+        )
+
+        ChallengeGoal.SCORE_REACHED -> stringResource(
+            Res.string.daily_challenge_goal_score,
+            challenge.target,
+        )
+
+        ChallengeGoal.TACTICAL_MERGES -> stringResource(
+            Res.string.daily_challenge_goal_tactical,
+            challenge.target,
+        )
+
+        ChallengeGoal.PIECE_VALUE_REACHED -> stringResource(
+            Res.string.daily_challenge_goal_value,
+            challenge.target,
+        )
+
+        ChallengeGoal.MOVES_WITHOUT_PERK -> stringResource(
+            Res.string.daily_challenge_goal_no_perks,
+            challenge.target,
+        )
+
+        ChallengeGoal.PERK_RESTRICTED_LEVEL -> stringResource(
+            Res.string.daily_challenge_goal_perk_restriction,
+            challenge.target,
+            challenge.restrictedPerk?.let { stringResource(it.displayNameRes) } ?: "",
+        )
+
         ChallengeGoal.LEGENDARY_GAMBLE -> stringResource(Res.string.daily_challenge_goal_legendary_gamble)
         ChallengeGoal.GEOMETRIC_PATTERN -> {
             val patternName = when (challenge.patternId) {
@@ -340,12 +414,29 @@ private fun DailyChallengeSummaryRow(
             }
             stringResource(Res.string.daily_challenge_goal_pattern, patternName)
         }
+
         ChallengeGoal.ELITE_SACRIFICE -> stringResource(Res.string.daily_challenge_goal_elite_sacrifice)
-        ChallengeGoal.COMBO_MAINTENANCE -> stringResource(Res.string.daily_challenge_goal_combo_maintenance, challenge.target)
-        ChallengeGoal.GHOST_HORDE -> stringResource(Res.string.daily_challenge_goal_ghost_horde, challenge.target)
-        ChallengeGoal.PATH_MERGE_COUNT -> stringResource(Res.string.daily_challenge_goal_path_merge, challenge.target)
+        ChallengeGoal.COMBO_MAINTENANCE -> stringResource(
+            Res.string.daily_challenge_goal_combo_maintenance,
+            challenge.target,
+        )
+
+        ChallengeGoal.GHOST_HORDE -> stringResource(
+            Res.string.daily_challenge_goal_ghost_horde,
+            challenge.target,
+        )
+
+        ChallengeGoal.PATH_MERGE_COUNT -> stringResource(
+            Res.string.daily_challenge_goal_path_merge,
+            challenge.target,
+        )
+
         ChallengeGoal.DIVERSITY_STREAK -> stringResource(Res.string.daily_challenge_goal_diversity)
-        ChallengeGoal.FRUGAL_SURVIVOR -> stringResource(Res.string.daily_challenge_goal_frugal, challenge.target)
+        ChallengeGoal.FRUGAL_SURVIVOR -> stringResource(
+            Res.string.daily_challenge_goal_frugal,
+            challenge.target,
+        )
+
         ChallengeGoal.FROZEN_RECOVERY -> stringResource(Res.string.daily_challenge_goal_frozen_recovery)
     }
 
@@ -367,7 +458,7 @@ private fun DailyChallengeSummaryRow(
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(14.dp.scaled),
             )
-            Spacer(Modifier.width(MaterialTheme.spacing.small.scaled))
+            Spacer(Modifier.width(MaterialTheme.spacing.extraSmall.scaled))
             Text(
                 text = goalText,
                 color = Color.White,
@@ -392,20 +483,22 @@ private fun GameOverStatHexagon(
     value: String,
     backgroundColor: Color,
     size: Dp,
+    modifier: Modifier = Modifier,
     labelColor: Color = Color.White.copy(alpha = 0.6f),
     glowAlphaProvider: () -> Float = { 0f },
     glowColor: Color = Color.Transparent,
 ) {
     val spacing = MaterialTheme.spacing
     Column(
+        modifier = modifier.width(IntrinsicSize.Min),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
+        verticalArrangement = Arrangement.spacedBy(spacing.small.scaled),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Box(
                 modifier = Modifier
                     .size(width = size + 16.dp.scaled, height = (size + 16.dp.scaled) * 0.866f)
-                    .graphicsLayer { 
+                    .graphicsLayer {
                         alpha = glowAlphaProvider()
                     }
                     .background(glowColor.copy(alpha = 0.4f), FlatTopHexagonShape()),
@@ -427,11 +520,14 @@ private fun GameOverStatHexagon(
             }
         }
         Text(
+            modifier = Modifier.fillMaxWidth(),
             text = label,
             color = labelColor,
             fontWeight = FontWeight.Bold,
             fontSize = 12.sp.scaled,
+            lineHeight = 14.sp.scaled,
             letterSpacing = 0.5.sp.scaled,
+            textAlign = TextAlign.Center,
         )
     }
 }

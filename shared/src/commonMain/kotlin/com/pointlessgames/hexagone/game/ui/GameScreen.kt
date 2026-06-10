@@ -25,42 +25,52 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
-import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
-import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.model.TipTarget
-import com.pointlessgames.hexagone.game.ui.components.*
+import com.pointlessgames.hexagone.game.ui.components.AchievementNotification
+import com.pointlessgames.hexagone.game.ui.components.AchievementsDialog
+import com.pointlessgames.hexagone.game.ui.components.DailyChallengeDialog
+import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
+import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
+import com.pointlessgames.hexagone.game.ui.components.GameOverlays
+import com.pointlessgames.hexagone.game.ui.components.PerkBar
+import com.pointlessgames.hexagone.game.ui.components.ScoreSection
+import com.pointlessgames.hexagone.game.ui.components.SettingsDialog
+import com.pointlessgames.hexagone.game.ui.components.TipOverlay
+import com.pointlessgames.hexagone.game.ui.components.trackTipTarget
+import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
 import com.pointlessgames.hexagone.leaderboard.ui.LeaderboardDialog
-import com.pointlessgames.hexagone.ui.theme.cornerRadius
-import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.ui.theme.IsSmallDevice
+import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
+import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.utils.BackHandler
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.no_moves_left_warning
-import org.jetbrains.compose.resources.stringResource
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 internal fun GameScreen(
@@ -220,8 +230,6 @@ internal fun GameScreen(
 
     // Stable Providers for GameGridOverlay
     val mergeHintsProvider = remember { { mergeHintsState.value } }
-    val previewStateProvider = remember { { previewState.value } }
-    val gridStateProvider = remember { { gridState.value } }
     val onBoardPerksProvider = remember { { onBoardPerksState.value } }
     val potentialMergesProvider = remember(viewModel) {
         derivedStateOf {

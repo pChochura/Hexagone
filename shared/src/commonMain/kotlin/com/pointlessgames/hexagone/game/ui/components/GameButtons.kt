@@ -15,6 +15,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.movableContentWithReceiverOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,7 +37,7 @@ import org.jetbrains.compose.resources.painterResource
 fun BottomSheetTitle(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = Color.White
+    color: Color = Color.White,
 ) {
     Text(
         text = text.uppercase(),
@@ -45,7 +46,7 @@ fun BottomSheetTitle(
         color = color,
         letterSpacing = 4.sp,
         textAlign = TextAlign.Center,
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
     )
 }
 
@@ -66,7 +67,7 @@ fun DialogTabButton(
             listOf(primaryColor, primaryColor.copy(alpha = 0.7f))
         } else {
             listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.01f))
-        }
+        },
     )
 
     Box(
@@ -76,18 +77,18 @@ fun DialogTabButton(
             .border(
                 width = spacing.extraTiny,
                 color = if (isSelected) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.05f),
-                shape = shape
+                shape = shape,
             )
             .clip(shape)
             .clickable { onClick() },
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text.uppercase(),
             color = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color.White.copy(alpha = 0.4f),
             fontSize = 12.sp,
             fontWeight = FontWeight.Black,
-            letterSpacing = 2.sp
+            letterSpacing = 2.sp,
         )
     }
 }
@@ -102,14 +103,13 @@ fun HexagonIconButton(
     tooltipPosition: Position = Position.ABOVE,
     backgroundColor: Color = Color(0xFFD63F7B).copy(alpha = 0.2f),
     borderColor: Color = Color(0xFFD63F7B).copy(alpha = 0.4f),
-    size: Dp = 64.dp
+    size: Dp = 64.dp,
 ) {
     val spacing = MaterialTheme.spacing
-    val content = @Composable {
+    val content = movableContentWithReceiverOf<Modifier> {
         Column(
-            modifier = modifier,
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             Box(
                 modifier = Modifier
@@ -118,13 +118,13 @@ fun HexagonIconButton(
                     .background(backgroundColor)
                     .border(spacing.extraTiny, borderColor, FlatTopHexagonShape())
                     .clickable { onClick() },
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = null,
                     modifier = Modifier.size(size * 0.45f),
-                    tint = Color.White
+                    tint = Color.White,
                 )
             }
             if (label != null) {
@@ -136,7 +136,7 @@ fun HexagonIconButton(
                     fontWeight = FontWeight.Black,
                     letterSpacing = 1.sp,
                     textAlign = TextAlign.Center,
-                    lineHeight = 11.sp
+                    lineHeight = 11.sp,
                 )
             }
         }
@@ -144,11 +144,12 @@ fun HexagonIconButton(
 
     if (tooltip != null && label == null) {
         Tooltip(
+            modifier = modifier,
             position = tooltipPosition,
             contentDescription = tooltip,
-            content = content
+            content = { content(Modifier) },
         )
     } else {
-        content()
+        content(modifier)
     }
 }
