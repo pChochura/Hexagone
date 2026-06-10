@@ -82,7 +82,7 @@ internal class StateDelegate(
             reachedComboTiers = state.reachedComboTiers,
             perkOptions = state.perkOptions,
             canReroll = state.canReroll,
-            sessionBestScore = state.bestScore,
+            sessionBestScore = state.sessionBestScore,
             isStuck = state.isStuck,
             availableChoices = state.availableChoices,
             perksUsedTracking = state.perksUsedTracking,

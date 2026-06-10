@@ -445,9 +445,11 @@ internal class ActionDelegate(
                     )
                     result = scoreResult
 
+                    val nextScore = currentState.score + scoreResult.totalScore
                     currentState.copy(
                         preview = currentState.preview.filter { it.id != previewToTarget.id },
-                        score = currentState.score + scoreResult.totalScore,
+                        score = nextScore,
+                        bestScore = maxOf(currentState.bestScore, nextScore),
                     ).consumePerk(Perk.REMOVE_TILE).copy(activePerk = null, selectedCellId = null)
                 }
 
@@ -527,9 +529,11 @@ internal class ActionDelegate(
                         ) else it
                     }
 
+                    val nextScore = currentState.score + scoreResult.totalScore
                     currentState.copy(
                         preview = nextPreview,
-                        score = currentState.score + scoreResult.totalScore,
+                        score = nextScore,
+                        bestScore = maxOf(currentState.bestScore, nextScore),
                     ).consumePerk(Perk.INCREMENT_TILE)
                         .copy(activePerk = null, selectedCellId = null)
                 }
@@ -617,9 +621,11 @@ internal class ActionDelegate(
                         ) else it
                     }
 
+                    val nextScore = currentState.score + scoreResult.totalScore
                     currentState.copy(
                         grid = nextGrid,
-                        score = currentState.score + scoreResult.totalScore,
+                        score = nextScore,
+                        bestScore = maxOf(currentState.bestScore, nextScore),
                     ).consumePerk(Perk.INCREMENT_TILE)
                         .copy(activePerk = null, selectedCellId = null)
                 }
@@ -712,9 +718,11 @@ internal class ActionDelegate(
                     )
                     result = scoreResult
 
+                    val nextScore = currentState.score + scoreResult.totalScore
                     currentState.copy(
                         grid = currentState.grid.filter { it.id != cellToRemove.id },
-                        score = currentState.score + scoreResult.totalScore,
+                        score = nextScore,
+                        bestScore = maxOf(currentState.bestScore, nextScore),
                     ).consumePerk(Perk.REMOVE_TILE).copy(activePerk = null, selectedCellId = null)
                 }
 

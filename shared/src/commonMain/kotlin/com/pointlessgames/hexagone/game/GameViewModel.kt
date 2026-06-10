@@ -182,7 +182,7 @@ internal class GameViewModel(
                             reachedComboTiers = savedState.reachedComboTiers,
                             perkOptions = savedState.perkOptions,
                             canReroll = savedState.canReroll,
-                            bestScore = savedState.sessionBestScore,
+                            bestScore = maxOf(best, savedState.score),
                             sessionBestScore = savedState.sessionBestScore,
                             mergeHintsEnabled = hintsEnabled,
                             isStuck = savedState.isStuck,
@@ -215,6 +215,7 @@ internal class GameViewModel(
                     _uiState.update { 
                         it.copy(
                             bestScore = best, 
+                            sessionBestScore = best,
                             mergeHintsEnabled = hintsEnabled,
                             dailyChallenges = currentDailyChallenges.map { c -> DailyChallengeProgress(c) },
                             challengeStreak = challengeStreak,
@@ -228,6 +229,7 @@ internal class GameViewModel(
                 _uiState.update { 
                     it.copy(
                         bestScore = best, 
+                        sessionBestScore = best,
                         mergeHintsEnabled = hintsEnabled,
                         dailyChallenges = currentDailyChallenges.map { c -> DailyChallengeProgress(c) },
                         challengeStreak = challengeStreak,
@@ -617,7 +619,10 @@ internal class GameViewModel(
 
     private suspend fun handleChallengeComplete(challenge: DailyChallenge) {
         if (challenge.rewardScore > 0) {
-            _uiState.update { it.copy(score = it.score + challenge.rewardScore) }
+            _uiState.update { 
+                val newScore = it.score + challenge.rewardScore
+                it.copy(score = newScore, bestScore = maxOf(it.bestScore, newScore)) 
+            }
         }
         if (challenge.rewardPerk != null) {
             _uiState.update { it.copy(collectedPerks = it.collectedPerks + challenge.rewardPerk) }
