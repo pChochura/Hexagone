@@ -120,7 +120,10 @@ internal fun PerkSelectionDialog(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = if (canReroll) spacing.extraHuge.scaled else 0.dp)
+                ) {
                     Text(
                         text = stringResource(Res.string.level_up_title),
                         color = MaterialTheme.colorScheme.primary,
