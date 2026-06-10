@@ -178,58 +178,74 @@ internal class GameViewModel(
             if (savedStateJson != null) {
                 try {
                     val savedState = Json.decodeFromString<GameState>(savedStateJson)
-                    _uiState.update {
-                        it.copy(
-                            grid = savedState.grid,
-                            preview = savedState.preview,
-                            score = savedState.score,
-                            level = savedState.level,
-                            highestValue = savedState.highestValue,
-                            combo = savedState.combo,
-                            collectedPerks = savedState.collectedPerks,
-                            maxCombo = savedState.maxCombo,
-                            totalMerges = savedState.totalMerges,
-                            onBoardPerks = savedState.onBoardPerks,
-                            pendingLevelUps = savedState.pendingLevelUps,
-                            perkSpawnCounter = savedState.perkSpawnCounter,
-                            reachedComboTiers = savedState.reachedComboTiers,
-                            perkOptions = savedState.perkOptions,
-                            canReroll = savedState.canReroll,
-                            bestScore = maxOf(best, savedState.score),
-                            diamonds = diamonds,
-                            bankedPerks = bankedPerks,
-                            sessionBestScore = savedState.sessionBestScore,
-                            mergeHintsEnabled = hintsEnabled,
-                            isStuck = savedState.isStuck,
-                            availableChoices = savedState.availableChoices,
-                            perksUsedTracking = savedState.perksUsedTracking,
-                            consecutiveUndos = savedState.consecutiveUndos,
-                            comboTriggeredInSession = savedState.comboTriggeredInSession,
-                            perkUsedInSession = savedState.perkUsedInSession,
-                            undoUsedInSession = savedState.undoUsedInSession,
-                            ghostPerkUsedInSession = savedState.ghostPerkUsedInSession,
-                            seed = savedState.seed,
-                            cellIdCounter = savedState.cellIdCounter,
-                            previewIdCounter = savedState.previewIdCounter,
-                            activePerk = savedState.activePerk,
-                            selectedCellId = savedState.selectedCellId,
-                            dailyChallenges = if (savedState.dailyChallenges.isNotEmpty()) {
-                                savedState.dailyChallenges
-                            } else {
-                                currentDailyChallenges.map { challenge -> DailyChallengeProgress(challenge) }
-                            },
-                            completedChallengeDates = if (savedState.completedChallengeDates.isNotEmpty()) {
-                                savedState.completedChallengeDates
-                            } else {
-                                completedDates
-                            },
-                            challengeStreak = challengeStreak,
-                            isStreakCollectedToday = lastCompletedDate == dateSeed
-                        )
+                    val isGameStarted = savedState.totalMerges > 0
+                    val isSameDayChallenges = savedState.dailyChallenges.map { it.challenge } == currentDailyChallenges
+
+                    if (!isGameStarted && !isSameDayChallenges) {
+                        stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
+                        _uiState.update {
+                            it.copy(
+                                challengeStreak = challengeStreak,
+                                isStreakCollectedToday = lastCompletedDate == dateSeed,
+                                completedChallengeDates = completedDates,
+                                mergeHintsEnabled = hintsEnabled,
+                            )
+                        }
+                        restartGame()
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                grid = savedState.grid,
+                                preview = savedState.preview,
+                                score = savedState.score,
+                                level = savedState.level,
+                                highestValue = savedState.highestValue,
+                                combo = savedState.combo,
+                                collectedPerks = savedState.collectedPerks,
+                                maxCombo = savedState.maxCombo,
+                                totalMerges = savedState.totalMerges,
+                                onBoardPerks = savedState.onBoardPerks,
+                                pendingLevelUps = savedState.pendingLevelUps,
+                                perkSpawnCounter = savedState.perkSpawnCounter,
+                                reachedComboTiers = savedState.reachedComboTiers,
+                                perkOptions = savedState.perkOptions,
+                                canReroll = savedState.canReroll,
+                                bestScore = maxOf(best, savedState.score),
+                                diamonds = diamonds,
+                                bankedPerks = bankedPerks,
+                                sessionBestScore = savedState.sessionBestScore,
+                                mergeHintsEnabled = hintsEnabled,
+                                isStuck = savedState.isStuck,
+                                availableChoices = savedState.availableChoices,
+                                perksUsedTracking = savedState.perksUsedTracking,
+                                consecutiveUndos = savedState.consecutiveUndos,
+                                comboTriggeredInSession = savedState.comboTriggeredInSession,
+                                perkUsedInSession = savedState.perkUsedInSession,
+                                undoUsedInSession = savedState.undoUsedInSession,
+                                ghostPerkUsedInSession = savedState.ghostPerkUsedInSession,
+                                seed = savedState.seed,
+                                cellIdCounter = savedState.cellIdCounter,
+                                previewIdCounter = savedState.previewIdCounter,
+                                activePerk = savedState.activePerk,
+                                selectedCellId = savedState.selectedCellId,
+                                dailyChallenges = if (savedState.dailyChallenges.isNotEmpty()) {
+                                    savedState.dailyChallenges
+                                } else {
+                                    currentDailyChallenges.map { challenge -> DailyChallengeProgress(challenge) }
+                                },
+                                completedChallengeDates = if (savedState.completedChallengeDates.isNotEmpty()) {
+                                    savedState.completedChallengeDates
+                                } else {
+                                    completedDates
+                                },
+                                challengeStreak = challengeStreak,
+                                isStreakCollectedToday = lastCompletedDate == dateSeed
+                            )
+                        }
+                        stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
+                        updateLevel()
+                        checkValidMoves()
                     }
-                    stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
-                    updateLevel()
-                    checkValidMoves()
                 } catch (_: Exception) {
                     stateDelegate.setAbsoluteBestScore(best)
                     _uiState.update { 
