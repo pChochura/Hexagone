@@ -59,6 +59,7 @@
     <string name="perk_increment_tile_name">UPGRADE</string>
     <string name="perk_path_merge_name">MERGE</string>
     <string name="perk_freeze_tile_name">FREEZE</string>
+    <string name="perk_mimic_name">MIMIC</string>
 
     <!-- Perk Descriptions -->
     <string name="perk_undo_desc">Undo your last move.</string>
@@ -73,6 +74,7 @@
     <string name="perk_increment_tile_desc">Select a hex to increase its value by one.</string>
     <string name="perk_path_merge_desc">Merge all connected tiles of the same value into a single place.</string>
     <string name="perk_freeze_tile_desc">Select a solid hex to freeze it for the next turn. Frozen hexes cannot be merged.</string>
+    <string name="perk_mimic_desc">Turn a hex into a wildcard that matches any adjacent value to trigger a merge.</string>
 
     <!-- Tooltips -->
     <string name="reroll_perks">Reroll selection. Note: Legendary perks will not appear in the new selection.</string>
@@ -84,7 +86,7 @@
 
     <!-- Content -->
     <string name="daily_challenge">Daily challenge</string>
-    <string name="daily_challenge_completed">DAILY CHALLENGE COMPLETED!</string>
+    <string name="daily_challenge_completed">COMPLETED!</string>
     <string name="daily_challenge_goal_merge">Merge %1$d times</string>
     <string name="daily_challenge_goal_level">Reach Level %1$d</string>
     <string name="daily_challenge_goal_combo">Reach a x%1$d Combo</string>

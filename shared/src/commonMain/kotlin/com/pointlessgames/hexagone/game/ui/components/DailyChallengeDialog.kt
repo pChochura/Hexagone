@@ -181,7 +181,10 @@ private fun StreakRow(streak: Int, isStreakCollectedToday: Boolean, completedDat
         modifier = Modifier.fillMaxWidth()
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = MaterialTheme.spacing.extraLarge.scaled),
-        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small.scaled),
+        horizontalArrangement = Arrangement.spacedBy(
+            space = MaterialTheme.spacing.small.scaled,
+            alignment = Alignment.CenterHorizontally,
+        ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         for (i in 0 until 5) {

@@ -84,7 +84,6 @@ internal class GameViewModel(
     private val actionDelegate = ActionDelegate(
         uiState = _uiState,
         engine = engine,
-        scope = viewModelScope,
         stateDelegate = stateDelegate,
         effectDelegate = effectDelegate,
         achievementDelegate = achievementDelegate,
@@ -92,7 +91,6 @@ internal class GameViewModel(
         onSpawnRequested = { spawnFromQueue(_uiState.value.grid) },
         onCheckValidMoves = { checkValidMoves() },
         onUpdateLevel = { updateLevel() },
-        onRecalculateHints = { recalculateHints() },
         onHoveredMergeChanged = { _hoveredMerge.value = it }
     )
 

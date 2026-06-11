@@ -70,6 +70,7 @@ import hexagone.shared.generated.resources.perk_duplicate_tile_name
 import hexagone.shared.generated.resources.perk_freeze_tile_name
 import hexagone.shared.generated.resources.perk_fusion_name
 import hexagone.shared.generated.resources.perk_increment_tile_name
+import hexagone.shared.generated.resources.perk_mimic_name
 import hexagone.shared.generated.resources.perk_move_tile_name
 import hexagone.shared.generated.resources.perk_path_merge_name
 import hexagone.shared.generated.resources.perk_remove_tile_name
@@ -557,6 +558,7 @@ private fun MaxPieceDisplay(
                     Perk.INCREMENT_TILE -> Res.string.perk_increment_tile_name
                     Perk.PATH_MERGE -> Res.string.perk_path_merge_name
                     Perk.FREEZE_TILE -> Res.string.perk_freeze_tile_name
+                    Perk.MIMIC -> Res.string.perk_mimic_name
                 }
                 Text(
                     text = stringResource(actionRes),

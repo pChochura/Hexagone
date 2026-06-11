@@ -10,14 +10,12 @@ import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PotentialMerge
 import com.pointlessgames.hexagone.game.model.PreviewCell
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
 internal class ActionDelegate(
     private val uiState: MutableStateFlow<GameUiState>,
     private val engine: GameEngine,
-    private val scope: CoroutineScope,
     private val stateDelegate: StateDelegate,
     private val effectDelegate: EffectDelegate,
     private val achievementDelegate: AchievementDelegate,
@@ -25,7 +23,6 @@ internal class ActionDelegate(
     private val onSpawnRequested: () -> Unit,
     private val onCheckValidMoves: () -> Unit,
     private val onUpdateLevel: () -> Unit,
-    private val onRecalculateHints: () -> Unit,
     private val onHoveredMergeChanged: (MergeTransition?) -> Unit,
 ) {
     fun onEmptySpaceClicked(x: Int, y: Int) {
@@ -41,7 +38,7 @@ internal class ActionDelegate(
 
         if (perk == Perk.PATH_MERGE) return
         val isTileOnlyPerk =
-            perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES
+            perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES || perk == Perk.MIMIC
         if (isTileOnlyPerk && previewAtPos == null) return
 
         if (perk != null && perk != Perk.FUSION && perk != Perk.CHAIN_MERGE && perk != Perk.SKIP_SPAWN && previewAtPos != null) {
@@ -121,7 +118,7 @@ internal class ActionDelegate(
 
         if (perk == Perk.PATH_MERGE) return
         val isTileOnlyPerk =
-            perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES
+            perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES || perk == Perk.MIMIC
         if (isTileOnlyPerk && ghostAtPos == null) return
 
         val mergeResult = when (perk) {
@@ -260,6 +257,22 @@ internal class ActionDelegate(
                 }
             }
 
+            Perk.MIMIC -> {
+                if (ghostAtPos != null) {
+                    MergeTransition(
+                        targetX = x,
+                        targetY = y,
+                        steps = emptyList(),
+                        finalValue = ghostAtPos.value,
+                        totalCells = 1,
+                        uniqueGroups = 0,
+                        baseScore = 0,
+                        resultId = "preview_mimic_queue",
+                        participatingIds = setOf(ghostAtPos.id),
+                    )
+                } else null
+            }
+
             null, Perk.CHAIN_MERGE, Perk.SKIP_SPAWN -> {
                 val (m, _) = if (perk == Perk.CHAIN_MERGE) {
                     engine.simulateChainMerge(x, y, state.grid, state.combo) to 0
@@ -387,7 +400,9 @@ internal class ActionDelegate(
         val state = uiState.value
         if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
 
-        state.activePerk?.let { challengeDelegate.onPerkUsed(it) }
+        if (state.activePerk != null) {
+            challengeDelegate.onPerkUsed(state.activePerk)
+        }
 
         when (val perk = state.activePerk) {
             Perk.MOVE_TILE -> {
@@ -469,6 +484,20 @@ internal class ActionDelegate(
                 achievementDelegate.checkScoreAchievements(uiState.value.score)
                 achievementDelegate.checkLevelAchievements(uiState.value.level)
                 achievementDelegate.checkPerkAchievements(Perk.REMOVE_TILE, uiState.value, isTargetGhost = true)
+                achievementDelegate.onNonUndoAction()
+                finalizeAction()
+            }
+
+            Perk.MIMIC -> {
+                uiState.update { currentState ->
+                    val nextPreview = currentState.preview.map {
+                        if (it.id == preview.id) it.copy(isMimic = true, isTactical = true) else it
+                    }
+                    currentState.copy(preview = nextPreview).consumePerk(Perk.MIMIC).copy(activePerk = null, selectedCellId = null)
+                }
+                achievementDelegate.checkPerkAchievements(Perk.MIMIC, uiState.value, isTargetGhost = true)
+                achievementDelegate.checkScoreAchievements(uiState.value.score)
+                achievementDelegate.checkLevelAchievements(uiState.value.level)
                 achievementDelegate.onNonUndoAction()
                 finalizeAction()
             }
@@ -563,7 +592,9 @@ internal class ActionDelegate(
         val state = uiState.value
         if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
 
-        state.activePerk?.let { challengeDelegate.onPerkUsed(it) }
+        if (state.activePerk != null) {
+            challengeDelegate.onPerkUsed(state.activePerk)
+        }
 
         when (val perk = state.activePerk) {
             Perk.MOVE_TILE -> {
@@ -643,6 +674,20 @@ internal class ActionDelegate(
                     }
                 }
                 achievementDelegate.checkPerkAchievements(Perk.INCREMENT_TILE, uiState.value, isTargetGhost = false)
+                finalizeAction()
+            }
+
+            Perk.MIMIC -> {
+                uiState.update { currentState ->
+                    val nextGrid = currentState.grid.map {
+                        if (it.id == cell.id) it.copy(isMimic = true, isTactical = true) else it
+                    }
+                    currentState.copy(grid = nextGrid).consumePerk(Perk.MIMIC).copy(activePerk = null, selectedCellId = null)
+                }
+                achievementDelegate.checkPerkAchievements(Perk.MIMIC, uiState.value, isTargetGhost = false)
+                achievementDelegate.checkScoreAchievements(uiState.value.score)
+                achievementDelegate.checkLevelAchievements(uiState.value.level)
+                achievementDelegate.onNonUndoAction()
                 finalizeAction()
             }
 

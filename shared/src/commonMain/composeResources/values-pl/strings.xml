@@ -59,6 +59,7 @@
     <string name="perk_increment_tile_name">Ulepszenie</string>
     <string name="perk_path_merge_name">Scalenie</string>
     <string name="perk_freeze_tile_name">Zamrożenie</string>
+    <string name="perk_mimic_name">Mimik</string>
 
     <!-- Perk Descriptions -->
     <string name="perk_undo_desc">Cofnij swój ostatni ruch.</string>
@@ -73,6 +74,7 @@
     <string name="perk_increment_tile_desc">Zwiększ wartość wybranego hexa o jeden.</string>
     <string name="perk_path_merge_desc">Połącz wszystkie hexy o tej samej wartości tworzące ścieżkę w jedno miejsce.</string>
     <string name="perk_freeze_tile_desc">Wybierz hexa, aby go zamrozić na następną turę. Zamrożone hexy nie mogą być łączone.</string>
+    <string name="perk_mimic_desc">Zmień hex w jokera, który pasuje do każdej sąsiedniej wartości, aby wywołać połączenie.</string>
 
     <!-- Tooltips -->
     <string name="reroll_perks">Przelosuj wybór. Uwaga: Legendarne perki nie pojawią się w nowym wyborze.</string>
@@ -84,7 +86,7 @@
 
     <!-- Content -->
     <string name="daily_challenge">Wyzwanie dnia</string>
-    <string name="daily_challenge_completed">WYZWANIE DNIA UKOŃCZONE!</string>
+    <string name="daily_challenge_completed">UKOŃCZONE!</string>
     <string name="daily_reward_granted">NAGRODA DNIA PRZYZNANA</string>
     <string name="leaderboard_disabled_debug">Ranking wyłączony (użyto trybu debugowania)</string>
     <string name="rank_regional">#%1$d w Twoim regionie</string>

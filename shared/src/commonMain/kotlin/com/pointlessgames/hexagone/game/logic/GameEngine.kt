@@ -122,77 +122,133 @@ internal class GameEngine(
 
         val centerCell = grid.find { it.x == x && it.y == y }?.takeIf { !it.isFrozen }
 
-        // Group neighbors by value
-        val groups = neighborCells.groupBy { it.value }.toMutableMap()
+        // Group neighbors by value, accounting for Mimics
+        val normalNeighbors = neighborCells.filter { !it.isMimic }
+        val mimics = neighborCells.filter { it.isMimic }.toMutableList()
+        if (centerCell?.isMimic == true) mimics.add(centerCell)
 
-        // If there's a center cell, add it to the corresponding group
-        centerCell?.let { cell ->
-            val group = groups[cell.value] ?: emptyList()
-            groups[cell.value] = group + cell
+        val groups = normalNeighbors.groupBy { it.value }.toMutableMap()
+
+        // If there's a center cell that isn't a mimic, add it to the corresponding group
+        if (centerCell != null && !centerCell.isMimic) {
+            val group = groups[centerCell.value] ?: emptyList()
+            groups[centerCell.value] = group + centerCell
         }
 
-        // A merge happens if any group has at least 2 cells total
-        val valuesToMerge = groups.filter { it.value.size >= 2 }.keys.sortedDescending()
+        // Mimic assignment logic:
+        // Mimics are distributed among the available groups in descending order of value.
+        // If there are more mimics than groups, it wraps around to the highest group again.
+        val sortedKeys = groups.keys.sortedDescending()
+        val mimicAssignments = mutableMapOf<Int, MutableList<HexagonCell>>()
+        
+        if (sortedKeys.isNotEmpty() && mimics.isNotEmpty()) {
+            var keyIndex = 0
+            mimics.forEach { mimic ->
+                val targetValue = sortedKeys[keyIndex]
+                mimicAssignments.getOrPut(targetValue) { mutableListOf() }.add(mimic)
+                keyIndex = (keyIndex + 1) % sortedKeys.size
+            }
+        }
 
-        if (valuesToMerge.isNotEmpty()) {
+        val valuesToMerge = groups.keys.filter { value ->
+            (groups[value]?.size ?: 0) + (mimicAssignments[value]?.size ?: 0) >= 2
+        }.sortedDescending()
+
+        if (valuesToMerge.isNotEmpty() || mimics.size >= 2) {
             val steps = mutableListOf<MergeStep>()
             var currentCenterValue = 0
             var totalCells = 0
 
-            valuesToMerge.forEachIndexed { index, value ->
-                val groupCells = groups[value]!!
-                val mergingNeighbors =
-                    groupCells.filter { it.id != (centerCell?.id ?: "placed_temp") }
+            val previewValuesMap = mimics.mapNotNull { mimic ->
+                val assignedValue = mimicAssignments.entries.find { it.value.contains(mimic) }?.key
+                if (assignedValue != null && assignedValue in valuesToMerge) {
+                    mimic.id to assignedValue
+                } else if (valuesToMerge.isEmpty() && mimics.size >= 2) {
+                    mimic.id to 1 // Special case where mimics merge among themselves
+                } else null
+            }.toMap()
 
-                if (index == 0) {
-                    currentCenterValue = value + groupCells.size - 1
-                    steps.add(
-                        MergeStep(
-                            mergingNeighbors,
-                            currentCenterValue,
-                            calculateBaseScore(groupCells)
-                        )
+            if (valuesToMerge.isEmpty() && mimics.size >= 2) {
+                // Special case: Only mimics merging — no group to adopt, treat as value 1.
+                val mimicAdoptedValue = 1
+                currentCenterValue = mimicAdoptedValue + mimics.size - 1
+                steps.add(
+                    MergeStep(
+                        mimics.filter { it.id != (centerCell?.id ?: "placed_temp") },
+                        currentCenterValue,
+                        calculateBaseScore(mimics.map { it.copy(value = mimicAdoptedValue) })
                     )
-                    totalCells += groupCells.size
-                } else {
-                    // Merging next group into existing center
-                    val prevCenterValue = currentCenterValue
-                    val n = groupCells.size + 1 // group + current center
-                    currentCenterValue = maxOf(currentCenterValue, value) + n - 2
-                    steps.add(
-                        MergeStep(
-                            groupCells,
-                            currentCenterValue,
-                            calculateBaseScore(groupCells + createCell(x, y, prevCenterValue, id = "temp"))
+                )
+                totalCells = mimics.size
+            } else {
+                valuesToMerge.forEachIndexed { index, value ->
+                    val groupNormalCells = groups[value] ?: emptyList()
+                    val groupMimicsToUse = mimicAssignments[value] ?: emptyList()
+
+                    val groupCells = groupNormalCells + groupMimicsToUse
+                    val mergingNeighbors = groupCells.filter { it.id != (centerCell?.id ?: "placed_temp") }
+
+                    if (index == 0) {
+                        currentCenterValue = value + groupCells.size - 1
+                        // For scoring: treat each mimic as having the group's value.
+                        val groupCellsForScoring = groupNormalCells + groupMimicsToUse.map { it.copy(value = value) }
+                        steps.add(
+                            MergeStep(
+                                mergingNeighbors,
+                                currentCenterValue,
+                                calculateBaseScore(groupCellsForScoring)
+                            )
                         )
-                    )
-                    totalCells += groupCells.size
+                        totalCells += groupCells.size
+                    } else {
+                        val prevCenterValue = currentCenterValue
+                        val n = groupCells.size + 1
+                        currentCenterValue = maxOf(currentCenterValue, value) + n - 2
+                        steps.add(
+                            MergeStep(
+                                groupCells,
+                                currentCenterValue,
+                                calculateBaseScore(groupCells + createCell(x, y, prevCenterValue, id = "temp"))
+                            )
+                        )
+                        totalCells += groupCells.size
+                    }
                 }
             }
 
-            val mergingCells = neighborCells.filter { it.value in valuesToMerge } +
-                    listOfNotNull(centerCell).filter { it.value in valuesToMerge }
+            val mergingCells = neighborCells.filter { it.value in valuesToMerge || (it.isMimic && previewValuesMap.containsKey(it.id)) } +
+                    listOfNotNull(centerCell).filter { it.value in valuesToMerge || (it.isMimic && previewValuesMap.containsKey(it.id)) }
 
-            var baseScore = calculateBaseScore(mergingCells)
+            val mergingCellsForScoring = mergingCells.map { cell ->
+                if (cell.isMimic) cell.copy(value = previewValuesMap[cell.id] ?: 1) else cell
+            }
+            var baseScore = calculateBaseScore(mergingCellsForScoring)
             if (mergingCells.any { it.isTactical }) {
                 baseScore = (baseScore * 1.5).toInt()
             }
-
+            
             val transition = MergeTransition(
                 targetX = x,
                 targetY = y,
                 steps = steps,
                 finalValue = currentCenterValue,
                 totalCells = totalCells,
-                uniqueGroups = valuesToMerge.size,
+                uniqueGroups = if (valuesToMerge.isEmpty()) 1 else valuesToMerge.size,
                 baseScore = baseScore,
                 resultId = "cell_${currentIdCounter++}",
                 isTactical = mergingCells.any { it.isTactical },
-                participatingIds = mergingCells.map { it.id }.toSet()
+                participatingIds = mergingCells.map { it.id }.toSet(),
+                previewValues = if (previewValuesMap.isNotEmpty()) previewValuesMap else null
             )
             return transition to currentIdCounter
         }
         return null to currentIdCounter
+    }
+
+    fun calculateBlast(x: Int, y: Int, grid: List<HexagonCell>): Set<String> {
+        val radiusCoords = getNeighbors(x, y) + (x to y)
+        return grid.filter { cell -> radiusCoords.any { it.first == cell.x && it.second == cell.y } }
+            .map { it.id }.toSet()
     }
 
     fun calculatePathMerge(x: Int, y: Int, value: Int, grid: List<HexagonCell>, idCounter: Int): Pair<MergeTransition?, Int> {
@@ -494,7 +550,11 @@ internal class GameEngine(
                 if (x to y !in occupied) {
                     val neighbors = getNeighbors(x, y)
                     val neighborCells = grid.filter { cell -> !cell.isFrozen && neighbors.any { it.first == cell.x && it.second == cell.y } }
-                    if (neighborCells.groupBy { it.value }.any { it.value.size >= 2 }) {
+                    val hasNormalMerge = neighborCells.groupBy { it.value }.any { it.value.size >= 2 }
+                    // A mimic can merge with any neighbour (it adapts to the group's value),
+                    // so one mimic + any other non-frozen neighbour counts as a valid move.
+                    val hasMimicMerge = neighborCells.any { it.isMimic } && neighborCells.size >= 2
+                    if (hasNormalMerge || hasMimicMerge) {
                         possibleMoves++
                     }
                 }
@@ -503,8 +563,8 @@ internal class GameEngine(
         return possibleMoves
     }
 
-    fun createCell(x: Int, y: Int, value: Int, id: String? = null, isTactical: Boolean = false): HexagonCell {
-        return HexagonCell(id ?: "cell_temp", x, y, value, isTactical)
+    fun createCell(x: Int, y: Int, value: Int, id: String? = null, isTactical: Boolean = false, isMimic: Boolean = false): HexagonCell {
+        return HexagonCell(id ?: "cell_temp", x, y, value, isTactical, isMimic = isMimic)
     }
 
     fun createPreviewCell(x: Int, y: Int, value: Int, id: String? = null, isTactical: Boolean = false): PreviewCell {
@@ -602,7 +662,7 @@ internal class GameEngine(
         var nextPerks = currentPerks
         currentPreviews.forEach { p ->
             if (newState.none { it.x == p.x && it.y == p.y }) {
-                newState = newState + createCell(p.x, p.y, p.value, id = p.id, isTactical = p.isTactical)
+                newState = newState + createCell(p.x, p.y, p.value, id = p.id, isTactical = p.isTactical, isMimic = p.isMimic)
                 // Delete perk if a ghost lands on it (don't collect)
                 nextPerks = nextPerks.filterNot { it.x == p.x && it.y == p.y }
             }
@@ -663,10 +723,15 @@ internal class GameEngine(
             }
             Perk.INCREMENT_TILE -> {
                 grid.any { cell ->
-                    val tempGrid = grid.map { if (it.id == cell.id) it.copy(value = it.value + 1) else it }
-                    isMovePossible(tempGrid) || hasAnyMergePotential(tempGrid)
+                    val tempGridInc = grid.map { if (it.id == cell.id) it.copy(value = it.value + 1) else it }
+                    val tempGridDec = if (cell.value > 1) {
+                        grid.map { if (it.id == cell.id) it.copy(value = it.value - 1) else it }
+                    } else null
+                    isMovePossible(tempGridInc) || hasAnyMergePotential(tempGridInc) || 
+                            (tempGridDec != null && (isMovePossible(tempGridDec) || hasAnyMergePotential(tempGridDec)))
                 }
             }
+            Perk.MIMIC -> grid.isNotEmpty() || previews.isNotEmpty()
             Perk.DUPLICATE_TILE -> {
                 val occupied = grid.map { it.x to it.y }.toSet()
                 if (occupied.size >= columns * rows) return false
@@ -721,9 +786,10 @@ internal class GameEngine(
             !cell.isFrozen &&
                     getNeighbors(cell.x, cell.y).any { n ->
                         grid.any {
-                            it.value == cell.value &&
-                                    !it.isFrozen &&
-                                    it.x == n.first && it.y == n.second
+                            !it.isFrozen &&
+                                    it.x == n.first && it.y == n.second &&
+                                    // Mimics can merge with any neighbour (they adopt its value).
+                                    (it.value == cell.value || it.isMimic || cell.isMimic)
                         }
                     }
         }

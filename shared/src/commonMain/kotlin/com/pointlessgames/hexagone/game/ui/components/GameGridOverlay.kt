@@ -16,13 +16,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
@@ -32,7 +32,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -46,8 +45,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.GameEffect
-import com.pointlessgames.hexagone.game.model.PotentialMerge
-import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.game.model.GhostAnimationState
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeHint
 import com.pointlessgames.hexagone.game.model.MergeTransition
@@ -55,18 +53,21 @@ import com.pointlessgames.hexagone.game.model.OnBoardPerk
 import com.pointlessgames.hexagone.game.model.Particle
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PerkPopup
+import com.pointlessgames.hexagone.game.model.PotentialMerge
 import com.pointlessgames.hexagone.game.model.PreviewCell
 import com.pointlessgames.hexagone.game.model.ScorePopup
-import com.pointlessgames.hexagone.game.model.GhostAnimationState
-import hexagone.shared.generated.resources.*
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
+import com.pointlessgames.hexagone.ui.theme.spacing
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.ic_roll
+import hexagone.shared.generated.resources.score_popup
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -87,7 +88,6 @@ internal fun GameGridOverlay(
     activePerkProvider: () -> Perk?,
     selectedCellIdProvider: () -> String?,
     activeMergeStepIndexProvider: () -> Int,
-    pendingMergeScoreProvider: () -> Int,
     comboProvider: () -> Int,
     effects: SharedFlow<GameEffect>,
     onEmptySpaceClick: (Int, Int) -> Unit,
@@ -172,9 +172,9 @@ internal fun GameGridOverlay(
         }
     }
 
-    val columns = 5;
-    val rows = 4;
-    val itemGap = spacing.extraSmall;
+    val columns = 5
+    val rows = 4
+    val itemGap = spacing.extraSmall
     val gapPx = with(density) { itemGap.toPx() }
     val moveAnimationSpec = remember {
         spring<IntOffset>(
@@ -208,15 +208,15 @@ internal fun GameGridOverlay(
                 when (effect) {
                     is GameEffect.Particles -> localParticles.addAll(effect.particles)
                     is GameEffect.ScorePopup -> {
-                        val offset = HexagonGridDefaults.calculateOffset(
+                        val offsetPos = HexagonGridDefaults.calculateOffset(
                             effect.gridX,
                             effect.gridY,
                             cellWidth,
                             cellHeight,
                             gapPx,
                         )
-                        val centerX = offset.x + itemWidth / 2
-                        val centerY = offset.y + itemHeight / 2
+                        val centerX = offsetPos.x + itemWidth / 2
+                        val centerY = offsetPos.y + itemHeight / 2
                         localScorePopups.add(
                             ScorePopup(
                                 popupIdCounter++,
@@ -233,15 +233,15 @@ internal fun GameGridOverlay(
                     }
 
                     is GameEffect.MergeParticles -> {
-                        val offset = HexagonGridDefaults.calculateOffset(
+                        val offsetPos = HexagonGridDefaults.calculateOffset(
                             effect.gridX,
                             effect.gridY,
                             cellWidth,
                             cellHeight,
                             gapPx,
                         )
-                        val centerX = offset.x + itemWidth / 2
-                        val centerY = offset.y + itemHeight / 2
+                        val centerX = offsetPos.x + itemWidth / 2
+                        val centerY = offsetPos.y + itemHeight / 2
                         val color = if (effect.isPerk) {
                             HexagonGridDefaults.getColorForPerk(Perk.entries[effect.value], colorScheme)
                         } else {
@@ -268,15 +268,15 @@ internal fun GameGridOverlay(
                     }
 
                     is GameEffect.PerkPopup -> {
-                        val offset = HexagonGridDefaults.calculateOffset(
+                        val offsetPos = HexagonGridDefaults.calculateOffset(
                             effect.gridX,
                             effect.gridY,
                             cellWidth,
                             cellHeight,
                             gapPx,
                         )
-                        val centerX = offset.x + itemWidth / 2
-                        val centerY = offset.y + itemHeight / 2
+                        val centerX = offsetPos.x + itemWidth / 2
+                        val centerY = offsetPos.y + itemHeight / 2
                         localPerkPopups.add(
                             PerkPopup(
                                 popupIdCounter++,
@@ -355,7 +355,7 @@ internal fun GameGridOverlay(
 
         fun getCellAt(x: Float, y: Float): Pair<Int, Int>? {
             for (col in 0 until columns) {
-                val xOffset = col * 0.75f * cellWidth + gapPx / 2;
+                val xOffset = col * 0.75f * cellWidth + gapPx / 2
                 val yOffset = (if (col % 2 == 1) cellHeight / 2 else 0f) + gapPx / 2
                 for (row in 0 until rows) {
                     val yStart = row * cellHeight + yOffset
@@ -447,14 +447,14 @@ internal fun GameGridOverlay(
                     .drawBehind {
                         val hints = mergeHintsProvider()
                         hints.forEach { hint ->
-                            val offset = HexagonGridDefaults.calculateOffset(
+                            val offsetPos = HexagonGridDefaults.calculateOffset(
                                 hint.x,
                                 hint.y,
                                 cellWidth,
                                 cellHeight,
                                 gapPx,
                             )
-                            val center = Offset(offset.x + itemWidth / 2, offset.y + itemHeight / 2)
+                            val center = Offset(offsetPos.x + itemWidth / 2, offsetPos.y + itemHeight / 2)
                             drawCircle(
                                 color = Color.White.copy(alpha = 0.2f),
                                 radius = (spacing.tiny + spacing.extraSmall * hint.weight).toPx(),
@@ -464,7 +464,7 @@ internal fun GameGridOverlay(
 
                         val perks = onBoardPerksProvider()
                         perks.forEach { op ->
-                            val offset = HexagonGridDefaults.calculateOffset(
+                            val offsetPos = HexagonGridDefaults.calculateOffset(
                                 op.x,
                                 op.y,
                                 cellWidth,
@@ -473,8 +473,8 @@ internal fun GameGridOverlay(
                             )
                             val mysterySize = Size(spacing.semiMedium.toPx(), spacing.semiMedium.toPx())
                             val mysteryOffset = Offset(
-                                offset.x + (itemWidth - mysterySize.width) / 2,
-                                offset.y + itemHeight - mysterySize.height - spacing.medium.toPx(),
+                                offsetPos.x + (itemWidth - mysterySize.width) / 2,
+                                offsetPos.y + itemHeight - mysterySize.height - spacing.medium.toPx(),
                             )
                             withTransform(
                                 {
@@ -500,8 +500,8 @@ internal fun GameGridOverlay(
                             drawText(
                                 textLayoutResult,
                                 topLeft = Offset(
-                                    offset.x + (itemWidth - textLayoutResult.size.width) / 2,
-                                    offset.y + itemHeight - mysterySize.height - spacing.medium.toPx() - textLayoutResult.size.height - spacing.tiny.toPx(),
+                                    offsetPos.x + (itemWidth - textLayoutResult.size.width) / 2,
+                                    offsetPos.y + itemHeight - mysterySize.height - spacing.medium.toPx() - textLayoutResult.size.height - spacing.tiny.toPx(),
                                 ),
                             )
                         }
@@ -516,7 +516,7 @@ internal fun GameGridOverlay(
                         val isGhostSelectable = { preview: PreviewCell ->
                             when (activePerk) {
                                 Perk.PATH_MERGE -> false
-                                Perk.REMOVE_TILE, Perk.INCREMENT_TILE -> true
+                                Perk.REMOVE_TILE, Perk.INCREMENT_TILE, Perk.MIMIC -> true
                                 Perk.SWAP_TILES -> selectedCellId != preview.id
                                 Perk.MOVE_TILE, Perk.DUPLICATE_TILE -> selectedCellId == null
                                 else -> false

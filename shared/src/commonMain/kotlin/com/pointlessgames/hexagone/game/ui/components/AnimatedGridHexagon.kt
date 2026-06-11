@@ -172,15 +172,19 @@ internal fun AnimatedGridHexagon(
     val isGhostedInPreview = currentHoverMerge?.forceGhostIds?.contains(cell.id) == true
     val isFrozen = currentHoverMerge?.previewFrozenIds?.contains(cell.id) == true || cell.isFrozen
 
+    val isMimicking = currentHoverMerge?.previewValues?.containsKey(cell.id) == true && cell.isMimic
+
     Hexagon(
-        value = visualValue.toString(),
-        backgroundColor = HexagonGridDefaults.getColorForValue(
+        value = if (cell.isMimic && !isMimicking) "*" else visualValue.toString(),
+        backgroundColor = if (cell.isMimic && !isMimicking) Color.DarkGray else HexagonGridDefaults.getColorForValue(
             visualValue,
             MaterialTheme.colorScheme,
         ).let { if (isGhostedInPreview) it.copy(alpha = 0.3f) else it },
         isTactical = cell.isTactical,
         isGhost = isGhostedInPreview,
         isFrozen = isFrozen,
+        isMimic = cell.isMimic && !isMimicking,
+        seed = cell.id.hashCode(),
         modifier = modifier.size(
             with(density) { itemWidth.toDp() },
             with(density) { itemHeight.toDp() },

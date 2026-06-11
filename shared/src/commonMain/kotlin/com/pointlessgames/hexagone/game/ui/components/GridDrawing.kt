@@ -2,7 +2,9 @@ package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
@@ -11,11 +13,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.pointlessgames.hexagone.game.model.GhostAnimationState
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.PreviewCell
-import com.pointlessgames.hexagone.game.model.GhostAnimationState
-import com.pointlessgames.hexagone.game.model.Perk
 
 internal fun drawGhost(
     drawScope: DrawScope,
@@ -44,13 +45,27 @@ internal fun drawGhost(
             rotate(wiggleValue, Offset(itemWidth / 2, itemHeight / 2))
         },
     ) {
-        val visualValue = currentHoverMerge?.previewValues?.get(preview.id) 
+        val visualValue = currentHoverMerge?.previewValues?.get(preview.id)
             ?: if (currentHoverMerge != null && currentHoverMerge.targetX == preview.x && currentHoverMerge.targetY == preview.y && currentHoverMerge.finalValue != 0) {
                 currentHoverMerge.finalValue
             } else preview.value
 
-        val backgroundColor = HexagonGridDefaults.getColorForValue(visualValue, colorScheme)
-            .copy(alpha = 0.3f)
+        val isMimicking = currentHoverMerge?.previewValues?.containsKey(preview.id) == true
+
+        val backgroundColor = if (preview.isMimic && !isMimicking) {
+            Brush.linearGradient(
+                listOf(
+                    Color.DarkGray.copy(alpha = 0.5f),
+                    Color.DarkGray.copy(alpha = 0.1f),
+                ),
+                start = Offset(0f, 0f),
+                end = Offset(itemWidth, itemHeight),
+            )
+        } else {
+            SolidColor(
+                HexagonGridDefaults.getColorForValue(visualValue, colorScheme).copy(alpha = 0.3f),
+            )
+        }
         HexagonGridDefaults.drawHexagonPath(
             this,
             Size(itemWidth, itemHeight),
@@ -59,12 +74,15 @@ internal fun drawGhost(
         )
 
         if (isHovered || preview.isTactical || isSelected) {
-            val borderColor = if (isSelected) Color.White.copy(alpha = alpha) else if (isHovered) Color.White.copy(alpha = 0.5f * alpha) else colorScheme.secondary.copy(alpha = alpha)
+            val borderColor =
+                if (isSelected) Color.White.copy(alpha = alpha) else if (isHovered) Color.White.copy(
+                    alpha = 0.5f * alpha,
+                ) else colorScheme.secondary.copy(alpha = alpha)
             HexagonGridDefaults.drawHexagonPath(
                 this,
                 Size(itemWidth, itemHeight),
-                borderColor,
-                style = Stroke(width = spacing.tiny.toPx())
+                SolidColor(borderColor),
+                style = Stroke(width = spacing.tiny.toPx()),
             )
         }
 
@@ -78,8 +96,9 @@ internal fun drawGhost(
             )
         }
 
+        val displayText = if (preview.isMimic && !isMimicking) "*" else visualValue.toString()
         val textLayoutResult = textMeasurer.measure(
-            text = visualValue.toString(),
+            text = displayText,
             style = TextStyle(
                 color = Color.White.copy(alpha = alpha),
                 fontWeight = FontWeight.Bold,
@@ -127,9 +146,13 @@ internal fun drawHoverResult(
 
     val currentCell = gridStateProvider().find { it.x == merge.targetX && it.y == merge.targetY }
     val currentValue = currentCell?.value ?: 0
-    val isPlacement = merge.resultId.contains("move") || merge.resultId.contains("duplicate") || merge.resultId.contains("swap") || merge.resultId.contains("highlight")
+    val isPlacement =
+        merge.resultId.contains("move") || merge.resultId.contains("duplicate") || merge.resultId.contains(
+            "swap",
+        ) || merge.resultId.contains("highlight")
 
-    val currentPreview = previewStateProvider().find { it.x == merge.targetX && it.y == merge.targetY }
+    val currentPreview =
+        previewStateProvider().find { it.x == merge.targetX && it.y == merge.targetY }
     val shouldSkipHexagon = merge.resultId == "preview_move" ||
             (merge.resultId.contains("path_merge") && (currentCell != null || currentPreview != null))
 
@@ -143,9 +166,14 @@ internal fun drawHoverResult(
                 scale(s, s, Offset(itemWidth / 2, itemHeight / 2))
             },
         ) {
-            val backgroundColor = HexagonGridDefaults.getColorForValue(merge.finalValue, colorScheme)
-                .copy(alpha = (if (isForcedSolid) 0.8f else 0.5f) * progress * 0.7f)
-            HexagonGridDefaults.drawHexagonPath(this, Size(itemWidth, itemHeight), backgroundColor)
+            val backgroundColor =
+                HexagonGridDefaults.getColorForValue(merge.finalValue, colorScheme)
+                    .copy(alpha = (if (isForcedSolid) 0.8f else 0.5f) * progress * 0.7f)
+            HexagonGridDefaults.drawHexagonPath(
+                this,
+                Size(itemWidth, itemHeight),
+                SolidColor(backgroundColor),
+            )
 
             if (!isForcedSolid) {
                 clipPath(HexagonGridDefaults.getHexagonPath(Size(itemWidth, itemHeight))) {
@@ -162,7 +190,7 @@ internal fun drawHoverResult(
             HexagonGridDefaults.drawHexagonPath(
                 this,
                 Size(itemWidth, itemHeight),
-                Color.White.copy(alpha = 0.3f * progress),
+                SolidColor(Color.White.copy(alpha = 0.3f * progress)),
                 style = Stroke(width = spacing.tiny.toPx()),
             )
 
@@ -190,6 +218,7 @@ internal fun drawHoverResult(
             val multiplier = (combo + 1).coerceAtMost(12)
             merge.baseScore * multiplier
         }
+
         else -> merge.baseScore
     }
     if (scoreText.isNotEmpty()) {
@@ -208,7 +237,11 @@ internal fun drawHoverResult(
         drawScope.withTransform(
             {
                 val s = 0.8f + 0.2f * progress * pulseValue
-                scale(s, s, Offset(popupTopLeft.x + popupWidth / 2f, popupTopLeft.y + popupHeight / 2f))
+                scale(
+                    s,
+                    s,
+                    Offset(popupTopLeft.x + popupWidth / 2f, popupTopLeft.y + popupHeight / 2f),
+                )
             },
         ) {
             drawRoundRect(

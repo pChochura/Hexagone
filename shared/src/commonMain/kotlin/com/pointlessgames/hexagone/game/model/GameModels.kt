@@ -301,6 +301,7 @@ data class HexagonCell(
     val value: Int,
     val isTactical: Boolean = false,
     val isFrozen: Boolean = false,
+    val isMimic: Boolean = false,
 )
 
 @Immutable
@@ -321,6 +322,7 @@ data class PreviewCell(
     val value: Int,
     val rank: Int,
     val isTactical: Boolean = false,
+    val isMimic: Boolean = false,
 )
 
 @Immutable
@@ -365,7 +367,8 @@ enum class Perk(val baseWeight: Int) {
     SKIP_SPAWN(baseWeight = 50),
     INCREMENT_TILE(baseWeight = 80),
     FREEZE_TILE(baseWeight = 60),
-    PATH_MERGE(baseWeight = 10);
+    PATH_MERGE(baseWeight = 10),
+    MIMIC(baseWeight = 25);
 
     val isLegendary: Boolean get() = baseWeight <= 20
 }

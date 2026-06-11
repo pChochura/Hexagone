@@ -1,6 +1,8 @@
 package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.StartOffset
+import androidx.compose.animation.core.StartOffsetType
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -38,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -66,6 +69,7 @@ import hexagone.shared.generated.resources.ic_fusion
 import hexagone.shared.generated.resources.ic_move
 import hexagone.shared.generated.resources.ic_path_merge
 import hexagone.shared.generated.resources.ic_pause
+import hexagone.shared.generated.resources.ic_star
 import hexagone.shared.generated.resources.ic_swap
 import hexagone.shared.generated.resources.ic_undo
 import hexagone.shared.generated.resources.ic_upgrade
@@ -81,6 +85,8 @@ import hexagone.shared.generated.resources.perk_fusion_desc
 import hexagone.shared.generated.resources.perk_fusion_name
 import hexagone.shared.generated.resources.perk_increment_tile_desc
 import hexagone.shared.generated.resources.perk_increment_tile_name
+import hexagone.shared.generated.resources.perk_mimic_desc
+import hexagone.shared.generated.resources.perk_mimic_name
 import hexagone.shared.generated.resources.perk_move_tile_desc
 import hexagone.shared.generated.resources.perk_move_tile_name
 import hexagone.shared.generated.resources.perk_path_merge_desc
@@ -96,6 +102,7 @@ import hexagone.shared.generated.resources.perk_undo_name
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
@@ -137,6 +144,7 @@ object HexagonGridDefaults {
             Perk.INCREMENT_TILE -> colorScheme.primary
             Perk.PATH_MERGE -> colorScheme.errorContainer
             Perk.FREEZE_TILE -> colorScheme.onSecondaryContainer
+            Perk.MIMIC -> colorScheme.inversePrimary
         }
     }
 
@@ -157,11 +165,11 @@ object HexagonGridDefaults {
     fun drawHexagonPath(
         drawScope: DrawScope,
         size: Size,
-        color: Color,
+        brush: Brush,
         alpha: Float = 1f,
         style: androidx.compose.ui.graphics.drawscope.DrawStyle = androidx.compose.ui.graphics.drawscope.Fill,
     ) {
-        drawScope.drawPath(getHexagonPath(size), color, alpha = alpha, style = style)
+        drawScope.drawPath(getHexagonPath(size), brush, alpha = alpha, style = style)
     }
 
     fun drawGhostStripes(
@@ -201,290 +209,6 @@ object HexagonGridDefaults {
         val y = (row * cellHeight + yOffset + gapPx / 2).roundToInt()
         return IntOffset(x, y)
     }
-
-    fun drawPerkIcon(
-        drawScope: DrawScope,
-        perk: Perk?,
-        size: Size,
-        color: Color,
-        strokeWidth: Float,
-    ) {
-        with(drawScope) {
-            if (perk == null) {
-                // Draw Mystery Icon (?)
-                val path = Path().apply {
-                    // Stylized ?
-                    moveTo(size.width * 0.35f, size.height * 0.25f)
-                    cubicTo(
-                        size.width * 0.35f,
-                        0f,
-                        size.width * 0.75f,
-                        0f,
-                        size.width * 0.75f,
-                        size.height * 0.3f,
-                    )
-                    cubicTo(
-                        size.width * 0.75f,
-                        size.height * 0.45f,
-                        size.width * 0.55f,
-                        size.height * 0.45f,
-                        size.width * 0.55f,
-                        size.height * 0.6f,
-                    )
-                    moveTo(size.width * 0.55f, size.height * 0.75f)
-                    lineTo(size.width * 0.55f, size.height * 0.85f)
-                }
-                drawPath(path, color = color, style = Stroke(width = strokeWidth))
-                return@with
-            }
-            when (perk) {
-                Perk.ADVANCE_QUEUE -> {
-                    val path = Path().apply {
-                        moveTo(0f, 0f)
-                        lineTo(size.width * 0.5f, size.height * 0.5f)
-                        lineTo(0f, size.height)
-                        moveTo(size.width * 0.5f, 0f)
-                        lineTo(size.width, size.height * 0.5f)
-                        lineTo(size.width * 0.5f, size.height)
-                    }
-                    drawPath(path, color = color, style = Stroke(width = strokeWidth))
-                }
-
-                Perk.MOVE_TILE -> {
-                    drawLine(
-                        color,
-                        Offset(size.width * 0.5f, 0f),
-                        Offset(size.width * 0.5f, size.height),
-                        strokeWidth,
-                    )
-                    drawLine(
-                        color,
-                        Offset(0f, size.height * 0.5f),
-                        Offset(size.width, size.height * 0.5f),
-                        strokeWidth,
-                    )
-                }
-
-                Perk.REMOVE_TILE -> {
-                    drawRect(
-                        color,
-                        Offset(size.width * 0.2f, size.height * 0.3f),
-                        Size(size.width * 0.6f, size.height * 0.6f),
-                        style = Stroke(width = strokeWidth),
-                    )
-                    drawLine(
-                        color,
-                        Offset(size.width * 0.1f, size.height * 0.2f),
-                        Offset(size.width * 0.9f, size.height * 0.2f),
-                        strokeWidth,
-                    )
-                }
-
-                Perk.FUSION -> {
-                    drawCircle(
-                        color,
-                        radius = size.minDimension * 0.4f,
-                        style = Stroke(width = strokeWidth),
-                    )
-                    drawCircle(color, radius = size.minDimension * 0.2f)
-                }
-
-                Perk.SWAP_TILES -> {
-                    val arrowSize = size.width * 0.3f
-                    drawLine(
-                        color,
-                        Offset(0f, size.height * 0.3f),
-                        Offset(size.width, size.height * 0.3f),
-                        strokeWidth,
-                    )
-                    drawLine(
-                        color,
-                        Offset(size.width, size.height * 0.3f),
-                        Offset(size.width - arrowSize, size.height * 0.15f),
-                        strokeWidth,
-                    )
-                    drawLine(
-                        color,
-                        Offset(size.width, size.height * 0.3f),
-                        Offset(size.width - arrowSize, size.height * 0.45f),
-                        strokeWidth,
-                    )
-
-                    drawLine(
-                        color,
-                        Offset(0f, size.height * 0.7f),
-                        Offset(size.width, size.height * 0.7f),
-                        strokeWidth,
-                    )
-                    drawLine(
-                        color,
-                        Offset(0f, size.height * 0.7f),
-                        Offset(arrowSize, size.height * 0.55f),
-                        strokeWidth,
-                    )
-                    drawLine(
-                        color,
-                        Offset(0f, size.height * 0.7f),
-                        Offset(arrowSize, size.height * 0.85f),
-                        strokeWidth,
-                    )
-                }
-
-                Perk.CHAIN_MERGE -> {
-                    drawCircle(
-                        color,
-                        radius = size.width * 0.15f,
-                        center = Offset(size.width * 0.25f, size.height * 0.25f),
-                        style = Stroke(width = strokeWidth),
-                    )
-                    drawLine(
-                        color,
-                        Offset(size.width * 0.35f, size.height * 0.35f),
-                        Offset(size.width * 0.65f, size.height * 0.65f),
-                        strokeWidth,
-                    )
-                    drawCircle(
-                        color,
-                        radius = size.width * 0.15f,
-                        center = Offset(size.width * 0.75f, size.height * 0.75f),
-                        style = Stroke(width = strokeWidth),
-                    )
-                }
-
-                Perk.UNDO -> {
-                    drawArc(
-                        color = color,
-                        startAngle = 180f,
-                        sweepAngle = 270f,
-                        useCenter = false,
-                        topLeft = Offset(size.width * 0.15f, size.height * 0.15f),
-                        size = Size(size.width * 0.7f, size.height * 0.7f),
-                        style = Stroke(
-                            width = strokeWidth,
-                            cap = androidx.compose.ui.graphics.StrokeCap.Round,
-                        ),
-                    )
-                    val arrowSize = size.width * 0.2f
-                    val arrowPath = Path().apply {
-                        moveTo(size.width * 0.15f, size.height * 0.5f - arrowSize * 0.5f)
-                        lineTo(size.width * 0.15f, size.height * 0.5f + arrowSize * 0.5f)
-                        lineTo(size.width * 0.15f - arrowSize * 0.8f, size.height * 0.5f)
-                        close()
-                    }
-                    drawPath(arrowPath, color = color)
-                }
-
-                Perk.DUPLICATE_TILE -> {
-                    drawRect(
-                        color = color,
-                        topLeft = Offset(size.width * 0.15f, size.height * 0.15f),
-                        size = Size(size.width * 0.45f, size.height * 0.45f),
-                        style = Stroke(width = strokeWidth),
-                    )
-                    drawRect(
-                        color = color,
-                        topLeft = Offset(size.width * 0.4f, size.height * 0.4f),
-                        size = Size(size.width * 0.45f, size.height * 0.45f),
-                        style = Stroke(width = strokeWidth),
-                    )
-                }
-
-                Perk.SKIP_SPAWN -> {
-                    drawArc(
-                        color = color,
-                        startAngle = 0f,
-                        sweepAngle = 360f,
-                        useCenter = false,
-                        style = Stroke(width = strokeWidth),
-                    )
-                    drawLine(
-                        color = color,
-                        start = Offset(size.width * 0.3f, size.height * 0.3f),
-                        end = Offset(size.width * 0.7f, size.height * 0.7f),
-                        strokeWidth = strokeWidth,
-                    )
-                    val arrowPath = Path().apply {
-                        moveTo(size.width * 0.8f, size.height * 0.5f)
-                        lineTo(size.width * 0.55f, size.height * 0.35f)
-                        lineTo(size.width * 0.55f, size.height * 0.65f)
-                        close()
-                    }
-                    drawPath(arrowPath, color = color)
-                }
-
-                Perk.INCREMENT_TILE -> {
-                    drawLine(
-                        color = color,
-                        start = Offset(size.width * 0.5f, size.height * 0.2f),
-                        end = Offset(size.width * 0.5f, size.height * 0.8f),
-                        strokeWidth = strokeWidth,
-                    )
-                    drawLine(
-                        color = color,
-                        start = Offset(size.width * 0.2f, size.height * 0.5f),
-                        end = Offset(size.width * 0.8f, size.height * 0.5f),
-                        strokeWidth = strokeWidth,
-                    )
-                }
-
-                Perk.PATH_MERGE -> {
-                    val path = Path().apply {
-                        moveTo(size.width * 0.2f, size.height * 0.2f)
-                        lineTo(size.width * 0.5f, size.height * 0.5f)
-                        lineTo(size.width * 0.8f, size.height * 0.2f)
-                        moveTo(size.width * 0.2f, size.height * 0.8f)
-                        lineTo(size.width * 0.5f, size.height * 0.5f)
-                        lineTo(size.width * 0.8f, size.height * 0.8f)
-                    }
-                    drawPath(path, color = color, style = Stroke(width = strokeWidth))
-                    drawCircle(
-                        color,
-                        radius = size.width * 0.1f,
-                        center = Offset(size.width * 0.5f, size.height * 0.5f),
-                    )
-                }
-
-                Perk.FREEZE_TILE -> {
-                    val center = Offset(size.width / 2f, size.height / 2f)
-                    val radius = size.minDimension * 0.4f
-                    for (i in 0 until 3) {
-                        val angle = (i * 60f).toDouble()
-                        val dx = (radius * kotlin.math.cos(angle * kotlin.math.PI / 180)).toFloat()
-                        val dy = (radius * kotlin.math.sin(angle * kotlin.math.PI / 180)).toFloat()
-                        drawLine(
-                            color,
-                            center - Offset(dx, dy),
-                            center + Offset(dx, dy),
-                            strokeWidth,
-                        )
-                    }
-                    val smallRadius = radius * 0.3f
-                    for (i in 0 until 6) {
-                        val angle = (i * 60f).toDouble()
-                        val dx =
-                            (radius * 0.8f * kotlin.math.cos(angle * kotlin.math.PI / 180)).toFloat()
-                        val dy =
-                            (radius * 0.8f * kotlin.math.sin(angle * kotlin.math.PI / 180)).toFloat()
-                        val tip = center + Offset(dx, dy)
-
-                        val crossAngle1 = angle + 45
-                        val crossAngle2 = angle - 45
-                        val cdx1 =
-                            (smallRadius * kotlin.math.cos(crossAngle1 * kotlin.math.PI / 180)).toFloat()
-                        val cdy1 =
-                            (smallRadius * kotlin.math.sin(crossAngle1 * kotlin.math.PI / 180)).toFloat()
-                        val cdx2 =
-                            (smallRadius * kotlin.math.cos(crossAngle2 * kotlin.math.PI / 180)).toFloat()
-                        val cdy2 =
-                            (smallRadius * kotlin.math.sin(crossAngle2 * kotlin.math.PI / 180)).toFloat()
-
-                        drawLine(color, tip, tip - Offset(cdx1, cdy1), strokeWidth)
-                        drawLine(color, tip, tip - Offset(cdx2, cdy2), strokeWidth)
-                    }
-                }
-            }
-        }
-    }
 }
 
 class FlatTopHexagonShape : Shape {
@@ -522,6 +246,7 @@ val Perk.displayNameRes
         Perk.INCREMENT_TILE -> Res.string.perk_increment_tile_name
         Perk.PATH_MERGE -> Res.string.perk_path_merge_name
         Perk.FREEZE_TILE -> Res.string.perk_freeze_tile_name
+        Perk.MIMIC -> Res.string.perk_mimic_name
     }
 
 val Perk.descriptionRes
@@ -538,6 +263,7 @@ val Perk.descriptionRes
         Perk.INCREMENT_TILE -> Res.string.perk_increment_tile_desc
         Perk.PATH_MERGE -> Res.string.perk_path_merge_desc
         Perk.FREEZE_TILE -> Res.string.perk_freeze_tile_desc
+        Perk.MIMIC -> Res.string.perk_mimic_desc
     }
 
 @Composable
@@ -551,6 +277,8 @@ fun Hexagon(
     isGhost: Boolean = false,
     isTactical: Boolean = false,
     isFrozen: Boolean = false,
+    isMimic: Boolean = false,
+    seed: Int = 0,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "hexagon_animations")
 
@@ -563,6 +291,23 @@ fun Hexagon(
                 repeatMode = androidx.compose.animation.core.RepeatMode.Restart,
             ),
             label = "stripe_offset",
+        )
+    } else null
+
+    // Shine sweeping across the hex (very slow)
+    val mimicShine = if (isMimic) {
+        infiniteTransition.animateFloat(
+            initialValue = -1f,
+            targetValue = 2f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(4000, easing = LinearEasing, delayMillis = 4000),
+                repeatMode = androidx.compose.animation.core.RepeatMode.Restart,
+                initialStartOffset = StartOffset(
+                    offsetMillis = seed.absoluteValue % 8000,
+                    offsetType = StartOffsetType.Delay,
+                ),
+            ),
+            label = "mimic_shine",
         )
     } else null
 
@@ -579,6 +324,13 @@ fun Hexagon(
     } else null
 
     val spacing = MaterialTheme.spacing
+
+    // Subtle linear gradient for a shine effect
+    val mimicGradientColors = listOf(
+        Color.Transparent,
+        Color.White,
+        Color.Transparent,
+    )
 
     val ghostModifier = if (isGhost && stripeOffset != null) {
         Modifier.drawWithContent {
@@ -600,9 +352,40 @@ fun Hexagon(
         )
     } else Modifier
 
+    val finalBackgroundColor = if (isMimic) {
+        Brush.linearGradient(
+            listOf(
+                Color.Gray.copy(alpha = 0.5f),
+                Color.Gray.copy(alpha = 0.1f),
+            ),
+        )
+    } else {
+        SolidColor(backgroundColor)
+    }
+
     val baseModifier = modifier
         .clip(FlatTopHexagonShape())
-        .background(backgroundColor)
+        .background(finalBackgroundColor)
+        .then(
+            // Sweeping shine effect for mimic tiles
+            if (isMimic && mimicShine != null) {
+                val shine = mimicShine
+                val gradColors = mimicGradientColors
+                Modifier.drawBehind {
+                    val w = size.width
+                    val h = size.height
+                    val offset = shine.value * w
+                    drawRect(
+                        brush = Brush.linearGradient(
+                            colors = gradColors,
+                            start = Offset(offset, offset),
+                            end = Offset(offset + w * 0.4f, offset + h * 0.4f),
+                        ),
+                        alpha = 0.1f,
+                    )
+                }
+            } else Modifier,
+        )
         .then(ghostModifier)
         .then(frozenModifier)
 
@@ -619,7 +402,7 @@ fun Hexagon(
             HexagonGridDefaults.drawHexagonPath(
                 drawScope = this,
                 size = size,
-                color = secondaryColor,
+                brush = SolidColor(secondaryColor),
                 alpha = tacticalPulse.value,
                 style = Stroke(width = strokeWidth.toPx()),
             )
@@ -642,7 +425,7 @@ fun Hexagon(
     ) {
         if (value != null) {
             Text(
-                text = value,
+                text = if (isMimic) "*" else value,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp.scaled,
@@ -829,6 +612,7 @@ fun PerkIcon(
         Perk.INCREMENT_TILE -> Res.drawable.ic_upgrade
         Perk.FREEZE_TILE -> Res.drawable.ic_freeze
         Perk.PATH_MERGE -> Res.drawable.ic_path_merge
+        Perk.MIMIC -> Res.drawable.ic_star
     }
 
     Icon(
