@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -355,8 +356,8 @@ fun Hexagon(
     val finalBackgroundColor = if (isMimic) {
         Brush.linearGradient(
             listOf(
-                Color.Gray.copy(alpha = 0.5f),
-                Color.Gray.copy(alpha = 0.1f),
+                Color(0xFF424242), // Dark Gray
+                Color(0xFF616161), // Gray
             ),
         )
     } else {
@@ -498,9 +499,18 @@ fun PerkButton(
             .graphicsLayer { alpha = if (isEnabled) 1f else 0.1f },
     ) {
         val hexagonContent = @Composable {
-            Box(
+            BadgedBox(
+                badge = @Composable {
+                    if (count != null) {
+                        Badge(
+                            containerColor = perkColor,
+                            contentColor = Color.White,
+                        ) {
+                            Text(text = count.toString())
+                        }
+                    }
+                },
                 modifier = Modifier.size(width = buttonSize, height = buttonSize * heightScale),
-                contentAlignment = Alignment.Center,
             ) {
                 // Legendary Glow
                 if (isLegendary && isEnabled) {
@@ -559,19 +569,6 @@ fun PerkButton(
                         modifier = Modifier.size(buttonSize * 0.45f),
                         color = Color.White.copy(alpha = if (isActive) 1f else if (isEnabled) 0.7f else 0.3f),
                     )
-                }
-
-                // Badge counter
-                if (count != null) {
-                    Badge(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .offset(x = spacing.small.scaled, y = -spacing.tiny.scaled),
-                        containerColor = perkColor,
-                        contentColor = Color.White,
-                    ) {
-                        Text(text = count.toString(), fontSize = 20.sp.scaled)
-                    }
                 }
             }
         }
