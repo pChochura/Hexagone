@@ -10,11 +10,10 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -113,14 +112,7 @@ fun DailyChallengeDialog(
         scrimColor = Color.Transparent,
         dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.2f)) },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    bottom = WindowInsets.navigationBars.asPaddingValues()
-                        .calculateBottomPadding() + MaterialTheme.spacing.large.scaled,
-                ),
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = stringResource(Res.string.daily_challenge).uppercase(),
                 style = MaterialTheme.typography.headlineMedium.copy(
@@ -162,6 +154,14 @@ fun DailyChallengeDialog(
                     Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
 
                     StreakRow(streak, isStreakCollectedToday, completedDates)
+                }
+
+                item {
+                    Spacer(
+                        modifier = Modifier
+                            .navigationBarsPadding()
+                            .padding(bottom = MaterialTheme.spacing.large.scaled),
+                    )
                 }
             }
         }
