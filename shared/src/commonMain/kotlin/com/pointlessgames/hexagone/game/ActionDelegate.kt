@@ -118,7 +118,7 @@ internal class ActionDelegate(
 
         if (perk == Perk.PATH_MERGE) return
         val isTileOnlyPerk =
-            perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES || perk == Perk.MIMIC
+            perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES || perk == Perk.MIMIC || perk == Perk.FREEZE_TILE
         if (isTileOnlyPerk && ghostAtPos == null) return
 
         val mergeResult = when (perk) {
@@ -140,22 +140,7 @@ internal class ActionDelegate(
                 } else null
             }
 
-            Perk.FREEZE_TILE -> {
-                if (ghostAtPos != null) {
-                    MergeTransition(
-                        targetX = x,
-                        targetY = y,
-                        steps = emptyList(),
-                        finalValue = 0,
-                        totalCells = 1,
-                        uniqueGroups = 0,
-                        baseScore = 0,
-                        resultId = "preview_freeze_queue",
-                        participatingIds = setOf(ghostAtPos.id),
-                        previewFrozenIds = setOf(ghostAtPos.id)
-                    )
-                } else null
-            }
+            Perk.FREEZE_TILE -> null
 
             Perk.INCREMENT_TILE -> {
                 if (ghostAtPos != null && !ghostAtPos.isMimic) {
@@ -198,8 +183,11 @@ internal class ActionDelegate(
                 if (selectedId != null && (ghostAtPos == null || selectedId != ghostAtPos.id)) {
                     val source = getGameItem(selectedId)
                     if (source != null) {
-                        val resultId =
-                            if (perk == Perk.MOVE_TILE) "preview_move" else "preview_duplicate"
+                        val resultId = when {
+                            perk == Perk.MOVE_TILE -> "preview_move"
+                            source.isMimic -> "preview_duplicate_mimic"
+                            else -> "preview_duplicate"
+                        }
                         val swaps =
                             if (perk == Perk.MOVE_TILE) mapOf(selectedId to (x to y)) else null
                         val isSourceSolid = !source.isGhost
@@ -515,12 +503,38 @@ internal class ActionDelegate(
 
             Perk.MIMIC -> {
                 if (preview.isMimic) return
+                var barRaisedBonus = 0
                 uiState.update { currentState ->
                     val nextPreview = currentState.preview.map {
                         if (it.id == preview.id) it.copy(isMimic = true, isTactical = true) else it
                     }
-                    currentState.copy(preview = nextPreview).consumePerk(Perk.MIMIC).copy(activePerk = null, selectedCellId = null)
+                    barRaisedBonus = Scoring.calculateBarRaisedBonus(
+                        currentState.grid, currentState.preview,
+                        currentState.grid, nextPreview
+                    )
+                    val nextScore = currentState.score + barRaisedBonus
+                    currentState.copy(
+                        preview = nextPreview,
+                        score = nextScore,
+                        bestScore = maxOf(currentState.bestScore, nextScore),
+                    ).consumePerk(Perk.MIMIC).copy(activePerk = null, selectedCellId = null)
                 }
+
+                if (barRaisedBonus > 0) {
+                    stateDelegate.persistBestScore(uiState.value.score)
+                    effectDelegate.handlePopups(
+                        targetX = preview.x,
+                        targetY = preview.y,
+                        totalScore = barRaisedBonus,
+                        isRedemption = false,
+                        isBarRaised = true,
+                        isSacrifice = false,
+                        isTactical = true,
+                        isExecution = false
+                    )
+                    achievementDelegate.onMergeDetails(isTactical = true, isBarRaised = true, isSacrifice = false)
+                }
+
                 achievementDelegate.checkPerkAchievements(Perk.MIMIC, uiState.value, isTargetGhost = true)
                 achievementDelegate.checkScoreAchievements(uiState.value.score)
                 achievementDelegate.checkLevelAchievements(uiState.value.level)
@@ -709,12 +723,38 @@ internal class ActionDelegate(
 
             Perk.MIMIC -> {
                 if (cell.isMimic) return
+                var barRaisedBonus = 0
                 uiState.update { currentState ->
                     val nextGrid = currentState.grid.map {
                         if (it.id == cell.id) it.copy(isMimic = true, isTactical = true) else it
                     }
-                    currentState.copy(grid = nextGrid).consumePerk(Perk.MIMIC).copy(activePerk = null, selectedCellId = null)
+                    barRaisedBonus = Scoring.calculateBarRaisedBonus(
+                        currentState.grid, currentState.preview,
+                        nextGrid, currentState.preview
+                    )
+                    val nextScore = currentState.score + barRaisedBonus
+                    currentState.copy(
+                        grid = nextGrid,
+                        score = nextScore,
+                        bestScore = maxOf(currentState.bestScore, nextScore),
+                    ).consumePerk(Perk.MIMIC).copy(activePerk = null, selectedCellId = null)
                 }
+
+                if (barRaisedBonus > 0) {
+                    stateDelegate.persistBestScore(uiState.value.score)
+                    effectDelegate.handlePopups(
+                        targetX = cell.x,
+                        targetY = cell.y,
+                        totalScore = barRaisedBonus,
+                        isRedemption = false,
+                        isBarRaised = true,
+                        isSacrifice = false,
+                        isTactical = true,
+                        isExecution = false
+                    )
+                    achievementDelegate.onMergeDetails(isTactical = true, isBarRaised = true, isSacrifice = false)
+                }
+
                 achievementDelegate.checkPerkAchievements(Perk.MIMIC, uiState.value, isTargetGhost = false)
                 achievementDelegate.checkScoreAchievements(uiState.value.score)
                 achievementDelegate.checkLevelAchievements(uiState.value.level)

@@ -325,7 +325,7 @@ internal class GameViewModel(
                 state.copy(
                     level = lvl,
                     levelProgress = engine.getLevelProgress(state.score, lvl),
-                    highestValue = state.grid.maxOfOrNull { it.value } ?: 1,
+                    highestValue = state.grid.filter { !it.isMimic }.maxOfOrNull { it.value } ?: 1,
                     perkOptions = nextPerkOptions,
                     pendingLevelUps = state.pendingLevelUps + levelDifference,
                     canReroll = if (state.perkOptions.isEmpty()) true else state.canReroll,
@@ -335,7 +335,7 @@ internal class GameViewModel(
                 state.copy(
                     level = lvl,
                     levelProgress = engine.getLevelProgress(state.score, lvl),
-                    highestValue = state.grid.maxOfOrNull { it.value } ?: 1,
+                    highestValue = state.grid.filter { !it.isMimic }.maxOfOrNull { it.value } ?: 1,
                 )
             }
         }

@@ -57,8 +57,8 @@ internal class GameEngine(
         if (existingPreviews.isNotEmpty()) return existingPreviews to initialPreviewIdCounter
 
         var previewIdCounter = initialPreviewIdCounter
-        val boardPool = if (currentGrid.isEmpty()) listOf(1, 2) else currentGrid.map { it.value }.distinct().sorted()
-        val spawnPool = boardPool.take((boardPool.size * 0.7f).toInt().coerceAtLeast(2))
+        val boardPool = if (currentGrid.isEmpty()) listOf(1, 2) else currentGrid.filter { !it.isMimic }.map { it.value }.distinct().sorted()
+        val spawnPool = if (boardPool.isEmpty()) listOf(1, 2) else boardPool.take((boardPool.size * 0.7f).toInt().coerceAtLeast(2))
 
         val currentOccupied = currentGrid.map { it.x to it.y }.toSet()
         val perkPositions = existingPerks.map { it.x to it.y }.toSet()
@@ -171,8 +171,8 @@ internal class GameEngine(
             }.toMap()
 
             if (valuesToMerge.isEmpty() && mimics.size >= 2) {
-                // Special case: Only mimics merging — no group to adopt, treat as value 1.
-                val mimicAdoptedValue = 1
+                // Special case: Only mimics merging — no group to adopt, treat as highest value on board.
+                val mimicAdoptedValue = grid.filter { !it.isMimic }.maxOfOrNull { it.value } ?: 1
                 currentCenterValue = mimicAdoptedValue + mimics.size - 1
                 steps.add(
                     MergeStep(
@@ -334,7 +334,7 @@ internal class GameEngine(
             val normalCells = allCells.filter { !it.isMimic }
             val mimics = allCells.filter { it.isMimic }
             
-            val highestValue = normalCells.maxOfOrNull { it.value } ?: 1
+            val highestValue = normalCells.maxOfOrNull { it.value } ?: (grid.filter { !it.isMimic }.maxOfOrNull { it.value } ?: 1)
             
             // Treat mimics as the highest value for grouping
             val cellsForGrouping = normalCells + mimics.map { it.copy(value = highestValue) }

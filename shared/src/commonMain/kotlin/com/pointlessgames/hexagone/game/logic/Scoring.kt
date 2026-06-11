@@ -14,8 +14,10 @@ object Scoring {
         newGrid: List<HexagonCell>,
         newPreview: List<PreviewCell>,
     ): Int {
-        val oldMin = (oldGrid.map { it.value } + oldPreview.map { it.value }).minOrNull() ?: return 0
-        val newMin = (newGrid.map { it.value } + newPreview.map { it.value }).minOrNull() ?: return 0
+        val oldMin = (oldGrid.filter { !it.isMimic }.map { it.value } + 
+                      oldPreview.filter { !it.isMimic }.map { it.value }).minOrNull() ?: return 0
+        val newMin = (newGrid.filter { !it.isMimic }.map { it.value } + 
+                      newPreview.filter { !it.isMimic }.map { it.value }).minOrNull() ?: return 0
         return if (newMin > oldMin) oldMin * 10 else 0
     }
 
@@ -23,12 +25,15 @@ object Scoring {
         grid: List<HexagonCell>,
         removedCell: HexagonCell,
     ): Int {
-        val isOnlyHighest = grid.count { it.value == removedCell.value } == 1 &&
-                grid.all { it.value <= removedCell.value }
+        if (removedCell.isMimic) return 0
+
+        val gridWithoutMimics = grid.filter { !it.isMimic }
+        val isOnlyHighest = gridWithoutMimics.count { it.value == removedCell.value } == 1 &&
+                gridWithoutMimics.all { it.value <= removedCell.value }
 
         if (!isOnlyHighest) return 0
 
-        val sortedValues = grid.map { it.value }.distinct().sortedDescending()
+        val sortedValues = gridWithoutMimics.map { it.value }.distinct().sortedDescending()
         val secondHighest = if (sortedValues.size > 1) sortedValues[1] else 0
         val diff = removedCell.value - secondHighest
 
@@ -134,7 +139,8 @@ object Scoring {
         val sacrificeDiff = if (merge.isRemoval && sacrificeBonus > 0) {
             val cell = grid.find { it.x == merge.targetX && it.y == merge.targetY }
             if (cell != null) {
-                val sortedValues = grid.map { it.value }.distinct().sortedDescending()
+                val gridWithoutMimics = grid.filter { !it.isMimic }
+                val sortedValues = gridWithoutMimics.map { it.value }.distinct().sortedDescending()
                 val secondHighest = if (sortedValues.size > 1) sortedValues[1] else 0
                 cell.value - secondHighest
             } else 0
