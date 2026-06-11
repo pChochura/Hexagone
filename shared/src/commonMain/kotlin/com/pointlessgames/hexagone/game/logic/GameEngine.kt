@@ -268,7 +268,7 @@ internal class GameEngine(
             val neighborCoords = getNeighbors(current.x, current.y)
             grid.filter { cell ->
                 !cell.isFrozen &&
-                        cell.value == targetValue &&
+                        (cell.value == targetValue || cell.isMimic) &&
                         neighborCoords.any { it.first == cell.x && it.second == cell.y }
             }.forEach { queue.add(it) }
         }

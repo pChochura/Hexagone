@@ -108,7 +108,12 @@ internal object PatternRecognitionEngine {
     }
 
     fun checkQuadruplets(previews: List<com.pointlessgames.hexagone.game.model.PreviewCell>): Boolean {
-        return previews.groupBy { it.value }.any { it.value.size >= 4 }
+        val normalValues = previews.filter { !it.isMimic }.groupBy { it.value }
+        val mimicsCount = previews.count { it.isMimic }
+        
+        if (mimicsCount >= 4) return true
+        
+        return normalValues.any { it.value.size + mimicsCount >= 4 }
     }
 
     fun checkTheMedium(grid: List<HexagonCell>, previews: List<com.pointlessgames.hexagone.game.model.PreviewCell>, engine: GameEngine): PatternResult {

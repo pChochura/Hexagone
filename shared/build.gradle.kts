@@ -93,6 +93,9 @@ kotlin {
             implementation(libs.supabase.auth)
             implementation(libs.ktor.client.core)
         }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
         }

@@ -22,6 +22,9 @@ internal class AchievementDelegate(
         // into an empty center.
         if (merge.totalCells == 6 && merge.uniqueGroups == 1) {
             achievementManager.unlockAchievement(GameAchievement.THE_WHOLE_GANG)
+            if (merge.steps.any { it.mergingCells.any { it.isMimic } }) {
+                achievementManager.unlockAchievement(GameAchievement.PERFECT_FIT)
+            }
         }
 
         if (merge.finalValue >= 15) {
@@ -42,6 +45,9 @@ internal class AchievementDelegate(
 
         if (merge.resultId.contains("path_merge") && merge.totalCells >= 10) {
             achievementManager.unlockAchievement(GameAchievement.SNAKE_CHARMER)
+            if (merge.steps.any { it.mergingCells.any { it.isMimic } }) {
+                achievementManager.unlockAchievement(GameAchievement.PERFECT_FIT)
+            }
         }
 
         if (merge.isTactical && merge.baseScore > 1000) {
@@ -70,13 +76,14 @@ internal class AchievementDelegate(
             uiState.update { it.copy(comboTriggeredInSession = true) }
         }
 
-        if (finalCombo >= ComboTier.ZENITH.threshold) {
+        val effectiveCombo = finalCombo + 1
+        if (effectiveCombo >= ComboTier.ZENITH.threshold) {
             achievementManager.unlockAchievement(GameAchievement.ASCENSION)
         }
-        if (finalCombo >= ComboTier.OVERDRIVE.threshold) {
+        if (effectiveCombo >= ComboTier.OVERDRIVE.threshold) {
             achievementManager.unlockAchievement(GameAchievement.MAXIMUM_OVERDRIVE)
         }
-        if (finalCombo >= ComboTier.SURGE.threshold) {
+        if (effectiveCombo >= ComboTier.SURGE.threshold) {
             achievementManager.unlockAchievement(GameAchievement.FEELING_THE_SURGE)
         }
     }
@@ -297,6 +304,9 @@ internal class AchievementDelegate(
     fun checkArchitectsDream(grid: List<HexagonCell>, potentialMerges: Map<Pair<Int, Int>, PotentialMerge>) {
         if (PatternRecognitionEngine.checkArchitectsDream(grid, potentialMerges)) {
             achievementManager.unlockAchievement(GameAchievement.ARCHITECTS_DREAM)
+            if (grid.any { it.isMimic }) {
+                achievementManager.unlockAchievement(GameAchievement.PERFECT_FIT)
+            }
         }
     }
 }
