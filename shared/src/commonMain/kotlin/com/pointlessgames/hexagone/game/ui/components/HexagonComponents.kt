@@ -423,18 +423,27 @@ fun Hexagon(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        if (value != null) {
-            Text(
-                text = if (isMimic) "*" else value,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp.scaled,
-                maxLines = 1,
-                autoSize = TextAutoSize.StepBased(
-                    minFontSize = 8.sp.scaled,
-                    maxFontSize = 24.sp.scaled,
-                ),
-            )
+        if (value != null || isMimic) {
+            if (isMimic) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_star),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp.scaled),
+                    tint = Color.White,
+                )
+            } else if (value != null) {
+                Text(
+                    text = value,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp.scaled,
+                    maxLines = 1,
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 8.sp.scaled,
+                        maxFontSize = 24.sp.scaled,
+                    ),
+                )
+            }
         }
 
         if (perk != null) {

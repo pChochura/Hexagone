@@ -9,6 +9,8 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +28,7 @@ internal fun drawGhost(
     itemHeight: Float,
     wiggleValue: Float,
     stripeOffset: Float,
+    starPainter: Painter,
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
     colorScheme: androidx.compose.material3.ColorScheme,
     spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
@@ -96,22 +99,32 @@ internal fun drawGhost(
             )
         }
 
-        val displayText = if (preview.isMimic && !isMimicking) "*" else visualValue.toString()
-        val textLayoutResult = textMeasurer.measure(
-            text = displayText,
-            style = TextStyle(
-                color = Color.White.copy(alpha = alpha),
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
-            ),
-        )
-        drawText(
-            textLayoutResult,
-            topLeft = Offset(
-                (itemWidth - textLayoutResult.size.width) / 2,
-                (itemHeight - textLayoutResult.size.height) / 2,
-            ),
-        )
+        if (preview.isMimic && !isMimicking) {
+            val iconSize = with(drawScope) { 24.sp.toPx() }
+            val left = (itemWidth - iconSize) / 2
+            val top = (itemHeight - iconSize) / 2
+            drawScope.translate(left, top) {
+                with(starPainter) {
+                    draw(size = Size(iconSize, iconSize), alpha = alpha)
+                }
+            }
+        } else {
+            val textLayoutResult = textMeasurer.measure(
+                text = visualValue.toString(),
+                style = TextStyle(
+                    color = Color.White.copy(alpha = alpha),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                ),
+            )
+            drawText(
+                textLayoutResult,
+                topLeft = Offset(
+                    (itemWidth - textLayoutResult.size.width) / 2,
+                    (itemHeight - textLayoutResult.size.height) / 2,
+                ),
+            )
+        }
     }
 }
 

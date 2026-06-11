@@ -59,6 +59,7 @@ import com.pointlessgames.hexagone.game.model.ScorePopup
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.ic_roll
+import hexagone.shared.generated.resources.ic_star
 import hexagone.shared.generated.resources.score_popup
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -104,6 +105,7 @@ internal fun GameGridOverlay(
     val spacing = MaterialTheme.spacing
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
+    val starPainter = painterResource(Res.drawable.ic_star)
     val finishedMergeCount = remember { mutableIntStateOf(0) }
     val localParticles = remember { mutableStateListOf<Particle>() }
     val localScorePopups = remember { mutableStateListOf<ScorePopup>() }
@@ -538,6 +540,7 @@ internal fun GameGridOverlay(
                                     itemHeight = itemHeight,
                                     wiggleValue = if (isGhostSelectable(preview)) wiggleState.value else 0f,
                                     stripeOffset = ghostStripeOffset.value,
+                                    starPainter = starPainter,
                                     textMeasurer = textMeasurer,
                                     colorScheme = colorScheme,
                                     spacing = spacing,
@@ -605,6 +608,7 @@ internal fun GameGridOverlay(
                                     itemHeight = itemHeight,
                                     wiggleValue = if (isGhostSelectable(preview)) wiggleState.value else 0f,
                                     stripeOffset = ghostStripeOffset.value,
+                                    starPainter = starPainter,
                                     textMeasurer = textMeasurer,
                                     colorScheme = colorScheme,
                                     spacing = spacing,

@@ -175,7 +175,7 @@ internal fun AnimatedGridHexagon(
     val isMimicking = currentHoverMerge?.previewValues?.containsKey(cell.id) == true && cell.isMimic
 
     Hexagon(
-        value = if (cell.isMimic && !isMimicking) "*" else visualValue.toString(),
+        value = visualValue.toString(),
         backgroundColor = if (cell.isMimic && !isMimicking) Color.DarkGray else HexagonGridDefaults.getColorForValue(
             visualValue,
             MaterialTheme.colorScheme,
