@@ -70,7 +70,8 @@ A merge occurs when 2+ tiles of the same value touch.
 *   **Solid Only**: Only solid tiles participate in merges. Ghost tiles (previews) are ignored by the merge engine until they are solidified.
 *   **Mimic Tiles (Wildcards)**: Mimic tiles adapt to any adjacent value to trigger a merge.
     *   **Solidification**: During previews or complex merges (Fusion/Chain), Mimics adopt the **highest possible value** from the participating group to maximize results.
-    *   **Mimic-Only Merges**: If only Mimics merge, they default to a base value of 1.
+    *   **Mimic-Only Merges**: If only Mimics merge, they adopt the **highest value currently on the board** (plus merge bonus). If the board is empty of regular tiles, they default to a base value of 1.
+    *   **Value Range Exclusion**: Mimic tiles are excluded from board-wide value range calculations. This ensures that new tile spawns and level progression are governed strictly by regular tiles.
 *   **Frozen Tiles**: Frozen tiles are excluded from all merge calculations and pathfinding. They are unfrozen automatically at the end of each turn.
 *   **Removals**: Actions that remove tiles (e.g., *Remove Tile* perk) are excluded from merge-count statistics for challenge tracking.
 *   **Path Merge (Legendary)**: Merges all connected tiles of the same value across the board into a single target.
@@ -82,8 +83,8 @@ A merge occurs when 2+ tiles of the same value touch.
 *   **Tactical Multiplier**: Any merge involving a tile marked as "tactical" (from a Move, Swap, or Perk action) receives a **1.5x base score multiplier**.
 
 ### Scoring & Bonuses
-*   **Scalable Bar Raised Bonus**: Granted whenever the smallest value tile is cleared from the game.
-*   **Scalable Sacrifice Bonus**: Granted when removing the only remaining highest-value tile.
+*   **Scalable Bar Raised Bonus**: Granted whenever the smallest regular value tile is cleared from the game. This can be triggered by a merge, removal, or by using the **Mimic perk** on the last remaining tile of the minimum value.
+*   **Scalable Sacrifice Bonus**: Granted when removing the only remaining highest-value regular tile. Mimic tiles do not interfere with this detection.
 *   **Execution Bonus**: Granted when removing a Mimic tile. The reward is calculated based on the highest value on the board: `(highestValue * 50) + 1000`.
 *   **Redemption Bonus**: If a move's score exceeds the previous turn's baseline, a bonus is applied (`250 + 50% of the difference`).
 *   **Combo System**: Multipliers build with every merge (capped at **x12**). 
@@ -174,8 +175,8 @@ The game implements a contextual onboarding system to guide players through its 
     *   **Legendary**: Fusion, Chain Merge, Path Merge.
 *   **Strategic Behavioral Rules**:
     *   **Target Restrictions**: Perks like *Upgrade* and *Mimic* are blocked from targeting existing Mimic tiles to maintain game balance.
-    *   **Move & Duplicate**: Positional actions that preserve the "ghost" or "solid" status and allow for combo setup without forced merges. *Duplicate* correctly copies the Mimic attribute.
-    *   **Freeze Strategy**: Allows isolating a tile to prevent accidental merges, useful for preserving high-value clusters or setting up future complex moves.
+    *   **Move & Duplicate**: Positional actions that preserve the "ghost" or "solid" status and allow for combo setup without forced merges. *Duplicate* correctly copies the Mimic attribute, displaying it as a star in the preview.
+    *   **Freeze Strategy**: Allows isolating a **solid tile** to prevent accidental merges. Useful for preserving high-value clusters or setting up future complex moves. Restricted from targeting ghost tiles.
     *   **Lifespan Stability**: On-board perks only decrement lifespan during regular turn progression, not during strategic perk actions.
     *   **Pity System**: Guaranteed on-board perk spawning between 8 and 15 turns.
 
