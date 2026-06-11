@@ -68,6 +68,9 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 ### The Merge Formula
 A merge occurs when 2+ tiles of the same value touch.
 *   **Solid Only**: Only solid tiles participate in merges. Ghost tiles (previews) are ignored by the merge engine until they are solidified.
+*   **Mimic Tiles (Wildcards)**: Mimic tiles adapt to any adjacent value to trigger a merge.
+    *   **Solidification**: During previews or complex merges (Fusion/Chain), Mimics adopt the **highest possible value** from the participating group to maximize results.
+    *   **Mimic-Only Merges**: If only Mimics merge, they default to a base value of 1.
 *   **Frozen Tiles**: Frozen tiles are excluded from all merge calculations and pathfinding. They are unfrozen automatically at the end of each turn.
 *   **Removals**: Actions that remove tiles (e.g., *Remove Tile* perk) are excluded from merge-count statistics for challenge tracking.
 *   **Path Merge (Legendary)**: Merges all connected tiles of the same value across the board into a single target.
@@ -81,6 +84,7 @@ A merge occurs when 2+ tiles of the same value touch.
 ### Scoring & Bonuses
 *   **Scalable Bar Raised Bonus**: Granted whenever the smallest value tile is cleared from the game.
 *   **Scalable Sacrifice Bonus**: Granted when removing the only remaining highest-value tile.
+*   **Execution Bonus**: Granted when removing a Mimic tile. The reward is calculated based on the highest value on the board: `(highestValue * 50) + 1000`.
 *   **Redemption Bonus**: If a move's score exceeds the previous turn's baseline, a bonus is applied (`250 + 50% of the difference`).
 *   **Combo System**: Multipliers build with every merge (capped at **x12**). 
     *   The combo resets when a tile is placed from the queue without triggering a merge.
@@ -93,11 +97,11 @@ A merge occurs when 2+ tiles of the same value touch.
 The game features a multi-layered achievement system integrated via a platform-agnostic `AchievementManager`.
 
 ### Achievement Categories
-1.  **Spatial Architecture**: Detected by `PatternRecognitionEngine` (e.g., *Ring of Fire*, *Great Wall*, *The Prism*).
+1.  **Spatial Architecture**: Detected by `PatternRecognitionEngine` (e.g., *Ring of Fire*, *Great Wall*, *The Prism*). Patterns support **Mimic wildcards** for detection.
 2.  **Strategic Mastery**: Turn-based milestones (e.g., *Triple Threat*, *Tactical Genius*, *Snake Charmer*).
 3.  **Purity & Restraint**: Session-long tracking (e.g., *Pacifist*, *Ascetic*, *Zen Master*).
 4.  **Lifetime Grind**: Incremental tracking in `DataStore` (e.g., *Marathon*, *Gambler*, *Perk Collector*).
-5.  **Tactical Prowess**: Reward-based logic (e.g., *Redemption*, *Advanced Janitor*, *Double Vision*).
+5.  **Tactical Prowess**: Reward-based logic (e.g., *Redemption*, *Advanced Janitor*, *Double Vision*). Includes Mimic-specific triggers like *Perfect Fit* (using a mimic in a pattern).
 
 ### UI Integration
 *   **Sequential Notifications**: Unlocked achievements are queued and displayed via a top-level `Popup` window.
@@ -164,9 +168,13 @@ The game implements a contextual onboarding system to guide players through its 
 *   **Atomic State**: Full game state is persisted after every move to ensure no progress is lost.
 
 ### Perk Economy
-*   **Rarity Weights**: Common (Undo, Move, Remove, Increment), Rare (Advance, Swap, Duplicate, Skip, Freeze), Legendary (Fusion, Chain Merge, Path Merge).
+*   **Rarity Weights**: 
+    *   **Common**: Undo, Move, Remove, Increment (Upgrade).
+    *   **Rare**: Advance, Swap, Duplicate, Skip (Pause), Freeze, Mimic.
+    *   **Legendary**: Fusion, Chain Merge, Path Merge.
 *   **Strategic Behavioral Rules**:
-    *   **Move & Duplicate**: Positional actions that preserve the "ghost" or "solid" status and allow for combo setup without forced merges.
+    *   **Target Restrictions**: Perks like *Upgrade* and *Mimic* are blocked from targeting existing Mimic tiles to maintain game balance.
+    *   **Move & Duplicate**: Positional actions that preserve the "ghost" or "solid" status and allow for combo setup without forced merges. *Duplicate* correctly copies the Mimic attribute.
     *   **Freeze Strategy**: Allows isolating a tile to prevent accidental merges, useful for preserving high-value clusters or setting up future complex moves.
     *   **Lifespan Stability**: On-board perks only decrement lifespan during regular turn progression, not during strategic perk actions.
     *   **Pity System**: Guaranteed on-board perk spawning between 8 and 15 turns.
