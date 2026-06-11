@@ -43,6 +43,12 @@ object Scoring {
         }
     }
 
+    fun calculateExecutionBonus(grid: List<HexagonCell>, preview: List<PreviewCell>): Int {
+        val highestValue = (grid.filter { !it.isMimic }.map { it.value } + 
+                           preview.filter { !it.isMimic }.map { it.value }).maxOrNull() ?: 1
+        return (highestValue * 50) + 1000
+    }
+
     fun calculateFinalCombo(merge: MergeTransition, currentCombo: Int, activePerk: Perk?): Int {
         val isPathMerge = merge.resultId.contains("path_merge")
         val isChainMerge = activePerk == Perk.CHAIN_MERGE
@@ -134,28 +140,38 @@ object Scoring {
             } else 0
         } else 0
 
+        val removedMimic = if (merge.isRemoval) {
+            grid.find { it.x == merge.targetX && it.y == merge.targetY }?.isMimic == true ||
+            preview.find { it.x == merge.targetX && it.y == merge.targetY }?.isMimic == true
+        } else false
+
+        val executionBonus = if (removedMimic) calculateExecutionBonus(grid, preview) else 0
+
         // Use a dampened multiplier so scores don't explode too much at high combos
         val dampenedMultiplier = 1 + (comboMultiplier - 1) / 3
         val multipliedBarRaised = barRaisedBonus * dampenedMultiplier
         val multipliedSacrifice = sacrificeBonus * dampenedMultiplier
+        val multipliedExecution = executionBonus * dampenedMultiplier
         
         val redemptionBonus = calculateRedemptionBonus(
-            totalStepScore + multipliedBarRaised + multipliedSacrifice, 
+            totalStepScore + multipliedBarRaised + multipliedSacrifice + multipliedExecution, 
             redemptionBaseline
         )
         
-        val totalScore = totalStepScore + multipliedBarRaised + redemptionBonus + multipliedSacrifice
+        val totalScore = totalStepScore + multipliedBarRaised + redemptionBonus + multipliedSacrifice + multipliedExecution
 
         return ScoreResult(
             totalScore = totalScore,
             stepScore = totalStepScore,
-            bonusScore = multipliedBarRaised + multipliedSacrifice + redemptionBonus,
+            bonusScore = multipliedBarRaised + multipliedSacrifice + redemptionBonus + multipliedExecution,
             sacrificeBonus = sacrificeBonus,
             sacrificeDiff = sacrificeDiff,
             finalCombo = finalCombo,
             barRaisedBonus = barRaisedBonus,
             redemptionBonus = redemptionBonus,
-            isTactical = merge.isTactical
+            isTactical = merge.isTactical,
+            isExecution = removedMimic,
+            executionBonus = executionBonus
         )
     }
 }
@@ -169,5 +185,7 @@ data class ScoreResult(
     val finalCombo: Int,
     val barRaisedBonus: Int,
     val redemptionBonus: Int,
-    val isTactical: Boolean = false
+    val isTactical: Boolean = false,
+    val isExecution: Boolean = false,
+    val executionBonus: Int = 0
 )

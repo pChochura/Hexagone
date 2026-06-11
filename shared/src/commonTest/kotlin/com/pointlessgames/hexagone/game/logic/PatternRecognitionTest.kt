@@ -64,4 +64,38 @@ class PatternRecognitionTest {
             assertTrue(merge.participatingIds!!.contains("2"), "Mimic should be part of the path")
         }
     }
+
+    @Test
+    fun testFusionWithMimics() {
+        val engine = GameEngine(5, 5)
+        val grid = listOf(
+            HexagonCell("1", 0, 0, 10),
+            HexagonCell("2", 1, 1, 1, isMimic = true),
+            HexagonCell("3", 2, 0, 5)
+        )
+        // Fusion at (1,0) should pull all neighbors
+        val (merge, _) = engine.calculateFusion(1, 0, grid, 100)
+        assertTrue(merge != null, "Fusion should trigger")
+        if (merge != null) {
+            // Mimic adopts 10. Merge result: max(10, 5) + 3 - 1 = 12
+            // Actually, fusion logic: 
+            // Group 1: 10 + Mimic(10) -> value 11
+            // Group 2: 5 -> value max(11, 5) + (1+1) - 1 = 12
+            assertTrue(merge.finalValue == 12, "Final value should be 12 (10+Mimic+5 neighbors)")
+            assertTrue(merge.totalCells == 3, "Should merge 3 cells")
+        }
+    }
+
+    @Test
+    fun testExecutionBonus() {
+        val grid = listOf(
+            HexagonCell("1", 0, 0, 20),
+            HexagonCell("mimic", 1, 1, 1, isMimic = true)
+        )
+        val preview = listOf<PreviewCell>()
+        
+        val bonus = Scoring.calculateExecutionBonus(grid, preview)
+        // highestValue is 20. Bonus: 20 * 50 + 1000 = 2000
+        assertTrue(bonus == 2000, "Execution bonus should be 2000 for highest piece 20")
+    }
 }

@@ -45,6 +45,7 @@
     <string name="label_janitor_plus">JANITOR+</string>
     <string name="label_sacrifice">SACRIFICE</string>
     <string name="label_bar_raised">BAR RAISED</string>
+    <string name="label_execution">EXECUTION</string>
 
     <!-- Perk Names -->
     <string name="perk_undo_name">UNDO</string>

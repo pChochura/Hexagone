@@ -45,6 +45,7 @@
     <string name="label_janitor_plus">WOŹNY+</string>
     <string name="label_sacrifice">POŚWIĘCENIE</string>
     <string name="label_bar_raised">POPRZECZKA PODNIESIONA</string>
+    <string name="label_execution">EGZEKUCJA</string>
 
     <!-- Perk Names -->
     <string name="perk_undo_name">Cofnięcie</string>

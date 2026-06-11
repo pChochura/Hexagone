@@ -137,11 +137,13 @@ internal class GameEngine(
 
         // Mimic assignment logic:
         // Mimics are distributed among the available groups in descending order of value.
-        // If there are more mimics than groups, it wraps around to the highest group again.
+        // We prioritize assigning mimics to the HIGHEST value group first to maximize benefit.
         val sortedKeys = groups.keys.sortedDescending()
         val mimicAssignments = mutableMapOf<Int, MutableList<HexagonCell>>()
         
         if (sortedKeys.isNotEmpty() && mimics.isNotEmpty()) {
+            // Assign mimics starting from the highest group. 
+            // Wrap around if there are more mimics than groups.
             var keyIndex = 0
             mimics.forEach { mimic ->
                 val targetValue = sortedKeys[keyIndex]
@@ -329,7 +331,14 @@ internal class GameEngine(
 
         // Fusion requires at least two neighbors to trigger
         if (neighborCells.size >= 2) {
-            val groups = allCells.groupBy { it.value }
+            val normalCells = allCells.filter { !it.isMimic }
+            val mimics = allCells.filter { it.isMimic }
+            
+            val highestValue = normalCells.maxOfOrNull { it.value } ?: 1
+            
+            // Treat mimics as the highest value for grouping
+            val cellsForGrouping = normalCells + mimics.map { it.copy(value = highestValue) }
+            val groups = cellsForGrouping.groupBy { it.value }
             val sortedValues = groups.keys.sortedDescending()
 
             val steps = mutableListOf<MergeStep>()
@@ -338,8 +347,13 @@ internal class GameEngine(
 
             sortedValues.forEachIndexed { index, value ->
                 val groupCells = groups[value]!!
+                // Find original IDs for merging neighbors
+                val originalMergingCells = allCells.filter { c -> 
+                    cellsForGrouping.find { it.id == c.id && it.value == value } != null
+                }
+                
                 val mergingNeighbors =
-                    groupCells.filter { it.id != (centerCell?.id ?: "placed_temp") }
+                    originalMergingCells.filter { it.id != (centerCell?.id ?: "placed_temp") }
 
                 if (index == 0) {
                     currentCenterValue = value + groupCells.size - 1
@@ -359,7 +373,7 @@ internal class GameEngine(
                     currentCenterValue = maxOf(currentCenterValue, value) + n - 1
                     steps.add(
                         MergeStep(
-                            groupCells,
+                            originalMergingCells,
                             currentCenterValue,
                             calculateBaseScore(groupCells + createCell(x, y, prevValue, id = "temp"))
                         )
@@ -368,7 +382,10 @@ internal class GameEngine(
                 }
             }
 
-            var baseScore = calculateBaseScore(allCells)
+            val cellsForScoring = allCells.map { 
+                if (it.isMimic) it.copy(value = highestValue) else it 
+            }
+            var baseScore = calculateBaseScore(cellsForScoring)
             if (allCells.any { it.isTactical }) {
                 baseScore = (baseScore * 1.5).toInt()
             }
@@ -383,7 +400,8 @@ internal class GameEngine(
                 baseScore = baseScore,
                 resultId = "cell_${currentIdCounter++}",
                 isTactical = allCells.any { it.isTactical },
-                participatingIds = allCells.map { it.id }.toSet()
+                participatingIds = allCells.map { it.id }.toSet(),
+                previewValues = mimics.associate { it.id to highestValue }.ifEmpty { null }
             )
             return transition to currentIdCounter
         }
@@ -568,8 +586,8 @@ internal class GameEngine(
         return HexagonCell(id ?: "cell_temp", x, y, value, isTactical, isMimic = isMimic)
     }
 
-    fun createPreviewCell(x: Int, y: Int, value: Int, id: String? = null, isTactical: Boolean = false): PreviewCell {
-        return PreviewCell(id ?: "preview_temp", x, y, value, 0, isTactical)
+    fun createPreviewCell(x: Int, y: Int, value: Int, id: String? = null, isTactical: Boolean = false, isMimic: Boolean = false): PreviewCell {
+        return PreviewCell(id ?: "preview_temp", x, y, value, 0, isTactical, isMimic = isMimic)
     }
 
     fun syncCounters(grid: List<HexagonCell>, previews: List<PreviewCell>) {

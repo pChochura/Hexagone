@@ -158,7 +158,7 @@ internal class ActionDelegate(
             }
 
             Perk.INCREMENT_TILE -> {
-                if (ghostAtPos != null) {
+                if (ghostAtPos != null && !ghostAtPos.isMimic) {
                     val nextValue = ghostAtPos.value + 1
                     val m = MergeTransition(
                         targetX = x,
@@ -177,17 +177,20 @@ internal class ActionDelegate(
             }
 
             Perk.PATH_MERGE -> {
-                val (m, _) = engine.calculatePathMerge(x, y, state.grid, 0)
-                m?.let {
-                    val nextId = "preview_path_merge"
-                    it.copy(
-                        resultId = nextId,
-                        forceSolidIds = setOf(nextId),
-                        previewValues = ghostAtPos?.let { g -> mapOf(g.id to it.finalValue) }
-                            ?: emptyMap(),
-                        baseScore = calculatePotentialScore(it, state),
-                        isPerkAssisted = true
-                    )
+                if (ghostAtPos?.isMimic == true) null
+                else {
+                    val (m, _) = engine.calculatePathMerge(x, y, state.grid, 0)
+                    m?.let {
+                        val nextId = "preview_path_merge"
+                        it.copy(
+                            resultId = nextId,
+                            forceSolidIds = setOf(nextId),
+                            previewValues = ghostAtPos?.let { g -> mapOf(g.id to it.finalValue) }
+                                ?: emptyMap(),
+                            baseScore = calculatePotentialScore(it, state),
+                            isPerkAssisted = true
+                        )
+                    }
                 }
             }
 
@@ -258,7 +261,7 @@ internal class ActionDelegate(
             }
 
             Perk.MIMIC -> {
-                if (ghostAtPos != null) {
+                if (ghostAtPos != null && !ghostAtPos.isMimic) {
                     MergeTransition(
                         targetX = x,
                         targetY = y,
@@ -267,7 +270,7 @@ internal class ActionDelegate(
                         totalCells = 1,
                         uniqueGroups = 0,
                         baseScore = 0,
-                        resultId = "preview_mimic_queue",
+                        resultId = "preview_mimic",
                         participatingIds = setOf(ghostAtPos.id),
                     )
                 } else null
@@ -303,17 +306,36 @@ internal class ActionDelegate(
 
         val mergeResult = when (perk) {
             Perk.PATH_MERGE -> {
-                val (m, _) = engine.calculatePathMerge(cell.x, cell.y, state.grid, 0)
-                m?.let {
-                    val nextId = "preview_path_merge"
-                    it.copy(
-                        resultId = nextId,
-                        forceSolidIds = setOf(nextId),
-                        previewValues = mapOf(cell.id to it.finalValue),
-                        baseScore = calculatePotentialScore(it, state),
-                        isPerkAssisted = true
-                    )
+                if (cell.isMimic) null
+                else {
+                    val (m, _) = engine.calculatePathMerge(cell.x, cell.y, state.grid, 0)
+                    m?.let {
+                        val nextId = "preview_path_merge"
+                        it.copy(
+                            resultId = nextId,
+                            forceSolidIds = setOf(nextId),
+                            previewValues = mapOf(cell.id to it.finalValue),
+                            baseScore = calculatePotentialScore(it, state),
+                            isPerkAssisted = true
+                        )
+                    }
                 }
+            }
+
+            Perk.MIMIC -> {
+                if (!cell.isMimic) {
+                    MergeTransition(
+                        targetX = cell.x,
+                        targetY = cell.y,
+                        steps = emptyList(),
+                        finalValue = cell.value,
+                        totalCells = 1,
+                        uniqueGroups = 0,
+                        baseScore = 0,
+                        resultId = "preview_mimic",
+                        participatingIds = setOf(cell.id),
+                    )
+                } else null
             }
 
             Perk.REMOVE_TILE -> {
@@ -348,20 +370,22 @@ internal class ActionDelegate(
             }
 
             Perk.INCREMENT_TILE -> {
-                val nextValue = cell.value + 1
-                val m = MergeTransition(
-                    targetX = cell.x,
-                    targetY = cell.y,
-                    steps = emptyList(),
-                    finalValue = 0,
-                    totalCells = 1,
-                    uniqueGroups = 0,
-                    baseScore = 0,
-                    resultId = "preview_increment",
-                    participatingIds = setOf(cell.id),
-                    previewValues = mapOf(cell.id to nextValue),
-                )
-                m.copy(baseScore = calculatePotentialScore(m, state))
+                if (!cell.isMimic) {
+                    val nextValue = cell.value + 1
+                    val m = MergeTransition(
+                        targetX = cell.x,
+                        targetY = cell.y,
+                        steps = emptyList(),
+                        finalValue = 0,
+                        totalCells = 1,
+                        uniqueGroups = 0,
+                        baseScore = 0,
+                        resultId = "preview_increment",
+                        participatingIds = setOf(cell.id),
+                        previewValues = mapOf(cell.id to nextValue),
+                    )
+                    m.copy(baseScore = calculatePotentialScore(m, state))
+                } else null
             }
 
             Perk.SWAP_TILES -> {
@@ -472,7 +496,8 @@ internal class ActionDelegate(
                             isRedemption = scoreResult.redemptionBonus > 0,
                             isBarRaised = scoreResult.barRaisedBonus > 0,
                             isSacrifice = scoreResult.sacrificeBonus > 0,
-                            isTactical = scoreResult.isTactical
+                            isTactical = scoreResult.isTactical,
+                            isExecution = scoreResult.isExecution
                         )
                         effectDelegate.addMergeParticles(tx, ty, preview.value, intensity = (preview.value / 8f + 0.3f).coerceAtMost(1.5f))
                         achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, scoreResult.sacrificeBonus > 0)
@@ -489,6 +514,7 @@ internal class ActionDelegate(
             }
 
             Perk.MIMIC -> {
+                if (preview.isMimic) return
                 uiState.update { currentState ->
                     val nextPreview = currentState.preview.map {
                         if (it.id == preview.id) it.copy(isMimic = true, isTactical = true) else it
@@ -512,6 +538,7 @@ internal class ActionDelegate(
             }
 
             Perk.INCREMENT_TILE -> {
+                if (preview.isMimic) return
                 stateDelegate.saveState()
                 var result: ScoreResult? = null
                 var targetPos: Pair<Int, Int>? = null
@@ -571,7 +598,8 @@ internal class ActionDelegate(
                             isRedemption = scoreResult.redemptionBonus > 0,
                             isBarRaised = scoreResult.barRaisedBonus > 0,
                             isSacrifice = false,
-                            isTactical = scoreResult.isTactical
+                            isTactical = scoreResult.isTactical,
+                            isExecution = scoreResult.isExecution
                         )
 
                         if (scoreResult.barRaisedBonus > 0) {
@@ -606,6 +634,7 @@ internal class ActionDelegate(
             }
 
             Perk.INCREMENT_TILE -> {
+                if (cell.isMimic) return
                 stateDelegate.saveState()
                 var result: ScoreResult? = null
                 var targetPos: Pair<Int, Int>? = null
@@ -664,7 +693,8 @@ internal class ActionDelegate(
                             isRedemption = scoreResult.redemptionBonus > 0,
                             isBarRaised = scoreResult.barRaisedBonus > 0,
                             isSacrifice = false,
-                            isTactical = scoreResult.isTactical
+                            isTactical = scoreResult.isTactical,
+                            isExecution = scoreResult.isExecution
                         )
 
                         if (scoreResult.barRaisedBonus > 0) {
@@ -678,6 +708,7 @@ internal class ActionDelegate(
             }
 
             Perk.MIMIC -> {
+                if (cell.isMimic) return
                 uiState.update { currentState ->
                     val nextGrid = currentState.grid.map {
                         if (it.id == cell.id) it.copy(isMimic = true, isTactical = true) else it
@@ -775,7 +806,8 @@ internal class ActionDelegate(
                             isRedemption = scoreResult.redemptionBonus > 0,
                             isBarRaised = scoreResult.barRaisedBonus > 0,
                             isSacrifice = scoreResult.sacrificeBonus > 0,
-                            isTactical = scoreResult.isTactical
+                            isTactical = scoreResult.isTactical,
+                            isExecution = scoreResult.isExecution
                         )
                         effectDelegate.addMergeParticles(tx, ty, cell.value, intensity = (cell.value / 8f + 0.3f).coerceAtMost(1.5f))
                         achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, scoreResult.sacrificeBonus > 0)
@@ -878,6 +910,7 @@ internal class ActionDelegate(
             val cellToCopy = currentState.grid.find { it.id == selectedId }
             val previewToCopy = currentState.preview.find { it.id == selectedId }
             val value = cellToCopy?.value ?: previewToCopy?.value ?: return@update currentState
+            val isMimic = cellToCopy?.isMimic ?: previewToCopy?.isMimic ?: false
 
             val collectedPerk = currentState.onBoardPerks.find { it.x == x && it.y == y }?.perk
             if (collectedPerk != null) {
@@ -889,7 +922,7 @@ internal class ActionDelegate(
             var nextPreviewIdCounter = currentState.previewIdCounter
 
             val updatedGrid = if (cellToCopy != null) {
-                currentState.grid + engine.createCell(x, y, value, id = "cell_${nextCellIdCounter++}", isTactical = true)
+                currentState.grid + engine.createCell(x, y, value, id = "cell_${nextCellIdCounter++}", isTactical = true, isMimic = isMimic)
             } else {
                 currentState.grid
             }
@@ -902,6 +935,7 @@ internal class ActionDelegate(
                     value,
                     id = "preview_${nextPreviewIdCounter++}",
                     isTactical = true,
+                    isMimic = isMimic
                 )
             } else {
                 currentState.preview.filterNot { it.x == x && it.y == y }
@@ -1050,9 +1084,9 @@ internal class ActionDelegate(
 
     private fun getGameItem(id: String): GameItem? {
         val state = uiState.value
-        state.grid.find { it.id == id }?.let { return GameItem(it.id, it.x, it.y, it.value, false) }
+        state.grid.find { it.id == id }?.let { return GameItem(it.id, it.x, it.y, it.value, false, it.isMimic) }
         state.preview.find { it.id == id }
-            ?.let { return GameItem(it.id, it.x, it.y, it.value, true) }
+            ?.let { return GameItem(it.id, it.x, it.y, it.value, true, it.isMimic) }
         return null
     }
 }

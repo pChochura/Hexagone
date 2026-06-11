@@ -334,6 +334,7 @@ internal fun GameGridOverlay(
                     val isOverlapped = current != null && preview != null && current.targetX == preview.x && current.targetY == preview.y && (
                         current.resultId == "preview_move" || 
                         current.resultId == "preview_duplicate" || 
+                        current.resultId.contains("mimic") ||
                         current.steps.isNotEmpty()
                     )
                     launch { state.alpha.animateTo(if (isOverlapped) 0f else 1f, tween(200)) }
@@ -518,7 +519,8 @@ internal fun GameGridOverlay(
                         val isGhostSelectable = { preview: PreviewCell ->
                             when (activePerk) {
                                 Perk.PATH_MERGE -> false
-                                Perk.REMOVE_TILE, Perk.INCREMENT_TILE, Perk.MIMIC -> true
+                                Perk.REMOVE_TILE -> true
+                                Perk.INCREMENT_TILE, Perk.MIMIC -> !preview.isMimic
                                 Perk.SWAP_TILES -> selectedCellId != preview.id
                                 Perk.MOVE_TILE, Perk.DUPLICATE_TILE -> selectedCellId == null
                                 else -> false
@@ -586,6 +588,7 @@ internal fun GameGridOverlay(
                                 pulseValue = pulseState.value,
                                 floatValue = floatState.value,
                                 stripeOffset = ghostStripeOffset.value,
+                                starPainter = starPainter,
                                 textMeasurer = textMeasurer,
                                 colorScheme = colorScheme,
                                 spacing = spacing,

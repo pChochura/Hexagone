@@ -53,9 +53,10 @@ internal fun drawGhost(
                 currentHoverMerge.finalValue
             } else preview.value
 
-        val isMimicking = currentHoverMerge?.previewValues?.containsKey(preview.id) == true
+        val isMimicking = currentHoverMerge?.previewValues?.containsKey(preview.id) == true && preview.isMimic
+        val isVisualMimic = preview.isMimic || (currentHoverMerge?.resultId == "preview_mimic" && currentHoverMerge.participatingIds?.contains(preview.id) == true)
 
-        val backgroundColor = if (preview.isMimic && !isMimicking) {
+        val backgroundColor = if (isVisualMimic && !isMimicking) {
             Brush.linearGradient(
                 listOf(
                     Color.DarkGray.copy(alpha = 0.5f),
@@ -99,7 +100,7 @@ internal fun drawGhost(
             )
         }
 
-        if (preview.isMimic && !isMimicking) {
+        if (isVisualMimic && !isMimicking) {
             val iconSize = with(drawScope) { 24.sp.toPx() }
             val left = (itemWidth - iconSize) / 2
             val top = (itemHeight - iconSize) / 2
@@ -143,6 +144,7 @@ internal fun drawHoverResult(
     pulseValue: Float,
     floatValue: Float,
     stripeOffset: Float,
+    starPainter: Painter,
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
     colorScheme: androidx.compose.material3.ColorScheme,
     spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
@@ -171,6 +173,7 @@ internal fun drawHoverResult(
 
     if (merge.finalValue > 0 && (merge.finalValue != currentValue || isPlacement) && !shouldSkipHexagon) {
         val isForcedSolid = merge.forceSolidIds?.contains(merge.resultId) == true
+        val isMimicPreview = merge.resultId.contains("mimic")
 
         drawScope.withTransform(
             {
@@ -179,13 +182,23 @@ internal fun drawHoverResult(
                 scale(s, s, Offset(itemWidth / 2, itemHeight / 2))
             },
         ) {
-            val backgroundColor =
-                HexagonGridDefaults.getColorForValue(merge.finalValue, colorScheme)
-                    .copy(alpha = (if (isForcedSolid) 0.8f else 0.5f) * progress * 0.7f)
+            val backgroundColor = if (isMimicPreview) {
+                Brush.linearGradient(
+                    listOf(
+                        Color(0xFF424242).copy(alpha = (if (isForcedSolid) 0.8f else 0.5f) * progress * 0.7f),
+                        Color(0xFF616161).copy(alpha = (if (isForcedSolid) 0.8f else 0.5f) * progress * 0.7f),
+                    ),
+                )
+            } else {
+                SolidColor(
+                    HexagonGridDefaults.getColorForValue(merge.finalValue, colorScheme)
+                        .copy(alpha = (if (isForcedSolid) 0.8f else 0.5f) * progress * 0.7f)
+                )
+            }
             HexagonGridDefaults.drawHexagonPath(
                 this,
                 Size(itemWidth, itemHeight),
-                SolidColor(backgroundColor),
+                backgroundColor,
             )
 
             if (!isForcedSolid) {
@@ -207,21 +220,32 @@ internal fun drawHoverResult(
                 style = Stroke(width = spacing.tiny.toPx()),
             )
 
-            val textLayoutResult = textMeasurer.measure(
-                text = merge.finalValue.toString(),
-                style = TextStyle(
-                    color = Color.White.copy(alpha = progress),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp,
-                ),
-            )
-            drawText(
-                textLayoutResult,
-                topLeft = Offset(
-                    (itemWidth - textLayoutResult.size.width) / 2,
-                    (itemHeight - textLayoutResult.size.height) / 2,
-                ),
-            )
+            if (isMimicPreview) {
+                val iconSize = with(drawScope) { 24.sp.toPx() }
+                val left = (itemWidth - iconSize) / 2
+                val top = (itemHeight - iconSize) / 2
+                translate(left, top) {
+                    with(starPainter) {
+                        draw(size = Size(iconSize, iconSize), alpha = progress)
+                    }
+                }
+            } else {
+                val textLayoutResult = textMeasurer.measure(
+                    text = merge.finalValue.toString(),
+                    style = TextStyle(
+                        color = Color.White.copy(alpha = progress),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp,
+                    ),
+                )
+                drawText(
+                    textLayoutResult,
+                    topLeft = Offset(
+                        (itemWidth - textLayoutResult.size.width) / 2,
+                        (itemHeight - textLayoutResult.size.height) / 2,
+                    ),
+                )
+            }
         }
     }
 

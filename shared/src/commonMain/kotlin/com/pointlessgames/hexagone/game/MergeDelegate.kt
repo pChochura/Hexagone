@@ -134,7 +134,8 @@ internal class MergeDelegate(
             redemptionBonus,
             isBarRaised,
             isSacrifice,
-            scoreResult.isTactical
+            scoreResult.isTactical,
+            scoreResult.isExecution
         )
         val mergeIntensity = (0.4f + (finalCombo * 0.1f) + (merge.totalCells - 2) * 0.2f).coerceIn(0.2f, 2f)
         effectDelegate.addMergeParticles(merge.targetX, merge.targetY, merge.finalValue, intensity = mergeIntensity)

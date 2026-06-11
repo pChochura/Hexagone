@@ -12,6 +12,7 @@ import hexagone.shared.generated.resources.label_tactical_redemption
 import hexagone.shared.generated.resources.label_bar_raised
 import hexagone.shared.generated.resources.label_sacrifice
 import hexagone.shared.generated.resources.label_janitor_plus
+import hexagone.shared.generated.resources.label_execution
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -51,9 +52,11 @@ internal class EffectDelegate(
         isBarRaised: Boolean,
         isSacrifice: Boolean = false,
         isTactical: Boolean = false,
+        isExecution: Boolean = false,
     ) {
         scope.launch {
             val labelRes = when {
+                isExecution -> Res.string.label_execution
                 isRedemption && isSacrifice -> Res.string.label_sacrifice
                 isBarRaised && isSacrifice -> Res.string.label_janitor_plus
                 isRedemption && isBarRaised -> Res.string.label_tactical_redemption
@@ -64,6 +67,7 @@ internal class EffectDelegate(
                 else -> null
             }
             val color = when {
+                isExecution -> Colors().orangeRed
                 isRedemption -> Colors().yellow
                 isBarRaised && isSacrifice -> Colors().gold
                 isSacrifice -> Colors().pink

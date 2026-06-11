@@ -156,10 +156,11 @@ internal fun AnimatedGridHexagon(
                     }
                     coords.any { it.first == n.x && it.second == n.y }
                 }
-                neighbors.any { it.value == cell.value }
+                neighbors.any { it.value == cell.value || it.isMimic || cell.isMimic }
             }
 
-            Perk.REMOVE_TILE, Perk.INCREMENT_TILE, Perk.FREEZE_TILE -> true
+            Perk.REMOVE_TILE, Perk.FREEZE_TILE -> true
+            Perk.INCREMENT_TILE, Perk.MIMIC -> !cell.isMimic
             Perk.SWAP_TILES -> selectedCellId != cell.id
             Perk.MOVE_TILE, Perk.DUPLICATE_TILE -> selectedCellId == null
             else -> false
@@ -173,17 +174,18 @@ internal fun AnimatedGridHexagon(
     val isFrozen = currentHoverMerge?.previewFrozenIds?.contains(cell.id) == true || cell.isFrozen
 
     val isMimicking = currentHoverMerge?.previewValues?.containsKey(cell.id) == true && cell.isMimic
+    val isVisualMimic = cell.isMimic || (currentHoverMerge?.resultId == "preview_mimic" && currentHoverMerge.participatingIds?.contains(cell.id) == true)
 
     Hexagon(
         value = visualValue.toString(),
-        backgroundColor = if (cell.isMimic && !isMimicking) Color.DarkGray else HexagonGridDefaults.getColorForValue(
+        backgroundColor = if (isVisualMimic && !isMimicking) Color.DarkGray else HexagonGridDefaults.getColorForValue(
             visualValue,
             MaterialTheme.colorScheme,
         ).let { if (isGhostedInPreview) it.copy(alpha = 0.3f) else it },
         isTactical = cell.isTactical,
         isGhost = isGhostedInPreview,
         isFrozen = isFrozen,
-        isMimic = cell.isMimic && !isMimicking,
+        isMimic = isVisualMimic && !isMimicking,
         seed = cell.id.hashCode(),
         modifier = modifier.size(
             with(density) { itemWidth.toDp() },
@@ -206,14 +208,14 @@ internal fun AnimatedGridHexagon(
                 }
             }
             .graphicsLayer {
-                this.alpha = alpha;
+                this.alpha = alpha
                 val hovered = isHovered
                 val selectedCellId = selectedCellIdProvider()
                 val isSelectedLocal = selectedCellId == cell.id
 
                 scaleX = scale * (if (isSelectedLocal) 1.2f else if (hovered) 1.15f else 1f)
                 scaleY = scale * (if (isSelectedLocal) 1.2f else if (hovered) 1.15f else 1f)
-                rotationZ = if (isSelectableLocal && !isSelectedLocal) wiggleState.value else 0f
+                rotationZ = if ((isSelectableLocal || hovered) && !isSelectedLocal) wiggleState.value else 0f
             }
             .drawWithContent {
                 drawContent()

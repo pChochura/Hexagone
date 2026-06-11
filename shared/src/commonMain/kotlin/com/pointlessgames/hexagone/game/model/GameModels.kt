@@ -14,6 +14,7 @@ data class GameItem(
     val y: Int,
     val value: Int,
     val isGhost: Boolean,
+    val isMimic: Boolean,
 )
 
 @Immutable
