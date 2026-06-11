@@ -273,4 +273,15 @@
     <string name="achievement_gambler_desc">Reroll perk rewards 15 times</string>
     <string name="achievement_perk_collector_title">Perk Collector</string>
     <string name="achievement_perk_collector_desc">Use every type of perk at least once</string>
+
+    <string name="achievement_mimicry_101_title">Mimicry 101</string>
+    <string name="achievement_mimicry_101_desc">Use the Mimic perk for the first time</string>
+    <string name="achievement_mirror_image_title">Mirror Image</string>
+    <string name="achievement_mirror_image_desc">Have two Mimic tiles adjacent to each other on the board</string>
+    <string name="achievement_doppelganger_title">Doppelgänger</string>
+    <string name="achievement_doppelganger_desc">Trigger a merge consisting only of Mimic tiles</string>
+    <string name="achievement_perfect_fit_title">Perfect Fit</string>
+    <string name="achievement_perfect_fit_desc">Use a Mimic tile to complete a geometric pattern</string>
+    <string name="achievement_spectral_mimic_title">Spectral Mimic</string>
+    <string name="achievement_spectral_mimic_desc">Use the Mimic perk on a ghost tile</string>
 </resources>

@@ -136,10 +136,10 @@ internal class ChallengeDelegate(
             when (challenge.goal) {
                 ChallengeGoal.GEOMETRIC_PATTERN -> {
                     val patternMet = when (challenge.patternId) {
-                        "ring_of_fire" -> PatternRecognitionEngine.checkRingOfFire(grid, engine)
-                        "great_wall" -> PatternRecognitionEngine.checkGreatWall(grid, engine)
-                        "twin_peaks" -> PatternRecognitionEngine.checkTwinPeaks(grid, engine)
-                        "the_prism" -> PatternRecognitionEngine.checkThePrism(grid)
+                        "ring_of_fire" -> PatternRecognitionEngine.checkRingOfFire(grid, engine).success
+                        "great_wall" -> PatternRecognitionEngine.checkGreatWall(grid, engine).success
+                        "twin_peaks" -> PatternRecognitionEngine.checkTwinPeaks(grid, engine).success
+                        "the_prism" -> PatternRecognitionEngine.checkThePrism(grid).success
                         else -> false
                     }
                     if (patternMet) progress.copy(progress = challenge.target) else progress

@@ -52,6 +52,10 @@ internal class AchievementDelegate(
             achievementManager.unlockAchievement(GameAchievement.ALL_AROUND)
         }
 
+        if (merge.isMimicOnly) {
+            achievementManager.unlockAchievement(GameAchievement.DOPPELGANGER)
+        }
+
         checkPatternAchievements(uiState.value.grid, uiState.value.preview, engine)
     }
 
@@ -128,6 +132,13 @@ internal class AchievementDelegate(
 
         if (perk == Perk.SKIP_SPAWN && state.grid.size >= 17) {
             achievementManager.unlockAchievement(GameAchievement.CALCULATED_RISK)
+        }
+
+        if (perk == Perk.MIMIC) {
+            achievementManager.unlockAchievement(GameAchievement.MIMICRY_101)
+            if (isTargetGhost) {
+                achievementManager.unlockAchievement(GameAchievement.SPECTRAL_MIMIC)
+            }
         }
 
         // Perk Collector check is now handled in AchievementManager.trackPerkUsed
@@ -257,23 +268,29 @@ internal class AchievementDelegate(
     }
 
     fun checkPatternAchievements(grid: List<HexagonCell>, previews: List<com.pointlessgames.hexagone.game.model.PreviewCell>, engine: GameEngine) {
-        if (PatternRecognitionEngine.checkRingOfFire(grid, engine)) {
-            achievementManager.unlockAchievement(GameAchievement.RING_OF_FIRE)
+        val patternResults = listOf(
+            PatternRecognitionEngine.checkRingOfFire(grid, engine) to GameAchievement.RING_OF_FIRE,
+            PatternRecognitionEngine.checkGreatWall(grid, engine) to GameAchievement.GREAT_WALL,
+            PatternRecognitionEngine.checkTwinPeaks(grid, engine) to GameAchievement.TWIN_PEAKS,
+            PatternRecognitionEngine.checkThePrism(grid) to GameAchievement.THE_PRISM,
+            PatternRecognitionEngine.checkTheMedium(grid, previews, engine) to GameAchievement.THE_MEDIUM
+        )
+
+        patternResults.forEach { (res, achievement) ->
+            if (res.success) {
+                achievementManager.unlockAchievement(achievement)
+                if (res.containsMimic) {
+                    achievementManager.unlockAchievement(GameAchievement.PERFECT_FIT)
+                }
+            }
         }
-        if (PatternRecognitionEngine.checkGreatWall(grid, engine)) {
-            achievementManager.unlockAchievement(GameAchievement.GREAT_WALL)
+
+        if (PatternRecognitionEngine.checkMirrorImage(grid, engine)) {
+            achievementManager.unlockAchievement(GameAchievement.MIRROR_IMAGE)
         }
-        if (PatternRecognitionEngine.checkTwinPeaks(grid, engine)) {
-            achievementManager.unlockAchievement(GameAchievement.TWIN_PEAKS)
-        }
-        if (PatternRecognitionEngine.checkThePrism(grid)) {
-            achievementManager.unlockAchievement(GameAchievement.THE_PRISM)
-        }
+
         if (PatternRecognitionEngine.checkQuadruplets(previews)) {
             achievementManager.unlockAchievement(GameAchievement.QUADRUPLETS)
-        }
-        if (PatternRecognitionEngine.checkTheMedium(grid, previews, engine)) {
-            achievementManager.unlockAchievement(GameAchievement.THE_MEDIUM)
         }
     }
 

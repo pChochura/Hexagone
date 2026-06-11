@@ -249,6 +249,17 @@
     <string name="achievement_gambler_desc">Przelosuj nagrody za perki 15 razy</string>
     <string name="achievement_perk_collector_title">Kolekcjoner perków</string>
     <string name="achievement_perk_collector_desc">Użyj każdego rodzaju perka przynajmniej raz</string>
+
+    <string name="achievement_mimicry_101_title">Mimikra 101</string>
+    <string name="achievement_mimicry_101_desc">Użyj perka Mimik po raz pierwszy</string>
+    <string name="achievement_mirror_image_title">Lustrzane odbicie</string>
+    <string name="achievement_mirror_image_desc">Miej dwa Mimiki obok siebie na planszy</string>
+    <string name="achievement_doppelganger_title">Doppelgänger</string>
+    <string name="achievement_doppelganger_desc">Wywołaj połączenie składające się wyłącznie z Mimików</string>
+    <string name="achievement_perfect_fit_title">Idealne dopasowanie</string>
+    <string name="achievement_perfect_fit_desc">Użyj Mimika, aby ukończyć wzór geometryczny</string>
+    <string name="achievement_spectral_mimic_title">Spektralny mimik</string>
+    <string name="achievement_spectral_mimic_desc">Użyj perka Mimik na płytce ducha</string>
     <string name="daily_challenge_goal_merge">Połącz %1$d razy</string>
     <string name="daily_challenge_goal_level">Osiągnij Poziom %1$d</string>
     <string name="daily_challenge_goal_combo">Osiągnij Combo x%1$d</string>

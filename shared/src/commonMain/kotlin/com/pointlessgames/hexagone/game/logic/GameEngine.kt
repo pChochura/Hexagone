@@ -237,6 +237,7 @@ internal class GameEngine(
                 baseScore = baseScore,
                 resultId = "cell_${currentIdCounter++}",
                 isTactical = mergingCells.any { it.isTactical },
+                isMimicOnly = mergingCells.size >= 2 && mergingCells.all { it.isMimic },
                 participatingIds = mergingCells.map { it.id }.toSet(),
                 previewValues = if (previewValuesMap.isNotEmpty()) previewValuesMap else null
             )

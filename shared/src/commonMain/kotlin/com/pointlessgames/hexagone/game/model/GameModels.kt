@@ -344,6 +344,7 @@ data class MergeTransition(
     val previewFrozenIds: Set<String>? = null,
     val isRemoval: Boolean = false,
     val isPerkAssisted: Boolean = false,
+    val isMimicOnly: Boolean = false,
     val startingCombo: Int = 0,
 )
 

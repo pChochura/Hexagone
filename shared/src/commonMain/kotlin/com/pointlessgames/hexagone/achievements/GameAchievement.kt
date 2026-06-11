@@ -30,6 +30,7 @@ enum class GameAchievement(
     BEGINNER_LUCK("beginner_luck", Res.string.achievement_beginner_luck_title, Res.string.achievement_beginner_luck_desc, AchievementCategory.BASICS, "CgkI_beginner_luck", "grp.beginner_luck"),
     PERK_HUNTER("perk_hunter", Res.string.achievement_perk_hunter_title, Res.string.achievement_perk_hunter_desc, AchievementCategory.BASICS, "CgkI_perk_hunter", "grp.perk_hunter", isIncremental = true),
     CHANCE_TAKEN("chance_taken", Res.string.achievement_chance_taken_title, Res.string.achievement_chance_taken_desc, AchievementCategory.BASICS, "CgkI_chance_taken", "grp.chance_taken"),
+    MIMICRY_101("mimicry_101", Res.string.achievement_mimicry_101_title, Res.string.achievement_mimicry_101_desc, AchievementCategory.BASICS, "CgkI_mimicry_101", "grp.mimicry_101"),
 
     // --- MILESTONES ---
     A_NEW_BEGINNING("a_new_beginning", Res.string.achievement_a_new_beginning_title, Res.string.achievement_a_new_beginning_desc, AchievementCategory.MILESTONES, "CgkI_a_new_beginning", "grp.a_new_beginning"),
@@ -59,6 +60,7 @@ enum class GameAchievement(
     MASTER_OF_FATE("master_of_fate", Res.string.achievement_master_of_fate_title, Res.string.achievement_master_of_fate_desc, AchievementCategory.TACTICAL, "CgkI_master_of_fate", "grp.master_of_fate"),
     DOUBLE_VISION("double_vision", Res.string.achievement_double_vision_title, Res.string.achievement_double_vision_desc, AchievementCategory.TACTICAL, "CgkI_double_vision", "grp.double_vision"),
     COMBO_BREAKER("combo_breaker", Res.string.achievement_combo_breaker_title, Res.string.achievement_combo_breaker_desc, AchievementCategory.TACTICAL, "CgkI_combo_breaker", "grp.combo_breaker"),
+    DOPPELGANGER("doppelganger", Res.string.achievement_doppelganger_title, Res.string.achievement_doppelganger_desc, AchievementCategory.TACTICAL, "CgkI_doppelganger", "grp.doppelganger"),
 
     // --- SPATIAL ---
     ARCHITECTS_DREAM("architects_dream", Res.string.achievement_architects_dream_title, Res.string.achievement_architects_dream_desc, AchievementCategory.SPATIAL, "CgkI_architects_dream", "grp.architects_dream"),
@@ -69,6 +71,8 @@ enum class GameAchievement(
     GREAT_WALL("great_wall", Res.string.achievement_great_wall_title, Res.string.achievement_great_wall_desc, AchievementCategory.SPATIAL, "CgkI_great_wall", "grp.great_wall"),
     TWIN_PEAKS("twin_peaks", Res.string.achievement_twin_peaks_title, Res.string.achievement_twin_peaks_desc, AchievementCategory.SPATIAL, "CgkI_twin_peaks", "grp.twin_peaks"),
     THE_PRISM("the_prism", Res.string.achievement_the_prism_title, Res.string.achievement_the_prism_desc, AchievementCategory.SPATIAL, "CgkI_the_prism", "grp.the_prism"),
+    MIRROR_IMAGE("mirror_image", Res.string.achievement_mirror_image_title, Res.string.achievement_mirror_image_desc, AchievementCategory.SPATIAL, "CgkI_mirror_image", "grp.mirror_image"),
+    PERFECT_FIT("perfect_fit", Res.string.achievement_perfect_fit_title, Res.string.achievement_perfect_fit_desc, AchievementCategory.SPATIAL, "CgkI_perfect_fit", "grp.perfect_fit"),
 
     // --- RESTRAINT ---
     PACIFIST("pacifist", Res.string.achievement_pacifist_title, Res.string.achievement_pacifist_desc, AchievementCategory.RESTRAINT, "CgkI_pacifist", "grp.pacifist"),
@@ -86,6 +90,7 @@ enum class GameAchievement(
     POSSESSION("possession", Res.string.achievement_possession_title, Res.string.achievement_possession_desc, AchievementCategory.GHOSTS, "CgkI_possession", "grp.possession"),
     GHOST_PROTOCOL("ghost_protocol", Res.string.achievement_ghost_protocol_title, Res.string.achievement_ghost_protocol_desc, AchievementCategory.GHOSTS, "CgkI_ghost_protocol", "grp.ghost_protocol"),
     SOLID_GROUND("solid_ground", Res.string.achievement_solid_ground_title, Res.string.achievement_solid_ground_desc, AchievementCategory.GHOSTS, "CgkI_solid_ground", "grp.solid_ground"),
+    SPECTRAL_MIMIC("spectral_mimic", Res.string.achievement_spectral_mimic_title, Res.string.achievement_spectral_mimic_desc, AchievementCategory.GHOSTS, "CgkI_spectral_mimic", "grp.spectral_mimic"),
 
     // --- MISC ---
     CLEANSE("cleanse", Res.string.achievement_cleanse_title, Res.string.achievement_cleanse_desc, AchievementCategory.MISC, "CgkI_cleanse", "grp.cleanse"),
