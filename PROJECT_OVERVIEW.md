@@ -16,7 +16,12 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 │   ├── LocalAchievementManager.kt # Persistence-backed implementation
 │   └── GameAchievement.kt        # Logical registry of all milestones
 ├── data/
-│   └── SettingsRepository.kt     # Game State & DataStore persistence
+│   ├── SettingsRepository.kt     # Game State & local persistence (DataStore)
+│   ├── LeaderboardRepository.kt  # Supabase: Scores & Profile sync
+│   └── MonetizationRepository.kt # Economy: RevenueCat & Supabase Functions sync
+├── billing/
+│   ├── BillingManager.kt         # Platform-agnostic economy interface
+│   └── RevenueCatBillingManager.kt # Core sync: Virtual Currencies & Products
 ├── di/
 │   └── AppModule.kt              # Koin Dependency Injection
 ├── game/
@@ -34,6 +39,8 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 │   │       ├── AchievementsDialog.kt # BottomSheet list of all rewards
 │   │       ├── AchievementNotification.kt # Top-level clickable HUD popup
 │   │       ├── DailyChallengeDialog.kt # 5-day streak tracker & mission list
+│   │       ├── ShopDialog.kt          # RevenueCat IAP & Voucher exchange
+│   │       ├── VoucherSelectionDialog.kt # "Pick your reward" UI for vouchers
 │   │       ├── DailyChallengeRewardOverlay.kt # Cinematic completion effect
 │   │       ├── TipOverlay.kt      # Contextual onboarding with spotlight effect
 │   │       ├── PopupsLayer.kt     # Stable HUD notifications (sequential IDs)
@@ -127,9 +134,10 @@ The game features a dynamic mission system that resets per session but tracks lo
 
 ### Reward Mechanics
 *   **Session-Specific Impact**: Completing a mission mid-game instantly rewards the player with either a **Score Boost** or a **Free Perk**, aiding the current run.
+*   **Persistent Streak Rewards**: Completing all 3 daily missions triggers a server-side reward grant. 
+    *   **Diamonds & Vouchers**: Rewards (e.g., 100 diamonds + 1 Rare Voucher) are added to the user's permanent inventory via the `adjust-economy` backend function.
 *   **Per-Game Collection**: Mission progress resets every time a new game starts, allowing players to collect rewards multiple times per day.
-*   **Persistent Streak**: Completing the full set of 3 missions in any single session marks the day as "Done" in a persistent 5-day calendar view.
-*   **Streak-Based Scaling**: Score rewards scale steadily with the current streak, providing higher bonuses for consistent daily play.
+*   **Streak-Based Scaling**: Score and item rewards scale steadily with the current streak, providing higher bonuses for consistent daily play.
 
 ### UI Integration
 *   **Cinematic Completion**: Completion triggers a high-impact `DailyChallengeRewardOverlay` with a star burst and glow effect.
@@ -166,13 +174,21 @@ The game implements a contextual onboarding system to guide players through its 
 ### Offline Persistence & Sync
 *   **Score Queue**: Failed leaderboard submissions are serialized and stored in `DataStore`.
 *   **Background Processing**: Uses `WorkManager` (Android) and `BGTaskScheduler` (iOS) to automatically sync pending scores when connectivity is restored.
+*   **Economy Sync**: RevenueCat initialization and balance fetches are performed on background threads (`Dispatchers.IO`) to prevent main-thread hangs.
 *   **Atomic State**: Full game state is persisted after every move to ensure no progress is lost.
 
-### Perk Economy
-*   **Rarity Weights**: 
-    *   **Common**: Undo, Move, Remove, Increment (Upgrade).
-    *   **Rare**: Advance, Swap, Duplicate, Skip (Pause), Freeze, Mimic.
-    *   **Legendary**: Fusion, Chain Merge, Path Merge.
+### Perk & Voucher Economy
+*   **Rarity Groups**: 
+    *   **Common (VCMN)**: Undo, Move, Remove, Increment (Upgrade).
+    *   **Rare (VRARE)**: Advance, Swap, Duplicate, Skip (Pause), Freeze, Mimic.
+    *   **Legendary (VLGD)**: Fusion, Chain Merge, Path Merge.
+*   **Voucher System**: 
+    *   Players earn or buy **Category Vouchers** instead of specific perks.
+    *   **On-Demand Selection**: Vouchers can be spent at any time to open a `VoucherSelectionDialog`, allowing the player to pick any specific perk from that rarity group for the current game session.
+*   **Cloud-Synced Balances**: 
+    *   **RevenueCat Virtual Currency**: Diamonds and Vouchers are stored server-side via RevenueCat.
+    *   **Zero Local Storage**: All economy values (diamonds, VCMN, VRARE, VLGD) are fetched from the server on startup, removing reliance on local DataStore for inventory.
+*   **Secure Transactions**: Uses a Supabase Edge Function (`adjust-economy`) as a secure bridge to the RevenueCat v2 API for all balance adjustments.
 *   **Strategic Behavioral Rules**:
     *   **Target Restrictions**: Perks like *Upgrade* and *Mimic* are blocked from targeting existing Mimic tiles to maintain game balance.
     *   **Move & Duplicate**: Positional actions that preserve the "ghost" or "solid" status and allow for combo setup without forced merges. *Duplicate* correctly copies the Mimic attribute, displaying it as a star in the preview.
