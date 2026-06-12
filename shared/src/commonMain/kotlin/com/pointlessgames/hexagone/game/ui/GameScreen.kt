@@ -127,6 +127,10 @@ internal fun GameScreen(
         remember(uiState) { uiState.map { it.isShopLoading }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.isShopLoading,
         )
+    val isShopProcessingState =
+        remember(uiState) { uiState.map { it.isShopProcessing }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.isShopProcessing,
+        )
 
     // Helper delegates for GameScreen's own logic.
     // Accessing these 'by' variables will trigger recomposition of GameScreen.
@@ -139,6 +143,7 @@ internal fun GameScreen(
     val activeTip by activeTipState
     val isShopVisible by isShopVisibleState
     val isShopLoading by isShopLoadingState
+    val isShopProcessing by isShopProcessingState
     val activeVoucherSelectionState =
         remember(uiState) { uiState.map { it.activeVoucherSelection }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.activeVoucherSelection,
@@ -299,6 +304,14 @@ internal fun GameScreen(
         showSettings = false
         showDailyChallenge = false
         initiallySelectedAchievement = null
+    }
+
+    BackHandler(enabled = isShopVisible) {
+        viewModel.onDismissShop()
+    }
+
+    BackHandler(enabled = activeVoucherSelection != null) {
+        viewModel.onDismissVoucherSelection()
     }
 
     BackHandler(enabled = isGameOver && !showLeaderboard && !showAchievements && !showSettings && !showDailyChallenge && activeTierReward == null && activeChallengeReward == null) {
@@ -776,6 +789,7 @@ internal fun GameScreen(
                     vouchers = vouchersProvider(),
                     storeProducts = storeProductsState.value,
                     isShopLoading = isShopLoading,
+                    isProcessing = isShopProcessing,
                     onDismiss = viewModel::onDismissShop,
                     onBuyPerkWithDiamonds = viewModel::onBuyPerk,
                     onBuyPremiumProduct = viewModel::onBuyPremiumProduct,

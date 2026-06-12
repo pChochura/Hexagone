@@ -15,9 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
@@ -67,20 +67,27 @@ internal fun VoucherSelectionDialog(
                 letterSpacing = 4.sp.scaled,
             )
 
-            Spacer(Modifier.height(spacing.large.scaled))
+            Spacer(Modifier.height(spacing.extraLarge.scaled))
 
             LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
+                columns = GridCells.Adaptive(minSize = 70.dp.scaled),
+                horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally),
                 verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
-                modifier = Modifier.heightIn(max = 400.dp.scaled)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 450.dp.scaled),
+                contentPadding = PaddingValues(horizontal = spacing.medium.scaled)
             ) {
                 items(perks) { perk ->
-                    PerkSelectionItem(perk = perk, onClick = { onPerkSelected(perk) })
+                    PerkButton(
+                        perk = perk,
+                        onClick = { onPerkSelected(perk) },
+                        buttonSize = 70.dp.scaled
+                    )
                 }
             }
 
-            Spacer(Modifier.height(spacing.large.scaled))
+            Spacer(Modifier.height(spacing.extraLarge.scaled))
 
             // Cancel Button
             Box(
@@ -100,31 +107,14 @@ internal fun VoucherSelectionDialog(
     }
 }
 
+@Preview
 @Composable
-private fun PerkSelectionItem(perk: Perk, onClick: () -> Unit) {
-    val spacing = MaterialTheme.spacing
-    Box(
-        modifier = Modifier
-            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(24.dp.scaled))
-            .clickable { onClick() }
-            .padding(spacing.medium.scaled),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = stringResource(perk.displayNameRes).uppercase(),
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 12.sp.scaled,
-                textAlign = TextAlign.Center
-            )
-            Spacer(Modifier.height(4.dp.scaled))
-            Text(
-                text = "SELECT",
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Black,
-                fontSize = 10.sp.scaled
-            )
-        }
+private fun VoucherSelectionDialogPreview() {
+    MaterialTheme {
+        VoucherSelectionDialog(
+            category = PerkCategory.RARE,
+            onPerkSelected = {},
+            onDismiss = {}
+        )
     }
 }

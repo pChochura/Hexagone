@@ -294,8 +294,13 @@
     <string name="shop_rare_bundle">RZADKI PERK</string>
     <string name="shop_legendary_bundle">LEGENDARNY PERK</string>
     <string name="shop_buy_button">KUP</string>
+    <string name="shop_products_title">SKLEP DIAMENTÓW</string>
+    <string name="shop_vouchers_title">WYMIANA VOUCHERÓW</string>
     <string name="shop_not_enough_diamonds">ZA MAŁO DIAMENTÓW</string>
     <string name="shop_revive_button">ODRODZENIE</string>
     <string name="shop_use_banked_perk">UŻYJ ZAPASOWEGO PERKA</string>
     <string name="shop_quick_revive_hint">Kup perka, aby kontynuować!</string>
+    <string name="shop_best_value">NAJLEPSZA OFERTA</string>
+    <string name="shop_extra_diamonds">+%1$d% EKSTRA</string>
+    <string name="shop_insufficient_balance">ZA MAŁO DIAMENTÓW</string>
 </resources>

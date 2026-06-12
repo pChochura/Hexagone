@@ -700,7 +700,9 @@ internal class GameViewModel(
 
     fun onBuyPerk(category: PerkCategory) {
         viewModelScope.launch {
+            _uiState.update { it.copy(isShopProcessing = true) }
             monetizationRepository.buyPerkVoucher(category)
+            _uiState.update { it.copy(isShopProcessing = false) }
         }
     }
 
@@ -727,7 +729,9 @@ internal class GameViewModel(
 
     fun onBuyPremiumProduct(product: BillingProduct) {
         viewModelScope.launch {
+            _uiState.update { it.copy(isShopProcessing = true) }
             billingManager.purchase(product)
+            _uiState.update { it.copy(isShopProcessing = false) }
         }
     }
 

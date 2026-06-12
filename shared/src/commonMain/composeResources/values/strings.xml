@@ -294,8 +294,13 @@
     <string name="shop_rare_bundle">RARE PERK</string>
     <string name="shop_legendary_bundle">LEGENDARY PERK</string>
     <string name="shop_buy_button">BUY</string>
+    <string name="shop_products_title">DIAMONDS STORE</string>
+    <string name="shop_vouchers_title">VOUCHER EXCHANGE</string>
     <string name="shop_not_enough_diamonds">NOT ENOUGH DIAMONDS</string>
     <string name="shop_revive_button">REVIVE</string>
     <string name="shop_use_banked_perk">USE BANKED PERK</string>
     <string name="shop_quick_revive_hint">Buy a perk to continue!</string>
+    <string name="shop_best_value">BEST VALUE</string>
+    <string name="shop_extra_diamonds">+%1$d% EXTRA</string>
+    <string name="shop_insufficient_balance">INSUFFICIENT BALANCE</string>
 </resources>

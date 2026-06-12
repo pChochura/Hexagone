@@ -87,6 +87,7 @@ data class GameUiState(
     val activeTip: GameTip? = null,
     val isShopVisible: Boolean = false,
     val isShopLoading: Boolean = false,
+    val isShopProcessing: Boolean = false,
     val activeVoucherSelection: com.pointlessgames.hexagone.game.logic.PerkCategory? = null,
 ) {
     fun consumePerk(perk: Perk): GameUiState {
