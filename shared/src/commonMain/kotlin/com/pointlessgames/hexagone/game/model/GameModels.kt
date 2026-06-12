@@ -29,7 +29,7 @@ data class GameUiState(
     val hoveredMerge: MergeTransition? = null,
     val score: Int = 0,
     val diamonds: Int = 0,
-    val bankedPerks: Map<Perk, Int> = emptyMap(),
+    val vouchers: Map<com.pointlessgames.hexagone.game.logic.PerkCategory, Int> = emptyMap(),
     val bestScore: Int = 0,
     val sessionBestScore: Int = 0,
     val level: Int = 1,
@@ -86,6 +86,8 @@ data class GameUiState(
     val thawedIds: Set<String> = emptySet(),
     val activeTip: GameTip? = null,
     val isShopVisible: Boolean = false,
+    val isShopLoading: Boolean = false,
+    val activeVoucherSelection: com.pointlessgames.hexagone.game.logic.PerkCategory? = null,
 ) {
     fun consumePerk(perk: Perk): GameUiState {
         val perkIndex = collectedPerks.indexOf(perk)
@@ -214,7 +216,7 @@ data class GameState(
     val preview: List<PreviewCell>,
     val score: Int,
     val diamonds: Int = 0,
-    val bankedPerks: Map<Perk, Int> = emptyMap(),
+    val vouchers: Map<com.pointlessgames.hexagone.game.logic.PerkCategory, Int> = emptyMap(),
     val level: Int,
     val highestValue: Int,
     val combo: Int,

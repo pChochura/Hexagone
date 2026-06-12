@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,19 +33,20 @@ import org.jetbrains.compose.resources.stringResource
 internal fun ShopDialog(
     modifier: Modifier = Modifier,
     diamonds: Int,
-    bankedPerks: Map<Perk, Int>,
+    vouchers: Map<PerkCategory, Int>,
     storeProducts: List<BillingProduct> = emptyList(),
+    isShopLoading: Boolean = false,
     onDismiss: () -> Unit,
     onBuyPerkWithDiamonds: (PerkCategory) -> Unit,
     onBuyPremiumProduct: (BillingProduct) -> Unit,
-    onUseBankedPerk: (Perk) -> Unit,
+    onUseVoucher: (PerkCategory) -> Unit,
     isStuck: Boolean = false,
 ) {
     val spacing = MaterialTheme.spacing
     
-    val commonPerksCount = bankedPerks.filter { it.key.baseWeight >= 80 }.values.sum()
-    val rarePerksCount = bankedPerks.filter { it.key.baseWeight in 21..79 }.values.sum()
-    val legendaryPerksCount = bankedPerks.filter { it.key.isLegendary }.values.sum()
+    val commonVouchers = vouchers[PerkCategory.COMMON] ?: 0
+    val rareVouchers = vouchers[PerkCategory.RARE] ?: 0
+    val legendaryVouchers = vouchers[PerkCategory.LEGENDARY] ?: 0
 
     Box(
         modifier = modifier
@@ -123,12 +125,27 @@ internal fun ShopDialog(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                BankedPerkItem(label = "Common", count = commonPerksCount, color = Color.Gray)
-                BankedPerkItem(label = "Rare", count = rarePerksCount, color = Color(0xFF4FC3F7))
-                BankedPerkItem(label = "Legendary", count = legendaryPerksCount, color = Color(0xFFFFD54F))
+                BankedPerkItem(
+                    label = "Common", 
+                    count = commonVouchers, 
+                    color = Color.Gray,
+                    onUse = { if (commonVouchers > 0) onUseVoucher(PerkCategory.COMMON) }
+                )
+                BankedPerkItem(
+                    label = "Rare", 
+                    count = rareVouchers, 
+                    color = Color(0xFF4FC3F7),
+                    onUse = { if (rareVouchers > 0) onUseVoucher(PerkCategory.RARE) }
+                )
+                BankedPerkItem(
+                    label = "Legendary", 
+                    count = legendaryVouchers, 
+                    color = Color(0xFFFFD54F),
+                    onUse = { if (legendaryVouchers > 0) onUseVoucher(PerkCategory.LEGENDARY) }
+                )
             }
 
-            if (isStuck && bankedPerks.isNotEmpty()) {
+            if (isStuck && vouchers.any { it.value > 0 }) {
                 Spacer(Modifier.height(spacing.medium.scaled))
                 Text(
                     text = stringResource(Res.string.shop_use_banked_perk).uppercase(),
@@ -136,62 +153,69 @@ internal fun ShopDialog(
                     fontSize = 12.sp.scaled,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(Modifier.height(spacing.small.scaled))
-                // List individual banked perks to use when stuck
-                bankedPerks.forEach { (perk, count) ->
-                    if (count > 0) {
-                        BankedPerkActionRow(perk, count, onUseBankedPerk)
-                    }
-                }
             }
 
             Spacer(Modifier.height(spacing.large.scaled))
 
-            // Premium Section
-            if (storeProducts.isNotEmpty()) {
+            if (isShopLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp.scaled),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 3.dp.scaled
+                    )
+                }
+            } else {
+                // Premium Section
+                if (storeProducts.isNotEmpty()) {
+                    Text(
+                        text = "PREMIUM STORE",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 14.sp.scaled,
+                        letterSpacing = 1.sp.scaled,
+                    )
+                    Spacer(Modifier.height(spacing.small.scaled))
+                    storeProducts.forEach { product ->
+                        PremiumProductRow(product, onBuyPremiumProduct)
+                    }
+                    Spacer(Modifier.height(spacing.large.scaled))
+                }
+
+                // Perk Exchange Section
                 Text(
-                    text = "PREMIUM STORE",
+                    text = "PERK EXCHANGE",
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 14.sp.scaled,
                     letterSpacing = 1.sp.scaled,
                 )
+
                 Spacer(Modifier.height(spacing.small.scaled))
-                storeProducts.forEach { product ->
-                    PremiumProductRow(product, onBuyPremiumProduct)
-                }
-                Spacer(Modifier.height(spacing.large.scaled))
+
+                ShopItemRow(
+                    title = stringResource(Res.string.shop_common_bundle),
+                    cost = 50,
+                    onBuy = { onBuyPerkWithDiamonds(PerkCategory.COMMON) },
+                    hasEnough = diamonds >= 50
+                )
+                ShopItemRow(
+                    title = stringResource(Res.string.shop_rare_bundle),
+                    cost = 150,
+                    onBuy = { onBuyPerkWithDiamonds(PerkCategory.RARE) },
+                    hasEnough = diamonds >= 150
+                )
+                ShopItemRow(
+                    title = stringResource(Res.string.shop_legendary_bundle),
+                    cost = 500,
+                    onBuy = { onBuyPerkWithDiamonds(PerkCategory.LEGENDARY) },
+                    hasEnough = diamonds >= 500
+                )
             }
-
-            // Perk Exchange Section
-            Text(
-                text = "PERK EXCHANGE",
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 14.sp.scaled,
-                letterSpacing = 1.sp.scaled,
-            )
-
-            Spacer(Modifier.height(spacing.small.scaled))
-
-            ShopItemRow(
-                title = stringResource(Res.string.shop_common_bundle),
-                cost = 50,
-                onBuy = { onBuyPerkWithDiamonds(PerkCategory.COMMON) },
-                hasEnough = diamonds >= 50
-            )
-            ShopItemRow(
-                title = stringResource(Res.string.shop_rare_bundle),
-                cost = 150,
-                onBuy = { onBuyPerkWithDiamonds(PerkCategory.RARE) },
-                hasEnough = diamonds >= 150
-            )
-            ShopItemRow(
-                title = stringResource(Res.string.shop_legendary_bundle),
-                cost = 500,
-                onBuy = { onBuyPerkWithDiamonds(PerkCategory.LEGENDARY) },
-                hasEnough = diamonds >= 500
-            )
 
             Spacer(Modifier.height(spacing.large.scaled))
 
@@ -214,8 +238,11 @@ internal fun ShopDialog(
 }
 
 @Composable
-private fun BankedPerkItem(label: String, count: Int, color: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun BankedPerkItem(label: String, count: Int, color: Color, onUse: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable(enabled = count > 0) { onUse() }
+    ) {
         Box(
             modifier = Modifier
                 .size(48.dp.scaled)
@@ -233,37 +260,9 @@ private fun BankedPerkItem(label: String, count: Int, color: Color) {
         Spacer(Modifier.height(4.dp.scaled))
         Text(
             text = label.uppercase(),
-            color = Color.White.copy(alpha = 0.4f),
+            color = if (count > 0) color else Color.White.copy(alpha = 0.2f),
             fontSize = 10.sp.scaled,
             fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-private fun BankedPerkActionRow(perk: Perk, count: Int, onUse: (Perk) -> Unit) {
-    val spacing = MaterialTheme.spacing
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp.scaled)
-            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp.scaled))
-            .clickable { onUse(perk) }
-            .padding(spacing.medium.scaled),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = stringResource(perk.displayNameRes).uppercase(),
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp.scaled
-        )
-        Text(
-            text = "USE ($count left)",
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Black,
-            fontSize = 12.sp.scaled
         )
     }
 }

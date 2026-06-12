@@ -113,6 +113,7 @@ kotlin {
 
             implementation(libs.supabase.postgrest)
             implementation(libs.supabase.auth)
+            implementation(libs.supabase.functions)
             implementation(libs.ktor.client.core)
         }
         commonTest.dependencies {
@@ -129,6 +130,10 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
+            implementation(libs.ktor.client.okhttp)
+        }
+        jvmTest.dependencies {
+            implementation(libs.ktor.client.okhttp)
         }
     }
 }

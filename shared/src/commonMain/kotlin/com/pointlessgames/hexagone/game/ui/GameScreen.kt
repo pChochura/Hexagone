@@ -63,6 +63,7 @@ import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
 import com.pointlessgames.hexagone.game.ui.components.SettingsDialog
 import com.pointlessgames.hexagone.game.ui.components.ShopDialog
+import com.pointlessgames.hexagone.game.ui.components.VoucherSelectionDialog
 import com.pointlessgames.hexagone.game.ui.components.TipOverlay
 import com.pointlessgames.hexagone.game.ui.components.trackTipTarget
 import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
@@ -122,6 +123,10 @@ internal fun GameScreen(
         remember(uiState) { uiState.map { it.isShopVisible }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.isShopVisible,
         )
+    val isShopLoadingState =
+        remember(uiState) { uiState.map { it.isShopLoading }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.isShopLoading,
+        )
 
     // Helper delegates for GameScreen's own logic.
     // Accessing these 'by' variables will trigger recomposition of GameScreen.
@@ -133,6 +138,12 @@ internal fun GameScreen(
     val pendingResult by pendingResultState
     val activeTip by activeTipState
     val isShopVisible by isShopVisibleState
+    val isShopLoading by isShopLoadingState
+    val activeVoucherSelectionState =
+        remember(uiState) { uiState.map { it.activeVoucherSelection }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.activeVoucherSelection,
+        )
+    val activeVoucherSelection by activeVoucherSelectionState
 
     // Other states primarily used by providers passed to children.
     // GameScreen won't recompose when these change unless it reads them directly.
@@ -350,7 +361,7 @@ internal fun GameScreen(
     val isStreakCollectedTodayProvider = remember { { isStreakCollectedTodayState.value } }
     val debugUsedProvider = remember { { debugUsedState.value } }
     val diamondsProvider = remember { { uiState.value.diamonds } }
-    val bankedPerksProvider = remember { { uiState.value.bankedPerks } }
+    val vouchersProvider = remember { { uiState.value.vouchers } }
 
     // Stable Providers for GameGridOverlay
     val mergeHintsProvider = remember { { mergeHintsState.value } }
@@ -762,13 +773,35 @@ internal fun GameScreen(
             ) {
                 ShopDialog(
                     diamonds = diamondsProvider(),
-                    bankedPerks = bankedPerksProvider(),
+                    vouchers = vouchersProvider(),
                     storeProducts = storeProductsState.value,
+                    isShopLoading = isShopLoading,
                     onDismiss = viewModel::onDismissShop,
                     onBuyPerkWithDiamonds = viewModel::onBuyPerk,
                     onBuyPremiumProduct = viewModel::onBuyPremiumProduct,
-                    onUseBankedPerk = viewModel::onReviveWithPerk,
+                    onUseVoucher = viewModel::onUseVoucher,
                     isStuck = isStuck
+                )
+            }
+        }
+
+        if (activeVoucherSelection != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .clickable(
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        indication = null
+                    ) { viewModel.onDismissVoucherSelection() },
+                contentAlignment = Alignment.Center
+            ) {
+                VoucherSelectionDialog(
+                    category = activeVoucherSelection!!,
+                    onPerkSelected = { perk ->
+                        viewModel.onPerkFromVoucherSelected(perk, activeVoucherSelection!!)
+                    },
+                    onDismiss = viewModel::onDismissVoucherSelection
                 )
             }
         }

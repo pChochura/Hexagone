@@ -5,14 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.pointlessgames.hexagone.achievements.AchievementManager
 import com.pointlessgames.hexagone.billing.BillingManager
 import com.pointlessgames.hexagone.billing.BillingProduct
-import com.pointlessgames.hexagone.billing.PurchaseResult
 import com.pointlessgames.hexagone.data.LeaderboardRepository
 import com.pointlessgames.hexagone.data.MonetizationRepository
 import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.game.logic.DailyChallengeProvider
-import com.pointlessgames.hexagone.game.logic.PerkCategory
-import com.pointlessgames.hexagone.game.logic.StreakMilestones
 import com.pointlessgames.hexagone.game.logic.GameEngine
+import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.DailyChallenge
 import com.pointlessgames.hexagone.game.model.DailyChallengeProgress
 import com.pointlessgames.hexagone.game.model.DetailedGameResult
@@ -162,9 +160,6 @@ internal class GameViewModel(
     init {
         viewModelScope.launch {
             val best = settingsRepository.getBestScore()
-            val diamonds = settingsRepository.getDiamonds()
-            val bankedPerksJson = settingsRepository.getBankedPerks()
-            val bankedPerks = bankedPerksJson?.let { Json.decodeFromString<Map<Perk, Int>>(it) } ?: emptyMap()
             val hintsEnabled = settingsRepository.getMergeHintsEnabled()
             val savedStateJson = settingsRepository.getGameState()
 
@@ -220,8 +215,6 @@ internal class GameViewModel(
                                 perkOptions = savedState.perkOptions,
                                 canReroll = savedState.canReroll,
                                 bestScore = maxOf(best, savedState.score),
-                                diamonds = diamonds,
-                                bankedPerks = bankedPerks,
                                 sessionBestScore = savedState.sessionBestScore,
                                 mergeHintsEnabled = hintsEnabled,
                                 isStuck = savedState.isStuck,
@@ -262,8 +255,6 @@ internal class GameViewModel(
                         it.copy(
                             bestScore = best, 
                             sessionBestScore = best,
-                            diamonds = diamonds,
-                            bankedPerks = bankedPerks,
                             mergeHintsEnabled = hintsEnabled,
                             dailyChallenges = currentDailyChallenges.map { c -> DailyChallengeProgress(c) },
                             completedChallengeDates = completedDates,
@@ -279,7 +270,6 @@ internal class GameViewModel(
                     it.copy(
                         bestScore = best, 
                         sessionBestScore = best,
-                        diamonds = diamonds,
                         mergeHintsEnabled = hintsEnabled,
                         dailyChallenges = currentDailyChallenges.map { c -> DailyChallengeProgress(c) },
                         completedChallengeDates = completedDates,
@@ -312,8 +302,30 @@ internal class GameViewModel(
 
         viewModelScope.launch {
             billingManager.initialize()
-            billingManager.products.collect { products ->
-                _storeProducts.value = products
+            launch {
+                billingManager.products.collect { products ->
+                    _storeProducts.value = products
+                }
+            }
+            launch {
+                billingManager.currencyBalances.collect { balances ->
+                    val vouchers = mapOf(
+                        PerkCategory.COMMON to (balances["VCMN"] ?: 0),
+                        PerkCategory.RARE to (balances["VRARE"] ?: 0),
+                        PerkCategory.LEGENDARY to (balances["VLGD"] ?: 0)
+                    )
+                    _uiState.update { 
+                        it.copy(
+                            diamonds = balances["diamonds"] ?: 0,
+                            vouchers = vouchers
+                        ) 
+                    }
+                }
+            }
+            launch {
+                billingManager.isInitializing.collect { loading ->
+                    _uiState.update { it.copy(isShopLoading = loading) }
+                }
             }
         }
     }
@@ -688,12 +700,27 @@ internal class GameViewModel(
 
     fun onBuyPerk(category: PerkCategory) {
         viewModelScope.launch {
-            val perk = monetizationRepository.buyRandomPerk(category)
-            if (perk != null) {
-                val diamonds = settingsRepository.getDiamonds()
-                val bankedJson = settingsRepository.getBankedPerks()
-                val bankedPerks = bankedJson?.let { Json.decodeFromString<Map<Perk, Int>>(it) } ?: emptyMap()
-                _uiState.update { it.copy(diamonds = diamonds, bankedPerks = bankedPerks) }
+            monetizationRepository.buyPerkVoucher(category)
+        }
+    }
+
+    fun onUseVoucher(category: PerkCategory) {
+        _uiState.update { it.copy(activeVoucherSelection = category) }
+    }
+
+    fun onDismissVoucherSelection() {
+        _uiState.update { it.copy(activeVoucherSelection = null) }
+    }
+
+    fun onPerkFromVoucherSelected(perk: Perk, category: PerkCategory) {
+        viewModelScope.launch {
+            if (monetizationRepository.usePerkVoucher(category)) {
+                _uiState.update { 
+                    it.copy(
+                        collectedPerks = it.collectedPerks + perk,
+                        activeVoucherSelection = null
+                    ) 
+                }
             }
         }
     }
@@ -704,27 +731,8 @@ internal class GameViewModel(
         }
     }
 
-    fun onReviveWithPerk(perk: Perk) {
-        viewModelScope.launch {
-            val bankedJson = settingsRepository.getBankedPerks()
-            val bankedPerks = bankedJson?.let { Json.decodeFromString<Map<Perk, Int>>(it) }?.toMutableMap() ?: mutableMapOf()
-            
-            val count = bankedPerks[perk] ?: 0
-            if (count > 0) {
-                bankedPerks[perk] = count - 1
-                settingsRepository.setBankedPerks(Json.encodeToString(bankedPerks))
-                
-                _uiState.update { 
-                    it.copy(
-                        bankedPerks = bankedPerks,
-                        collectedPerks = it.collectedPerks + perk,
-                        isGameOver = false,
-                        isStuck = false
-                    ) 
-                }
-                checkValidMoves()
-            }
-        }
+    fun onReviveWithPerk(category: PerkCategory) {
+        onUseVoucher(category)
     }
 
     private suspend fun handleChallengeComplete(challenge: DailyChallenge) {
@@ -757,36 +765,15 @@ internal class GameViewModel(
                 settingsRepository.addCompletedChallengeDate(dateSeed.toString())
 
                 val reward = com.pointlessgames.hexagone.game.logic.StreakMilestones.getRewardForStreak(newStreak)
-                val awardedPerks = mutableMapOf<Perk, Int>()
                 if (reward != null) {
-                    val random = kotlin.random.Random(_uiState.value.seed)
-                    reward.perkRewards.forEach { (category, count) ->
-                        repeat(count) {
-                            val perk = com.pointlessgames.hexagone.game.logic.StreakMilestones.getRandomPerkFromCategory(category, random)
-                            awardedPerks[perk] = (awardedPerks[perk] ?: 0) + 1
-                        }
-                    }
-                    val currentDiamonds = settingsRepository.getDiamonds()
-                    settingsRepository.setDiamonds(currentDiamonds + reward.diamonds)
-                    
-                    val currentBanked = _uiState.value.bankedPerks.toMutableMap()
-                    awardedPerks.forEach { (perk, count) ->
-                        currentBanked[perk] = (currentBanked[perk] ?: 0) + count
-                    }
-                    settingsRepository.setBankedPerks(Json.encodeToString(currentBanked))
+                    monetizationRepository.awardStreakRewards(reward)
                 }
 
                 _uiState.update { 
-                    val newBanked = it.bankedPerks.toMutableMap()
-                    awardedPerks.forEach { (perk, count) ->
-                        newBanked[perk] = (newBanked[perk] ?: 0) + count
-                    }
                     it.copy(
                         challengeStreak = newStreak,
                         completedChallengeDates = it.completedChallengeDates + dateSeed,
                         isStreakCollectedToday = true,
-                        diamonds = it.diamonds + (reward?.diamonds ?: 0),
-                        bankedPerks = newBanked
                     )
                 }
             }

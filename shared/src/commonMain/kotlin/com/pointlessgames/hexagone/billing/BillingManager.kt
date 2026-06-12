@@ -6,9 +6,13 @@ import kotlinx.coroutines.flow.StateFlow
 interface BillingManager {
     val products: StateFlow<List<BillingProduct>>
     val purchaseEvents: SharedFlow<PurchaseResult>
+    val currencyBalances: StateFlow<Map<String, Int>>
+    val isInitializing: StateFlow<Boolean>
+    val appUserId: String?
 
     suspend fun initialize()
     suspend fun purchase(product: BillingProduct)
+    suspend fun refreshBalance()
 }
 
 data class BillingProduct(

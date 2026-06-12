@@ -8,12 +8,15 @@ import com.pointlessgames.hexagone.data.LeaderboardRepository
 import com.pointlessgames.hexagone.data.MonetizationRepository
 import com.pointlessgames.hexagone.data.SettingsRepository
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.annotations.SupabaseExperimental
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.postgrest.Postgrest
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
+@OptIn(SupabaseExperimental::class)
 internal val dataModule = module {
     single<SupabaseClient> {
         createSupabaseClient(
@@ -22,6 +25,7 @@ internal val dataModule = module {
         ) {
             install(Postgrest)
             install(Auth)
+            install(Functions)
         }
     }
     single<SettingsRepository> { DataStoreSettingsRepository(get()) }

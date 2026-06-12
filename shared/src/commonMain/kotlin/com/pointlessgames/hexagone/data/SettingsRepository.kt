@@ -59,10 +59,6 @@ interface SettingsRepository {
     suspend fun addCompletedChallengeDate(dateSeed: String): Preferences
     suspend fun getChallengeStreak(): Int
     suspend fun setChallengeStreak(streak: Int): Preferences
-    suspend fun getDiamonds(): Int
-    suspend fun setDiamonds(diamonds: Int)
-    suspend fun getBankedPerks(): String?
-    suspend fun setBankedPerks(perksJson: String)
     suspend fun getHasShownMergeTip(): Boolean
     suspend fun setHasShownMergeTip(shown: Boolean): Preferences
     suspend fun getHasShownPerkTip(): Boolean
@@ -105,8 +101,6 @@ class DataStoreSettingsRepository(
     private val hasShownMergeTipKey = booleanPreferencesKey("has_shown_merge_tip")
     private val hasShownPerkTipKey = booleanPreferencesKey("has_shown_perk_tip")
     private val hasShownPostGameTipKey = booleanPreferencesKey("has_shown_post_game_tip")
-    private val diamondsKey = intPreferencesKey("diamonds")
-    private val bankedPerksKey = stringPreferencesKey("banked_perks")
     private val hasShownDailyChallengeTipKey =
         booleanPreferencesKey("has_shown_daily_challenge_tip")
 
@@ -438,34 +432,6 @@ class DataStoreSettingsRepository(
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[challengeStreakKey] = streak
-            }
-        }
-    }
-
-    override suspend fun getDiamonds(): Int = withContext(Dispatchers.IO) {
-        appSettings.data.first()[diamondsKey] ?: 0
-    }
-
-    override suspend fun setDiamonds(diamonds: Int): Unit {
-        withContext(Dispatchers.IO) {
-            appSettings.updateData {
-                it.toMutablePreferences().also { prefs ->
-                    prefs[diamondsKey] = diamonds
-                }
-            }
-        }
-    }
-
-    override suspend fun getBankedPerks(): String? = withContext(Dispatchers.IO) {
-        appSettings.data.first()[bankedPerksKey]
-    }
-
-    override suspend fun setBankedPerks(perksJson: String): Unit {
-        withContext(Dispatchers.IO) {
-            appSettings.updateData {
-                it.toMutablePreferences().also { prefs ->
-                    prefs[bankedPerksKey] = perksJson
-                }
             }
         }
     }
