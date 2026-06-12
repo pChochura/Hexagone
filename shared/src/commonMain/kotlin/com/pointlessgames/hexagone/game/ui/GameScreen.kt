@@ -10,6 +10,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -61,6 +62,7 @@ import com.pointlessgames.hexagone.game.ui.components.GameOverlays
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
 import com.pointlessgames.hexagone.game.ui.components.SettingsDialog
+import com.pointlessgames.hexagone.game.ui.components.ShopDialog
 import com.pointlessgames.hexagone.game.ui.components.TipOverlay
 import com.pointlessgames.hexagone.game.ui.components.trackTipTarget
 import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
@@ -116,6 +118,10 @@ internal fun GameScreen(
         remember(uiState) { uiState.map { it.activeTip }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.activeTip,
         )
+    val isShopVisibleState =
+        remember(uiState) { uiState.map { it.isShopVisible }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.isShopVisible,
+        )
 
     // Helper delegates for GameScreen's own logic.
     // Accessing these 'by' variables will trigger recomposition of GameScreen.
@@ -126,6 +132,7 @@ internal fun GameScreen(
     val isDebugMode by isDebugModeState
     val pendingResult by pendingResultState
     val activeTip by activeTipState
+    val isShopVisible by isShopVisibleState
 
     // Other states primarily used by providers passed to children.
     // GameScreen won't recompose when these change unless it reads them directly.
@@ -233,6 +240,7 @@ internal fun GameScreen(
     val selectedCellIdState = remember(uiState) {
         uiState.map { it.selectedCellId }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.selectedCellId)
+    val storeProductsState = viewModel.storeProducts.collectAsState()
 
     var showLeaderboard by remember { mutableStateOf(false) }
     var showAchievements by remember { mutableStateOf(false) }
@@ -267,6 +275,7 @@ internal fun GameScreen(
     val onCellClick = remember(viewModel) { viewModel::onCellClicked }
     val onMergeAnimationFinished = remember(viewModel) { viewModel::onMergeAnimationFinished }
     val onPerkClick = remember(viewModel) { viewModel::onUsePerkClicked }
+    val onShopClick = remember(viewModel) { viewModel::onShopClicked }
     val onPerkSelected = remember(viewModel) { viewModel::onPerkSelected }
     val onRestart = remember(viewModel) { viewModel::onRestartClicked }
     val onViewBoardToggle = remember(viewModel) { viewModel::onViewBoardToggled }
@@ -340,6 +349,8 @@ internal fun GameScreen(
     val completedChallengeDatesProvider = remember { { completedChallengeDatesState.value } }
     val isStreakCollectedTodayProvider = remember { { isStreakCollectedTodayState.value } }
     val debugUsedProvider = remember { { debugUsedState.value } }
+    val diamondsProvider = remember { { uiState.value.diamonds } }
+    val bankedPerksProvider = remember { { uiState.value.bankedPerks } }
 
     // Stable Providers for GameGridOverlay
     val mergeHintsProvider = remember { { mergeHintsState.value } }
@@ -476,21 +487,9 @@ internal fun GameScreen(
                         )
                     }
 
-                    // Right Column: Perk Bar
+                    // Placeholder for Perk Bar (to keep layout consistent)
                     if (!isDebugModeProvider()) {
-                        PerkBar(
-                            collectedPerksProvider = collectedPerksProvider,
-                            activePerkProvider = activePerkProvider,
-                            isStuckProvider = isStuckProvider,
-                            stuckPerksProvider = stuckPerksProvider,
-                            onPerkClick = onPerkClick,
-                            isVertical = true,
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .trackTipTarget(TipTarget.PERK_BAR) { target, rect ->
-                                    targetRects[target] = rect
-                                },
-                        )
+                        Spacer(Modifier.width(100.dp.scaled))
                     }
                 }
             } else {
@@ -594,17 +593,57 @@ internal fun GameScreen(
                         )
                     }
                 }
+            }
+        }
 
-                // Floating PerkBar for Portrait
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer { clip = false },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Bottom,
+        GameOverlays(
+            isGameOverProvider = isGameOverProvider,
+            scoreProvider = scoreProvider,
+            bestScoreProvider = bestScoreProvider,
+            sessionBestScoreProvider = sessionBestScoreProvider,
+            levelProvider = levelProvider,
+            maxComboProvider = maxComboProvider,
+            totalMergesProvider = totalMergesProvider,
+            highestValueProvider = highestValueProvider,
+            showBoardProvider = showGameOverBoardProvider,
+            perkOptionsProvider = perkOptionsProvider,
+            pendingLevelUpsProvider = pendingLevelUpsProvider,
+            canRerollProvider = canRerollProvider,
+            onPerkSelected = onPerkSelected,
+            onRerollClicked = viewModel::onRerollClicked,
+            onRestart = onRestart,
+            onViewBoardToggle = onViewBoardToggle,
+            onShare = { /* TODO: Implement snapshot and share */ },
+            onLeaderboard = { showLeaderboard = true },
+            activeTierReward = activeTierReward,
+            onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
+            activeChallengeReward = activeChallengeReward,
+            onChallengeRewardFinished = {
+                if (challengeRewardQueue.isNotEmpty())
+                    challengeRewardQueue.removeAt(0)
+            },
+            rankingInfoProvider = currentRankProvider,
+            debugUsedProvider = debugUsedProvider,
+            finalResultProvider = finalResultProvider,
+            modifier = Modifier.trackTipTarget(TipTarget.GAME_OVER_BUTTONS) { target, rect ->
+                targetRects[target] = rect
+            },
+        )
+
+        // Persistent Perk Bar (Above Game Over Dim)
+        if (!isDebugModeProvider()) {
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val isLandscape = maxWidth > maxHeight
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = if (isLandscape) Alignment.CenterEnd else Alignment.BottomCenter
                 ) {
-                    if (!isDebugModeProvider()) {
-                        if (isStuckProvider() && activePerkProvider() == null) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Bottom,
+                        modifier = Modifier.then(if (isLandscape) Modifier.fillMaxHeight() else Modifier.fillMaxWidth())
+                    ) {
+                        if (!isLandscape && isStuckProvider() && activePerkProvider() == null) {
                             Box(
                                 modifier = Modifier
                                     .offset { IntOffset(0, stuckBounceProvider().dp.roundToPx()) }
@@ -644,8 +683,10 @@ internal fun GameScreen(
                             isStuckProvider = isStuckProvider,
                             stuckPerksProvider = stuckPerksProvider,
                             onPerkClick = onPerkClick,
+                            onShopClick = onShopClick,
+                            isVertical = isLandscape,
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .then(if (isLandscape) Modifier.fillMaxHeight() else Modifier.fillMaxWidth())
                                 .graphicsLayer { clip = false }
                                 .trackTipTarget(TipTarget.PERK_BAR) { target, rect ->
                                     targetRects[target] = rect
@@ -655,40 +696,6 @@ internal fun GameScreen(
                 }
             }
         }
-
-        GameOverlays(
-            isGameOverProvider = isGameOverProvider,
-            scoreProvider = scoreProvider,
-            bestScoreProvider = bestScoreProvider,
-            sessionBestScoreProvider = sessionBestScoreProvider,
-            levelProvider = levelProvider,
-            maxComboProvider = maxComboProvider,
-            totalMergesProvider = totalMergesProvider,
-            highestValueProvider = highestValueProvider,
-            showBoardProvider = showGameOverBoardProvider,
-            perkOptionsProvider = perkOptionsProvider,
-            pendingLevelUpsProvider = pendingLevelUpsProvider,
-            canRerollProvider = canRerollProvider,
-            onPerkSelected = onPerkSelected,
-            onRerollClicked = viewModel::onRerollClicked,
-            onRestart = onRestart,
-            onViewBoardToggle = onViewBoardToggle,
-            onShare = { /* TODO: Implement snapshot and share */ },
-            onLeaderboard = { showLeaderboard = true },
-            activeTierReward = activeTierReward,
-            onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
-            activeChallengeReward = activeChallengeReward,
-            onChallengeRewardFinished = {
-                if (challengeRewardQueue.isNotEmpty())
-                    challengeRewardQueue.removeAt(0)
-            },
-            rankingInfoProvider = currentRankProvider,
-            debugUsedProvider = debugUsedProvider,
-            finalResultProvider = finalResultProvider,
-            modifier = Modifier.trackTipTarget(TipTarget.GAME_OVER_BUTTONS) { target, rect ->
-                targetRects[target] = rect
-            },
-        )
 
         TipOverlay(
             activeTip = activeTip,
@@ -740,6 +747,30 @@ internal fun GameScreen(
                 viewModel = leaderboardViewModel,
                 onDismiss = { showLeaderboard = false },
             )
+        }
+
+        if (isShopVisible) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .clickable(
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        indication = null
+                    ) { viewModel.onDismissShop() },
+                contentAlignment = Alignment.Center
+            ) {
+                ShopDialog(
+                    diamonds = diamondsProvider(),
+                    bankedPerks = bankedPerksProvider(),
+                    storeProducts = storeProductsState.value,
+                    onDismiss = viewModel::onDismissShop,
+                    onBuyPerkWithDiamonds = viewModel::onBuyPerk,
+                    onBuyPremiumProduct = viewModel::onBuyPremiumProduct,
+                    onUseBankedPerk = viewModel::onReviveWithPerk,
+                    isStuck = isStuck
+                )
+            }
         }
     }
 }

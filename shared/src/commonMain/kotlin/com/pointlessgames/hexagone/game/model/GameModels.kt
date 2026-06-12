@@ -85,6 +85,7 @@ data class GameUiState(
     val consecutiveTacticalNoSpawn: Int = 0,
     val thawedIds: Set<String> = emptySet(),
     val activeTip: GameTip? = null,
+    val isShopVisible: Boolean = false,
 ) {
     fun consumePerk(perk: Perk): GameUiState {
         val perkIndex = collectedPerks.indexOf(perk)

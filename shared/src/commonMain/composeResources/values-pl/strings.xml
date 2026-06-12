@@ -285,4 +285,17 @@
     <string name="reward_score_label">+%1$d Wynik</string>
     <string name="reward_perk_label">Darmowy perk: %1$s</string>
     <string name="streak_label">Seria %1$d dni</string>
+
+    <!-- Shop -->
+    <string name="shop_title">SKLEP</string>
+    <string name="shop_diamonds_label">DIAMENTY</string>
+    <string name="shop_banked_perks_label">ZAPASOWE PERKI</string>
+    <string name="shop_common_bundle">ZWYKŁY PERK</string>
+    <string name="shop_rare_bundle">RZADKI PERK</string>
+    <string name="shop_legendary_bundle">LEGENDARNY PERK</string>
+    <string name="shop_buy_button">KUP</string>
+    <string name="shop_not_enough_diamonds">ZA MAŁO DIAMENTÓW</string>
+    <string name="shop_revive_button">ODRODZENIE</string>
+    <string name="shop_use_banked_perk">UŻYJ ZAPASOWEGO PERKA</string>
+    <string name="shop_quick_revive_hint">Kup perka, aby kontynuować!</string>
 </resources>

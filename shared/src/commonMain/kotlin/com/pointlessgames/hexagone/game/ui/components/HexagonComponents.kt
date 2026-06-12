@@ -64,6 +64,7 @@ import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.ic_advance
 import hexagone.shared.generated.resources.ic_chain_merge
 import hexagone.shared.generated.resources.ic_delete
+import hexagone.shared.generated.resources.ic_diamond
 import hexagone.shared.generated.resources.ic_duplicate
 import hexagone.shared.generated.resources.ic_freeze
 import hexagone.shared.generated.resources.ic_fusion
@@ -468,6 +469,68 @@ fun Hexagon(
                     .zIndex(5f),
                 color = Color.White,
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun ShopButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    isHighlighted: Boolean = false,
+    buttonSize: Dp = MaterialTheme.spacing.extraHuge.scaled,
+) {
+    val spacing = MaterialTheme.spacing
+    val perkColor = Color(0xFFFFD54F) // Diamond color
+    val heightScale = 0.866f
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.padding(horizontal = spacing.tiny.scaled),
+    ) {
+        Box(
+            modifier = Modifier.size(width = buttonSize, height = buttonSize * heightScale),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isHighlighted) {
+                val infiniteTransition = rememberInfiniteTransition(label = "shop_highlight")
+                val glowAlpha = infiniteTransition.animateFloat(
+                    initialValue = 0.2f,
+                    targetValue = 0.6f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(800),
+                        repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+                    ),
+                    label = "glow",
+                )
+                Box(
+                    modifier = Modifier
+                        .size(width = buttonSize + 8.dp.scaled, height = (buttonSize + 8.dp.scaled) * heightScale)
+                        .background(perkColor.copy(alpha = glowAlpha.value), FlatTopHexagonShape())
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(FlatTopHexagonShape())
+                    .background(perkColor.copy(alpha = 0.1f))
+                    .border(
+                        width = 2.dp.scaled,
+                        color = perkColor.copy(alpha = 0.5f),
+                        shape = FlatTopHexagonShape(),
+                    )
+                    .clickable(onClick = onClick),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_diamond),
+                    contentDescription = null,
+                    tint = perkColor,
+                    modifier = Modifier.size(buttonSize * 0.45f)
+                )
+            }
         }
     }
 }

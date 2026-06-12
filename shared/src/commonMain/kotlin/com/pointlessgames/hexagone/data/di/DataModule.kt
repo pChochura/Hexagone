@@ -3,7 +3,9 @@ package com.pointlessgames.hexagone.data.di
 import com.pointlessgames.hexagone.BuildKonfig
 import com.pointlessgames.hexagone.achievements.AchievementManager
 import com.pointlessgames.hexagone.achievements.LocalAchievementManager
+import com.pointlessgames.hexagone.data.DataStoreSettingsRepository
 import com.pointlessgames.hexagone.data.LeaderboardRepository
+import com.pointlessgames.hexagone.data.MonetizationRepository
 import com.pointlessgames.hexagone.data.SettingsRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
@@ -22,7 +24,8 @@ internal val dataModule = module {
             install(Auth)
         }
     }
-    singleOf(::SettingsRepository)
+    single<SettingsRepository> { DataStoreSettingsRepository(get()) }
     singleOf(::LeaderboardRepository)
+    singleOf(::MonetizationRepository)
     single<AchievementManager> { LocalAchievementManager(get()) }
 }

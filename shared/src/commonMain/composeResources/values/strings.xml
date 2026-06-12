@@ -285,4 +285,17 @@
     <string name="achievement_perfect_fit_desc">Use a Mimic tile to complete a geometric pattern</string>
     <string name="achievement_spectral_mimic_title">Spectral Mimic</string>
     <string name="achievement_spectral_mimic_desc">Use the Mimic perk on a ghost tile</string>
+
+    <!-- Shop -->
+    <string name="shop_title">SHOP</string>
+    <string name="shop_diamonds_label">DIAMONDS</string>
+    <string name="shop_banked_perks_label">BANKED PERKS</string>
+    <string name="shop_common_bundle">COMMON PERK</string>
+    <string name="shop_rare_bundle">RARE PERK</string>
+    <string name="shop_legendary_bundle">LEGENDARY PERK</string>
+    <string name="shop_buy_button">BUY</string>
+    <string name="shop_not_enough_diamonds">NOT ENOUGH DIAMONDS</string>
+    <string name="shop_revive_button">REVIVE</string>
+    <string name="shop_use_banked_perk">USE BANKED PERK</string>
+    <string name="shop_quick_revive_hint">Buy a perk to continue!</string>
 </resources>

@@ -7,14 +7,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
@@ -56,6 +49,7 @@ fun PerkBar(
     isStuckProvider: () -> Boolean,
     stuckPerksProvider: () -> Set<Perk>,
     onPerkClick: (Perk) -> Unit,
+    onShopClick: () -> Unit,
     isVertical: Boolean = false,
 ) {
     val collectedPerks = collectedPerksProvider()
@@ -108,6 +102,17 @@ fun PerkBar(
         RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge)
     }
 
+    val persistentActions = @Composable {
+        ShopButton(
+            onClick = onShopClick,
+            isHighlighted = isStuck,
+            modifier = Modifier.padding(
+                horizontal = if (isVertical) 0.dp else spacing.small.scaled,
+                vertical = if (isVertical) spacing.small.scaled else 0.dp
+            )
+        )
+    }
+
     Box(
         modifier = modifier
             .then(if (isVertical) Modifier.fillMaxHeight() else Modifier.fillMaxWidth())
@@ -115,7 +120,7 @@ fun PerkBar(
         contentAlignment = if (isVertical) Alignment.CenterEnd else Alignment.BottomCenter
     ) {
         if (collectedPerks.isEmpty()) {
-            Box(
+            Row(
                 modifier = Modifier
                     .then(if (isVertical) Modifier.width(100.dp.scaled).fillMaxHeight() else Modifier.fillMaxWidth())
                     .background(surfaceColor, shape)
@@ -126,7 +131,8 @@ fun PerkBar(
                     )
                     .navigationBarsPadding()
                     .padding(spacing.large.scaled),
-                contentAlignment = Alignment.Center
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = stringResource(Res.string.perk_bar_empty_hint),
@@ -135,8 +141,9 @@ fun PerkBar(
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
                     lineHeight = 18.sp.scaled,
-                    modifier = Modifier.padding(spacing.large.scaled),
+                    modifier = Modifier.weight(1f).padding(spacing.large.scaled),
                 )
+                persistentActions()
             }
         } else {
             val content: LazyListScope.() -> Unit = {
@@ -163,8 +170,7 @@ fun PerkBar(
             }
 
             if (isVertical) {
-                LazyColumn(
-                    state = listState,
+                Column(
                     modifier = Modifier
                         .width(100.dp.scaled)
                         .fillMaxHeight()
@@ -176,14 +182,21 @@ fun PerkBar(
                         )
                         .clip(shape)
                         .navigationBarsPadding(),
-                    contentPadding = PaddingValues(vertical = spacing.large.scaled, horizontal = spacing.medium.scaled),
-                    verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterVertically),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    content = content
-                )
+                ) {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(vertical = spacing.large.scaled, horizontal = spacing.medium.scaled),
+                        verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterVertically),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        content = content
+                    )
+                    persistentActions()
+                    Spacer(Modifier.height(spacing.medium.scaled))
+                }
             } else {
-                LazyRow(
-                    state = listState,
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(surfaceColor, shape)
@@ -194,11 +207,19 @@ fun PerkBar(
                         )
                         .clip(shape)
                         .navigationBarsPadding(),
-                    contentPadding = PaddingValues(horizontal = spacing.large.scaled, vertical = spacing.medium.scaled),
-                    horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically,
-                    content = content
-                )
+                ) {
+                    LazyRow(
+                        state = listState,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = spacing.large.scaled, vertical = spacing.medium.scaled),
+                        horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically,
+                        content = content
+                    )
+                    persistentActions()
+                    Spacer(Modifier.width(spacing.medium.scaled))
+                }
             }
         }
     }

@@ -1,7 +1,7 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.compose.internal.utils.getLocalProperty
 import com.codingfeline.buildkonfig.compiler.FieldSpec
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -15,14 +15,32 @@ plugins {
 buildkonfig {
     packageName = "com.pointlessgames.hexagone"
 
-    val supabaseUrl = getLocalProperty("SUPABASE_URL") ?: ""
-    val supabaseKey = getLocalProperty("SUPABASE_KEY") ?: ""
+    val localProperties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use {
+            localProperties.load(it)
+        }
+    }
+
+    val supabaseUrl = localProperties.getProperty("SUPABASE_URL") ?: ""
+    val supabaseKey = localProperties.getProperty("SUPABASE_KEY") ?: ""
+    val revenueCatAndroidKey = localProperties.getProperty("REVENUECAT_ANDROID_KEY") ?: ""
+    val revenueCatIosKey = localProperties.getProperty("REVENUECAT_IOS_KEY") ?: ""
 
     defaultConfigs {
         buildConfigField(FieldSpec.Type.STRING, "SUPABASE_URL", supabaseUrl)
         buildConfigField(FieldSpec.Type.STRING, "SUPABASE_KEY", supabaseKey)
+        buildConfigField(FieldSpec.Type.STRING, "REVENUECAT_ANDROID_KEY", revenueCatAndroidKey)
+        buildConfigField(FieldSpec.Type.STRING, "REVENUECAT_IOS_KEY", revenueCatIosKey)
         buildConfigField(FieldSpec.Type.BOOLEAN, "IS_DEBUG", "true")
     }
+}
+
+repositories {
+    google()
+    mavenCentral()
+    maven { url = uri("https://maven.revenuecat.com/repository/maven-public/") }
 }
 
 kotlin {
@@ -60,6 +78,10 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.androidx.compose.ui.tooling)
             implementation(libs.ktor.client.okhttp)
+            val rcVersion = "3.0.6"
+            api("com.revenuecat.purchases:purchases-kmp-core:$rcVersion")
+            implementation("com.revenuecat.purchases:purchases-kmp-models:$rcVersion")
+            implementation("com.revenuecat.purchases:purchases-kmp-result:$rcVersion")
         }
         commonMain.dependencies {
             implementation(libs.compose.mp.runtime)
@@ -95,9 +117,14 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+            val rcVersion = "3.0.6"
+            api("com.revenuecat.purchases:purchases-kmp-core:$rcVersion")
+            implementation("com.revenuecat.purchases:purchases-kmp-models:$rcVersion")
+            implementation("com.revenuecat.purchases:purchases-kmp-result:$rcVersion")
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)

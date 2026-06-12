@@ -3,9 +3,15 @@ package com.pointlessgames.hexagone.game
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pointlessgames.hexagone.achievements.AchievementManager
+import com.pointlessgames.hexagone.billing.BillingManager
+import com.pointlessgames.hexagone.billing.BillingProduct
+import com.pointlessgames.hexagone.billing.PurchaseResult
 import com.pointlessgames.hexagone.data.LeaderboardRepository
+import com.pointlessgames.hexagone.data.MonetizationRepository
 import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.game.logic.DailyChallengeProvider
+import com.pointlessgames.hexagone.game.logic.PerkCategory
+import com.pointlessgames.hexagone.game.logic.StreakMilestones
 import com.pointlessgames.hexagone.game.logic.GameEngine
 import com.pointlessgames.hexagone.game.model.DailyChallenge
 import com.pointlessgames.hexagone.game.model.DailyChallengeProgress
@@ -40,13 +46,18 @@ import kotlin.time.Clock
 internal class GameViewModel(
     private val settingsRepository: SettingsRepository,
     private val leaderboardRepository: LeaderboardRepository,
+    private val monetizationRepository: MonetizationRepository,
     private val achievementManager: AchievementManager,
+    private val billingManager: BillingManager,
 ) : ViewModel() {
 
     private val engine = GameEngine()
 
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
+
+    private val _storeProducts = MutableStateFlow<List<BillingProduct>>(emptyList())
+    val storeProducts: StateFlow<List<BillingProduct>> = _storeProducts.asStateFlow()
 
     private val _hoveredMerge = MutableStateFlow<MergeTransition?>(null)
     val hoveredMerge: StateFlow<MergeTransition?> = _hoveredMerge.asStateFlow()
@@ -296,6 +307,13 @@ internal class GameViewModel(
         viewModelScope.launch {
             _uiState.collect { state ->
                 achievementManager.updateSessionData(state)
+            }
+        }
+
+        viewModelScope.launch {
+            billingManager.initialize()
+            billingManager.products.collect { products ->
+                _storeProducts.value = products
             }
         }
     }
@@ -659,6 +677,55 @@ internal class GameViewModel(
     fun addPerkManually(perk: Perk) = debugDelegate.addPerkManually(perk)
 
     fun getAchievementManager(): AchievementManager = achievementManager
+
+    fun onShopClicked() {
+        _uiState.update { it.copy(isShopVisible = true) }
+    }
+
+    fun onDismissShop() {
+        _uiState.update { it.copy(isShopVisible = false) }
+    }
+
+    fun onBuyPerk(category: PerkCategory) {
+        viewModelScope.launch {
+            val perk = monetizationRepository.buyRandomPerk(category)
+            if (perk != null) {
+                val diamonds = settingsRepository.getDiamonds()
+                val bankedJson = settingsRepository.getBankedPerks()
+                val bankedPerks = bankedJson?.let { Json.decodeFromString<Map<Perk, Int>>(it) } ?: emptyMap()
+                _uiState.update { it.copy(diamonds = diamonds, bankedPerks = bankedPerks) }
+            }
+        }
+    }
+
+    fun onBuyPremiumProduct(product: BillingProduct) {
+        viewModelScope.launch {
+            billingManager.purchase(product)
+        }
+    }
+
+    fun onReviveWithPerk(perk: Perk) {
+        viewModelScope.launch {
+            val bankedJson = settingsRepository.getBankedPerks()
+            val bankedPerks = bankedJson?.let { Json.decodeFromString<Map<Perk, Int>>(it) }?.toMutableMap() ?: mutableMapOf()
+            
+            val count = bankedPerks[perk] ?: 0
+            if (count > 0) {
+                bankedPerks[perk] = count - 1
+                settingsRepository.setBankedPerks(Json.encodeToString(bankedPerks))
+                
+                _uiState.update { 
+                    it.copy(
+                        bankedPerks = bankedPerks,
+                        collectedPerks = it.collectedPerks + perk,
+                        isGameOver = false,
+                        isStuck = false
+                    ) 
+                }
+                checkValidMoves()
+            }
+        }
+    }
 
     private suspend fun handleChallengeComplete(challenge: DailyChallenge) {
         if (challenge.rewardScore > 0) {

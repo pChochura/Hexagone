@@ -1,20 +1,81 @@
 package com.pointlessgames.hexagone.data
 
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
+import androidx.datastore.preferences.core.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
-class SettingsRepository(
+interface SettingsRepository {
+    suspend fun getBestScore(): Int
+    suspend fun setBestScore(score: Int): Preferences
+    suspend fun getPlayerId(): String?
+    suspend fun setPlayerId(id: String): Preferences
+    suspend fun getPlayerName(): String?
+    suspend fun setPlayerName(name: String): Preferences
+    suspend fun getPlayerRegion(): String?
+    suspend fun setPlayerRegion(region: String): Preferences
+    suspend fun getMergeHintsEnabled(): Boolean
+    suspend fun setMergeHintsEnabled(enabled: Boolean): Preferences
+    suspend fun getGameState(): String?
+    suspend fun setGameState(state: String?): Preferences
+    suspend fun getTotalMergesLifetime(): Long
+    suspend fun incrementTotalMergesLifetime(): Preferences
+    suspend fun getPerksUsedLifetime(): Set<String>
+    suspend fun addPerkToLifetime(perkName: String): Preferences
+    suspend fun getUnlockedAchievements(): Set<String>
+    suspend fun setAchievementUnlocked(achievementId: String): Preferences
+    suspend fun getPerksCollectedLifetime(): Int
+    suspend fun incrementPerksCollectedLifetime(): Preferences
+    suspend fun getGamesFinishedLifetime(): Int
+    suspend fun incrementGamesFinishedLifetime(): Preferences
+    suspend fun getRerollsLifetime(): Int
+    suspend fun incrementRerollsLifetime(): Preferences
+    suspend fun getMaxComboLifetime(): Int
+    suspend fun updateMaxComboLifetime(value: Int): Preferences
+    suspend fun getHighestLevelLifetime(): Int
+    suspend fun updateHighestLevelLifetime(value: Int): Preferences
+    suspend fun getMaxConsecutiveMergesLifetime(): Int
+    suspend fun updateMaxConsecutiveMergesLifetime(value: Int): Preferences
+    suspend fun getMaxTacticalMergesLifetime(): Int
+    suspend fun updateMaxTacticalMergesLifetime(value: Int): Preferences
+    suspend fun getMaxCollectedPerksLifetime(): Int
+    suspend fun updateMaxCollectedPerksLifetime(value: Int): Preferences
+    suspend fun getMaxConsecutiveUndosLifetime(): Int
+    suspend fun updateMaxConsecutiveUndosLifetime(value: Int): Preferences
+    suspend fun getMaxTacticalGhostsLifetime(): Int
+    suspend fun updateMaxTacticalGhostsLifetime(value: Int): Preferences
+    suspend fun getMaxBarRaisedLifetime(): Int
+    suspend fun updateMaxBarRaisedLifetime(value: Int): Preferences
+    suspend fun getHighestTileValueLifetime(): Int
+    suspend fun updateHighestTileValueLifetime(value: Int): Preferences
+    suspend fun getPendingScores(): Set<String>
+    suspend fun addPendingScore(serializedScore: String): Preferences
+    suspend fun removePendingScore(serializedScore: String): Preferences
+    suspend fun getLastCompletedChallengeDate(): Long
+    suspend fun setLastCompletedChallengeDate(date: Long): Preferences
+    suspend fun getCompletedChallengeDates(): Set<String>
+    suspend fun addCompletedChallengeDate(dateSeed: String): Preferences
+    suspend fun getChallengeStreak(): Int
+    suspend fun setChallengeStreak(streak: Int): Preferences
+    suspend fun getDiamonds(): Int
+    suspend fun setDiamonds(diamonds: Int)
+    suspend fun getBankedPerks(): String?
+    suspend fun setBankedPerks(perksJson: String)
+    suspend fun getHasShownMergeTip(): Boolean
+    suspend fun setHasShownMergeTip(shown: Boolean): Preferences
+    suspend fun getHasShownPerkTip(): Boolean
+    suspend fun setHasShownPerkTip(shown: Boolean): Preferences
+    suspend fun getHasShownPostGameTip(): Boolean
+    suspend fun setHasShownPostGameTip(shown: Boolean): Preferences
+    suspend fun getHasShownDailyChallengeTip(): Boolean
+    suspend fun setHasShownDailyChallengeTip(shown: Boolean): Preferences
+}
+
+class DataStoreSettingsRepository(
     private val appSettings: DataStore<Preferences>,
-) {
+) : SettingsRepository {
     private val bestScoreKey = intPreferencesKey("best_score")
     private val mergeHintsEnabledKey = booleanPreferencesKey("merge_hints_enabled")
     private val gameStateKey = stringPreferencesKey("game_state")
@@ -49,11 +110,11 @@ class SettingsRepository(
     private val hasShownDailyChallengeTipKey =
         booleanPreferencesKey("has_shown_daily_challenge_tip")
 
-    suspend fun getBestScore(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getBestScore(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[bestScoreKey] ?: 0
     }
 
-    suspend fun setBestScore(score: Int) = withContext(Dispatchers.IO) {
+    override suspend fun setBestScore(score: Int) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[bestScoreKey] = score
@@ -61,11 +122,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getPlayerId(): String? = withContext(Dispatchers.IO) {
+    override suspend fun getPlayerId(): String? = withContext(Dispatchers.IO) {
         appSettings.data.first()[playerIdKey]
     }
 
-    suspend fun setPlayerId(id: String) = withContext(Dispatchers.IO) {
+    override suspend fun setPlayerId(id: String) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[playerIdKey] = id
@@ -73,11 +134,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getPlayerName(): String? = withContext(Dispatchers.IO) {
+    override suspend fun getPlayerName(): String? = withContext(Dispatchers.IO) {
         appSettings.data.first()[playerNameKey]
     }
 
-    suspend fun setPlayerName(name: String) = withContext(Dispatchers.IO) {
+    override suspend fun setPlayerName(name: String) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[playerNameKey] = name
@@ -85,11 +146,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getPlayerRegion(): String? = withContext(Dispatchers.IO) {
+    override suspend fun getPlayerRegion(): String? = withContext(Dispatchers.IO) {
         appSettings.data.first()[playerRegionKey]
     }
 
-    suspend fun setPlayerRegion(region: String) = withContext(Dispatchers.IO) {
+    override suspend fun setPlayerRegion(region: String) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[playerRegionKey] = region
@@ -97,11 +158,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getMergeHintsEnabled(): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun getMergeHintsEnabled(): Boolean = withContext(Dispatchers.IO) {
         appSettings.data.first()[mergeHintsEnabledKey] ?: true
     }
 
-    suspend fun setMergeHintsEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
+    override suspend fun setMergeHintsEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[mergeHintsEnabledKey] = enabled
@@ -109,11 +170,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getGameState(): String? = withContext(Dispatchers.IO) {
+    override suspend fun getGameState(): String? = withContext(Dispatchers.IO) {
         appSettings.data.first()[gameStateKey]
     }
 
-    suspend fun setGameState(state: String?) = withContext(Dispatchers.IO) {
+    override suspend fun setGameState(state: String?) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 if (state == null) {
@@ -125,11 +186,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getTotalMergesLifetime(): Long = withContext(Dispatchers.IO) {
+    override suspend fun getTotalMergesLifetime(): Long = withContext(Dispatchers.IO) {
         appSettings.data.first()[totalMergesLifetimeKey] ?: 0L
     }
 
-    suspend fun incrementTotalMergesLifetime() = withContext(Dispatchers.IO) {
+    override suspend fun incrementTotalMergesLifetime() = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[totalMergesLifetimeKey] ?: 0L
@@ -138,11 +199,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getPerksUsedLifetime(): Set<String> = withContext(Dispatchers.IO) {
+    override suspend fun getPerksUsedLifetime(): Set<String> = withContext(Dispatchers.IO) {
         appSettings.data.first()[perksUsedLifetimeKey] ?: emptySet()
     }
 
-    suspend fun addPerkToLifetime(perkName: String) = withContext(Dispatchers.IO) {
+    override suspend fun addPerkToLifetime(perkName: String) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[perksUsedLifetimeKey] ?: emptySet()
@@ -151,11 +212,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getUnlockedAchievements(): Set<String> = withContext(Dispatchers.IO) {
+    override suspend fun getUnlockedAchievements(): Set<String> = withContext(Dispatchers.IO) {
         appSettings.data.first()[unlockedAchievementsKey] ?: emptySet()
     }
 
-    suspend fun setAchievementUnlocked(achievementId: String) = withContext(Dispatchers.IO) {
+    override suspend fun setAchievementUnlocked(achievementId: String) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[unlockedAchievementsKey] ?: emptySet()
@@ -164,11 +225,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getPerksCollectedLifetime(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getPerksCollectedLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[perksCollectedLifetimeKey] ?: 0
     }
 
-    suspend fun incrementPerksCollectedLifetime() = withContext(Dispatchers.IO) {
+    override suspend fun incrementPerksCollectedLifetime() = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[perksCollectedLifetimeKey] ?: 0
@@ -177,11 +238,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getGamesFinishedLifetime(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getGamesFinishedLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[gamesFinishedLifetimeKey] ?: 0
     }
 
-    suspend fun incrementGamesFinishedLifetime() = withContext(Dispatchers.IO) {
+    override suspend fun incrementGamesFinishedLifetime() = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[gamesFinishedLifetimeKey] ?: 0
@@ -190,11 +251,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getRerollsLifetime(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getRerollsLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[rerollsLifetimeKey] ?: 0
     }
 
-    suspend fun incrementRerollsLifetime() = withContext(Dispatchers.IO) {
+    override suspend fun incrementRerollsLifetime() = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[rerollsLifetimeKey] ?: 0
@@ -203,11 +264,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getMaxComboLifetime(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getMaxComboLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[maxComboLifetimeKey] ?: 0
     }
 
-    suspend fun updateMaxComboLifetime(value: Int) = withContext(Dispatchers.IO) {
+    override suspend fun updateMaxComboLifetime(value: Int) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[maxComboLifetimeKey] ?: 0
@@ -216,11 +277,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getHighestLevelLifetime(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getHighestLevelLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[highestLevelLifetimeKey] ?: 1
     }
 
-    suspend fun updateHighestLevelLifetime(value: Int) = withContext(Dispatchers.IO) {
+    override suspend fun updateHighestLevelLifetime(value: Int) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[highestLevelLifetimeKey] ?: 1
@@ -229,11 +290,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getMaxConsecutiveMergesLifetime(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getMaxConsecutiveMergesLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[maxConsecutiveMergesLifetimeKey] ?: 0
     }
 
-    suspend fun updateMaxConsecutiveMergesLifetime(value: Int) = withContext(Dispatchers.IO) {
+    override suspend fun updateMaxConsecutiveMergesLifetime(value: Int) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[maxConsecutiveMergesLifetimeKey] ?: 0
@@ -242,11 +303,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getMaxTacticalMergesLifetime(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getMaxTacticalMergesLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[maxTacticalMergesLifetimeKey] ?: 0
     }
 
-    suspend fun updateMaxTacticalMergesLifetime(value: Int) = withContext(Dispatchers.IO) {
+    override suspend fun updateMaxTacticalMergesLifetime(value: Int) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[maxTacticalMergesLifetimeKey] ?: 0
@@ -255,11 +316,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getMaxCollectedPerksLifetime(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getMaxCollectedPerksLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[maxCollectedPerksLifetimeKey] ?: 0
     }
 
-    suspend fun updateMaxCollectedPerksLifetime(value: Int) = withContext(Dispatchers.IO) {
+    override suspend fun updateMaxCollectedPerksLifetime(value: Int) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[maxCollectedPerksLifetimeKey] ?: 0
@@ -268,11 +329,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getMaxConsecutiveUndosLifetime(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getMaxConsecutiveUndosLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[maxConsecutiveUndosLifetimeKey] ?: 0
     }
 
-    suspend fun updateMaxConsecutiveUndosLifetime(value: Int) = withContext(Dispatchers.IO) {
+    override suspend fun updateMaxConsecutiveUndosLifetime(value: Int) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[maxConsecutiveUndosLifetimeKey] ?: 0
@@ -281,11 +342,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getMaxTacticalGhostsLifetime(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getMaxTacticalGhostsLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[maxTacticalGhostsLifetimeKey] ?: 0
     }
 
-    suspend fun updateMaxTacticalGhostsLifetime(value: Int) = withContext(Dispatchers.IO) {
+    override suspend fun updateMaxTacticalGhostsLifetime(value: Int) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[maxTacticalGhostsLifetimeKey] ?: 0
@@ -294,11 +355,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getMaxBarRaisedLifetime(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getMaxBarRaisedLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[maxBarRaisedLifetimeKey] ?: 0
     }
 
-    suspend fun updateMaxBarRaisedLifetime(value: Int) = withContext(Dispatchers.IO) {
+    override suspend fun updateMaxBarRaisedLifetime(value: Int) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[maxBarRaisedLifetimeKey] ?: 0
@@ -307,11 +368,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getHighestTileValueLifetime(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getHighestTileValueLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[highestTileValueLifetimeKey] ?: 1
     }
 
-    suspend fun updateHighestTileValueLifetime(value: Int) = withContext(Dispatchers.IO) {
+    override suspend fun updateHighestTileValueLifetime(value: Int) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[highestTileValueLifetimeKey] ?: 1
@@ -320,11 +381,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getPendingScores(): Set<String> = withContext(Dispatchers.IO) {
+    override suspend fun getPendingScores(): Set<String> = withContext(Dispatchers.IO) {
         appSettings.data.first()[pendingScoresKey] ?: emptySet()
     }
 
-    suspend fun addPendingScore(serializedScore: String) = withContext(Dispatchers.IO) {
+    override suspend fun addPendingScore(serializedScore: String) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[pendingScoresKey] ?: emptySet()
@@ -333,7 +394,7 @@ class SettingsRepository(
         }
     }
 
-    suspend fun removePendingScore(serializedScore: String) = withContext(Dispatchers.IO) {
+    override suspend fun removePendingScore(serializedScore: String) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[pendingScoresKey] ?: emptySet()
@@ -342,11 +403,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getLastCompletedChallengeDate(): Long = withContext(Dispatchers.IO) {
+    override suspend fun getLastCompletedChallengeDate(): Long = withContext(Dispatchers.IO) {
         appSettings.data.first()[lastCompletedChallengeDateKey] ?: 0L
     }
 
-    suspend fun setLastCompletedChallengeDate(date: Long) = withContext(Dispatchers.IO) {
+    override suspend fun setLastCompletedChallengeDate(date: Long) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[lastCompletedChallengeDateKey] = date
@@ -354,11 +415,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getCompletedChallengeDates(): Set<String> = withContext(Dispatchers.IO) {
+    override suspend fun getCompletedChallengeDates(): Set<String> = withContext(Dispatchers.IO) {
         appSettings.data.first()[completedChallengeDatesKey] ?: emptySet()
     }
 
-    suspend fun addCompletedChallengeDate(dateSeed: String) = withContext(Dispatchers.IO) {
+    override suspend fun addCompletedChallengeDate(dateSeed: String) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[completedChallengeDatesKey] ?: emptySet()
@@ -369,11 +430,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getChallengeStreak(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getChallengeStreak(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[challengeStreakKey] ?: 0
     }
 
-    suspend fun setChallengeStreak(streak: Int) = withContext(Dispatchers.IO) {
+    override suspend fun setChallengeStreak(streak: Int) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[challengeStreakKey] = streak
@@ -381,35 +442,39 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getDiamonds(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getDiamonds(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[diamondsKey] ?: 0
     }
 
-    suspend fun setDiamonds(diamonds: Int) = withContext(Dispatchers.IO) {
-        appSettings.updateData {
-            it.toMutablePreferences().also { prefs ->
-                prefs[diamondsKey] = diamonds
+    override suspend fun setDiamonds(diamonds: Int): Unit {
+        withContext(Dispatchers.IO) {
+            appSettings.updateData {
+                it.toMutablePreferences().also { prefs ->
+                    prefs[diamondsKey] = diamonds
+                }
             }
         }
     }
 
-    suspend fun getBankedPerks(): String? = withContext(Dispatchers.IO) {
+    override suspend fun getBankedPerks(): String? = withContext(Dispatchers.IO) {
         appSettings.data.first()[bankedPerksKey]
     }
 
-    suspend fun setBankedPerks(perksJson: String) = withContext(Dispatchers.IO) {
-        appSettings.updateData {
-            it.toMutablePreferences().also { prefs ->
-                prefs[bankedPerksKey] = perksJson
+    override suspend fun setBankedPerks(perksJson: String): Unit {
+        withContext(Dispatchers.IO) {
+            appSettings.updateData {
+                it.toMutablePreferences().also { prefs ->
+                    prefs[bankedPerksKey] = perksJson
+                }
             }
         }
     }
 
-    suspend fun getHasShownMergeTip(): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun getHasShownMergeTip(): Boolean = withContext(Dispatchers.IO) {
         appSettings.data.first()[hasShownMergeTipKey] ?: false
     }
 
-    suspend fun setHasShownMergeTip(shown: Boolean) = withContext(Dispatchers.IO) {
+    override suspend fun setHasShownMergeTip(shown: Boolean) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[hasShownMergeTipKey] = shown
@@ -417,11 +482,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getHasShownPerkTip(): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun getHasShownPerkTip(): Boolean = withContext(Dispatchers.IO) {
         appSettings.data.first()[hasShownPerkTipKey] ?: false
     }
 
-    suspend fun setHasShownPerkTip(shown: Boolean) = withContext(Dispatchers.IO) {
+    override suspend fun setHasShownPerkTip(shown: Boolean) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[hasShownPerkTipKey] = shown
@@ -429,11 +494,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getHasShownPostGameTip(): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun getHasShownPostGameTip(): Boolean = withContext(Dispatchers.IO) {
         appSettings.data.first()[hasShownPostGameTipKey] ?: false
     }
 
-    suspend fun setHasShownPostGameTip(shown: Boolean) = withContext(Dispatchers.IO) {
+    override suspend fun setHasShownPostGameTip(shown: Boolean) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[hasShownPostGameTipKey] = shown
@@ -441,11 +506,11 @@ class SettingsRepository(
         }
     }
 
-    suspend fun getHasShownDailyChallengeTip(): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun getHasShownDailyChallengeTip(): Boolean = withContext(Dispatchers.IO) {
         appSettings.data.first()[hasShownDailyChallengeTipKey] ?: false
     }
 
-    suspend fun setHasShownDailyChallengeTip(shown: Boolean) = withContext(Dispatchers.IO) {
+    override suspend fun setHasShownDailyChallengeTip(shown: Boolean) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[hasShownDailyChallengeTipKey] = shown
