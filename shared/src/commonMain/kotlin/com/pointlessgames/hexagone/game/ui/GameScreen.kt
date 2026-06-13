@@ -1,5 +1,6 @@
 package com.pointlessgames.hexagone.game.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
@@ -8,9 +9,15 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -63,8 +70,8 @@ import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
 import com.pointlessgames.hexagone.game.ui.components.SettingsDialog
 import com.pointlessgames.hexagone.game.ui.components.ShopDialog
-import com.pointlessgames.hexagone.game.ui.components.VoucherSelectionDialog
 import com.pointlessgames.hexagone.game.ui.components.TipOverlay
+import com.pointlessgames.hexagone.game.ui.components.VoucherSelectionDialog
 import com.pointlessgames.hexagone.game.ui.components.trackTipTarget
 import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
 import com.pointlessgames.hexagone.leaderboard.ui.LeaderboardDialog
@@ -120,16 +127,28 @@ internal fun GameScreen(
             viewModel.uiState.value.activeTip,
         )
     val isShopVisibleState =
-        remember(uiState) { uiState.map { it.isShopVisible }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.isShopVisible }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.isShopVisible,
         )
     val isShopLoadingState =
-        remember(uiState) { uiState.map { it.isShopLoading }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.isShopLoading }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.isShopLoading,
         )
     val isShopProcessingState =
-        remember(uiState) { uiState.map { it.isShopProcessing }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.isShopProcessing }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.isShopProcessing,
+        )
+    val isVoucherProcessingState =
+        remember(uiState) {
+            uiState.map { it.isVoucherProcessing }.distinctUntilChanged()
+        }.collectAsState(
+            viewModel.uiState.value.isVoucherProcessing,
         )
 
     // Helper delegates for GameScreen's own logic.
@@ -144,8 +163,11 @@ internal fun GameScreen(
     val isShopVisible by isShopVisibleState
     val isShopLoading by isShopLoadingState
     val isShopProcessing by isShopProcessingState
+    val isVoucherProcessing by isVoucherProcessingState
     val activeVoucherSelectionState =
-        remember(uiState) { uiState.map { it.activeVoucherSelection }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.activeVoucherSelection }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.activeVoucherSelection,
         )
     val activeVoucherSelection by activeVoucherSelectionState
@@ -163,6 +185,14 @@ internal fun GameScreen(
     val comboState =
         remember(uiState) { uiState.map { it.combo }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.combo,
+        )
+    val diamondsState =
+        remember(uiState) { uiState.map { it.diamonds }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.diamonds,
+        )
+    val vouchersState =
+        remember(uiState) { uiState.map { it.vouchers }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.vouchers,
         )
     val levelState =
         remember(uiState) { uiState.map { it.level }.distinctUntilChanged() }.collectAsState(
@@ -373,8 +403,8 @@ internal fun GameScreen(
     val completedChallengeDatesProvider = remember { { completedChallengeDatesState.value } }
     val isStreakCollectedTodayProvider = remember { { isStreakCollectedTodayState.value } }
     val debugUsedProvider = remember { { debugUsedState.value } }
-    val diamondsProvider = remember { { uiState.value.diamonds } }
-    val vouchersProvider = remember { { uiState.value.vouchers } }
+    val diamondsProvider = remember { { diamondsState.value } }
+    val vouchersProvider = remember { { vouchersState.value } }
 
     // Stable Providers for GameGridOverlay
     val mergeHintsProvider = remember { { mergeHintsState.value } }
@@ -660,12 +690,12 @@ internal fun GameScreen(
                 val isLandscape = maxWidth > maxHeight
                 Box(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = if (isLandscape) Alignment.CenterEnd else Alignment.BottomCenter
+                    contentAlignment = if (isLandscape) Alignment.CenterEnd else Alignment.BottomCenter,
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Bottom,
-                        modifier = Modifier.then(if (isLandscape) Modifier.fillMaxHeight() else Modifier.fillMaxWidth())
+                        modifier = Modifier.then(if (isLandscape) Modifier.fillMaxHeight() else Modifier.fillMaxWidth()),
                     ) {
                         if (!isLandscape && isStuckProvider() && activePerkProvider() == null) {
                             Box(
@@ -773,16 +803,20 @@ internal fun GameScreen(
             )
         }
 
-        if (isShopVisible) {
+        AnimatedVisibility(
+            visible = isShopVisible,
+            enter = fadeIn() + scaleIn(initialScale = 0.9f),
+            exit = fadeOut() + scaleOut(targetScale = 0.9f),
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.6f))
                     .clickable(
-                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                        indication = null
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
                     ) { viewModel.onDismissShop() },
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 ShopDialog(
                     diamonds = diamondsProvider(),
@@ -794,29 +828,43 @@ internal fun GameScreen(
                     onBuyPerkWithDiamonds = viewModel::onBuyPerk,
                     onBuyPremiumProduct = viewModel::onBuyPremiumProduct,
                     onUseVoucher = viewModel::onUseVoucher,
-                    isStuck = isStuck
+                    isStuck = isStuck,
                 )
             }
         }
 
+        val lastVoucher = remember { mutableStateOf<com.pointlessgames.hexagone.game.logic.PerkCategory?>(null) }
         if (activeVoucherSelection != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.6f))
-                    .clickable(
-                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                        indication = null
-                    ) { viewModel.onDismissVoucherSelection() },
-                contentAlignment = Alignment.Center
-            ) {
-                VoucherSelectionDialog(
-                    category = activeVoucherSelection!!,
-                    onPerkSelected = { perk ->
-                        viewModel.onPerkFromVoucherSelected(perk, activeVoucherSelection!!)
-                    },
-                    onDismiss = viewModel::onDismissVoucherSelection
-                )
+            lastVoucher.value = activeVoucherSelection
+        }
+
+        AnimatedVisibility(
+            visible = activeVoucherSelection != null,
+            enter = fadeIn() + scaleIn(initialScale = 0.9f),
+            exit = fadeOut(),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            val voucherToDisplay = activeVoucherSelection ?: lastVoucher.value
+            if (voucherToDisplay != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.6f))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) { viewModel.onDismissVoucherSelection() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    VoucherSelectionDialog(
+                        category = voucherToDisplay,
+                        isProcessing = isVoucherProcessing,
+                        onPerkSelected = { perk ->
+                            viewModel.onPerkFromVoucherSelected(perk, voucherToDisplay)
+                        },
+                        onDismiss = viewModel::onDismissVoucherSelection,
+                    )
+                }
             }
         }
     }

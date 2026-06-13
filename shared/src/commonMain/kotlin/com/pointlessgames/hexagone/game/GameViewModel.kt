@@ -716,13 +716,17 @@ internal class GameViewModel(
 
     fun onPerkFromVoucherSelected(perk: Perk, category: PerkCategory) {
         viewModelScope.launch {
+            _uiState.update { it.copy(isVoucherProcessing = true) }
             if (monetizationRepository.usePerkVoucher(category)) {
                 _uiState.update { 
                     it.copy(
                         collectedPerks = it.collectedPerks + perk,
-                        activeVoucherSelection = null
+                        activeVoucherSelection = null,
+                        isVoucherProcessing = false
                     ) 
                 }
+            } else {
+                _uiState.update { it.copy(isVoucherProcessing = false) }
             }
         }
     }
