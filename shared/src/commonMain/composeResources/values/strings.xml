@@ -303,4 +303,12 @@
     <string name="shop_best_value">BEST VALUE</string>
     <string name="shop_extra_diamonds">+%1$d% EXTRA</string>
     <string name="shop_insufficient_balance">INSUFFICIENT BALANCE</string>
+    <string name="shop_buy_confirmation_title">CONFIRM EXCHANGE</string>
+    <string name="shop_buy_confirmation_message">Exchange %1$d Diamonds for a %2$s Perk Voucher?</string>
+    <string name="shop_buy_success_title">PURCHASE SUCCESS</string>
+    <string name="shop_buy_success_message">You have successfully acquired the product.</string>
+    <string name="shop_buy_failure_title">PURCHASE FAILED</string>
+    <string name="shop_buy_failure_message">Something went wrong. Please try again later.</string>
+    <string name="shop_voucher_explanation">Exchanging a voucher will add the selected perk to your current game. This action is permanent and consumes the voucher.</string>
+    <string name="confirm">CONFIRM</string>
 </resources>

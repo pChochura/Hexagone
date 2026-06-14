@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.logic.PerkCategory
@@ -40,6 +41,9 @@ import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.cancel
+import hexagone.shared.generated.resources.confirm
+import hexagone.shared.generated.resources.done
 import hexagone.shared.generated.resources.ic_diamond
 import hexagone.shared.generated.resources.ic_legendary_perk
 import hexagone.shared.generated.resources.ic_rare_perk
@@ -47,6 +51,125 @@ import hexagone.shared.generated.resources.ic_roll
 import hexagone.shared.generated.resources.shop_insufficient_balance
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+
+/**
+ * Atom: A standardized alert dialog for Success, Error, and Confirmation messages.
+ */
+@Composable
+fun HexAlertDialog(
+    state: com.pointlessgames.hexagone.game.model.HexDialogState,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val spacing = MaterialTheme.spacing
+    
+    DialogContainer(modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(spacing.medium.scaled),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val (title, message, isError, onConfirm) = when (state) {
+                is com.pointlessgames.hexagone.game.model.HexDialogState.Confirmation -> {
+                    val msg = stringResource(state.message, *state.formatArgs.toTypedArray())
+                    Quadruple(stringResource(state.title), msg, false, state.onConfirm)
+                }
+                is com.pointlessgames.hexagone.game.model.HexDialogState.Info -> {
+                    Quadruple(stringResource(state.title), stringResource(state.message), state.isError, null)
+                }
+            }
+
+            Text(
+                text = title.uppercase(),
+                color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Black,
+                fontSize = 20.sp.scaled,
+                letterSpacing = 2.sp.scaled,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(Modifier.height(spacing.large.scaled))
+
+            Text(
+                text = message,
+                color = Color.White.copy(alpha = 0.8f),
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp.scaled,
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp.scaled
+            )
+
+            Spacer(Modifier.height(spacing.extraLarge.scaled))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally)
+            ) {
+                if (onConfirm != null) {
+                    // Cancel Option
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.background, CircleShape)
+                            .clickable { onDismiss() }
+                            .padding(vertical = spacing.medium.scaled),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.cancel).uppercase(),
+                            color = Color.White.copy(alpha = 0.6f),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp.scaled
+                        )
+                    }
+
+                    // Confirm Option
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            .clickable { 
+                                onConfirm()
+                                onDismiss()
+                            }
+                            .padding(vertical = spacing.medium.scaled),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.confirm).uppercase(),
+                            color = Color.White,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 14.sp.scaled
+                        )
+                    }
+                } else {
+                    // OK / Dismiss Button
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.6f)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            .clickable { onDismiss() }
+                            .padding(vertical = spacing.medium.scaled),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.done).uppercase(),
+                            color = Color.White,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 14.sp.scaled
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 /**
  * Atom: A reusable surface for dialogs with the standard Hexagone styling.

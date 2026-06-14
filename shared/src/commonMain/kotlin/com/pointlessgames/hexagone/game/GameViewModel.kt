@@ -17,10 +17,20 @@ import com.pointlessgames.hexagone.game.model.DetailedGameResult
 import com.pointlessgames.hexagone.game.model.GameEffect
 import com.pointlessgames.hexagone.game.model.GameState
 import com.pointlessgames.hexagone.game.model.GameUiState
+import com.pointlessgames.hexagone.game.model.HexDialogState.Confirmation
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.Perk
 import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.shop_buy_confirmation_message
+import hexagone.shared.generated.resources.shop_buy_confirmation_title
+import hexagone.shared.generated.resources.shop_buy_failure_message
+import hexagone.shared.generated.resources.shop_buy_failure_title
+import hexagone.shared.generated.resources.shop_buy_success_message
+import hexagone.shared.generated.resources.shop_buy_success_title
+import hexagone.shared.generated.resources.shop_common_bundle
+import hexagone.shared.generated.resources.shop_legendary_bundle
+import hexagone.shared.generated.resources.shop_rare_bundle
 import hexagone.shared.generated.resources.tip_daily_message
 import hexagone.shared.generated.resources.tip_merge_message
 import hexagone.shared.generated.resources.tip_perk_message
@@ -39,6 +49,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
 import kotlinx.serialization.json.Json
+import org.jetbrains.compose.resources.getString
 import kotlin.time.Clock
 
 internal class GameViewModel(
@@ -68,12 +79,12 @@ internal class GameViewModel(
         settingsRepository = settingsRepository,
         engine = engine,
         scope = viewModelScope,
-        onCheckValidMoves = { checkValidMoves() }
+        onCheckValidMoves = { checkValidMoves() },
     )
 
     private val effectDelegate = EffectDelegate(
         effects = _effects,
-        scope = viewModelScope
+        scope = viewModelScope,
     )
 
     private val achievementDelegate = AchievementDelegate(
@@ -87,7 +98,7 @@ internal class GameViewModel(
             viewModelScope.launch {
                 handleChallengeComplete(challenge)
             }
-        }
+        },
     )
 
     private val actionDelegate = ActionDelegate(
@@ -100,7 +111,7 @@ internal class GameViewModel(
         onSpawnRequested = { spawnFromQueue(_uiState.value.grid) },
         onCheckValidMoves = { checkValidMoves() },
         onUpdateLevel = { updateLevel() },
-        onHoveredMergeChanged = { _hoveredMerge.value = it }
+        onHoveredMergeChanged = { _hoveredMerge.value = it },
     )
 
     private val mergeDelegate = MergeDelegate(
@@ -111,9 +122,9 @@ internal class GameViewModel(
         effectDelegate = effectDelegate,
         achievementDelegate = achievementDelegate,
         challengeDelegate = challengeDelegate,
-        onSpawnRequested = { decrementLifespan, skipSpawn -> 
-            spawnFromQueue(_uiState.value.grid, decrementLifespan, skipSpawn) 
-        }
+        onSpawnRequested = { decrementLifespan, skipSpawn ->
+            spawnFromQueue(_uiState.value.grid, decrementLifespan, skipSpawn)
+        },
     )
 
     private val debugDelegate = DebugDelegate(
@@ -133,10 +144,21 @@ internal class GameViewModel(
         val currentTip = _uiState.value.activeTip ?: return
         viewModelScope.launch {
             when (currentTip.id) {
-                com.pointlessgames.hexagone.game.model.TipId.MERGE -> settingsRepository.setHasShownMergeTip(true)
-                com.pointlessgames.hexagone.game.model.TipId.PERK -> settingsRepository.setHasShownPerkTip(true)
-                com.pointlessgames.hexagone.game.model.TipId.POST_GAME -> settingsRepository.setHasShownPostGameTip(true)
-                com.pointlessgames.hexagone.game.model.TipId.DAILY -> settingsRepository.setHasShownDailyChallengeTip(true)
+                com.pointlessgames.hexagone.game.model.TipId.MERGE -> settingsRepository.setHasShownMergeTip(
+                    true,
+                )
+
+                com.pointlessgames.hexagone.game.model.TipId.PERK -> settingsRepository.setHasShownPerkTip(
+                    true,
+                )
+
+                com.pointlessgames.hexagone.game.model.TipId.POST_GAME -> settingsRepository.setHasShownPostGameTip(
+                    true,
+                )
+
+                com.pointlessgames.hexagone.game.model.TipId.DAILY -> settingsRepository.setHasShownDailyChallengeTip(
+                    true,
+                )
             }
             _uiState.update { it.copy(activeTip = null) }
         }
@@ -144,16 +166,27 @@ internal class GameViewModel(
 
     private fun triggerTip(id: com.pointlessgames.hexagone.game.model.TipId) {
         val tipData = when (id) {
-            com.pointlessgames.hexagone.game.model.TipId.MERGE -> 
+            com.pointlessgames.hexagone.game.model.TipId.MERGE ->
                 Res.string.tip_merge_message to com.pointlessgames.hexagone.game.model.TipTarget.GRID
-            com.pointlessgames.hexagone.game.model.TipId.PERK -> 
+
+            com.pointlessgames.hexagone.game.model.TipId.PERK ->
                 Res.string.tip_perk_message to com.pointlessgames.hexagone.game.model.TipTarget.PERK_BAR
-            com.pointlessgames.hexagone.game.model.TipId.POST_GAME -> 
+
+            com.pointlessgames.hexagone.game.model.TipId.POST_GAME ->
                 Res.string.tip_post_game_message to com.pointlessgames.hexagone.game.model.TipTarget.GAME_OVER_BUTTONS
-            com.pointlessgames.hexagone.game.model.TipId.DAILY -> 
+
+            com.pointlessgames.hexagone.game.model.TipId.DAILY ->
                 Res.string.tip_daily_message to com.pointlessgames.hexagone.game.model.TipTarget.SCORE_SECTION
         }
-        _uiState.update { it.copy(activeTip = com.pointlessgames.hexagone.game.model.GameTip(id, tipData.first, tipData.second)) }
+        _uiState.update {
+            it.copy(
+                activeTip = com.pointlessgames.hexagone.game.model.GameTip(
+                    id,
+                    tipData.first,
+                    tipData.second,
+                ),
+            )
+        }
     }
 
 
@@ -166,24 +199,29 @@ internal class GameViewModel(
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
             val dateSeed = today.year * 10000L + (today.month.ordinal + 1) * 100L + today.day
             val yesterday = today.minus(1, DateTimeUnit.DAY)
-            val yesterdaySeed = yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.day
+            val yesterdaySeed =
+                yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.day
 
             val lastCompletedDate = settingsRepository.getLastCompletedChallengeDate()
             var challengeStreak = settingsRepository.getChallengeStreak()
-            val completedDates = settingsRepository.getCompletedChallengeDates().mapNotNull { it.toLongOrNull() }.toSet()
+            val completedDates =
+                settingsRepository.getCompletedChallengeDates().mapNotNull { it.toLongOrNull() }
+                    .toSet()
 
             if (lastCompletedDate != 0L && lastCompletedDate != dateSeed && lastCompletedDate != yesterdaySeed) {
                 challengeStreak = 0
                 settingsRepository.setChallengeStreak(0)
             }
 
-            val currentDailyChallenges = DailyChallengeProvider.getChallengesForDate(today, challengeStreak)
+            val currentDailyChallenges =
+                DailyChallengeProvider.getChallengesForDate(today, challengeStreak)
 
             if (savedStateJson != null) {
                 try {
                     val savedState = Json.decodeFromString<GameState>(savedStateJson)
                     val isGameStarted = savedState.totalMerges > 0
-                    val isSameDayChallenges = savedState.dailyChallenges.map { it.challenge } == currentDailyChallenges
+                    val isSameDayChallenges =
+                        savedState.dailyChallenges.map { it.challenge } == currentDailyChallenges
 
                     if (!isGameStarted && !isSameDayChallenges) {
                         stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
@@ -234,7 +272,11 @@ internal class GameViewModel(
                                 dailyChallenges = if (savedState.dailyChallenges.isNotEmpty()) {
                                     savedState.dailyChallenges
                                 } else {
-                                    currentDailyChallenges.map { challenge -> DailyChallengeProgress(challenge) }
+                                    currentDailyChallenges.map { challenge ->
+                                        DailyChallengeProgress(
+                                            challenge,
+                                        )
+                                    }
                                 },
                                 completedChallengeDates = if (savedState.completedChallengeDates.isNotEmpty()) {
                                     savedState.completedChallengeDates
@@ -242,7 +284,7 @@ internal class GameViewModel(
                                     completedDates
                                 },
                                 challengeStreak = challengeStreak,
-                                isStreakCollectedToday = lastCompletedDate == dateSeed
+                                isStreakCollectedToday = lastCompletedDate == dateSeed,
                             )
                         }
                         stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
@@ -251,31 +293,35 @@ internal class GameViewModel(
                     }
                 } catch (_: Exception) {
                     stateDelegate.setAbsoluteBestScore(best)
-                    _uiState.update { 
+                    _uiState.update {
                         it.copy(
-                            bestScore = best, 
+                            bestScore = best,
                             sessionBestScore = best,
                             mergeHintsEnabled = hintsEnabled,
-                            dailyChallenges = currentDailyChallenges.map { c -> DailyChallengeProgress(c) },
+                            dailyChallenges = currentDailyChallenges.map { c ->
+                                DailyChallengeProgress(
+                                    c,
+                                )
+                            },
                             completedChallengeDates = completedDates,
                             challengeStreak = challengeStreak,
-                            isStreakCollectedToday = lastCompletedDate == dateSeed
-                        ) 
+                            isStreakCollectedToday = lastCompletedDate == dateSeed,
+                        )
                     }
                     restartGame()
                 }
             } else {
                 stateDelegate.setAbsoluteBestScore(best)
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
-                        bestScore = best, 
+                        bestScore = best,
                         sessionBestScore = best,
                         mergeHintsEnabled = hintsEnabled,
                         dailyChallenges = currentDailyChallenges.map { c -> DailyChallengeProgress(c) },
                         completedChallengeDates = completedDates,
                         challengeStreak = challengeStreak,
-                        isStreakCollectedToday = lastCompletedDate == dateSeed
-                    ) 
+                        isStreakCollectedToday = lastCompletedDate == dateSeed,
+                    )
                 }
                 restartGame()
             }
@@ -312,13 +358,13 @@ internal class GameViewModel(
                     val vouchers = mapOf(
                         PerkCategory.COMMON to (balances["VCMN"] ?: 0),
                         PerkCategory.RARE to (balances["VRARE"] ?: 0),
-                        PerkCategory.LEGENDARY to (balances["VLGD"] ?: 0)
+                        PerkCategory.LEGENDARY to (balances["VLGD"] ?: 0),
                     )
-                    _uiState.update { 
+                    _uiState.update {
                         it.copy(
                             diamonds = balances["diamonds"] ?: 0,
-                            vouchers = vouchers
-                        ) 
+                            vouchers = vouchers,
+                        )
                     }
                 }
             }
@@ -327,21 +373,55 @@ internal class GameViewModel(
                     _uiState.update { it.copy(isShopLoading = loading) }
                 }
             }
+            launch {
+                billingManager.purchaseEvents.collect { result ->
+                    when (result) {
+                        is com.pointlessgames.hexagone.billing.PurchaseResult.Success -> {
+                            _uiState.update {
+                                it.copy(
+                                    activeDialog = com.pointlessgames.hexagone.game.model.HexDialogState.Info(
+                                        title = Res.string.shop_buy_success_title,
+                                        message = Res.string.shop_buy_success_message,
+                                    ),
+                                )
+                            }
+                        }
+
+                        is com.pointlessgames.hexagone.billing.PurchaseResult.Error -> {
+                            _uiState.update {
+                                it.copy(
+                                    activeDialog = com.pointlessgames.hexagone.game.model.HexDialogState.Info(
+                                        title = Res.string.shop_buy_failure_title,
+                                        message = Res.string.shop_buy_failure_message,
+                                        isError = true,
+                                    ),
+                                )
+                            }
+                        }
+
+                        else -> {}
+                    }
+                }
+            }
         }
     }
 
     fun onEmptySpaceClicked(x: Int, y: Int) = actionDelegate.onEmptySpaceClicked(x, y)
-    
+
     fun onEmptySpaceTouchDown(x: Int, y: Int) = actionDelegate.onEmptySpaceTouchDown(x, y)
-    
+
     fun onCellTouchDown(cell: HexagonCell) = actionDelegate.onCellTouchDown(cell)
-    
-    fun onCellTouchUp() { _hoveredMerge.value = null }
-    
-    fun onEmptySpaceTouchUp() { _hoveredMerge.value = null }
-    
+
+    fun onCellTouchUp() {
+        _hoveredMerge.value = null
+    }
+
+    fun onEmptySpaceTouchUp() {
+        _hoveredMerge.value = null
+    }
+
     fun onCellClicked(cell: HexagonCell) = actionDelegate.onCellClicked(cell)
-    
+
     fun onMergeAnimationFinished() = mergeDelegate.onMergeAnimationFinished()
 
     private fun updateLevel() {
@@ -351,7 +431,8 @@ internal class GameViewModel(
             val levelDifference = lvl - state.level
             if (levelDifference > 0) {
                 challengeDelegate.onLevelUp(lvl)
-                val nextPerkOptions = state.perkOptions.ifEmpty { engine.pickWeightedPerks(3, random) }
+                val nextPerkOptions =
+                    state.perkOptions.ifEmpty { engine.pickWeightedPerks(3, random) }
                 state.copy(
                     level = lvl,
                     levelProgress = engine.getLevelProgress(state.score, lvl),
@@ -359,7 +440,7 @@ internal class GameViewModel(
                     perkOptions = nextPerkOptions,
                     pendingLevelUps = state.pendingLevelUps + levelDifference,
                     canReroll = if (state.perkOptions.isEmpty()) true else state.canReroll,
-                    seed = random.nextLong()
+                    seed = random.nextLong(),
                 )
             } else {
                 state.copy(
@@ -481,7 +562,7 @@ internal class GameViewModel(
             it.copy(
                 perkOptions = engine.pickWeightedPerks(3, random, excludeLegendary = true),
                 canReroll = false,
-                seed = random.nextLong()
+                seed = random.nextLong(),
             )
         }
         achievementDelegate.onRerollUsed()
@@ -498,10 +579,18 @@ internal class GameViewModel(
         val initialSeed = kotlin.random.Random.nextLong()
         val random = kotlin.random.Random(initialSeed)
         val (initialGrid, nextIdCounter) = engine.generateInitialGrid(random)
-        val (initialPreviews, nextPreviewIdCounter) = engine.pickRandomPreviews(initialGrid, emptyList(), emptyList(), 3, random, 0)
-        
+        val (initialPreviews, nextPreviewIdCounter) = engine.pickRandomPreviews(
+            initialGrid,
+            emptyList(),
+            emptyList(),
+            3,
+            random,
+            0,
+        )
+
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        val currentDailyChallenges = DailyChallengeProvider.getChallengesForDate(today, _uiState.value.challengeStreak)
+        val currentDailyChallenges =
+            DailyChallengeProvider.getChallengesForDate(today, _uiState.value.challengeStreak)
 
         _uiState.value = GameUiState(
             grid = initialGrid,
@@ -527,7 +616,7 @@ internal class GameViewModel(
             challengeStreak = _uiState.value.challengeStreak,
             isStreakCollectedToday = _uiState.value.isStreakCollectedToday,
             debugUsed = false,
-            finalResult = null
+            finalResult = null,
         )
         updateLevel()
         checkValidMoves()
@@ -576,12 +665,12 @@ internal class GameViewModel(
                 )
 
                 val playerName = settingsRepository.getPlayerName()
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
-                        isGameOver = true, 
+                        isGameOver = true,
                         pendingResult = if (playerName == null && !state.debugUsed) finalResult else null,
-                        finalResult = finalResult
-                    ) 
+                        finalResult = finalResult,
+                    )
                 }
                 achievementDelegate.onGameFinished()
                 settingsRepository.setGameState(null)
@@ -614,14 +703,18 @@ internal class GameViewModel(
             val currentPreviewIdCounter = _uiState.value.previewIdCounter
 
             val (newState, newPreviewsResult, perksAfterSpawn) = if (skipSpawn) {
-                Triple(gridWithoutTactical, _uiState.value.preview to currentPreviewIdCounter, currentPerks)
+                Triple(
+                    gridWithoutTactical,
+                    _uiState.value.preview to currentPreviewIdCounter,
+                    currentPerks,
+                )
             } else {
                 engine.spawnFromQueue(
                     gridWithoutTactical,
                     _uiState.value.preview,
                     currentPerks,
                     random,
-                    currentPreviewIdCounter
+                    currentPreviewIdCounter,
                 )
             }
 
@@ -643,7 +736,7 @@ internal class GameViewModel(
                 newPreviews,
                 updatedPerks,
                 _uiState.value.perkSpawnCounter,
-                random
+                random,
             )
 
             val rewardsToEmit = _uiState.value.earnedRewardsThisTurn
@@ -657,7 +750,7 @@ internal class GameViewModel(
                     earnedRewardsThisTurn = emptyList(),
                     seed = random.nextLong(),
                     previewIdCounter = nextPreviewIdCounter,
-                    thawedIds = thawedIds
+                    thawedIds = thawedIds,
                 )
             }
 
@@ -698,11 +791,39 @@ internal class GameViewModel(
         _uiState.update { it.copy(isShopVisible = false) }
     }
 
+    fun onDismissDialog() {
+        _uiState.update { it.copy(activeDialog = null) }
+    }
+
     fun onBuyPerk(category: PerkCategory) {
+        val cost = when (category) {
+            PerkCategory.COMMON -> 50
+            PerkCategory.RARE -> 150
+            PerkCategory.LEGENDARY -> 500
+        }
+        val nameRes = when (category) {
+            PerkCategory.COMMON -> Res.string.shop_common_bundle
+            PerkCategory.RARE -> Res.string.shop_rare_bundle
+            PerkCategory.LEGENDARY -> Res.string.shop_legendary_bundle
+        }
+
         viewModelScope.launch {
-            _uiState.update { it.copy(isShopProcessing = true) }
-            monetizationRepository.buyPerkVoucher(category)
-            _uiState.update { it.copy(isShopProcessing = false) }
+            _uiState.update {
+                it.copy(
+                    activeDialog = Confirmation(
+                        title = Res.string.shop_buy_confirmation_title,
+                        message = Res.string.shop_buy_confirmation_message,
+                        formatArgs = listOf(cost, getString(nameRes)),
+                        onConfirm = {
+                            viewModelScope.launch {
+                                _uiState.update { s -> s.copy(isShopProcessing = true) }
+                                monetizationRepository.buyPerkVoucher(category)
+                                _uiState.update { s -> s.copy(isShopProcessing = false) }
+                            }
+                        },
+                    ),
+                )
+            }
         }
     }
 
@@ -718,12 +839,12 @@ internal class GameViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isVoucherProcessing = true) }
             if (monetizationRepository.usePerkVoucher(category)) {
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
                         collectedPerks = it.collectedPerks + perk,
                         activeVoucherSelection = null,
-                        isVoucherProcessing = false
-                    ) 
+                        isVoucherProcessing = false,
+                    )
                 }
             } else {
                 _uiState.update { it.copy(isVoucherProcessing = false) }
@@ -745,9 +866,9 @@ internal class GameViewModel(
 
     private suspend fun handleChallengeComplete(challenge: DailyChallenge) {
         if (challenge.rewardScore > 0) {
-            _uiState.update { 
+            _uiState.update {
                 val newScore = it.score + challenge.rewardScore
-                it.copy(score = newScore, bestScore = maxOf(it.bestScore, newScore)) 
+                it.copy(score = newScore, bestScore = maxOf(it.bestScore, newScore))
             }
         }
         if (challenge.rewardPerk != null) {
@@ -764,7 +885,8 @@ internal class GameViewModel(
             if (lastDate != dateSeed) {
                 val currentStreak = settingsRepository.getChallengeStreak()
                 val yesterday = today.minus(1, DateTimeUnit.DAY)
-                val yesterdaySeed = yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.day
+                val yesterdaySeed =
+                    yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.day
 
                 val newStreak = if (lastDate == yesterdaySeed) currentStreak + 1 else 1
 
@@ -772,12 +894,15 @@ internal class GameViewModel(
                 settingsRepository.setChallengeStreak(newStreak)
                 settingsRepository.addCompletedChallengeDate(dateSeed.toString())
 
-                val reward = com.pointlessgames.hexagone.game.logic.StreakMilestones.getRewardForStreak(newStreak)
+                val reward =
+                    com.pointlessgames.hexagone.game.logic.StreakMilestones.getRewardForStreak(
+                        newStreak,
+                    )
                 if (reward != null) {
                     monetizationRepository.awardStreakRewards(reward)
                 }
 
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
                         challengeStreak = newStreak,
                         completedChallengeDates = it.completedChallengeDates + dateSeed,

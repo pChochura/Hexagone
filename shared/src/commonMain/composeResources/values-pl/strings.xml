@@ -303,4 +303,12 @@
     <string name="shop_best_value">NAJLEPSZA OFERTA</string>
     <string name="shop_extra_diamonds">+%1$d% EKSTRA</string>
     <string name="shop_insufficient_balance">ZA MAŁO DIAMENTÓW</string>
+    <string name="shop_buy_confirmation_title">POTWIERDŹ WYMIANĘ</string>
+    <string name="shop_buy_confirmation_message">Wymienić %1$d Diamentów na voucher na %2$s Perk?</string>
+    <string name="shop_buy_success_title">ZAKUP UDANY</string>
+    <string name="shop_buy_success_message">Pomyślnie nabyto produkt.</string>
+    <string name="shop_buy_failure_title">BŁĄD ZAKUPU</string>
+    <string name="shop_buy_failure_message">Coś poszło nie tak. Spróbuj ponownie później.</string>
+    <string name="shop_voucher_explanation">Wymiana vouchera doda wybrany perk do Twojej obecnej gry. Ta akcja jest trwała i zużywa voucher.</string>
+    <string name="confirm">POTWIERDŹ</string>
 </resources>

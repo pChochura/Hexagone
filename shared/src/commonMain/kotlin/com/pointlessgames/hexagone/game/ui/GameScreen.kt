@@ -164,6 +164,11 @@ internal fun GameScreen(
     val isShopLoading by isShopLoadingState
     val isShopProcessing by isShopProcessingState
     val isVoucherProcessing by isVoucherProcessingState
+    val activeDialogState =
+        remember(uiState) { uiState.map { it.activeDialog }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.activeDialog,
+        )
+    val activeDialog by activeDialogState
     val activeVoucherSelectionState =
         remember(uiState) {
             uiState.map { it.activeVoucherSelection }.distinctUntilChanged()
@@ -342,6 +347,10 @@ internal fun GameScreen(
 
     BackHandler(enabled = activeVoucherSelection != null) {
         viewModel.onDismissVoucherSelection()
+    }
+
+    BackHandler(enabled = activeDialog != null) {
+        viewModel.onDismissDialog()
     }
 
     BackHandler(enabled = isGameOver && !showLeaderboard && !showAchievements && !showSettings && !showDailyChallenge && activeTierReward == null && activeChallengeReward == null) {
@@ -863,6 +872,30 @@ internal fun GameScreen(
                             viewModel.onPerkFromVoucherSelected(perk, voucherToDisplay)
                         },
                         onDismiss = viewModel::onDismissVoucherSelection,
+                    )
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = activeDialog != null,
+            enter = fadeIn() + scaleIn(initialScale = 0.9f),
+            exit = fadeOut(),
+        ) {
+            if (activeDialog != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.6f))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) { viewModel.onDismissDialog() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    com.pointlessgames.hexagone.game.ui.components.HexAlertDialog(
+                        state = activeDialog!!,
+                        onDismiss = viewModel::onDismissDialog
                     )
                 }
             }

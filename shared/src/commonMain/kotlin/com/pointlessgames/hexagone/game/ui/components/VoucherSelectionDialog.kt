@@ -25,6 +25,7 @@ import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.cancel
+import hexagone.shared.generated.resources.shop_voucher_explanation
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -62,6 +63,19 @@ internal fun VoucherSelectionDialog(
 
             Spacer(Modifier.height(spacing.extraLarge.scaled))
 
+            Text(
+                text = stringResource(Res.string.shop_voucher_explanation),
+                color = Color.White.copy(alpha = 0.5f),
+                fontWeight = FontWeight.Medium,
+                fontSize = 11.sp.scaled,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = spacing.extraLarge.scaled)
+            )
+
+            Spacer(Modifier.height(spacing.extraLarge.scaled))
+
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 70.dp.scaled),
                 horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally),
@@ -76,7 +90,8 @@ internal fun VoucherSelectionDialog(
                         perk = perk,
                         onClick = { onPerkSelected(perk) },
                         buttonSize = 70.dp.scaled,
-                        isEnabled = !isProcessing
+                        isEnabled = !isProcessing,
+                        tooltipDescription = perk.descriptionRes
                     )
                 }
             }

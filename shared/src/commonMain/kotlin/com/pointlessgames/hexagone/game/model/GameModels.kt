@@ -90,6 +90,7 @@ data class GameUiState(
     val isShopProcessing: Boolean = false,
     val isVoucherProcessing: Boolean = false,
     val activeVoucherSelection: com.pointlessgames.hexagone.game.logic.PerkCategory? = null,
+    val activeDialog: HexDialogState? = null,
 ) {
     fun consumePerk(perk: Perk): GameUiState {
         val perkIndex = collectedPerks.indexOf(perk)
@@ -101,6 +102,22 @@ data class GameUiState(
             copy(collectedPerks = newList, perksUsedTracking = newTracking)
         } else this
     }
+}
+
+@Immutable
+sealed interface HexDialogState {
+    data class Confirmation(
+        val title: StringResource,
+        val message: StringResource,
+        val formatArgs: List<Any> = emptyList(),
+        val onConfirm: () -> Unit,
+    ) : HexDialogState
+
+    data class Info(
+        val title: StringResource,
+        val message: StringResource,
+        val isError: Boolean = false,
+    ) : HexDialogState
 }
 
 @Immutable
