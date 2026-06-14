@@ -94,4 +94,9 @@ internal class DebugDelegate(
         uiState.update { it.copy(collectedPerks = it.collectedPerks + perk, debugUsed = true) }
         onStateChanged()
     }
+
+    fun setChallengeStreak(streak: Int) {
+        uiState.update { it.copy(challengeStreak = streak, debugUsed = true) }
+        onStateChanged()
+    }
 }

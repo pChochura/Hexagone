@@ -103,6 +103,12 @@
     <string name="unknown">Nieznany</string>
     <string name="progress_fraction">%1$d / %2$d</string>
     <string name="reward_score_added">+%1$d PUNKTÓW</string>
+    <string name="streak_explanation">Ukończ wszystkie dzienne wyzwania, aby budować serię i odblokować nagrody za kamienie milowe!</string>
+    <string name="streak_milestones_title">KAMIEŃ MILOWY SERII</string>
+    <string name="streak_milestone_day">DZIEŃ %1$d</string>
+    <string name="streak_milestone_reward_details">SZCZEGÓŁY NAGRODY</string>
+    <string name="streak_milestone_diamonds">%1$d Diamentów</string>
+    <string name="streak_milestone_perks">%1$d %2$s Perk(ów)</string>
 
     <!-- Onboarding -->
     <string name="onboarding_title">WITAJ</string>

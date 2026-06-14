@@ -9,18 +9,22 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.game.ui.components.PerkIcon
 
 @Composable
 internal fun DebugOverlay(
@@ -28,8 +32,10 @@ internal fun DebugOverlay(
     isVisible: Boolean,
     selectedValue: Int?,
     isGhostMode: Boolean,
+    currentStreak: Int,
     onValueSelected: (Int?) -> Unit,
     onGhostModeToggled: () -> Unit,
+    onStreakChanged: (Int) -> Unit,
     onPerkClick: (Perk) -> Unit,
     onClose: () -> Unit,
 ) {
@@ -48,6 +54,7 @@ internal fun DebugOverlay(
             )
             .padding(24.dp)
             .padding(bottom = 16.dp)
+            .verticalScroll(rememberScrollState())
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -106,6 +113,67 @@ internal fun DebugOverlay(
                     isSelected = selectedValue == value,
                     onClick = { onValueSelected(value) }
                 )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        Text("Simulate Streak", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = 0.5f))
+        Spacer(Modifier.height(4.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "CURRENT: $currentStreak",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                modifier = Modifier.weight(1f)
+            )
+
+            Button(
+                onClick = { onStreakChanged(0) },
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                modifier = Modifier.height(32.dp)
+            ) {
+                Text("RESET", fontSize = 10.sp, fontWeight = FontWeight.Black)
+            }
+
+            Button(
+                onClick = { onStreakChanged(currentStreak + 1) },
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                modifier = Modifier.height(32.dp)
+            ) {
+                Text("+1", fontSize = 10.sp, fontWeight = FontWeight.Black)
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        val milestones = listOf(3, 7, 14, 30, 90, 365)
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(milestones) { day ->
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.DarkGray)
+                        .clickable { onStreakChanged(day) }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "DAY $day",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp
+                    )
+                }
             }
         }
 

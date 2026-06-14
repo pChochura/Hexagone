@@ -115,7 +115,9 @@ sealed interface HexDialogState {
 
     data class Info(
         val title: StringResource,
-        val message: StringResource,
+        val message: StringResource? = null,
+        val messageText: String? = null,
+        val formatArgs: List<Any> = emptyList(),
         val isError: Boolean = false,
     ) : HexDialogState
 }

@@ -31,6 +31,9 @@ import hexagone.shared.generated.resources.shop_buy_success_title
 import hexagone.shared.generated.resources.shop_common_bundle
 import hexagone.shared.generated.resources.shop_legendary_bundle
 import hexagone.shared.generated.resources.shop_rare_bundle
+import hexagone.shared.generated.resources.streak_milestone_diamonds
+import hexagone.shared.generated.resources.streak_milestone_perks
+import hexagone.shared.generated.resources.streak_milestone_reward_details
 import hexagone.shared.generated.resources.tip_daily_message
 import hexagone.shared.generated.resources.tip_merge_message
 import hexagone.shared.generated.resources.tip_perk_message
@@ -780,6 +783,7 @@ internal class GameViewModel(
     fun toggleDebugAddAsGhost() = debugDelegate.toggleDebugAddAsGhost()
     fun onDebugCellClicked(x: Int, y: Int) = debugDelegate.onDebugCellClicked(x, y)
     fun addPerkManually(perk: Perk) = debugDelegate.addPerkManually(perk)
+    fun setChallengeStreak(streak: Int) = debugDelegate.setChallengeStreak(streak)
 
     fun getAchievementManager(): AchievementManager = achievementManager
 
@@ -793,6 +797,34 @@ internal class GameViewModel(
 
     fun onDismissDialog() {
         _uiState.update { it.copy(activeDialog = null) }
+    }
+
+    fun onShowMilestoneDetails(day: Int) {
+        val reward = com.pointlessgames.hexagone.game.logic.StreakMilestones.getRewardForStreak(day) ?: return
+        
+        viewModelScope.launch {
+            val details = mutableListOf<String>()
+            if (reward.diamonds > 0) {
+                details.add(getString(Res.string.streak_milestone_diamonds, reward.diamonds))
+            }
+            reward.perkRewards.forEach { (category, count) ->
+                val categoryName = when (category) {
+                    PerkCategory.COMMON -> getString(Res.string.shop_common_bundle)
+                    PerkCategory.RARE -> getString(Res.string.shop_rare_bundle)
+                    PerkCategory.LEGENDARY -> getString(Res.string.shop_legendary_bundle)
+                }
+                details.add(getString(Res.string.streak_milestone_perks, count, categoryName))
+            }
+
+            _uiState.update { 
+                it.copy(
+                    activeDialog = com.pointlessgames.hexagone.game.model.HexDialogState.Info(
+                        title = Res.string.streak_milestone_reward_details,
+                        messageText = details.joinToString("\n") { detail -> "• $detail" }
+                    )
+                )
+            }
+        }
     }
 
     fun onBuyPerk(category: PerkCategory) {

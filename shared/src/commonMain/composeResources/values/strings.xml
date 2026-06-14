@@ -127,6 +127,12 @@
     <string name="unknown">Unknown</string>
     <string name="progress_fraction">%1$d / %2$d</string>
     <string name="reward_score_added">+%1$d SCORE</string>
+    <string name="streak_explanation">Complete all daily missions to build your streak and unlock milestone rewards!</string>
+    <string name="streak_milestones_title">STREAK MILESTONES</string>
+    <string name="streak_milestone_day">DAY %1$d</string>
+    <string name="streak_milestone_reward_details">REWARD DETAILS</string>
+    <string name="streak_milestone_diamonds">%1$d Diamonds</string>
+    <string name="streak_milestone_perks">%1$d %2$s Perk(s)</string>
 
     <!-- Onboarding -->
     <string name="onboarding_title">WELCOME</string>

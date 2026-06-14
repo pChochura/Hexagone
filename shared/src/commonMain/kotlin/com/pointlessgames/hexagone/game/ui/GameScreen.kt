@@ -252,9 +252,6 @@ internal fun GameScreen(
     val challengeStreakState = remember(uiState) {
         uiState.map { it.challengeStreak }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.challengeStreak)
-    val completedChallengeDatesState = remember(uiState) {
-        uiState.map { it.completedChallengeDates }.distinctUntilChanged()
-    }.collectAsState(viewModel.uiState.value.completedChallengeDates)
     val isStreakCollectedTodayState = remember(uiState) {
         uiState.map { it.isStreakCollectedToday }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.isStreakCollectedToday)
@@ -409,7 +406,6 @@ internal fun GameScreen(
     val debugAddAsGhostProvider = remember { { debugAddAsGhostState.value } }
     val dailyChallengesProvider = remember { { dailyChallengesState.value } }
     val challengeStreakProvider = remember { { challengeStreakState.value } }
-    val completedChallengeDatesProvider = remember { { completedChallengeDatesState.value } }
     val isStreakCollectedTodayProvider = remember { { isStreakCollectedTodayState.value } }
     val debugUsedProvider = remember { { debugUsedState.value } }
     val diamondsProvider = remember { { diamondsState.value } }
@@ -648,8 +644,10 @@ internal fun GameScreen(
                             isVisible = true,
                             selectedValue = debugSelectedValueProvider(),
                             isGhostMode = debugAddAsGhostProvider(),
+                            currentStreak = challengeStreakProvider(),
                             onValueSelected = viewModel::setDebugSelectedValue,
                             onGhostModeToggled = viewModel::toggleDebugAddAsGhost,
+                            onStreakChanged = viewModel::setChallengeStreak,
                             onPerkClick = viewModel::addPerkManually,
                             onClose = onDebugToggle,
                             modifier = Modifier.fillMaxWidth(),
@@ -799,8 +797,8 @@ internal fun GameScreen(
             DailyChallengeDialog(
                 challengesProvider = dailyChallengesProvider,
                 streakProvider = challengeStreakProvider,
-                completedDatesProvider = completedChallengeDatesProvider,
                 isStreakCollectedTodayProvider = isStreakCollectedTodayProvider,
+                onMilestoneClick = viewModel::onShowMilestoneDetails,
                 onDismiss = { showDailyChallenge = false },
             )
         }
@@ -877,28 +875,11 @@ internal fun GameScreen(
             }
         }
 
-        AnimatedVisibility(
-            visible = activeDialog != null,
-            enter = fadeIn() + scaleIn(initialScale = 0.9f),
-            exit = fadeOut(),
-        ) {
-            if (activeDialog != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.6f))
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { viewModel.onDismissDialog() },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    com.pointlessgames.hexagone.game.ui.components.HexAlertDialog(
-                        state = activeDialog!!,
-                        onDismiss = viewModel::onDismissDialog
-                    )
-                }
-            }
+        if (activeDialog != null) {
+            com.pointlessgames.hexagone.game.ui.components.HexAlertDialog(
+                state = activeDialog!!,
+                onDismiss = viewModel::onDismissDialog
+            )
         }
     }
 }
