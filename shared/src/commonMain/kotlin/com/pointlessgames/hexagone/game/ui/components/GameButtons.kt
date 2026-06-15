@@ -33,7 +33,69 @@ import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.ic_back
 import org.jetbrains.compose.resources.painterResource
+
+@Composable
+fun HexBackButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val heightScale = 0.866f
+    Box(
+        modifier = modifier
+            .size(width = 48.dp, height = 48.dp * heightScale)
+            .clip(FlatTopHexagonShape())
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
+            .border(1.dp, Color.White.copy(alpha = 0.15f), FlatTopHexagonShape())
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(Res.drawable.ic_back),
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+@Composable
+fun UnifiedTabButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val cornerRadius = MaterialTheme.cornerRadius
+    val shape = RoundedCornerShape(cornerRadius.medium)
+
+    Box(
+        modifier = modifier
+            .height(44.dp)
+            .background(
+                if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                shape,
+            )
+            .border(
+                width = 1.dp,
+                color = if (isSelected) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.05f),
+                shape = shape,
+            )
+            .clip(shape)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text.uppercase(),
+            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.4f),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Black,
+            letterSpacing = 2.sp,
+        )
+    }
+}
 
 @Composable
 fun BottomSheetTitle(
@@ -50,49 +112,6 @@ fun BottomSheetTitle(
         textAlign = TextAlign.Center,
         modifier = modifier.fillMaxWidth(),
     )
-}
-
-@Composable
-fun DialogTabButton(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val cornerRadius = MaterialTheme.cornerRadius
-    val spacing = MaterialTheme.spacing
-    val shape = RoundedCornerShape(cornerRadius.medium)
-    val primaryColor = MaterialTheme.colorScheme.primary
-
-    val brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-        if (isSelected) {
-            listOf(primaryColor, primaryColor.copy(alpha = 0.7f))
-        } else {
-            listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.01f))
-        },
-    )
-
-    Box(
-        modifier = modifier
-            .height(44.dp)
-            .background(brush, shape)
-            .border(
-                width = spacing.extraTiny,
-                color = if (isSelected) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.05f),
-                shape = shape,
-            )
-            .clip(shape)
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = text.uppercase(),
-            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color.White.copy(alpha = 0.4f),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 2.sp,
-        )
-    }
 }
 
 @Composable

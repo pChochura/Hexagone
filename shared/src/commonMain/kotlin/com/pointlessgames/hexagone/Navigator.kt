@@ -22,12 +22,28 @@ import org.koin.core.annotation.KoinExperimentalAPI
 internal sealed interface Route : NavKey {
     @Serializable
     data object Game : Route
+
+    @Serializable
+    data object Shop : Route
+
+    @Serializable
+    data object Leaderboard : Route
+
+    @Serializable
+    data object DailyMissions : Route
+
+    @Serializable
+    data class Achievements(val initialAchievementId: String? = null) : Route
 }
 
 private val navigationConfig = SavedStateConfiguration {
     serializersModule = SerializersModule {
         polymorphic(NavKey::class) {
             subclass(Route.Game::class, Route.Game.serializer())
+            subclass(Route.Shop::class, Route.Shop.serializer())
+            subclass(Route.Leaderboard::class, Route.Leaderboard.serializer())
+            subclass(Route.DailyMissions::class, Route.DailyMissions.serializer())
+            subclass(Route.Achievements::class, Route.Achievements.serializer())
         }
     }
 }

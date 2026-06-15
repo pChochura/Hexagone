@@ -10,8 +10,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +22,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,11 +31,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -240,7 +250,6 @@ fun DiamondBalanceBadge(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
-            .padding(spacing.large.scaled) // Manual offset since container padding is gone
             .background(MaterialTheme.colorScheme.background, RoundedCornerShape(16.dp.scaled))
             .border(1.dp.scaled, Color(0xFFFFD54F).copy(alpha = 0.2f), RoundedCornerShape(16.dp.scaled))
             .padding(horizontal = spacing.medium.scaled, vertical = spacing.small.scaled)
@@ -452,6 +461,168 @@ fun ProductCard(
                     fontWeight = FontWeight.Black,
                     fontSize = 9.sp.scaled
                 )
+            }
+        }
+    }
+}
+
+/**
+ * Molecule: A compact grid item for product display in the Shop.
+ */
+@Composable
+fun ProductGridItem(
+    title: String,
+    price: String,
+    description: String = "",
+    label: String? = null,
+    iconScale: Float = 1f,
+    isEnabled: Boolean = true,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val spacing = MaterialTheme.spacing
+    val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
+
+    Box(
+        modifier = modifier
+            .aspectRatio(0.8f) // Vertical orientation
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.background)
+            .border(1.dp.scaled, Color.White.copy(alpha = 0.05f), shape)
+            .clickable(enabled = isEnabled, onClick = onClick)
+            .padding(spacing.medium.scaled),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Icon / Visual Area
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_diamond),
+                    contentDescription = null,
+                    tint = Color(0xFFFFD54F),
+                    modifier = Modifier.size((48.dp.scaled * iconScale))
+                )
+            }
+
+            Text(
+                text = title.uppercase(),
+                color = Color.White,
+                fontWeight = FontWeight.Black,
+                fontSize = 13.sp.scaled,
+                textAlign = TextAlign.Center
+            )
+
+            if (description.isNotEmpty()) {
+                Text(
+                    text = description,
+                    color = Color.White.copy(alpha = 0.4f),
+                    fontSize = 9.sp.scaled,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Spacer(Modifier.height(spacing.medium.scaled))
+
+            Text(
+                text = price,
+                color = Color(0xFF81C784),
+                fontWeight = FontWeight.Black,
+                fontSize = 16.sp.scaled,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        if (label != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .offset(x = (-4).dp.scaled, y = (-4).dp.scaled)
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(6.dp.scaled))
+                    .padding(horizontal = 6.dp.scaled, vertical = 2.dp.scaled)
+            ) {
+                Text(
+                    text = label,
+                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 8.sp.scaled
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Organism: A unified layout for full-screen feature screens.
+ */
+@Composable
+fun ScreenScaffold(
+    title: String,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    topBarTrailingContent: @Composable (RowScope.() -> Unit)? = null,
+    content: @Composable (PaddingValues) -> Unit
+) {
+    val spacing = MaterialTheme.spacing
+    var headerHeight by remember { mutableStateOf(0) }
+    val density = androidx.compose.ui.platform.LocalDensity.current
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.background),
+                ),
+            )
+    ) {
+        // Content
+        val topPadding = remember(headerHeight) {
+            with(density) { headerHeight.toDp() }
+        }
+        content(PaddingValues(top = topPadding))
+
+        // Translucent Header
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned { headerHeight = it.size.height }
+                .background(
+                    Brush.verticalGradient(
+                        0f to MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                        0.7f to MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                        1f to Color.Transparent
+                    )
+                )
+                .statusBarsPadding()
+                .padding(horizontal = spacing.extraLarge.scaled)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = spacing.large.scaled, bottom = spacing.extraLarge.scaled),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled)
+            ) {
+                HexBackButton(onClick = onBack)
+                
+                Text(
+                    text = title.uppercase(),
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontSize = 24.sp.scaled,
+                        letterSpacing = 4.sp.scaled
+                    ),
+                    fontWeight = FontWeight.Black,
+                    color = Color.White,
+                    modifier = Modifier.weight(1f)
+                )
+
+                topBarTrailingContent?.invoke(this)
             }
         }
     }

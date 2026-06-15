@@ -1,4 +1,4 @@
-package com.pointlessgames.hexagone.game.ui.components
+package com.pointlessgames.hexagone.game.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,135 +11,157 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pointlessgames.hexagone.LocalNavigator
+import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.model.ChallengeGoal
 import com.pointlessgames.hexagone.game.model.DailyChallengeProgress
+import com.pointlessgames.hexagone.game.ui.components.ScreenScaffold
+import com.pointlessgames.hexagone.game.ui.components.ShopSectionTitle
+import com.pointlessgames.hexagone.game.ui.components.displayNameRes
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.*
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.daily_challenge
+import hexagone.shared.generated.resources.daily_challenge_completed
+import hexagone.shared.generated.resources.daily_challenge_goal_combo
+import hexagone.shared.generated.resources.daily_challenge_goal_combo_maintenance
+import hexagone.shared.generated.resources.daily_challenge_goal_diversity
+import hexagone.shared.generated.resources.daily_challenge_goal_elite_sacrifice
+import hexagone.shared.generated.resources.daily_challenge_goal_frozen_recovery
+import hexagone.shared.generated.resources.daily_challenge_goal_frugal
+import hexagone.shared.generated.resources.daily_challenge_goal_ghost_horde
+import hexagone.shared.generated.resources.daily_challenge_goal_legendary_gamble
+import hexagone.shared.generated.resources.daily_challenge_goal_level
+import hexagone.shared.generated.resources.daily_challenge_goal_merge
+import hexagone.shared.generated.resources.daily_challenge_goal_no_perks
+import hexagone.shared.generated.resources.daily_challenge_goal_path_merge
+import hexagone.shared.generated.resources.daily_challenge_goal_pattern
+import hexagone.shared.generated.resources.daily_challenge_goal_perk_restriction
+import hexagone.shared.generated.resources.daily_challenge_goal_score
+import hexagone.shared.generated.resources.daily_challenge_goal_tactical
+import hexagone.shared.generated.resources.daily_challenge_goal_value
+import hexagone.shared.generated.resources.ic_daily_challenge
+import hexagone.shared.generated.resources.ic_star
+import hexagone.shared.generated.resources.max_label
+import hexagone.shared.generated.resources.pattern_great_wall
+import hexagone.shared.generated.resources.pattern_ring_of_fire
+import hexagone.shared.generated.resources.pattern_the_prism
+import hexagone.shared.generated.resources.pattern_twin_peaks
+import hexagone.shared.generated.resources.progress_fraction
+import hexagone.shared.generated.resources.reward_perk_label
+import hexagone.shared.generated.resources.reward_score_label
+import hexagone.shared.generated.resources.streak_explanation
+import hexagone.shared.generated.resources.streak_label
+import hexagone.shared.generated.resources.streak_milestones_title
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DailyChallengeDialog(
-    challengesProvider: () -> List<DailyChallengeProgress>,
-    streakProvider: () -> Int,
-    isStreakCollectedTodayProvider: () -> Boolean,
-    onMilestoneClick: (Int) -> Unit,
-    onDismiss: () -> Unit,
+internal fun DailyMissionsScreen(
+    viewModel: GameViewModel,
 ) {
-    val challenges = challengesProvider()
-    val streak = streakProvider()
-    val isStreakCollectedToday = isStreakCollectedTodayProvider()
+    val uiState by viewModel.uiState.collectAsState()
+    val navigator = LocalNavigator.current
+    val spacing = MaterialTheme.spacing
 
-    ModalBottomSheet(
-        contentWindowInsets = { WindowInsets.statusBars },
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surface,
-        scrimColor = Color.Transparent,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.2f)) },
-    ) {
-        Column(
+    ScreenScaffold(
+        title = stringResource(Res.string.daily_challenge),
+        onBack = { navigator.pop() },
+    ) { contentPadding ->
+        LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding(),
+                .graphicsLayer { clip = false },
+            verticalArrangement = Arrangement.spacedBy(spacing.small.scaled),
+            contentPadding = PaddingValues(
+                top = contentPadding.calculateTopPadding(),
+                bottom = spacing.extraLarge.scaled,
+            ),
         ) {
-            Text(
-                text = stringResource(Res.string.daily_challenge).uppercase(),
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontSize = MaterialTheme.typography.headlineMedium.fontSize.scaled,
-                ),
-                fontWeight = FontWeight.Black,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = MaterialTheme.spacing.extraLarge.scaled),
-            )
-
-            Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small.scaled),
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(bottom = MaterialTheme.spacing.extraLarge.scaled)
-            ) {
-                items(challenges) { progress ->
+            items(uiState.dailyChallenges) { progress ->
+                Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
                     ChallengeCard(progress)
                 }
+            }
 
-                item {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Spacer(Modifier.height(MaterialTheme.spacing.large.scaled))
+            item {
+                Spacer(Modifier.height(spacing.large.scaled))
+            }
 
-                        Column(modifier = Modifier.padding(horizontal = MaterialTheme.spacing.extraLarge.scaled)) {
-                            ShopSectionTitle(text = stringResource(Res.string.streak_milestones_title))
+            item {
+                Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
+                    ShopSectionTitle(text = stringResource(Res.string.streak_milestones_title))
+                }
+            }
 
-                            Text(
-                                text = stringResource(Res.string.streak_explanation),
-                                color = Color.White.copy(alpha = 0.5f),
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 11.sp.scaled,
-                                lineHeight = 16.sp.scaled,
-                                modifier = Modifier.padding(bottom = MaterialTheme.spacing.medium.scaled)
-                            )
-                        }
+            item {
+                Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
+                    Text(
+                        text = stringResource(Res.string.streak_explanation),
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 11.sp.scaled,
+                        lineHeight = 16.sp.scaled,
+                        modifier = Modifier.padding(bottom = spacing.medium.scaled),
+                    )
+                }
+            }
 
-                        MilestoneMap(
-                            currentStreak = streak,
-                            isCollectedToday = isStreakCollectedToday,
-                            onMilestoneClick = onMilestoneClick
-                        )
-                        
-                        Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
+            item {
+                MilestoneMap(
+                    currentStreak = uiState.challengeStreak,
+                    isCollectedToday = uiState.isStreakCollectedToday,
+                    onMilestoneClick = viewModel::onShowMilestoneDetails,
+                )
+            }
 
-                        Text(
-                            text = stringResource(Res.string.streak_label, streak).uppercase(),
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 14.sp.scaled,
-                            letterSpacing = 1.sp.scaled,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = MaterialTheme.spacing.extraLarge.scaled)
-                        )
-                    }
+            item {
+                Spacer(Modifier.height(spacing.medium.scaled))
+            }
+
+            item {
+                Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
+                    Text(
+                        text = stringResource(
+                            Res.string.streak_label,
+                            uiState.challengeStreak,
+                        ).uppercase(),
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 14.sp.scaled,
+                        letterSpacing = 1.sp.scaled,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
@@ -150,7 +172,8 @@ fun DailyChallengeDialog(
 private fun MilestoneMap(
     currentStreak: Int,
     isCollectedToday: Boolean,
-    onMilestoneClick: (Int) -> Unit
+    onMilestoneClick: (Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val milestones = remember {
         listOf(3, 5, 7, 14, 21, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 365)
@@ -158,15 +181,15 @@ private fun MilestoneMap(
     val extraLargePadding = MaterialTheme.spacing.extraLarge.scaled
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
             .padding(vertical = MaterialTheme.spacing.small.scaled),
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium.scaled),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Spacer(Modifier.width(extraLargePadding - MaterialTheme.spacing.medium.scaled)) // Adjust for spacedBy
-        
+        Spacer(Modifier.width(extraLargePadding - MaterialTheme.spacing.medium.scaled))
+
         milestones.forEach { day ->
             MilestoneNode(
                 day = day,
@@ -185,14 +208,14 @@ private fun MilestoneNode(
     day: Int,
     isReached: Boolean,
     isNext: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val color = if (isReached) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.2f)
     val spacing = MaterialTheme.spacing
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(60.dp.scaled)
+        modifier = Modifier.width(60.dp.scaled),
     ) {
         Box(
             modifier = Modifier
@@ -203,33 +226,33 @@ private fun MilestoneNode(
                 .border(
                     width = if (isNext) 2.dp.scaled else 1.dp.scaled,
                     color = if (isNext) MaterialTheme.colorScheme.primary else color,
-                    shape = CircleShape
+                    shape = CircleShape,
                 ),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = day.toString(),
                     color = if (isReached || isNext) Color.White else Color.White.copy(alpha = 0.4f),
                     fontWeight = FontWeight.Black,
-                    fontSize = 16.sp.scaled
+                    fontSize = 16.sp.scaled,
                 )
                 Text(
                     text = stringResource(Res.string.max_label).uppercase(),
                     color = color.copy(alpha = 0.6f),
                     fontWeight = FontWeight.Bold,
-                    fontSize = 8.sp.scaled
+                    fontSize = 8.sp.scaled,
                 )
             }
         }
-        
+
         Spacer(Modifier.height(spacing.extraSmall.scaled))
-        
+
         Text(
             text = "DAY $day",
             color = if (isReached) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.3f),
             fontSize = 9.sp.scaled,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
     }
 }
@@ -327,7 +350,6 @@ private fun ChallengeCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = MaterialTheme.spacing.extraLarge.scaled)
             .height(IntrinsicSize.Min)
             .clip(shape)
             .background(MaterialTheme.colorScheme.background)
@@ -345,14 +367,14 @@ private fun ChallengeCard(
                 .fillMaxHeight()
                 .background(
                     if (isCompleted) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                    else Color.White.copy(alpha = 0.03f)
-                )
+                    else Color.White.copy(alpha = 0.03f),
+                ),
         )
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(MaterialTheme.spacing.medium.scaled),
+                .padding(MaterialTheme.spacing.large.scaled),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
@@ -439,31 +461,5 @@ private fun ChallengeCard(
                 }
             }
         }
-    }
-}
-
-@Preview
-@Composable
-private fun DailyChallengeDialogPreview() {
-    MaterialTheme {
-        DailyChallengeDialog(
-            challengesProvider = {
-                listOf(
-                    DailyChallengeProgress(
-                        com.pointlessgames.hexagone.game.model.DailyChallenge(
-                            id = "1",
-                            goal = ChallengeGoal.MERGE_COUNT,
-                            target = 10,
-                            rewardScore = 100
-                        ),
-                        progress = 5
-                    )
-                )
-            },
-            streakProvider = { 4 },
-            isStreakCollectedTodayProvider = { false },
-            onMilestoneClick = {},
-            onDismiss = {}
-        )
     }
 }

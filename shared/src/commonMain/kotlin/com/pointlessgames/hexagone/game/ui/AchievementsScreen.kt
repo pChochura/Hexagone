@@ -1,4 +1,4 @@
-package com.pointlessgames.hexagone.game.ui.components
+package com.pointlessgames.hexagone.game.ui
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -15,28 +15,19 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,34 +37,39 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pointlessgames.hexagone.LocalNavigator
 import com.pointlessgames.hexagone.achievements.AchievementManager
 import com.pointlessgames.hexagone.achievements.AchievementStatus
-import com.pointlessgames.hexagone.achievements.GameAchievement
+import com.pointlessgames.hexagone.game.ui.components.ScreenScaffold
+import com.pointlessgames.hexagone.game.ui.components.ShopSectionTitle
+import com.pointlessgames.hexagone.game.ui.components.WavyProgressBar
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
-import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.ui.theme.scaled
-import hexagone.shared.generated.resources.*
+import com.pointlessgames.hexagone.ui.theme.spacing
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.achievements_title
+import hexagone.shared.generated.resources.ic_locked
+import hexagone.shared.generated.resources.ic_star
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AchievementsDialog(
+internal fun AchievementsScreen(
     achievementManager: AchievementManager,
-    initialAchievement: GameAchievement? = null,
-    onDismiss: () -> Unit
+    initialAchievementId: String? = null,
 ) {
-    var statuses by remember { mutableStateOf<List<AchievementStatus>>(emptyList()) }
+    val navigator = LocalNavigator.current
+    val spacing = MaterialTheme.spacing
     val listState = rememberLazyListState()
+    var statuses by remember { mutableStateOf<List<AchievementStatus>>(emptyList()) }
 
     LaunchedEffect(Unit) {
         statuses = achievementManager.getAchievementsStatus()
@@ -83,87 +79,56 @@ fun AchievementsDialog(
         statuses.groupBy { it.achievement.category }
     }
 
-    LaunchedEffect(groupedStatuses, initialAchievement) {
-        if ((initialAchievement != null) && groupedStatuses.isNotEmpty()) {
+    LaunchedEffect(groupedStatuses, initialAchievementId) {
+        if (initialAchievementId != null && groupedStatuses.isNotEmpty()) {
             var targetIndex = 0
             var found = false
-            
-            outer@for (category in groupedStatuses.keys) {
-                targetIndex++ // StickyHeader
+
+            outer@ for (category in groupedStatuses.keys) {
+                targetIndex++ // Header
                 val itemsInCategory = groupedStatuses[category] ?: emptyList()
                 for (status in itemsInCategory) {
-                    if (status.achievement == initialAchievement) {
+                    if (status.achievement.id == initialAchievementId) {
                         found = true
                         break@outer
                     }
                     targetIndex++
                 }
-                targetIndex++ // Spacer
             }
-            
+
             if (found) {
-                delay(300.milliseconds) // Wait for sheet to expand
+                delay(300.milliseconds)
                 listState.animateScrollToItem(targetIndex)
             }
         }
     }
 
-    ModalBottomSheet(
-        contentWindowInsets = { WindowInsets.statusBars },
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surface,
-        scrimColor = Color.Transparent,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.2f)) }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = MaterialTheme.spacing.extraLarge.scaled),
-            horizontalAlignment = Alignment.CenterHorizontally,
+    ScreenScaffold(
+        title = stringResource(Res.string.achievements_title),
+        onBack = { navigator.pop() },
+    ) { contentPadding ->
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(spacing.small.scaled),
+            contentPadding = PaddingValues(
+                top = contentPadding.calculateTopPadding(),
+                bottom = spacing.extraLarge.scaled,
+            ),
         ) {
-            BottomSheetTitle(text = stringResource(Res.string.achievements_title))
-
-            Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
-
-            LazyColumn(
-                state = listState,
-                contentPadding = PaddingValues(
-                    bottom = WindowInsets.navigationBars.asPaddingValues()
-                        .calculateBottomPadding() + MaterialTheme.spacing.large.scaled
-                ),
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small.scaled),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                groupedStatuses.forEach { (category, categoryStatuses) ->
-                    stickyHeader {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surface)
-                                .padding(vertical = MaterialTheme.spacing.small.scaled)
-                        ) {
-                            Text(
-                                text = stringResource(category.title).uppercase(),
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontSize = MaterialTheme.typography.labelMedium.fontSize.scaled
-                                ),
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
-                                letterSpacing = 1.sp.scaled
-                            )
-                        }
+            groupedStatuses.forEach { (category, categoryStatuses) ->
+                item {
+                    Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
+                        ShopSectionTitle(text = stringResource(category.title))
                     }
+                }
 
-                    items(categoryStatuses) { status ->
+                items(categoryStatuses) { status ->
+                    Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
                         AchievementItem(
                             status = status,
-                            isHighlighted = status.achievement == initialAchievement
+                            isHighlighted = status.achievement.id == initialAchievementId,
                         )
-                    }
-
-                    item {
-                        Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
                     }
                 }
             }
@@ -172,12 +137,13 @@ fun AchievementsDialog(
 }
 
 @Composable
-private fun AchievementItem(
+internal fun AchievementItem(
     status: AchievementStatus,
-    isHighlighted: Boolean = false
+    isHighlighted: Boolean = false,
 ) {
     val alpha = if (status.isUnlocked) 1f else 0.4f
-    
+    val spacing = MaterialTheme.spacing
+
     val highlightAlpha by if (isHighlighted) {
         val infiniteTransition = rememberInfiniteTransition(label = "highlight_pulse")
         infiniteTransition.animateFloat(
@@ -185,27 +151,32 @@ private fun AchievementItem(
             targetValue = 0.3f,
             animationSpec = infiniteRepeatable(
                 animation = tween(1000),
-                repeatMode = RepeatMode.Reverse
+                repeatMode = RepeatMode.Reverse,
             ),
-            label = "alpha"
+            label = "alpha",
         )
     } else remember { mutableStateOf(0.05f) }
 
-    val progress = if (status.maxProgress > 0L) (status.currentProgress.toFloat() / status.maxProgress.toFloat()).coerceIn(0f, 1f) else if (status.isUnlocked) 1f else 0f
-    val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium)
+    val progress =
+        if (status.maxProgress > 0L) (status.currentProgress.toFloat() / status.maxProgress.toFloat()).coerceIn(
+            0f,
+            1f,
+        ) else if (status.isUnlocked) 1f else 0f
+    val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
             .clip(shape)
+            .background(MaterialTheme.colorScheme.background)
             .border(
-                1.dp,
-                if (isHighlighted) MaterialTheme.colorScheme.primary.copy(alpha = 0.8f) 
-                else if (status.isUnlocked) Color.White.copy(alpha = 0.1f) 
+                1.dp.scaled,
+                if (isHighlighted) MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                else if (status.isUnlocked) Color.White.copy(alpha = 0.1f)
                 else Color.White.copy(alpha = 0.05f),
-                shape
-            )
+                shape,
+            ),
     ) {
         if (progress > 0f) {
             WavyProgressBar(
@@ -215,17 +186,20 @@ private fun AchievementItem(
                 containerColor = if (status.isUnlocked) Color.White.copy(alpha = 0.05f) else Color.Transparent,
                 borderColor = Color.Transparent,
                 shape = shape,
-                isWavy = !status.isUnlocked
+                isWavy = !status.isUnlocked,
             )
         } else if (isHighlighted) {
-            Box(modifier = Modifier.matchParentSize().background(Color.White.copy(alpha = highlightAlpha)))
+            Box(
+                modifier = Modifier.matchParentSize()
+                    .background(Color.White.copy(alpha = highlightAlpha)),
+            )
         }
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(MaterialTheme.spacing.medium.scaled),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(spacing.large.scaled),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
@@ -235,32 +209,37 @@ private fun AchievementItem(
                         if (status.isUnlocked) {
                             Brush.linearGradient(listOf(Color(0xFF2C3E50), Color(0xFF4CA1AF)))
                         } else {
-                            Brush.linearGradient(listOf(Color.Gray.copy(alpha = 0.2f), Color.Gray.copy(alpha = 0.1f)))
-                        }
+                            Brush.linearGradient(
+                                listOf(
+                                    Color.Gray.copy(alpha = 0.2f),
+                                    Color.Gray.copy(alpha = 0.1f),
+                                ),
+                            )
+                        },
                     ),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(if (status.isUnlocked) Res.drawable.ic_star else Res.drawable.ic_locked),
                     contentDescription = null,
                     modifier = Modifier.size(20.dp.scaled),
-                    tint = if (status.isUnlocked) Color.Unspecified else Color.White.copy(alpha = 0.3f)
+                    tint = if (status.isUnlocked) Color.Unspecified else Color.White.copy(alpha = 0.3f),
                 )
             }
 
-            Spacer(Modifier.width(MaterialTheme.spacing.medium.scaled))
+            Spacer(Modifier.width(spacing.medium.scaled))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(status.achievement.title),
                     color = Color.White.copy(alpha = alpha),
                     fontSize = 16.sp.scaled,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = stringResource(status.achievement.description),
                     color = Color.White.copy(alpha = alpha * 0.7f),
-                    fontSize = 12.sp.scaled
+                    fontSize = 12.sp.scaled,
                 )
             }
         }
@@ -273,9 +252,8 @@ private fun AchievementItem(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(MaterialTheme.spacing.small.scaled)
+                    .padding(spacing.small.scaled),
             )
         }
     }
 }
-

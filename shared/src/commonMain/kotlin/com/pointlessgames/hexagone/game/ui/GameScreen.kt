@@ -61,20 +61,16 @@ import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.model.TipTarget
 import com.pointlessgames.hexagone.game.ui.components.AchievementNotification
-import com.pointlessgames.hexagone.game.ui.components.AchievementsDialog
-import com.pointlessgames.hexagone.game.ui.components.DailyChallengeDialog
 import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
 import com.pointlessgames.hexagone.game.ui.components.SettingsDialog
-import com.pointlessgames.hexagone.game.ui.components.ShopDialog
 import com.pointlessgames.hexagone.game.ui.components.TipOverlay
 import com.pointlessgames.hexagone.game.ui.components.VoucherSelectionDialog
 import com.pointlessgames.hexagone.game.ui.components.trackTipTarget
 import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
-import com.pointlessgames.hexagone.leaderboard.ui.LeaderboardDialog
 import com.pointlessgames.hexagone.ui.theme.IsSmallDevice
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
@@ -92,6 +88,7 @@ internal fun GameScreen(
     modifier: Modifier = Modifier,
     viewModel: GameViewModel,
 ) {
+    val navigator = com.pointlessgames.hexagone.LocalNavigator.current
     // Fine-grained state collection for reactivity and optimization.
     // We collect individual fields into Compose State objects.
     // Reading from these State objects in providers ensures children and snapshotFlows are reactive.
@@ -126,24 +123,6 @@ internal fun GameScreen(
         remember(uiState) { uiState.map { it.activeTip }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.activeTip,
         )
-    val isShopVisibleState =
-        remember(uiState) {
-            uiState.map { it.isShopVisible }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.isShopVisible,
-        )
-    val isShopLoadingState =
-        remember(uiState) {
-            uiState.map { it.isShopLoading }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.isShopLoading,
-        )
-    val isShopProcessingState =
-        remember(uiState) {
-            uiState.map { it.isShopProcessing }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.isShopProcessing,
-        )
     val isVoucherProcessingState =
         remember(uiState) {
             uiState.map { it.isVoucherProcessing }.distinctUntilChanged()
@@ -160,9 +139,6 @@ internal fun GameScreen(
     val isDebugMode by isDebugModeState
     val pendingResult by pendingResultState
     val activeTip by activeTipState
-    val isShopVisible by isShopVisibleState
-    val isShopLoading by isShopLoadingState
-    val isShopProcessing by isShopProcessingState
     val isVoucherProcessing by isVoucherProcessingState
     val activeDialogState =
         remember(uiState) { uiState.map { it.activeDialog }.distinctUntilChanged() }.collectAsState(
@@ -190,14 +166,6 @@ internal fun GameScreen(
     val comboState =
         remember(uiState) { uiState.map { it.combo }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.combo,
-        )
-    val diamondsState =
-        remember(uiState) { uiState.map { it.diamonds }.distinctUntilChanged() }.collectAsState(
-            viewModel.uiState.value.diamonds,
-        )
-    val vouchersState =
-        remember(uiState) { uiState.map { it.vouchers }.distinctUntilChanged() }.collectAsState(
-            viewModel.uiState.value.vouchers,
         )
     val levelState =
         remember(uiState) { uiState.map { it.level }.distinctUntilChanged() }.collectAsState(
@@ -252,9 +220,6 @@ internal fun GameScreen(
     val challengeStreakState = remember(uiState) {
         uiState.map { it.challengeStreak }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.challengeStreak)
-    val isStreakCollectedTodayState = remember(uiState) {
-        uiState.map { it.isStreakCollectedToday }.distinctUntilChanged()
-    }.collectAsState(viewModel.uiState.value.isStreakCollectedToday)
     val debugUsedState =
         remember(uiState) { uiState.map { it.debugUsed }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.debugUsed,
@@ -290,10 +255,7 @@ internal fun GameScreen(
     }.collectAsState(viewModel.uiState.value.selectedCellId)
     val storeProductsState = viewModel.storeProducts.collectAsState()
 
-    var showLeaderboard by remember { mutableStateOf(false) }
-    var showAchievements by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
-    var showDailyChallenge by remember { mutableStateOf(false) }
     var initiallySelectedAchievement by remember {
         mutableStateOf<com.pointlessgames.hexagone.achievements.GameAchievement?>(
             null,
@@ -323,23 +285,15 @@ internal fun GameScreen(
     val onCellClick = remember(viewModel) { viewModel::onCellClicked }
     val onMergeAnimationFinished = remember(viewModel) { viewModel::onMergeAnimationFinished }
     val onPerkClick = remember(viewModel) { viewModel::onUsePerkClicked }
-    val onShopClick = remember(viewModel) { viewModel::onShopClicked }
+    val onShopClick = remember(viewModel) { { navigator.navigateTo(com.pointlessgames.hexagone.Route.Shop) } }
     val onPerkSelected = remember(viewModel) { viewModel::onPerkSelected }
     val onRestart = remember(viewModel) { viewModel::onRestartClicked }
     val onViewBoardToggle = remember(viewModel) { viewModel::onViewBoardToggled }
     val onDebugToggle = remember(viewModel) { viewModel::toggleDebugMode }
     val onDebugCellClick = remember(viewModel) { viewModel::onDebugCellClicked }
 
-    BackHandler(enabled = showLeaderboard || showAchievements || showSettings || showDailyChallenge) {
-        showLeaderboard = false
-        showAchievements = false
+    BackHandler(enabled = showSettings) {
         showSettings = false
-        showDailyChallenge = false
-        initiallySelectedAchievement = null
-    }
-
-    BackHandler(enabled = isShopVisible) {
-        viewModel.onDismissShop()
     }
 
     BackHandler(enabled = activeVoucherSelection != null) {
@@ -350,7 +304,7 @@ internal fun GameScreen(
         viewModel.onDismissDialog()
     }
 
-    BackHandler(enabled = isGameOver && !showLeaderboard && !showAchievements && !showSettings && !showDailyChallenge && activeTierReward == null && activeChallengeReward == null) {
+    BackHandler(enabled = isGameOver && activeTierReward == null && activeChallengeReward == null) {
         if (showGameOverBoard) {
             onViewBoardToggle()
         } else {
@@ -404,12 +358,11 @@ internal fun GameScreen(
     val isDebugModeProvider = remember { { isDebugModeState.value } }
     val debugSelectedValueProvider = remember { { debugSelectedValueState.value } }
     val debugAddAsGhostProvider = remember { { debugAddAsGhostState.value } }
-    val dailyChallengesProvider = remember { { dailyChallengesState.value } }
     val challengeStreakProvider = remember { { challengeStreakState.value } }
-    val isStreakCollectedTodayProvider = remember { { isStreakCollectedTodayState.value } }
+    val isStreakCollectedTodayState = remember(uiState) {
+        uiState.map { it.isStreakCollectedToday }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.isStreakCollectedToday)
     val debugUsedProvider = remember { { debugUsedState.value } }
-    val diamondsProvider = remember { { diamondsState.value } }
-    val vouchersProvider = remember { { vouchersState.value } }
 
     // Stable Providers for GameGridOverlay
     val mergeHintsProvider = remember { { mergeHintsState.value } }
@@ -429,7 +382,7 @@ internal fun GameScreen(
     LaunchedEffect(pendingResult) {
         if (pendingResult != null) {
             leaderboardViewModel.setPendingResult(pendingResult)
-            showLeaderboard = true
+            navigator.navigateTo(com.pointlessgames.hexagone.Route.Leaderboard)
         }
     }
 
@@ -490,13 +443,10 @@ internal fun GameScreen(
                                 activePerkProvider = activePerkProvider,
                                 isVertical = true,
                                 onLevelClick = if (com.pointlessgames.hexagone.utils.isDebug) onDebugToggle else ({}),
-                                onLeaderboardClick = { showLeaderboard = true },
-                                onAchievementsClick = {
-                                    initiallySelectedAchievement = null
-                                    showAchievements = true
-                                },
+                                onLeaderboardClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Leaderboard) },
+                                onAchievementsClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Achievements()) },
                                 onSettingsClick = { showSettings = true },
-                                onDailyChallengeClick = { showDailyChallenge = true },
+                                onDailyChallengeClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.DailyMissions) },
                                 isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
                                 modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
                                     targetRects[target] = rect
@@ -582,13 +532,10 @@ internal fun GameScreen(
                                 highestValueProvider = highestValueProvider,
                                 activePerkProvider = activePerkProvider,
                                 onLevelClick = if (com.pointlessgames.hexagone.utils.isDebug) onDebugToggle else ({}),
-                                onLeaderboardClick = { showLeaderboard = true },
-                                onAchievementsClick = {
-                                    initiallySelectedAchievement = null
-                                    showAchievements = true
-                                },
+                                onLeaderboardClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Leaderboard) },
+                                onAchievementsClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Achievements()) },
                                 onSettingsClick = { showSettings = true },
-                                onDailyChallengeClick = { showDailyChallenge = true },
+                                onDailyChallengeClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.DailyMissions) },
                                 isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
                                 modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
                                     targetRects[target] = rect
@@ -675,7 +622,7 @@ internal fun GameScreen(
             onRestart = onRestart,
             onViewBoardToggle = onViewBoardToggle,
             onShare = { /* TODO: Implement snapshot and share */ },
-            onLeaderboard = { showLeaderboard = true },
+            onLeaderboard = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Leaderboard) },
             activeTierReward = activeTierReward,
             onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
             activeChallengeReward = activeChallengeReward,
@@ -768,21 +715,9 @@ internal fun GameScreen(
             AchievementNotification(
                 achievement = achievement,
                 onClick = {
-                    initiallySelectedAchievement = achievement
-                    showAchievements = true
+                    navigator.navigateTo(com.pointlessgames.hexagone.Route.Achievements(achievement.id))
                 },
                 onFinished = { if (achievementQueue.isNotEmpty()) achievementQueue.removeAt(0) },
-            )
-        }
-
-        if (showAchievements) {
-            AchievementsDialog(
-                achievementManager = viewModel.getAchievementManager(),
-                initialAchievement = initiallySelectedAchievement,
-                onDismiss = {
-                    showAchievements = false
-                    initiallySelectedAchievement = null
-                },
             )
         }
 
@@ -791,53 +726,6 @@ internal fun GameScreen(
                 onRestart = onRestart,
                 onDismiss = { showSettings = false },
             )
-        }
-
-        if (showDailyChallenge) {
-            DailyChallengeDialog(
-                challengesProvider = dailyChallengesProvider,
-                streakProvider = challengeStreakProvider,
-                isStreakCollectedTodayProvider = isStreakCollectedTodayProvider,
-                onMilestoneClick = viewModel::onShowMilestoneDetails,
-                onDismiss = { showDailyChallenge = false },
-            )
-        }
-
-        if (showLeaderboard) {
-            LeaderboardDialog(
-                viewModel = leaderboardViewModel,
-                onDismiss = { showLeaderboard = false },
-            )
-        }
-
-        AnimatedVisibility(
-            visible = isShopVisible,
-            enter = fadeIn() + scaleIn(initialScale = 0.9f),
-            exit = fadeOut() + scaleOut(targetScale = 0.9f),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.6f))
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) { viewModel.onDismissShop() },
-                contentAlignment = Alignment.Center,
-            ) {
-                ShopDialog(
-                    diamonds = diamondsProvider(),
-                    vouchers = vouchersProvider(),
-                    storeProducts = storeProductsState.value,
-                    isShopLoading = isShopLoading,
-                    isProcessing = isShopProcessing,
-                    onDismiss = viewModel::onDismissShop,
-                    onBuyPerkWithDiamonds = viewModel::onBuyPerk,
-                    onBuyPremiumProduct = viewModel::onBuyPremiumProduct,
-                    onUseVoucher = viewModel::onUseVoucher,
-                    isStuck = isStuck,
-                )
-            }
         }
 
         val lastVoucher = remember { mutableStateOf<com.pointlessgames.hexagone.game.logic.PerkCategory?>(null) }

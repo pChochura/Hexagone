@@ -281,6 +281,7 @@ fun Hexagon(
     isFrozen: Boolean = false,
     isMimic: Boolean = false,
     seed: Int = 0,
+    maxFontSize: androidx.compose.ui.unit.TextUnit = 24.sp.scaled,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "hexagon_animations")
 
@@ -438,11 +439,11 @@ fun Hexagon(
                     text = value,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp.scaled,
+                    fontSize = maxFontSize,
                     maxLines = 1,
                     autoSize = TextAutoSize.StepBased(
                         minFontSize = 8.sp.scaled,
-                        maxFontSize = 24.sp.scaled,
+                        maxFontSize = maxFontSize,
                     ),
                 )
             }
