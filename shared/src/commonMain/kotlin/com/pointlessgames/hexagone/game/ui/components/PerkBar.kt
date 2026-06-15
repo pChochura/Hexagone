@@ -4,16 +4,14 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,8 +29,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
@@ -45,14 +45,17 @@ import org.jetbrains.compose.resources.stringResource
 fun PerkBar(
     modifier: Modifier = Modifier,
     collectedPerksProvider: () -> List<Perk>,
+    vouchersProvider: () -> Map<PerkCategory, Int> = { emptyMap() },
     activePerkProvider: () -> Perk?,
     isStuckProvider: () -> Boolean,
     stuckPerksProvider: () -> Set<Perk>,
     onPerkClick: (Perk) -> Unit,
+    onVoucherClick: (PerkCategory) -> Unit = {},
     onShopClick: () -> Unit,
     isVertical: Boolean = false,
 ) {
     val collectedPerks = collectedPerksProvider()
+    val vouchers = vouchersProvider()
     val activePerk = activePerkProvider()
     val isStuck = isStuckProvider()
     val stuckPerks = stuckPerksProvider()
@@ -119,7 +122,7 @@ fun PerkBar(
             .graphicsLayer { clip = false },
         contentAlignment = if (isVertical) Alignment.CenterEnd else Alignment.BottomCenter
     ) {
-        if (collectedPerks.isEmpty()) {
+        if (collectedPerks.isEmpty() && vouchers.isEmpty()) {
             Row(
                 modifier = Modifier
                     .then(if (isVertical) Modifier.width(100.dp.scaled).fillMaxHeight() else Modifier.fillMaxWidth())
@@ -166,6 +169,21 @@ fun PerkBar(
                                 scaleY = scale
                             },
                     )
+                }
+
+                if (vouchers.any { it.value > 0 }) {
+                    item {
+                        VoucherSeparator(isVertical = isVertical)
+                    }
+
+                    val sortedCategories = vouchers.filter { it.value > 0 }.keys.toList().sortedBy { it.ordinal }
+                    items(sortedCategories, key = { it.name }) { category ->
+                        VoucherButton(
+                            category = category,
+                            count = vouchers[category] ?: 0,
+                            onClick = { onVoucherClick(category) }
+                        )
+                    }
                 }
             }
 
@@ -221,6 +239,56 @@ fun PerkBar(
                     Spacer(Modifier.width(spacing.medium.scaled))
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun VoucherSeparator(isVertical: Boolean) {
+    val spacing = MaterialTheme.spacing
+    val color = Color.White.copy(alpha = 0.15f)
+
+    if (isVertical) {
+        Box(
+            modifier = Modifier
+                .padding(vertical = spacing.small.scaled)
+                .width(32.dp.scaled)
+                .height(1.dp.scaled)
+                .background(color)
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .padding(horizontal = spacing.small.scaled)
+                .width(1.dp.scaled)
+                .height(32.dp.scaled)
+                .background(color)
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PerkBarPreview() {
+    MaterialTheme {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+            PerkBar(
+                collectedPerksProvider = { listOf(Perk.UNDO, Perk.MOVE_TILE) },
+                vouchersProvider = {
+                    mapOf(
+                        PerkCategory.COMMON to 2,
+                        PerkCategory.RARE to 1,
+                        PerkCategory.LEGENDARY to 3
+                    )
+                },
+                activePerkProvider = { null },
+                isStuckProvider = { false },
+                stuckPerksProvider = { emptySet() },
+                onPerkClick = {},
+                onVoucherClick = {},
+                onShopClick = {},
+                modifier = Modifier.padding(16.dp)
+            )
         }
     }
 }

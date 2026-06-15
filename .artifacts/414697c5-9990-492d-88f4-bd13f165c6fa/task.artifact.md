@@ -1,0 +1,8 @@
+- [x] Update `VoucherButton` in `HexagonComponents.kt` with optional glow effects
+- [x] Redesign `ReviveDialog.kt`:
+    - [x] Add Stats section (Score & Level)
+    - [x] Implement vertical "Card" layout for revive options
+    - [x] Add "BEST VALUE" badge and glow to Legendary option
+    - [x] Display Diamond balance and refined "OPEN SHOP" button
+- [x] Update `GameOverlays.kt` to pass stats to `ReviveDialog`
+- [x] Verify the new premium UI and conversion flow

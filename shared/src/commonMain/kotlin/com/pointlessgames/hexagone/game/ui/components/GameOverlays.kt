@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.ConfettiPiece
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.RankingInfo
@@ -65,6 +66,7 @@ internal fun GameOverlays(
     bestScoreProvider: () -> Int,
     sessionBestScoreProvider: () -> Int,
     levelProvider: () -> Int,
+    diamondsProvider: () -> Int = { 0 },
     maxComboProvider: () -> Int,
     totalMergesProvider: () -> Int,
     highestValueProvider: () -> Int,
@@ -83,10 +85,18 @@ internal fun GameOverlays(
     activeChallengeReward: com.pointlessgames.hexagone.game.model.DailyChallenge?,
     onChallengeRewardFinished: () -> Unit,
     rankingInfoProvider: () -> RankingInfo?,
+    showReviveOptionProvider: () -> Boolean = { false },
+    vouchersProvider: () -> Map<PerkCategory, Int> = { emptyMap() },
+    onRevive: (PerkCategory) -> Unit = {},
+    onBuyAndRevive: (PerkCategory) -> Unit = {},
+    onOpenShop: () -> Unit = {},
+    onDeclineRevive: () -> Unit = {},
     debugUsedProvider: () -> Boolean = { false },
     finalResultProvider: () -> com.pointlessgames.hexagone.game.model.DetailedGameResult? = { null },
 ) {
     val isGameOver = isGameOverProvider()
+    val showReviveOption = showReviveOptionProvider()
+    val vouchers = vouchersProvider()
     val bestScore = bestScoreProvider()
     val sessionBestScore = sessionBestScoreProvider()
     val level = levelProvider()
@@ -100,7 +110,7 @@ internal fun GameOverlays(
     val rankingInfo = rankingInfoProvider()
     val finalResult = finalResultProvider()
     val isAnyOverlayVisible =
-        perkOptions.isNotEmpty() || isGameOver || activeTierReward != null || activeChallengeReward != null
+        perkOptions.isNotEmpty() || isGameOver || showReviveOption || activeTierReward != null || activeChallengeReward != null
     val dimAlphaState = animateFloatAsState(
         targetValue = if (activeTierReward != null || activeChallengeReward != null) 0.85f else if (isAnyOverlayVisible && !showBoard) 0.6f else 0f,
         animationSpec = tween(500),
@@ -223,7 +233,7 @@ internal fun GameOverlays(
                 }
             }
 
-            if (perkOptions.isNotEmpty() && activeTierReward == null && activeChallengeReward == null) {
+            if (perkOptions.isNotEmpty() && activeTierReward == null && activeChallengeReward == null && !showReviveOption) {
                 PerkSelectionDialog(
                     options = perkOptions,
                     pendingLevelUps = pendingLevelUps,
@@ -234,7 +244,25 @@ internal fun GameOverlays(
             }
 
             AnimatedVisibility(
-                visible = isGameOver && !showBoard,
+                visible = showReviveOption && !showBoard,
+                enter = fadeIn(tween(600)) + scaleIn(initialScale = 0.9f),
+                exit = fadeOut(tween(300)) + scaleOut(targetScale = 1.1f),
+                modifier = Modifier.align(Alignment.Center),
+            ) {
+                ReviveDialog(
+                    score = scoreProvider(),
+                    level = level,
+                    diamonds = diamondsProvider(),
+                    vouchers = vouchers,
+                    onRevive = onRevive,
+                    onBuyAndRevive = onBuyAndRevive,
+                    onOpenShop = onOpenShop,
+                    onDecline = onDeclineRevive
+                )
+            }
+
+            AnimatedVisibility(
+                visible = isGameOver && !showBoard && !showReviveOption,
                 enter = fadeIn(tween(800)) + slideInVertically(initialOffsetY = { -it / 8 }),
                 exit = fadeOut(tween(400)) + scaleOut(targetScale = 0.9f),
                 modifier = Modifier.align(Alignment.Center),

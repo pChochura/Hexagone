@@ -90,6 +90,8 @@ data class GameUiState(
     val isShopProcessing: Boolean = false,
     val isVoucherProcessing: Boolean = false,
     val activeVoucherSelection: com.pointlessgames.hexagone.game.logic.PerkCategory? = null,
+    val showReviveOption: Boolean = false,
+    val hasRevived: Boolean = false,
     val activeDialog: HexDialogState? = null,
 ) {
     fun consumePerk(perk: Perk): GameUiState {
@@ -268,6 +270,7 @@ data class GameState(
     val previewIdCounter: Int = 0,
     val activePerk: Perk? = null,
     val selectedCellId: String? = null,
+    val hasRevived: Boolean = false,
     val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
     val completedChallengeDates: Set<Long> = emptySet(),
     val movesWithoutPerk: Int = 0,

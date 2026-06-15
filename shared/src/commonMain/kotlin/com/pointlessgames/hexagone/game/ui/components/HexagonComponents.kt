@@ -1,6 +1,7 @@
 package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.StartOffsetType
 import androidx.compose.animation.core.animateFloat
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.components.Tooltip
@@ -71,6 +73,9 @@ import hexagone.shared.generated.resources.ic_fusion
 import hexagone.shared.generated.resources.ic_move
 import hexagone.shared.generated.resources.ic_path_merge
 import hexagone.shared.generated.resources.ic_pause
+import hexagone.shared.generated.resources.ic_rare_perk
+import hexagone.shared.generated.resources.ic_legendary_perk
+import hexagone.shared.generated.resources.ic_roll
 import hexagone.shared.generated.resources.ic_star
 import hexagone.shared.generated.resources.ic_swap
 import hexagone.shared.generated.resources.ic_undo
@@ -529,6 +534,104 @@ fun ShopButton(
                     painter = painterResource(Res.drawable.ic_diamond),
                     contentDescription = null,
                     tint = perkColor,
+                    modifier = Modifier.size(buttonSize * 0.45f)
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun VoucherButton(
+    category: PerkCategory,
+    count: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    buttonSize: Dp = MaterialTheme.spacing.extraHuge.scaled,
+    showGlow: Boolean = false,
+) {
+    val spacing = MaterialTheme.spacing
+    val color = when (category) {
+        PerkCategory.COMMON -> Color.Gray
+        PerkCategory.RARE -> Color(0xFF4FC3F7)
+        PerkCategory.LEGENDARY -> Color(0xFFFFD54F)
+    }
+    val icon = when (category) {
+        PerkCategory.COMMON -> Res.drawable.ic_roll
+        PerkCategory.RARE -> Res.drawable.ic_rare_perk
+        PerkCategory.LEGENDARY -> Res.drawable.ic_legendary_perk
+    }
+    val heightScale = 0.866f
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .padding(horizontal = spacing.tiny.scaled)
+            .graphicsLayer { alpha = if (count > 0 || showGlow) 1f else 0.4f },
+    ) {
+        BadgedBox(
+            badge = {
+                if (count > 0) {
+                    Badge(
+                        containerColor = color,
+                        contentColor = Color.Black,
+                        modifier = Modifier.offset(x = (-4).dp, y = 4.dp)
+                    ) {
+                        Text(
+                            text = count.toString(),
+                            fontWeight = FontWeight.Black,
+                            fontSize = 10.sp.scaled
+                        )
+                    }
+                }
+            },
+            modifier = Modifier.size(width = buttonSize, height = buttonSize * heightScale),
+        ) {
+            // Blueprint Glow
+            if (showGlow) {
+                val infiniteTransition = rememberInfiniteTransition(label = "voucher_glow")
+                val glowAlpha = infiniteTransition.animateFloat(
+                    initialValue = 0.2f,
+                    targetValue = 0.6f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1200),
+                        repeatMode = RepeatMode.Reverse,
+                    ),
+                    label = "glow",
+                )
+
+                Box(
+                    modifier = Modifier
+                        .size(
+                            width = buttonSize + spacing.medium.scaled,
+                            height = (buttonSize + spacing.medium.scaled) * heightScale,
+                        )
+                        .align(Alignment.Center)
+                        .clip(FlatTopHexagonShape())
+                        .drawBehind {
+                            drawRect(color.copy(alpha = glowAlpha.value * 0.3f))
+                        }
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(FlatTopHexagonShape())
+                    .background(Color.White.copy(alpha = 0.05f))
+                    .border(
+                        width = 1.dp.scaled,
+                        brush = SolidColor(color.copy(alpha = if (showGlow) 0.8f else 0.4f)),
+                        shape = FlatTopHexagonShape()
+                    )
+                    .clickable(enabled = count > 0 || showGlow, onClick = onClick),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    tint = color.copy(alpha = if (showGlow) 0.9f else 0.6f),
                     modifier = Modifier.size(buttonSize * 0.45f)
                 )
             }

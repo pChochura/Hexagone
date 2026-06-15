@@ -234,6 +234,8 @@ internal class GameViewModel(
                                 isStreakCollectedToday = lastCompletedDate == dateSeed,
                                 completedChallengeDates = completedDates,
                                 mergeHintsEnabled = hintsEnabled,
+                                diamonds = savedState.diamonds,
+                                vouchers = savedState.vouchers,
                             )
                         }
                         restartGame()
@@ -243,6 +245,8 @@ internal class GameViewModel(
                                 grid = savedState.grid,
                                 preview = savedState.preview,
                                 score = savedState.score,
+                                diamonds = savedState.diamonds,
+                                vouchers = savedState.vouchers,
                                 level = savedState.level,
                                 highestValue = savedState.highestValue,
                                 combo = savedState.combo,
@@ -288,6 +292,7 @@ internal class GameViewModel(
                                 },
                                 challengeStreak = challengeStreak,
                                 isStreakCollectedToday = lastCompletedDate == dateSeed,
+                                hasRevived = savedState.hasRevived,
                             )
                         }
                         stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
@@ -595,32 +600,45 @@ internal class GameViewModel(
         val currentDailyChallenges =
             DailyChallengeProvider.getChallengesForDate(today, _uiState.value.challengeStreak)
 
-        _uiState.value = GameUiState(
-            grid = initialGrid,
-            mergeHints = if (_uiState.value.mergeHintsEnabled) engine.findMergeHints(
-                initialGrid,
-                initialPreviews,
-                0,
-                null,
-            ) else emptyList(),
-            mergeHintsEnabled = _uiState.value.mergeHintsEnabled,
-            preview = initialPreviews,
-            bestScore = stateDelegate.absoluteBestScore,
-            sessionBestScore = stateDelegate.absoluteBestScore,
-            collectedPerks = emptyList(),
-            onBoardPerks = emptyList(),
-            perkSpawnCounter = 0,
-            earnedRewardsThisTurn = emptyList(),
-            seed = random.nextLong(),
-            cellIdCounter = nextIdCounter,
-            previewIdCounter = nextPreviewIdCounter,
-            dailyChallenges = currentDailyChallenges.map { DailyChallengeProgress(it) },
-            completedChallengeDates = _uiState.value.completedChallengeDates,
-            challengeStreak = _uiState.value.challengeStreak,
-            isStreakCollectedToday = _uiState.value.isStreakCollectedToday,
-            debugUsed = false,
-            finalResult = null,
-        )
+        _uiState.update {
+            it.copy(
+                grid = initialGrid,
+                mergeHints = if (it.mergeHintsEnabled) engine.findMergeHints(
+                    initialGrid,
+                    initialPreviews,
+                    0,
+                    null,
+                ) else emptyList(),
+                preview = initialPreviews,
+                bestScore = stateDelegate.absoluteBestScore,
+                sessionBestScore = stateDelegate.absoluteBestScore,
+                collectedPerks = emptyList(),
+                onBoardPerks = emptyList(),
+                perkSpawnCounter = 0,
+                earnedRewardsThisTurn = emptyList(),
+                seed = random.nextLong(),
+                cellIdCounter = nextIdCounter,
+                previewIdCounter = nextPreviewIdCounter,
+                dailyChallenges = currentDailyChallenges.map { challenge -> DailyChallengeProgress(challenge) },
+                completedChallengeDates = it.completedChallengeDates,
+                challengeStreak = it.challengeStreak,
+                isStreakCollectedToday = it.isStreakCollectedToday,
+                debugUsed = false,
+                finalResult = null,
+                isGameOver = false,
+                showReviveOption = false,
+                hasRevived = false,
+                activePerk = null,
+                selectedCellId = null,
+                score = 0,
+                combo = 0,
+                comboMaintenanceTurns = 0,
+                movesWithoutPerk = 0,
+                levelProgress = 0f,
+                pendingLevelUps = 0,
+                perkOptions = emptyList(),
+            )
+        }
         updateLevel()
         checkValidMoves()
     }
@@ -654,6 +672,12 @@ internal class GameViewModel(
         if (!isPossible && hasPerkOptions.not() && actionablePerks.isEmpty() && !state.isDebugMode) {
             viewModelScope.launch {
                 delay(1000)
+                
+                if (!state.hasRevived) {
+                    _uiState.update { it.copy(showReviveOption = true) }
+                    return@launch
+                }
+
                 val finalResult = DetailedGameResult(
                     score = state.score,
                     maxCombo = state.maxCombo,
@@ -867,6 +891,15 @@ internal class GameViewModel(
         _uiState.update { it.copy(activeVoucherSelection = null) }
     }
 
+    fun onDeclineRevive() {
+        _uiState.update { it.copy(showReviveOption = false, hasRevived = true) }
+        checkValidMoves()
+    }
+
+    fun onBuyAndRevive(category: PerkCategory) {
+        onBuyPerk(category)
+    }
+
     fun onPerkFromVoucherSelected(perk: Perk, category: PerkCategory) {
         viewModelScope.launch {
             _uiState.update { it.copy(isVoucherProcessing = true) }
@@ -876,8 +909,12 @@ internal class GameViewModel(
                         collectedPerks = it.collectedPerks + perk,
                         activeVoucherSelection = null,
                         isVoucherProcessing = false,
+                        showReviveOption = false,
+                        hasRevived = it.showReviveOption || it.hasRevived,
+                        isGameOver = false,
                     )
                 }
+                checkValidMoves()
             } else {
                 _uiState.update { it.copy(isVoucherProcessing = false) }
             }

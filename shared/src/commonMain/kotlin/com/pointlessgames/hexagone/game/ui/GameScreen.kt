@@ -140,6 +140,11 @@ internal fun GameScreen(
     val pendingResult by pendingResultState
     val activeTip by activeTipState
     val isVoucherProcessing by isVoucherProcessingState
+    val showReviveOptionState = remember(uiState) {
+        uiState.map { it.showReviveOption }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.showReviveOption)
+    val showReviveOption by showReviveOptionState
+
     val activeDialogState =
         remember(uiState) { uiState.map { it.activeDialog }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.activeDialog,
@@ -181,6 +186,9 @@ internal fun GameScreen(
     val collectedPerksState = remember(uiState) {
         uiState.map { it.collectedPerks }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.collectedPerks)
+    val vouchersState = remember(uiState) {
+        uiState.map { it.vouchers }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.vouchers)
     val sessionBestScoreState = remember(uiState) {
         uiState.map { it.sessionBestScore }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.sessionBestScore)
@@ -220,6 +228,9 @@ internal fun GameScreen(
     val challengeStreakState = remember(uiState) {
         uiState.map { it.challengeStreak }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.challengeStreak)
+    val isStreakCollectedTodayState = remember(uiState) {
+        uiState.map { it.isStreakCollectedToday }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.isStreakCollectedToday)
     val debugUsedState =
         remember(uiState) { uiState.map { it.debugUsed }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.debugUsed,
@@ -336,6 +347,7 @@ internal fun GameScreen(
     // These lambdas are stable, and reading .value from State ensures reactivity.
     val scoreProvider = remember { { scoreState.value } }
     val bestScoreProvider = remember { { bestScoreState.value } }
+    val diamondsProvider = remember { { uiState.value.diamonds } }
     val comboProvider = remember { { comboState.value } }
     val levelProvider = remember { { levelState.value } }
     val highestValueProvider = remember { { highestValueState.value } }
@@ -343,6 +355,7 @@ internal fun GameScreen(
     val isDailyChallengeCompletedProvider =
         remember { { dailyChallengesState.value.all { it.isCompleted } } }
     val collectedPerksProvider = remember { { collectedPerksState.value } }
+    val vouchersProvider = remember { { vouchersState.value } }
     val isStuckProvider = remember { { isStuckState.value } }
     val stuckPerksProvider = remember { { stuckPerksState.value } }
     val isGameOverProvider = remember { { isGameOverState.value } }
@@ -359,9 +372,7 @@ internal fun GameScreen(
     val debugSelectedValueProvider = remember { { debugSelectedValueState.value } }
     val debugAddAsGhostProvider = remember { { debugAddAsGhostState.value } }
     val challengeStreakProvider = remember { { challengeStreakState.value } }
-    val isStreakCollectedTodayState = remember(uiState) {
-        uiState.map { it.isStreakCollectedToday }.distinctUntilChanged()
-    }.collectAsState(viewModel.uiState.value.isStreakCollectedToday)
+    val showReviveOptionProvider = remember { { showReviveOptionState.value } }
     val debugUsedProvider = remember { { debugUsedState.value } }
 
     // Stable Providers for GameGridOverlay
@@ -604,43 +615,15 @@ internal fun GameScreen(
             }
         }
 
-        GameOverlays(
-            isGameOverProvider = isGameOverProvider,
-            scoreProvider = scoreProvider,
-            bestScoreProvider = bestScoreProvider,
-            sessionBestScoreProvider = sessionBestScoreProvider,
-            levelProvider = levelProvider,
-            maxComboProvider = maxComboProvider,
-            totalMergesProvider = totalMergesProvider,
-            highestValueProvider = highestValueProvider,
-            showBoardProvider = showGameOverBoardProvider,
-            perkOptionsProvider = perkOptionsProvider,
-            pendingLevelUpsProvider = pendingLevelUpsProvider,
-            canRerollProvider = canRerollProvider,
-            onPerkSelected = onPerkSelected,
-            onRerollClicked = viewModel::onRerollClicked,
-            onRestart = onRestart,
-            onViewBoardToggle = onViewBoardToggle,
-            onShare = { /* TODO: Implement snapshot and share */ },
-            onLeaderboard = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Leaderboard) },
-            activeTierReward = activeTierReward,
-            onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
-            activeChallengeReward = activeChallengeReward,
-            onChallengeRewardFinished = {
-                if (challengeRewardQueue.isNotEmpty())
-                    challengeRewardQueue.removeAt(0)
-            },
-            rankingInfoProvider = currentRankProvider,
-            debugUsedProvider = debugUsedProvider,
-            finalResultProvider = finalResultProvider,
-            modifier = Modifier.trackTipTarget(TipTarget.GAME_OVER_BUTTONS) { target, rect ->
-                targetRects[target] = rect
-            },
-        )
-
-        // Persistent Perk Bar (Above Game Over Dim)
+        // Persistent Perk Bar (Moved before GameOverlays to be covered)
         if (!isDebugModeProvider()) {
-            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val isOverlayVisible = showReviveOption || isGameOver || activeTierReward != null || activeChallengeReward != null || perkOptionsProvider().isNotEmpty()
+            
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = if (isOverlayVisible) 0f else 1f }
+            ) {
                 val isLandscape = maxWidth > maxHeight
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -687,10 +670,12 @@ internal fun GameScreen(
 
                         PerkBar(
                             collectedPerksProvider = collectedPerksProvider,
+                            vouchersProvider = vouchersProvider,
                             activePerkProvider = activePerkProvider,
                             isStuckProvider = isStuckProvider,
                             stuckPerksProvider = stuckPerksProvider,
                             onPerkClick = onPerkClick,
+                            onVoucherClick = viewModel::onUseVoucher,
                             onShopClick = onShopClick,
                             isVertical = isLandscape,
                             modifier = Modifier
@@ -704,6 +689,47 @@ internal fun GameScreen(
                 }
             }
         }
+
+        GameOverlays(
+            isGameOverProvider = isGameOverProvider,
+            scoreProvider = scoreProvider,
+            bestScoreProvider = bestScoreProvider,
+            sessionBestScoreProvider = sessionBestScoreProvider,
+            levelProvider = levelProvider,
+            diamondsProvider = diamondsProvider,
+            maxComboProvider = maxComboProvider,
+            totalMergesProvider = totalMergesProvider,
+            highestValueProvider = highestValueProvider,
+            showBoardProvider = showGameOverBoardProvider,
+            perkOptionsProvider = perkOptionsProvider,
+            pendingLevelUpsProvider = pendingLevelUpsProvider,
+            canRerollProvider = canRerollProvider,
+            onPerkSelected = onPerkSelected,
+            onRerollClicked = viewModel::onRerollClicked,
+            onRestart = onRestart,
+            onViewBoardToggle = onViewBoardToggle,
+            onShare = { /* TODO: Implement snapshot and share */ },
+            onLeaderboard = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Leaderboard) },
+            activeTierReward = activeTierReward,
+            onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
+            activeChallengeReward = activeChallengeReward,
+            onChallengeRewardFinished = {
+                if (challengeRewardQueue.isNotEmpty())
+                    challengeRewardQueue.removeAt(0)
+            },
+            rankingInfoProvider = currentRankProvider,
+            showReviveOptionProvider = showReviveOptionProvider,
+            vouchersProvider = vouchersProvider,
+            onRevive = viewModel::onUseVoucher,
+            onBuyAndRevive = viewModel::onBuyAndRevive,
+            onOpenShop = onShopClick,
+            onDeclineRevive = viewModel::onDeclineRevive,
+            debugUsedProvider = debugUsedProvider,
+            finalResultProvider = finalResultProvider,
+            modifier = Modifier.trackTipTarget(TipTarget.GAME_OVER_BUTTONS) { target, rect ->
+                targetRects[target] = rect
+            },
+        )
 
         TipOverlay(
             activeTip = activeTip,
