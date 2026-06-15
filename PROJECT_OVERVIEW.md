@@ -1,72 +1,72 @@
 # Project: Hexagone Overview
 
-**Hexagone** is a high-polish, strategic hexagonal puzzle game built with **Compose Multiplatform**. It features a reactive, state-driven architecture, deep strategic mechanics, and a vibrant, "glowing hardware" aesthetic.
+**Hexagone** is a high-polish, strategic hexagonal puzzle game built with **Compose Multiplatform**. It features a reactive, state-driven architecture, a deep strategic economy, and a premium "Solid UI" design language.
 
 ---
 
 ## 1. Project Structure
 
-The project follows a modular Kotlin Multiplatform (KMP) architecture, prioritizing separation of concerns and Compose best practices (State Hoisting, Slot-based APIs).
+The project follows a modular Kotlin Multiplatform (KMP) architecture, utilizing a full-screen navigation system and strict design tokens.
 
 ### Key Directory Map
 ```text
 shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 ├── achievements/
 │   ├── AchievementManager.kt     # Core Interface for unlocks & tracking
-│   ├── LocalAchievementManager.kt # Persistence-backed implementation
 │   └── GameAchievement.kt        # Logical registry of all milestones
 ├── data/
 │   ├── SettingsRepository.kt     # Game State & local persistence (DataStore)
 │   ├── LeaderboardRepository.kt  # Supabase: Scores & Profile sync
-│   └── MonetizationRepository.kt # Economy: RevenueCat & Supabase Functions sync
+│   └── MonetizationRepository.kt # Economy: RevenueCat & Supabase sync
 ├── billing/
-│   ├── BillingManager.kt         # Platform-agnostic economy interface
-│   └── RevenueCatBillingManager.kt # Core sync: Virtual Currencies & Products
-├── di/
-│   └── AppModule.kt              # Koin Dependency Injection
+│   ├── BillingManager.kt         # Economy interface
 ├── game/
 │   ├── logic/
 │   │   ├── GameEngine.kt         # Core math: neighbors, merges, hints
 │   │   ├── Scoring.kt            # Centralized scoring formulas & multipliers
 │   │   ├── PatternRecognitionEngine.kt # Geometric achievement scanning
-│   │   └── DailyChallengeProvider.kt # Deterministic daily mission generator
+│   │   └── DailyChallengeProvider.kt # Deterministic mission generator
 │   ├── model/
-│   │   ├── GameModels.kt         # Domain Models: Perk, GameUiState, GameTip
-│   │   └── UIModels.kt           # UI-specific state: Particles, Animation states
+│   │   ├── GameModels.kt         # Domain Models: Perk, GameUiState, HexDialogState
 │   ├── ui/
-│   │   ├── GameScreen.kt         # Root UI Layout
+│   │   ├── GameScreen.kt         # Main Gameplay Loop
+│   │   ├── ShopScreen.kt         # Full-screen Store (Grids & Horizontal scroll)
+│   │   ├── DailyMissionsScreen.kt # Full-screen Missions (Log & Rewards)
+│   │   ├── LeaderboardScreen.kt  # Full-screen Rankings (Podium style)
+│   │   ├── AchievementsScreen.kt # Full-screen Collection (Card-based)
 │   │   └── components/
-│   │       ├── AchievementsDialog.kt # BottomSheet list of all rewards
-│   │       ├── AchievementNotification.kt # Top-level clickable HUD popup
-│   │       ├── DailyChallengeDialog.kt # 5-day streak tracker & mission list
-│   │       ├── ShopDialog.kt          # RevenueCat IAP & Voucher exchange
-│   │       ├── VoucherSelectionDialog.kt # "Pick your reward" UI for vouchers
-│   │       ├── DailyChallengeRewardOverlay.kt # Cinematic completion effect
-│   │       ├── TipOverlay.kt      # Contextual onboarding with spotlight effect
-│   │       ├── PopupsLayer.kt     # Stable HUD notifications (sequential IDs)
-│   │       ├── GridDrawing.kt     # Optimized DrawScope rendering logic
+│   │       ├── ScreenScaffold.kt  # Organism: Translucent "Glass" headers
+│   │       ├── HexDialogComponents.kt # Atoms: Premium Alert Dialogs & Cards
 │   │       ├── GameGridOverlay.kt # Grid orchestrator & gesture handling
 │   │       ├── ScoreSection.kt    # HUD: liquid progress & combo indicators
 │   │       ├── PerkBar.kt         # Strategic tool selection shelf
 │   │       └── GameOverlays.kt    # Dialog orchestration (Level Up, Game Over)
-│   ├── ActionDelegate.kt         # Delegate: User input & tile manipulation
-│   ├── EffectDelegate.kt         # Delegate: Particles, Popups & HUD feedback
-│   ├── MergeDelegate.kt          # Delegate: Merge lifecycle & animation logic
-│   ├── StateDelegate.kt          # Delegate: History, Undo & Persistence
-│   ├── AchievementDelegate.kt    # Delegate: Rule-based milestone triggering
-│   ├── ChallengeDelegate.kt      # Delegate: Real-time mission tracking
-│   ├── GameViewModel.kt          # Coordinator: Orchestrates delegates & state
-│   └── DebugDelegate.kt          # Delegate: Developer tools & state manipulation
-├── ui/
-│   └── theme/
-│       └── Theme.kt              # Centralized "Glowing Hardware" Design System
-└── utils/
-    └── Animation.kt              # Idiomatic Compose animation helpers
+├── di/
+│   └── GameModule.kt             # Koin DI & Navigation Routing
+├── Navigator.kt                  # navigation3 Implementation & Routes
+└── ui/
+    └── theme/
+        └── Theme.kt              # "Solid UI" Design System (Strict Design Tokens)
 ```
 
 ---
 
-## 2. Core Game Logic
+## 2. Navigation & Layout Architecture
+
+### Full-Screen Navigation
+The game has transitioned from local overlays to a formal navigation stack using **`navigation3`**. 
+*   **Routes**: Defined as serializable objects (`Route.Shop`, `Route.Leaderboard`, etc.) in `Navigator.kt`.
+*   **Decoupled State**: Screens are independent destinations, drastically simplifying `GameScreen.kt` and improving performance.
+
+### ScreenScaffold Organism
+All secondary screens use a unified `ScreenScaffold` that provides:
+*   **Translucent "Glass" Headers**: A vertical gradient top bar where content scrolls beautifully underneath.
+*   **Hexagonal Navigation**: Standardized hexagonal back buttons.
+*   **Dynamic Measurement**: Headers measure their own height to provide perfect top-padding for immersive content.
+
+---
+
+## 3. Core Game Logic
 
 ### Hexagonal System
 *   **Coordinate System**: Uses **axial coordinates** in a **staggered flat-top** layout (5 columns, 4 rows).
@@ -100,118 +100,55 @@ A merge occurs when 2+ tiles of the same value touch.
 
 ---
 
-## 3. Achievement System
-
-The game features a multi-layered achievement system integrated via a platform-agnostic `AchievementManager`.
-
-### Achievement Categories
-1.  **Spatial Architecture**: Detected by `PatternRecognitionEngine` (e.g., *Ring of Fire*, *Great Wall*, *The Prism*). Patterns support **Mimic wildcards** for detection.
-2.  **Strategic Mastery**: Turn-based milestones (e.g., *Triple Threat*, *Tactical Genius*, *Snake Charmer*).
-3.  **Purity & Restraint**: Session-long tracking (e.g., *Pacifist*, *Ascetic*, *Zen Master*).
-4.  **Lifetime Grind**: Incremental tracking in `DataStore` (e.g., *Marathon*, *Gambler*, *Perk Collector*).
-5.  **Tactical Prowess**: Reward-based logic (e.g., *Redemption*, *Advanced Janitor*, *Double Vision*). Includes Mimic-specific triggers like *Perfect Fit* (using a mimic in a pattern).
+## 4. Achievement System
 
 ### UI Integration
-*   **Sequential Notifications**: Unlocked achievements are queued and displayed via a top-level `Popup` window.
-*   **Multi-Tier Unlocks**: The logic supports triggering multiple achievement tiers (e.g., *Feeling the Surge* and *Maximum Overdrive*) in a single action.
-*   **Interactive HUD**: Clicking an achievement notification immediately opens the full collection view.
-*   **Dynamic Sorting**: The achievements list automatically prioritizes unlocked rewards while maintaining a logical progression order.
+*   **Card-Based UI**: Each achievement is presented as a high-fidelity card with a `WavyProgressBar`.
+*   **Dynamic Highlighting**: Clicking notifications deep-links directly to the relevant achievement within the full-screen view.
+*   **Sequential Notifications**: Unlocked achievements are queued and displayed via a top-level popup.
 
 ---
 
-## 4. Daily Missions System
+## 5. Daily Missions & Streak
 
-The game features a dynamic mission system that resets per session but tracks long-term commitment via a persistent streak.
-
-### Deterministic Generation
-*   **Seeded Variety**: Uses `DailyChallengeProvider` to generate 3 distinct missions daily, seeded by the current date (`yyyyMMdd`).
-*   **Strategic Categories**:
-    *   **Fundamental**: Direct interaction targets (e.g., *Merge 25 times*, *Reach Level 8*).
-    *   **Skill & Tactics**: Advanced play requirements (e.g., *5 Tactical Merges*, *Create a Value 12 Tile*, *Frozen Recovery*).
-    *   **Performance**: High-score or efficiency goals (e.g., *x10 Combo*, *10,000 Session Score*, *Combo Maintenance*).
-    *   **Geometric & Pattern**: Board state layout goals (e.g., *Ring of Fire*, *The Prism*, *Ghost Horde*).
-    *   **Restricted**: Conditional achievements (e.g., *Perk Restricted Level*, *Frugal Survivor*).
-
-### Reward Mechanics
-*   **Session-Specific Impact**: Completing a mission mid-game instantly rewards the player with either a **Score Boost** or a **Free Perk**, aiding the current run.
-*   **Persistent Streak Rewards**: Completing all 3 daily missions triggers a server-side reward grant. 
-    *   **Diamonds & Vouchers**: Rewards (e.g., 100 diamonds + 1 Rare Voucher) are added to the user's permanent inventory via the `adjust-economy` backend function.
-*   **Per-Game Collection**: Mission progress resets every time a new game starts, allowing players to collect rewards multiple times per day.
-*   **Streak-Based Scaling**: Score and item rewards scale steadily with the current streak, providing higher bonuses for consistent daily play.
-
-### UI Integration
-*   **Cinematic Completion**: Completion triggers a high-impact `DailyChallengeRewardOverlay` with a star burst and glow effect.
-*   **Wavy mission Cards**: The `DailyChallengeDialog` reuses the `WavyProgressBar` design from the achievement system for visual consistency.
-*   **Reward Preview**: Mission cards explicitly state the reward (Score or Perk) to encourage completion.
-*   **Post-Game Summary**: The Game Over screen provides a summary of all completed missions and their impact on the session.
+### Immersive Progress
+*   **Prominent Streak**: Current streak is the focal point with massive bold typography.
+*   **Next Reward Card**: High-fidelity card displaying upcoming milestone rewards (Diamonds/Perks).
+*   **Mission Log**: A custom month-view calendar highlighting every day the player completed all objectives.
+*   **Persistent Rewards**: Completing all 3 daily missions triggers a server-side reward grant (Diamonds & Vouchers).
 
 ---
 
-## 5. Interactive Tip System
-
-The game implements a contextual onboarding system to guide players through its deep mechanics without intrusive tutorials.
+## 6. Interactive Tip System
 
 ### Component Architecture
-*   **TipOverlay**: A full-screen overlay that uses a **Spotlight Effect** to highlight specific UI elements while dimming the rest of the screen.
-*   **Spotlight Mechanics**: Implemented using `ClipOp.Difference` on a `Path` containing the target element's bounding box.
-*   **Target Tracking**: Uses a custom `trackTipTarget` modifier and `Modifier.onGloballyPositioned` to dynamically send screen coordinates of HUD elements back to the overlay coordinator.
+*   **TipOverlay**: Full-screen overlay using a **Spotlight Effect** to highlight UI elements.
+*   **Target Tracking**: Uses a custom `trackTipTarget` modifier and `onGloballyPositioned` to sync coordinates.
 
 ### Contextual Triggers
-1.  **First Merge**: Guided merging instruction for new players.
-2.  **Daily Challenge Intro**: Points out the challenge system in the first session.
-3.  **Perk Mastery**: Triggers when the first perk is collected, explaining the `PerkBar` mechanics.
-4.  **Post-Game Discovery**: Highlights Leaderboards and Achievements on the first Game Over screen.
+1.  **First Merge**: Guided instruction for new players.
+2.  **Daily Challenge Intro**: Points out the system in the first session.
+3.  **Perk Mastery**: Collection and usage education.
+4.  **Post-Game Discovery**: Highlights Leaderboards and Achievements.
 
 ---
 
-## 6. Strategic Features
+## 7. Strategic Features
 
 ### Prediction & Previews
-*   **Interactive Previews**: Visually simulates Swaps, Moves, and direct Value changes before commitment.
-*   **Merge Isolation**: Previews at ghost positions do not trigger merges; only solid tiles are calculated.
-*   **Look-Ahead**: Simulations account for the current move plus the next 3 pieces in the queue.
-
-### Offline Persistence & Sync
-*   **Score Queue**: Failed leaderboard submissions are serialized and stored in `DataStore`.
-*   **Background Processing**: Uses `WorkManager` (Android) and `BGTaskScheduler` (iOS) to automatically sync pending scores when connectivity is restored.
-*   **Economy Sync**: RevenueCat initialization and balance fetches are performed on background threads (`Dispatchers.IO`) to prevent main-thread hangs.
-*   **Atomic State**: Full game state is persisted after every move to ensure no progress is lost.
+*   **Interactive Previews**: Visually simulates Swaps, Moves, and Values before commitment.
+*   **Merge Isolation**: Previews at ghost positions do not trigger merges.
 
 ### Perk & Voucher Economy
-*   **Rarity Groups**: 
-    *   **Common (VCMN)**: Undo, Move, Remove, Increment (Upgrade).
-    *   **Rare (VRARE)**: Advance, Swap, Duplicate, Skip (Pause), Freeze, Mimic.
-    *   **Legendary (VLGD)**: Fusion, Chain Merge, Path Merge.
-*   **Voucher System**: 
-    *   Players earn or buy **Category Vouchers** instead of specific perks.
-    *   **On-Demand Selection**: Vouchers can be spent at any time to open a `VoucherSelectionDialog`, allowing the player to pick any specific perk from that rarity group for the current game session.
-*   **Cloud-Synced Balances**: 
-    *   **RevenueCat Virtual Currency**: Diamonds and Vouchers are stored server-side via RevenueCat.
-    *   **Zero Local Storage**: All economy values (diamonds, VCMN, VRARE, VLGD) are fetched from the server on startup, removing reliance on local DataStore for inventory.
-*   **Secure Transactions**: Uses a Supabase Edge Function (`adjust-economy`) as a secure bridge to the RevenueCat v2 API for all balance adjustments.
-*   **Strategic Behavioral Rules**:
-    *   **Target Restrictions**: Perks like *Upgrade* and *Mimic* are blocked from targeting existing Mimic tiles to maintain game balance.
-    *   **Move & Duplicate**: Positional actions that preserve the "ghost" or "solid" status and allow for combo setup without forced merges. *Duplicate* correctly copies the Mimic attribute, displaying it as a star in the preview.
-    *   **Freeze Strategy**: Allows isolating a **solid tile** to prevent accidental merges. Useful for preserving high-value clusters or setting up future complex moves. Restricted from targeting ghost tiles.
-    *   **Lifespan Stability**: On-board perks only decrement lifespan during regular turn progression, not during strategic perk actions.
-    *   **Pity System**: Guaranteed on-board perk spawning between 8 and 15 turns.
+*   **Rarity Groups**: Common (VCMN), Rare (VRARE), Legendary (VLGD).
+*   **Voucher System**: Category-based vouchers can be exchanged for any perk within that rarity tier on-demand.
+*   **Cloud-Synced Balances**: Inventory is stored server-side via RevenueCat.
 
 ---
 
-## 7. UI & Visual Identity
+## 8. "Solid UI" Design System
 
-*   **Design System**: Centralized in `HexagoneTheme`, mapping Material 3 roles to "Glowing Hardware" tokens.
-*   **Stable Popups**: Notifications use **sequential IDs** and pre-calculated offsets for animation stability.
-*   **Liquid HUD**: A progress bar with a dynamic wavy edge that "splashes" based on point intensity.
-*   **Frost Effect**: Frozen tiles are visually distinct with a themed blue border and a snowflake badge.
-*   **Animated Perk Shelf**: Items trigger a scale-up "pop" (150%) when added, with smart scrolling to the latest updates.
-
----
-
-## 8. Development Guidelines
-1.  **ViewModel Delegation**: Extract complex logic into domain-specific delegates (State, Action, Effect, Merge, Achievement) to maintain a slim coordinator.
-2.  **State Atomicity**: Use `_uiState.update { ... }` for all gameplay changes to ensure consistency.
-3.  **Unique Merge IDs**: Always generate dynamic, unique IDs for merges (e.g., `cell_path_merge_N`) to prevent `MergeDelegate` from skipping animation steps due to ID collisions.
-4.  **Stability Guards**: Use stable keys (`key(id)`) for all dynamic items to prevent unnecessary recompositions.
-5.  **Interaction Locking**: Check `isBusy` and `pendingMerge` flags to prevent input during animations.
-6.  **Persistence**: State is serialized via `kotlinx.serialization` and persisted after every successful move.
+*   **Design Tokens**: Strict adherence to `MaterialTheme.spacing` and `cornerRadius`.
+*   **Draw-Phase Animations**: High-frequency effects (like the podium glow) are optimized to run in the draw phase, eliminating unnecessary recompositions.
+*   **Shallow UI Tree**: Minimal nesting through the use of `Arrangement.spacedBy()` and modifier stacking.
+*   **Consistent Immersive Depth**: Content visibility through translucent headers is standard.
