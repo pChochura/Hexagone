@@ -140,6 +140,10 @@
     <string name="onboarding_submit">START</string>
     <string name="login_title">HEXAGONE</string>
     <string name="login_subtitle">Strategy awaits. Identity required.</string>
+    <string name="login_as_guest">CONTINUE AS GUEST</string>
+    <string name="login_with_google">SIGN IN WITH GOOGLE</string>
+    <string name="login_with_apple">SIGN IN WITH APPLE</string>
+    <string name="login_continue">CONTINUE</string>
 
     <!-- Leaderboard -->
     <string name="leaderboard_title">LEADERBOARD</string>
