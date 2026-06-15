@@ -157,11 +157,9 @@
 
     <!-- Settings & Account -->
     <string name="settings_label">SETTINGS</string>
-    <string name="settings_account_section">ACCOUNT</string>
     <string name="settings_nickname_label">Nickname</string>
     <string name="settings_nickname_hint">Enter your nickname</string>
     <string name="settings_change_nickname_button">CHANGE</string>
-    <string name="settings_login_button">LOG IN</string>
     <string name="settings_logout_button">LOG OUT</string>
     <string name="settings_remove_account_button">REMOVE ACCOUNT</string>
     <string name="settings_anonymous_account">Anonymous Account</string>

@@ -134,6 +134,10 @@ internal class LoginViewModel(
         _uiState.value = _uiState.value.copy(showNicknamePopup = false)
     }
 
+    fun consumeSuccess() {
+        _uiState.value = _uiState.value.copy(isSuccess = false)
+    }
+
     fun onCreateProfile() {
         val name = _uiState.value.name.trim()
         if (name.isEmpty()) {

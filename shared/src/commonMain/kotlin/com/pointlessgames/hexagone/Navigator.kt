@@ -104,6 +104,13 @@ internal class Navigator(private val backStack: NavBackStack<NavKey>) {
             backStack.removeAt(backStack.size - 1)
         }
     }
+
+    fun replaceAll(route: Route) {
+        while (backStack.isNotEmpty()) {
+            backStack.removeAt(backStack.size - 1)
+        }
+        backStack.add(route)
+    }
 }
 
 internal val LocalNavigator: ProvidableCompositionLocal<Navigator> =

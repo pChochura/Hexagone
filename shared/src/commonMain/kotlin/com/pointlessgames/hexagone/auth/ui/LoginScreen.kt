@@ -1,20 +1,12 @@
 package com.pointlessgames.hexagone.auth.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -26,8 +18,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pointlessgames.hexagone.LocalNavigator
 import com.pointlessgames.hexagone.Route
 import com.pointlessgames.hexagone.auth.LoginViewModel
+import com.pointlessgames.hexagone.auth.ui.components.AuthButton
+import com.pointlessgames.hexagone.auth.ui.components.NicknamePopup
 import com.pointlessgames.hexagone.auth.ui.components.PlayfulTitle
-import com.pointlessgames.hexagone.game.ui.components.DialogContainer
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
@@ -46,7 +39,8 @@ internal fun LoginScreen(
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
-            navigator.navigateTo(Route.Game)
+            viewModel.consumeSuccess()
+            navigator.replaceAll(Route.Game)
         }
     }
 
@@ -123,14 +117,14 @@ internal fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(0.8f),
                 verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled)
             ) {
-                LoginButton(
+                AuthButton(
                     text = stringResource(Res.string.login_with_google),
                     onClick = viewModel::onSignInWithGoogle,
                     containerColor = Color.White.copy(alpha = 0.05f),
                     contentColor = Color.White
                 )
 
-                LoginButton(
+                AuthButton(
                     text = stringResource(Res.string.login_with_apple),
                     onClick = viewModel::onSignInWithApple,
                     containerColor = Color.White.copy(alpha = 0.05f),
@@ -139,7 +133,7 @@ internal fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(spacing.medium.scaled))
 
-                LoginButton(
+                AuthButton(
                     text = stringResource(Res.string.login_as_guest),
                     onClick = viewModel::onSignInAnonymously,
                     containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
@@ -150,125 +144,14 @@ internal fun LoginScreen(
         }
 
         // Nickname Popup
-        AnimatedVisibility(
+        NicknamePopup(
             visible = uiState.showNicknamePopup,
-            enter = fadeIn() + scaleIn(initialScale = 0.9f),
-            exit = fadeOut(),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.6f))
-                    .clickable(
-                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                        indication = null
-                    ) { viewModel.onDismissNicknamePopup() },
-                contentAlignment = Alignment.Center
-            ) {
-                DialogContainer(
-                    modifier = Modifier.clickable(enabled = false) {},
-                    isProcessing = uiState.isLoading
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(spacing.extraLarge.scaled),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.onboarding_title).uppercase(),
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Black
-                        )
-                        
-                        Spacer(modifier = Modifier.height(spacing.medium.scaled))
-                        
-                        Text(
-                            text = stringResource(Res.string.onboarding_subtitle),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.6f),
-                            textAlign = TextAlign.Center
-                        )
-
-                        Spacer(modifier = Modifier.height(spacing.extraLarge.scaled))
-
-                        OutlinedTextField(
-                            value = uiState.name,
-                            onValueChange = viewModel::onNameChanged,
-                            modifier = Modifier.fillMaxWidth(),
-                            placeholder = {
-                                Text(
-                                    text = stringResource(Res.string.onboarding_username_placeholder),
-                                    color = Color.White.copy(alpha = 0.3f),
-                                )
-                            },
-                            singleLine = true,
-                            isError = uiState.error != null,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                cursorColor = MaterialTheme.colorScheme.primary,
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                            ),
-                        )
-
-                        if (uiState.error != null) {
-                            Text(
-                                text = uiState.error!!,
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp.scaled),
-                                modifier = Modifier
-                                    .align(Alignment.Start)
-                                    .padding(top = spacing.small.scaled),
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(spacing.extraLarge.scaled))
-
-                        LoginButton(
-                            text = stringResource(Res.string.login_continue),
-                            onClick = viewModel::onCreateProfile,
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = Color.White,
-                            modifier = Modifier.fillMaxWidth(0.7f)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LoginButton(
-    text: String,
-    onClick: () -> Unit,
-    containerColor: Color,
-    contentColor: Color,
-    modifier: Modifier = Modifier,
-    borderColor: Color = Color.White.copy(alpha = 0.1f)
-) {
-    val spacing = MaterialTheme.spacing
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(CircleShape)
-            .background(containerColor)
-            .border(1.dp.scaled, borderColor, CircleShape)
-            .clickable { onClick() }
-            .padding(vertical = spacing.medium.scaled + 4.dp.scaled),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text.uppercase(),
-            color = contentColor,
-            fontWeight = FontWeight.Black,
-            fontSize = 14.sp.scaled,
-            letterSpacing = 1.sp.scaled
+            name = uiState.name,
+            onNameChanged = viewModel::onNameChanged,
+            onConfirm = viewModel::onCreateProfile,
+            onDismiss = viewModel::onDismissNicknamePopup,
+            isLoading = uiState.isLoading,
+            error = uiState.error
         )
     }
 }

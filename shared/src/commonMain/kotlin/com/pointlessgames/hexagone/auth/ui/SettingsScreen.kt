@@ -1,8 +1,8 @@
 package com.pointlessgames.hexagone.auth.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,10 +17,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pointlessgames.hexagone.LocalNavigator
 import com.pointlessgames.hexagone.Route
 import com.pointlessgames.hexagone.auth.SettingsViewModel
+import com.pointlessgames.hexagone.auth.ui.components.AuthButton
+import com.pointlessgames.hexagone.auth.ui.components.NicknamePopup
 import com.pointlessgames.hexagone.game.ui.components.HexAlertDialog
-import com.pointlessgames.hexagone.game.ui.components.HexagonIconButton
 import com.pointlessgames.hexagone.game.ui.components.ScreenScaffold
-import com.pointlessgames.hexagone.game.ui.components.ShopSectionTitle
 import com.pointlessgames.hexagone.game.model.HexDialogState
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
@@ -38,9 +38,14 @@ internal fun SettingsScreen(
     val spacing = MaterialTheme.spacing
     var showRemoveAccountDialog by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        viewModel.loadAccountInfo()
+    }
+
     LaunchedEffect(uiState.isLoggedOut) {
         if (uiState.isLoggedOut) {
-            navigator.navigateTo(Route.Login)
+            viewModel.consumeLoggedOut()
+            navigator.replaceAll(Route.Login)
         }
     }
 
@@ -48,63 +53,44 @@ internal fun SettingsScreen(
         title = stringResource(Res.string.settings_label),
         onBack = { navigator.pop() },
     ) { contentPadding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
-            contentPadding = PaddingValues(
-                top = contentPadding.calculateTopPadding() + spacing.medium.scaled,
-                bottom = spacing.extraLarge.scaled,
-            ),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = contentPadding.calculateTopPadding())
+                .padding(bottom = spacing.extraLarge.scaled),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            item {
-                Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
-                    ShopSectionTitle(text = stringResource(Res.string.settings_account_section))
-                }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = spacing.extraLarge.scaled)
+                    .padding(top = spacing.medium.scaled),
+                verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled)
+            ) {
+                AccountCard(
+                    nickname = uiState.nickname,
+                    isAnonymous = uiState.isAnonymous,
+                    onClick = viewModel::onShowNicknamePopup
+                )
+
+                Spacer(modifier = Modifier.height(spacing.medium.scaled))
+
+                AuthButton(
+                    text = stringResource(Res.string.settings_logout_button),
+                    onClick = viewModel::logout,
+                    containerColor = Color.White.copy(alpha = 0.05f),
+                    contentColor = Color.White
+                )
             }
 
-            item {
-                Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
-                    AccountCard(
-                        nickname = uiState.nickname,
-                        isAnonymous = uiState.isAnonymous,
-                        onNicknameChanged = viewModel::onNicknameChanged,
-                        onUpdateNickname = viewModel::updateNickname,
-                        isLoading = uiState.isLoading,
-                        error = uiState.error
-                    )
-                }
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(spacing.large.scaled))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = spacing.extraLarge.scaled),
-                    horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled)
-                ) {
-                    val buttonWeight = 1f
-                    
-                    HexagonIconButton(
-                        label = stringResource(Res.string.settings_logout_button),
-                        icon = Res.drawable.ic_back,
-                        onClick = viewModel::logout,
-                        modifier = Modifier.weight(buttonWeight),
-                        size = 80.dp.scaled,
-                        backgroundColor = Color.White.copy(alpha = 0.05f),
-                        borderColor = Color.White.copy(alpha = 0.1f)
-                    )
-
-                    HexagonIconButton(
-                        label = stringResource(Res.string.settings_remove_account_button),
-                        icon = Res.drawable.ic_delete,
-                        onClick = { showRemoveAccountDialog = true },
-                        modifier = Modifier.weight(buttonWeight),
-                        size = 80.dp.scaled,
-                        backgroundColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
-                        borderColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
-                    )
-                }
+            Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
+                AuthButton(
+                    text = stringResource(Res.string.settings_remove_account_button),
+                    onClick = { showRemoveAccountDialog = true },
+                    containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
+                    contentColor = MaterialTheme.colorScheme.error,
+                    borderColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
+                )
             }
         }
     }
@@ -122,16 +108,23 @@ internal fun SettingsScreen(
             onDismiss = { showRemoveAccountDialog = false }
         )
     }
+
+    NicknamePopup(
+        visible = uiState.showNicknamePopup,
+        name = uiState.nickname,
+        onNameChanged = viewModel::onNicknameChanged,
+        onConfirm = viewModel::updateNickname,
+        onDismiss = viewModel::onDismissNicknamePopup,
+        isLoading = uiState.isLoading,
+        error = uiState.error
+    )
 }
 
 @Composable
 private fun AccountCard(
     nickname: String,
     isAnonymous: Boolean,
-    onNicknameChanged: (String) -> Unit,
-    onUpdateNickname: () -> Unit,
-    isLoading: Boolean,
-    error: String?
+    onClick: () -> Unit
 ) {
     val spacing = MaterialTheme.spacing
     val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
@@ -141,9 +134,10 @@ private fun AccountCard(
             .fillMaxWidth()
             .clip(shape)
             .background(MaterialTheme.colorScheme.background)
+            .clickable { onClick() }
             .padding(spacing.large.scaled)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled)) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = if (isAnonymous) stringResource(Res.string.settings_anonymous_account)
                 else stringResource(Res.string.settings_logged_in_as, nickname),
@@ -151,46 +145,15 @@ private fun AccountCard(
                 fontSize = 12.sp.scaled,
                 fontWeight = FontWeight.Bold
             )
+            
+            Spacer(modifier = Modifier.height(spacing.extraSmall.scaled))
 
-            OutlinedTextField(
-                value = nickname,
-                onValueChange = onNicknameChanged,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(Res.string.settings_nickname_label)) },
-                placeholder = { Text(stringResource(Res.string.settings_nickname_hint)) },
-                singleLine = true,
-                isError = error != null,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                )
+            Text(
+                text = nickname,
+                color = Color.White,
+                fontSize = 20.sp.scaled,
+                fontWeight = FontWeight.Black
             )
-
-            if (error != null) {
-                Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 11.sp.scaled
-                )
-            }
-
-            Button(
-                onClick = onUpdateNickname,
-                modifier = Modifier.align(Alignment.End),
-                enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp.scaled), strokeWidth = 2.dp.scaled)
-                } else {
-                    Text(stringResource(Res.string.settings_change_nickname_button))
-                }
-            }
         }
     }
 }

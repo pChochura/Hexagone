@@ -27,26 +27,44 @@ internal class SettingsViewModel(
         val isLoading: Boolean = false,
         val error: String? = null,
         val isLoggedOut: Boolean = false,
+        val showNicknamePopup: Boolean = false,
     )
 
     init {
         loadAccountInfo()
     }
 
-    private fun loadAccountInfo() {
+    fun loadAccountInfo() {
         viewModelScope.launch {
             val name = settingsRepository.getPlayerName() ?: ""
             val user = supabaseClient.auth.currentUserOrNull()
             _uiState.value = _uiState.value.copy(
                 nickname = name,
                 originalNickname = name,
-                isAnonymous = user?.isAnonymous ?: true
+                isAnonymous = user?.isAnonymous ?: true,
+                isLoggedOut = false
             )
         }
     }
 
+    fun consumeLoggedOut() {
+        _uiState.value = _uiState.value.copy(isLoggedOut = false)
+    }
+
     fun onNicknameChanged(name: String) {
         _uiState.value = _uiState.value.copy(nickname = name, error = null)
+    }
+
+    fun onShowNicknamePopup() {
+        _uiState.value = _uiState.value.copy(showNicknamePopup = true)
+    }
+
+    fun onDismissNicknamePopup() {
+        _uiState.value = _uiState.value.copy(
+            showNicknamePopup = false,
+            nickname = _uiState.value.originalNickname,
+            error = null
+        )
     }
 
     fun updateNickname() {
@@ -64,7 +82,8 @@ internal class SettingsViewModel(
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     originalNickname = newName,
-                    error = null
+                    error = null,
+                    showNicknamePopup = false
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
