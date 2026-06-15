@@ -3,67 +3,49 @@ package com.pointlessgames.hexagone.game.ui.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.cancel
-import hexagone.shared.generated.resources.confirm
-import hexagone.shared.generated.resources.done
-import hexagone.shared.generated.resources.ic_diamond
-import hexagone.shared.generated.resources.ic_legendary_perk
-import hexagone.shared.generated.resources.ic_rare_perk
-import hexagone.shared.generated.resources.ic_roll
-import hexagone.shared.generated.resources.shop_insufficient_balance
+import hexagone.shared.generated.resources.*
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+private data class Quintuple<A, B, C, D, E>(val first: A, val second: B, val third: C, val fourth: D, val fifth: E)
 
 /**
  * Atom: A standardized alert dialog for Success, Error, and Confirmation messages.
@@ -76,111 +58,168 @@ fun HexAlertDialog(
 ) {
     val spacing = MaterialTheme.spacing
     
-    Dialog(onDismissRequest = onDismiss) {
-        DialogContainer(modifier = modifier) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(spacing.medium.scaled),
-                horizontalAlignment = Alignment.CenterHorizontally
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            // Animated Entrance
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(tween(300)) + scaleIn(initialScale = 0.9f, animationSpec = tween(300)),
+                modifier = Modifier.fillMaxWidth(0.92f)
             ) {
-                val (title, message, isError, onConfirm) = when (state) {
-                    is com.pointlessgames.hexagone.game.model.HexDialogState.Confirmation -> {
-                        val msg = stringResource(state.message, *state.formatArgs.toTypedArray())
-                        Quadruple(stringResource(state.title), msg, false, state.onConfirm)
-                    }
-                    is com.pointlessgames.hexagone.game.model.HexDialogState.Info -> {
-                        val msg = if (state.messageText != null) {
-                            state.messageText
-                        } else if (state.message != null) {
-                            stringResource(state.message, *state.formatArgs.toTypedArray())
-                        } else ""
-                        Quadruple(stringResource(state.title), msg, state.isError, null)
-                    }
-                }
+                DialogContainer(modifier = modifier) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = spacing.extraLarge.scaled, vertical = spacing.large.scaled),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled)
+                    ) {
+                        val (title, message, isError, onConfirm, icon) = when (state) {
+                            is com.pointlessgames.hexagone.game.model.HexDialogState.Confirmation -> {
+                                val msg = stringResource(state.message, *state.formatArgs.toTypedArray())
+                                Quintuple(
+                                    stringResource(state.title), 
+                                    msg, 
+                                    false, 
+                                    state.onConfirm, 
+                                    Res.drawable.ic_diamond
+                                )
+                            }
+                            is com.pointlessgames.hexagone.game.model.HexDialogState.Info -> {
+                                val msg = if (state.messageText != null) {
+                                    state.messageText
+                                } else if (state.message != null) {
+                                    stringResource(state.message, *state.formatArgs.toTypedArray())
+                                } else ""
+                                Quintuple(
+                                    stringResource(state.title), 
+                                    msg, 
+                                    state.isError, 
+                                    null, 
+                                    if (state.isError) Res.drawable.ic_delete else Res.drawable.ic_star
+                                )
+                            }
+                        }
 
-                Text(
-                    text = title.uppercase(),
-                    color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 20.sp.scaled,
-                    letterSpacing = 2.sp.scaled,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(Modifier.height(spacing.large.scaled))
-
-                Text(
-                    text = message,
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp.scaled,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 20.sp.scaled
-                )
-
-                Spacer(Modifier.height(spacing.extraLarge.scaled))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally)
-                ) {
-                    if (onConfirm != null) {
-                        // Cancel Option
+                        // Large Type-based Icon
                         Box(
                             modifier = Modifier
-                                .weight(1f)
+                                .size(64.dp.scaled)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.background, CircleShape)
-                                .clickable { onDismiss() }
-                                .padding(vertical = spacing.medium.scaled),
+                                .background(Color.White.copy(alpha = 0.05f))
+                                .padding(12.dp.scaled),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = stringResource(Res.string.cancel).uppercase(),
-                                color = Color.White.copy(alpha = 0.6f),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp.scaled
+                            Icon(
+                                painter = painterResource(icon),
+                                contentDescription = null,
+                                tint = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
 
-                        // Confirm Option
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary, CircleShape)
-                                .clickable { 
-                                    onConfirm()
-                                    onDismiss()
+                        Spacer(Modifier.height(spacing.extraSmall.scaled))
+
+                        Text(
+                            text = title.uppercase(),
+                            color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 20.sp.scaled,
+                            letterSpacing = 2.sp.scaled,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Text(
+                            text = message,
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp.scaled,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 22.sp.scaled
+                        )
+
+                        Spacer(Modifier.height(spacing.medium.scaled))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally)
+                        ) {
+                            if (onConfirm != null) {
+                                // Cancel Option
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surface, CircleShape)
+                                        .border(1.dp.scaled, Color.White.copy(alpha = 0.1f), CircleShape)
+                                        .clickable { onDismiss() }
+                                        .padding(vertical = spacing.medium.scaled),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.cancel).uppercase(),
+                                        color = Color.White.copy(alpha = 0.6f),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp.scaled
+                                    )
                                 }
-                                .padding(vertical = spacing.medium.scaled),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.confirm).uppercase(),
-                                color = Color.White,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 14.sp.scaled
-                            )
-                        }
-                    } else {
-                        // OK / Dismiss Button
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(0.6f)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary, CircleShape)
-                                .clickable { onDismiss() }
-                                .padding(vertical = spacing.medium.scaled),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.done).uppercase(),
-                                color = Color.White,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 14.sp.scaled
-                            )
+
+                                // Primary Confirm Action with Pulse
+                                val infiniteTransition = rememberInfiniteTransition(label = "btn_pulse")
+                                val pulseAlpha by infiniteTransition.animateFloat(
+                                    initialValue = 0.8f,
+                                    targetValue = 1f,
+                                    animationSpec = infiniteRepeatable(
+                                        animation = tween(1000),
+                                        repeatMode = RepeatMode.Reverse
+                                    ),
+                                    label = "alpha"
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha), CircleShape)
+                                        .clickable { 
+                                            onConfirm()
+                                            onDismiss()
+                                        }
+                                        .padding(vertical = spacing.medium.scaled),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.confirm).uppercase(),
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 14.sp.scaled
+                                    )
+                                }
+                            } else {
+                                // OK / Dismiss Button
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.6f)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary, CircleShape)
+                                        .clickable { onDismiss() }
+                                        .padding(vertical = spacing.medium.scaled),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.done).uppercase(),
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 14.sp.scaled
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -205,9 +244,14 @@ fun DialogContainer(
         modifier = modifier
             .fillMaxWidth(0.92f)
             .safeDrawingPadding()
-            .clip(RoundedCornerShape(cornerRadius.extraLarge.scaled)) // Ensure content respects corners
+            .clip(RoundedCornerShape(cornerRadius.extraLarge.scaled))
             .background(
                 MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+                RoundedCornerShape(cornerRadius.extraLarge.scaled),
+            )
+            .border(
+                1.dp.scaled,
+                Color.White.copy(alpha = 0.1f),
                 RoundedCornerShape(cornerRadius.extraLarge.scaled),
             )
             .border(
@@ -247,26 +291,80 @@ fun DiamondBalanceBadge(
     modifier: Modifier = Modifier
 ) {
     val spacing = MaterialTheme.spacing
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.background, RoundedCornerShape(16.dp.scaled))
-            .border(1.dp.scaled, Color(0xFFFFD54F).copy(alpha = 0.2f), RoundedCornerShape(16.dp.scaled))
-            .padding(horizontal = spacing.medium.scaled, vertical = spacing.small.scaled)
-    ) {
-        Icon(
-            painter = painterResource(Res.drawable.ic_diamond),
-            contentDescription = null,
-            tint = Color(0xFFFFD54F),
-            modifier = Modifier.size(16.dp.scaled)
-        )
-        Spacer(Modifier.width(spacing.extraSmall.scaled))
-        Text(
-            text = diamonds.toString(),
-            color = Color(0xFFFFD54F),
-            fontWeight = FontWeight.Black,
-            fontSize = 18.sp.scaled,
-        )
+    var previousDiamonds by remember { mutableStateOf(diamonds) }
+    var displayedDiamonds by remember { mutableStateOf(diamonds) }
+    var animatedDelta by remember { mutableStateOf(0) }
+    
+    val popScale = remember { Animatable(1f) }
+    val dropOffset = remember { Animatable(0f) }
+    val deltaAlpha = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(diamonds) {
+        val diff = diamonds - previousDiamonds
+        if (diff > 0) {
+            // Popup Increase
+            displayedDiamonds = diamonds
+            popScale.snapTo(1.4f)
+            popScale.animateTo(1f, tween(400))
+        } else if (diff < 0) {
+            // Drop Decrease
+            animatedDelta = diff
+            deltaAlpha.snapTo(1f)
+            dropOffset.snapTo(0f)
+            
+            // Parallel animation for falling red text
+            scope.launch {
+                dropOffset.animateTo(30f, tween(1000))
+            }
+            scope.launch {
+                deltaAlpha.animateTo(0f, tween(1000))
+                animatedDelta = 0
+            }
+            displayedDiamonds = diamonds
+        }
+        previousDiamonds = diamonds
+    }
+
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .graphicsLayer {
+                    scaleX = popScale.value
+                    scaleY = popScale.value
+                }
+                .background(MaterialTheme.colorScheme.background, RoundedCornerShape(16.dp.scaled))
+                .border(1.dp.scaled, Color(0xFFFFD54F).copy(alpha = 0.2f), RoundedCornerShape(16.dp.scaled))
+                .padding(horizontal = spacing.medium.scaled, vertical = spacing.small.scaled)
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_diamond),
+                contentDescription = null,
+                tint = Color(0xFFFFD54F),
+                modifier = Modifier.size(16.dp.scaled)
+            )
+            Spacer(Modifier.width(spacing.extraSmall.scaled))
+            Text(
+                text = displayedDiamonds.toString(),
+                color = Color(0xFFFFD54F),
+                fontWeight = FontWeight.Black,
+                fontSize = 18.sp.scaled,
+            )
+        }
+
+        // Falling Delta Animation
+        if (animatedDelta < 0) {
+            Text(
+                text = animatedDelta.toString(),
+                color = MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.Black,
+                fontSize = 14.sp.scaled,
+                modifier = Modifier
+                    .offset(y = dropOffset.value.dp.scaled)
+                    .alpha(deltaAlpha.value)
+            )
+        }
     }
 }
 
@@ -371,6 +469,8 @@ fun ProductCard(
     price: String,
     description: String = "",
     label: String? = null,
+    leadingIcon: org.jetbrains.compose.resources.DrawableResource? = null,
+    leadingIconTint: Color = Color.Unspecified,
     costInDiamonds: Int? = null,
     hasEnoughDiamonds: Boolean = true,
     isEnabled: Boolean = true,
@@ -392,9 +492,27 @@ fun ProductCard(
                 .alpha(if (hasEnoughDiamonds) 1f else 0.6f)
                 .clickable(enabled = isEnabled && hasEnoughDiamonds) { onClick() }
                 .padding(spacing.large.scaled),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(spacing.large.scaled),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (leadingIcon != null) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp.scaled)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.05f))
+                        .padding(8.dp.scaled),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(leadingIcon),
+                        contentDescription = null,
+                        tint = leadingIconTint,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title.uppercase(),

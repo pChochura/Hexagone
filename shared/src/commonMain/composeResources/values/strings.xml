@@ -301,7 +301,9 @@
     <string name="shop_legendary_bundle">LEGENDARY PERK</string>
     <string name="shop_buy_button">BUY</string>
     <string name="shop_products_title">DIAMONDS STORE</string>
+    <string name="shop_products_desc">Acquire diamonds to unlock exclusive perks and powerful upgrades.</string>
     <string name="shop_vouchers_title">VOUCHER EXCHANGE</string>
+    <string name="shop_vouchers_desc">Trade your diamonds for perk vouchers that can be used anytime during your run.</string>
     <string name="shop_not_enough_diamonds">NOT ENOUGH DIAMONDS</string>
     <string name="shop_revive_button">REVIVE</string>
     <string name="shop_use_banked_perk">USE BANKED PERK</string>

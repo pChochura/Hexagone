@@ -301,7 +301,9 @@
     <string name="shop_legendary_bundle">LEGENDARNY PERK</string>
     <string name="shop_buy_button">KUP</string>
     <string name="shop_products_title">SKLEP DIAMENTÓW</string>
+    <string name="shop_products_desc">Zdobądź diamenty, aby odblokować ekskluzywne perki i potężne ulepszenia.</string>
     <string name="shop_vouchers_title">WYMIANA VOUCHERÓW</string>
+    <string name="shop_vouchers_desc">Wymień diamenty na vouchery na perki, których możesz użyć w dowolnym momencie gry.</string>
     <string name="shop_not_enough_diamonds">ZA MAŁO DIAMENTÓW</string>
     <string name="shop_revive_button">ODRODZENIE</string>
     <string name="shop_use_banked_perk">UŻYJ ZAPASOWEGO PERKA</string>

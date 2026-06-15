@@ -1,5 +1,7 @@
 package com.pointlessgames.hexagone.game.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,13 +20,17 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.itemsIndexed as lazyRowItemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.LocalNavigator
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.logic.PerkCategory
@@ -38,14 +44,19 @@ import com.pointlessgames.hexagone.game.ui.components.VoucherItem
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.shop_banked_perks_label
+import hexagone.shared.generated.resources.ic_diamond
+import hexagone.shared.generated.resources.ic_legendary_perk
+import hexagone.shared.generated.resources.ic_rare_perk
+import hexagone.shared.generated.resources.ic_roll
 import hexagone.shared.generated.resources.shop_best_value
 import hexagone.shared.generated.resources.shop_common_bundle
 import hexagone.shared.generated.resources.shop_extra_diamonds
 import hexagone.shared.generated.resources.shop_legendary_bundle
+import hexagone.shared.generated.resources.shop_products_desc
 import hexagone.shared.generated.resources.shop_products_title
 import hexagone.shared.generated.resources.shop_rare_bundle
 import hexagone.shared.generated.resources.shop_title
+import hexagone.shared.generated.resources.shop_vouchers_desc
 import hexagone.shared.generated.resources.shop_vouchers_title
 import org.jetbrains.compose.resources.stringResource
 
@@ -78,34 +89,6 @@ internal fun ShopScreen(
                     bottom = spacing.extraLarge.scaled
                 )
             ) {
-                // My Vouchers Section (Full Width)
-                item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-                    Column(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
-                        ShopSectionTitle(text = stringResource(Res.string.shop_banked_perks_label))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                        ) {
-                            VoucherItem(
-                                category = PerkCategory.COMMON,
-                                count = uiState.vouchers[PerkCategory.COMMON] ?: 0,
-                                onUse = { viewModel.onUseVoucher(PerkCategory.COMMON) },
-                            )
-                            VoucherItem(
-                                category = PerkCategory.RARE,
-                                count = uiState.vouchers[PerkCategory.RARE] ?: 0,
-                                onUse = { viewModel.onUseVoucher(PerkCategory.RARE) },
-                            )
-                            VoucherItem(
-                                category = PerkCategory.LEGENDARY,
-                                count = uiState.vouchers[PerkCategory.LEGENDARY] ?: 0,
-                                onUse = { viewModel.onUseVoucher(PerkCategory.LEGENDARY) },
-                            )
-                        }
-                        Spacer(Modifier.height(spacing.medium.scaled))
-                    }
-                }
-
                 if (uiState.isShopLoading) {
                     item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
                         Box(
@@ -122,10 +105,16 @@ internal fun ShopScreen(
                     // Premium Section Header
                     if (storeProducts.isNotEmpty()) {
                         item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-                            ShopSectionTitle(
-                                text = stringResource(Res.string.shop_products_title),
-                                modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)
-                            )
+                            Column(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
+                                ShopSectionTitle(text = stringResource(Res.string.shop_products_title))
+                                Text(
+                                    text = stringResource(Res.string.shop_products_desc),
+                                    color = Color.White.copy(alpha = 0.5f),
+                                    fontSize = 11.sp.scaled,
+                                    lineHeight = 16.sp.scaled,
+                                    modifier = Modifier.padding(bottom = spacing.medium.scaled)
+                                )
+                            }
                         }
                         
                         item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
@@ -159,10 +148,17 @@ internal fun ShopScreen(
 
                     // Perk Exchange Section Header
                     item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-                        ShopSectionTitle(
-                            text = stringResource(Res.string.shop_vouchers_title),
-                            modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)
-                        )
+                        Column(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
+                            Spacer(Modifier.height(spacing.large.scaled))
+                            ShopSectionTitle(text = stringResource(Res.string.shop_vouchers_title))
+                            Text(
+                                text = stringResource(Res.string.shop_vouchers_desc),
+                                color = Color.White.copy(alpha = 0.5f),
+                                fontSize = 11.sp.scaled,
+                                lineHeight = 16.sp.scaled,
+                                modifier = Modifier.padding(bottom = spacing.medium.scaled)
+                            )
+                        }
                     }
 
                     val exchangeItems = listOf(
@@ -173,10 +169,23 @@ internal fun ShopScreen(
 
                     // Exchange items are full-width cards to distinguish from products
                     itemsIndexed(exchangeItems, span = { _, _ -> androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { _, (resId, cost, category) ->
+                        val icon = when (category) {
+                            PerkCategory.COMMON -> Res.drawable.ic_roll
+                            PerkCategory.RARE -> Res.drawable.ic_rare_perk
+                            PerkCategory.LEGENDARY -> Res.drawable.ic_legendary_perk
+                        }
+                        val color = when (category) {
+                            PerkCategory.COMMON -> Color.Gray
+                            PerkCategory.RARE -> Color(0xFF4FC3F7)
+                            PerkCategory.LEGENDARY -> Color(0xFFFFD54F)
+                        }
+
                         Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
                             ProductCard(
                                 title = stringResource(resId),
                                 price = "",
+                                leadingIcon = icon,
+                                leadingIconTint = color,
                                 costInDiamonds = cost,
                                 hasEnoughDiamonds = uiState.diamonds >= cost,
                                 isEnabled = !uiState.isShopProcessing,
@@ -193,6 +202,19 @@ internal fun ShopScreen(
                     state = uiState.activeDialog!!,
                     onDismiss = viewModel::onDismissDialog
                 )
+            }
+
+            // Global Processing Overlay
+            if (uiState.isShopProcessing) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.4f))
+                        .clickable(enabled = false) {},
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                }
             }
         }
     }
