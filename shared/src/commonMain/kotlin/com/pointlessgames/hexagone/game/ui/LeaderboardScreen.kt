@@ -92,149 +92,40 @@ internal fun LeaderboardScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(spacing.small.scaled),
         ) {
-            if (uiState.playerName == null) {
+            if (uiState.isLoading) {
                 item {
-                    Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
-                        OnboardingContent(
-                            onNameChanged = viewModel::onOnboardingNameChanged,
-                            onCreateProfile = viewModel::onCreateProfile,
-                            name = uiState.onboardingName,
-                            isLoading = uiState.isCreatingProfile,
-                            error = uiState.error,
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp.scaled),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            } else if (uiState.rankings.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp.scaled),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.leaderboard_empty),
+                            color = Color.White.copy(alpha = 0.4f),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp.scaled,
                         )
                     }
                 }
             } else {
-                if (uiState.isLoading) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp.scaled),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                        }
-                    }
-                } else if (uiState.rankings.isEmpty()) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp.scaled),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.leaderboard_empty),
-                                color = Color.White.copy(alpha = 0.4f),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp.scaled,
-                            )
-                        }
-                    }
-                } else {
-                    itemsIndexed(uiState.rankings) { index, result ->
-                        Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
-                            RankItem(rank = index + 1, result = result)
-                        }
+                itemsIndexed(uiState.rankings) { index, result ->
+                    Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
+                        RankItem(rank = index + 1, result = result)
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun OnboardingContent(
-    onNameChanged: (String) -> Unit,
-    onCreateProfile: () -> Unit,
-    name: String,
-    isLoading: Boolean,
-    error: String?,
-) {
-    val spacing = MaterialTheme.spacing
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = spacing.extraLarge.scaled),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = stringResource(Res.string.onboarding_title).uppercase(),
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontSize = 24.sp.scaled,
-                letterSpacing = 2.sp.scaled,
-            ),
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Black,
-        )
-
-        Spacer(modifier = Modifier.height(spacing.medium.scaled))
-
-        Text(
-            text = stringResource(Res.string.onboarding_subtitle),
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontSize = 16.sp.scaled,
-            ),
-            color = Color.White.copy(alpha = 0.6f),
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold,
-        )
-
-        Spacer(modifier = Modifier.height(spacing.extraLarge.scaled))
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = onNameChanged,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = {
-                Text(
-                    text = stringResource(Res.string.onboarding_username_placeholder),
-                    color = Color.White.copy(alpha = 0.3f),
-                )
-            },
-            singleLine = true,
-            isError = error != null,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                cursorColor = MaterialTheme.colorScheme.primary,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-            ),
-        )
-
-        if (error != null) {
-            Text(
-                text = error,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp.scaled),
-                modifier = Modifier
-                    .align(Alignment.Start)
-                    .padding(top = spacing.small.scaled),
-            )
-        }
-
-        Spacer(modifier = Modifier.height(spacing.extraLarge.scaled))
-
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(24.dp.scaled),
-                color = MaterialTheme.colorScheme.primary,
-                strokeWidth = 2.dp.scaled,
-            )
-        } else {
-            HexagonIconButton(
-                onClick = onCreateProfile,
-                icon = Res.drawable.ic_roll,
-                label = stringResource(Res.string.onboarding_submit),
-                size = 80.dp.scaled,
-                backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-            )
         }
     }
 }

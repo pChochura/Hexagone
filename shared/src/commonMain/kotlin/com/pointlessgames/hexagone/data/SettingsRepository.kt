@@ -11,11 +11,11 @@ interface SettingsRepository {
     suspend fun getBestScore(): Int
     suspend fun setBestScore(score: Int): Preferences
     suspend fun getPlayerId(): String?
-    suspend fun setPlayerId(id: String): Preferences
+    suspend fun setPlayerId(id: String?): Preferences
     suspend fun getPlayerName(): String?
-    suspend fun setPlayerName(name: String): Preferences
+    suspend fun setPlayerName(name: String?): Preferences
     suspend fun getPlayerRegion(): String?
-    suspend fun setPlayerRegion(region: String): Preferences
+    suspend fun setPlayerRegion(region: String?): Preferences
     suspend fun getMergeHintsEnabled(): Boolean
     suspend fun setMergeHintsEnabled(enabled: Boolean): Preferences
     suspend fun getGameState(): String?
@@ -120,10 +120,14 @@ class DataStoreSettingsRepository(
         appSettings.data.first()[playerIdKey]
     }
 
-    override suspend fun setPlayerId(id: String) = withContext(Dispatchers.IO) {
+    override suspend fun setPlayerId(id: String?) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
-                prefs[playerIdKey] = id
+                if (id == null) {
+                    prefs.remove(playerIdKey)
+                } else {
+                    prefs[playerIdKey] = id
+                }
             }
         }
     }
@@ -132,10 +136,14 @@ class DataStoreSettingsRepository(
         appSettings.data.first()[playerNameKey]
     }
 
-    override suspend fun setPlayerName(name: String) = withContext(Dispatchers.IO) {
+    override suspend fun setPlayerName(name: String?) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
-                prefs[playerNameKey] = name
+                if (name == null) {
+                    prefs.remove(playerNameKey)
+                } else {
+                    prefs[playerNameKey] = name
+                }
             }
         }
     }
@@ -144,10 +152,14 @@ class DataStoreSettingsRepository(
         appSettings.data.first()[playerRegionKey]
     }
 
-    override suspend fun setPlayerRegion(region: String) = withContext(Dispatchers.IO) {
+    override suspend fun setPlayerRegion(region: String?) = withContext(Dispatchers.IO) {
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
-                prefs[playerRegionKey] = region
+                if (region == null) {
+                    prefs.remove(playerRegionKey)
+                } else {
+                    prefs[playerRegionKey] = region
+                }
             }
         }
     }

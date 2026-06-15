@@ -1,6 +1,10 @@
 package com.pointlessgames.hexagone.game.di
 
 import com.pointlessgames.hexagone.Route
+import com.pointlessgames.hexagone.auth.LoginViewModel
+import com.pointlessgames.hexagone.auth.SettingsViewModel
+import com.pointlessgames.hexagone.auth.ui.LoginScreen
+import com.pointlessgames.hexagone.auth.ui.SettingsScreen
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.ui.GameScreen
 import com.pointlessgames.hexagone.game.ui.AchievementsScreen
@@ -17,6 +21,20 @@ import org.koin.dsl.navigation3.navigation
 @OptIn(KoinExperimentalAPI::class)
 internal val gameModule = module {
     viewModelOf(::GameViewModel)
+    viewModelOf(::LoginViewModel)
+    viewModelOf(::SettingsViewModel)
+
+    navigation<Route.Login> {
+        LoginScreen(
+            viewModel = koinViewModel(),
+        )
+    }
+
+    navigation<Route.Settings> {
+        SettingsScreen(
+            viewModel = koinViewModel(),
+        )
+    }
 
     navigation<Route.Game> {
         GameScreen(

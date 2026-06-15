@@ -34,6 +34,12 @@ internal sealed interface Route : NavKey {
 
     @Serializable
     data class Achievements(val initialAchievementId: String? = null) : Route
+
+    @Serializable
+    data object Login : Route
+
+    @Serializable
+    data object Settings : Route
 }
 
 private val navigationConfig = SavedStateConfiguration {
@@ -44,6 +50,8 @@ private val navigationConfig = SavedStateConfiguration {
             subclass(Route.Leaderboard::class, Route.Leaderboard.serializer())
             subclass(Route.DailyMissions::class, Route.DailyMissions.serializer())
             subclass(Route.Achievements::class, Route.Achievements.serializer())
+            subclass(Route.Login::class, Route.Login.serializer())
+            subclass(Route.Settings::class, Route.Settings.serializer())
         }
     }
 }

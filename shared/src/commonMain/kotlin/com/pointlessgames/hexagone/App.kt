@@ -44,11 +44,16 @@ fun App(modifier: Modifier = Modifier) {
                 val iconsSize = MaterialTheme.iconsSize
 
                 val leaderboardRepository = koinInject<LeaderboardRepository>()
+                val settingsRepository = koinInject<com.pointlessgames.hexagone.data.SettingsRepository>()
                 var startingRoute by remember { mutableStateOf<Route?>(null) }
 
                 LaunchedEffect(Unit) {
                     leaderboardRepository.syncPendingScores()
-                    startingRoute = Route.Game
+                    startingRoute = if (settingsRepository.getPlayerId() != null) {
+                        Route.Game
+                    } else {
+                        Route.Login
+                    }
                 }
 
                 CompositionLocalProvider(

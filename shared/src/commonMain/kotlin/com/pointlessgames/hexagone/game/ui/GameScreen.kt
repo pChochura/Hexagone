@@ -66,7 +66,6 @@ import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
-import com.pointlessgames.hexagone.game.ui.components.SettingsDialog
 import com.pointlessgames.hexagone.game.ui.components.TipOverlay
 import com.pointlessgames.hexagone.game.ui.components.VoucherSelectionDialog
 import com.pointlessgames.hexagone.game.ui.components.trackTipTarget
@@ -266,7 +265,6 @@ internal fun GameScreen(
     }.collectAsState(viewModel.uiState.value.selectedCellId)
     val storeProductsState = viewModel.storeProducts.collectAsState()
 
-    var showSettings by remember { mutableStateOf(false) }
     var initiallySelectedAchievement by remember {
         mutableStateOf<com.pointlessgames.hexagone.achievements.GameAchievement?>(
             null,
@@ -302,10 +300,6 @@ internal fun GameScreen(
     val onViewBoardToggle = remember(viewModel) { viewModel::onViewBoardToggled }
     val onDebugToggle = remember(viewModel) { viewModel::toggleDebugMode }
     val onDebugCellClick = remember(viewModel) { viewModel::onDebugCellClicked }
-
-    BackHandler(enabled = showSettings) {
-        showSettings = false
-    }
 
     BackHandler(enabled = activeVoucherSelection != null) {
         viewModel.onDismissVoucherSelection()
@@ -456,7 +450,7 @@ internal fun GameScreen(
                                 onLevelClick = if (com.pointlessgames.hexagone.utils.isDebug) onDebugToggle else ({}),
                                 onLeaderboardClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Leaderboard) },
                                 onAchievementsClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Achievements()) },
-                                onSettingsClick = { showSettings = true },
+                                onSettingsClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Settings) },
                                 onDailyChallengeClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.DailyMissions) },
                                 isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
                                 modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
@@ -545,7 +539,7 @@ internal fun GameScreen(
                                 onLevelClick = if (com.pointlessgames.hexagone.utils.isDebug) onDebugToggle else ({}),
                                 onLeaderboardClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Leaderboard) },
                                 onAchievementsClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Achievements()) },
-                                onSettingsClick = { showSettings = true },
+                                onSettingsClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Settings) },
                                 onDailyChallengeClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.DailyMissions) },
                                 isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
                                 modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
@@ -744,13 +738,6 @@ internal fun GameScreen(
                     navigator.navigateTo(com.pointlessgames.hexagone.Route.Achievements(achievement.id))
                 },
                 onFinished = { if (achievementQueue.isNotEmpty()) achievementQueue.removeAt(0) },
-            )
-        }
-
-        if (showSettings) {
-            SettingsDialog(
-                onRestart = onRestart,
-                onDismiss = { showSettings = false },
             )
         }
 

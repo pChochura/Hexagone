@@ -20,7 +20,6 @@
     <string name="view_stats_button">VIEW STATS</string>
     <string name="restart_game_button">RESTART GAME</string>
     <string name="share_label">SHARE</string>
-    <string name="settings_label">SETTINGS</string>
     <string name="perk_bar_empty_hint">Level up to collect perks and enhance your strategy!</string>
     <string name="perk_selection_hint">Long press a perk to see what it does</string>
     <string name="no_moves_left_warning">NO MOVES LEFT! USE A PERK</string>
@@ -134,11 +133,13 @@
     <string name="streak_milestone_diamonds">%1$d Diamonds</string>
     <string name="streak_milestone_perks">%1$d %2$s Perk(s)</string>
 
-    <!-- Onboarding -->
+    <!-- Onboarding / Login -->
     <string name="onboarding_title">WELCOME</string>
     <string name="onboarding_subtitle">Enter your username to start your journey.</string>
     <string name="onboarding_username_placeholder">Username</string>
     <string name="onboarding_submit">START</string>
+    <string name="login_title">HEXAGONE</string>
+    <string name="login_subtitle">Strategy awaits. Identity required.</string>
 
     <!-- Leaderboard -->
     <string name="leaderboard_title">LEADERBOARD</string>
@@ -149,6 +150,19 @@
     <string name="leaderboard_score">SCORE</string>
     <string name="leaderboard_max_piece">MAX PIECE</string>
     <string name="leaderboard_empty">No scores yet. Be the first!</string>
+
+    <!-- Settings & Account -->
+    <string name="settings_label">SETTINGS</string>
+    <string name="settings_account_section">ACCOUNT</string>
+    <string name="settings_nickname_label">Nickname</string>
+    <string name="settings_nickname_hint">Enter your nickname</string>
+    <string name="settings_change_nickname_button">CHANGE</string>
+    <string name="settings_login_button">LOG IN</string>
+    <string name="settings_logout_button">LOG OUT</string>
+    <string name="settings_remove_account_button">REMOVE ACCOUNT</string>
+    <string name="settings_anonymous_account">Anonymous Account</string>
+    <string name="settings_logged_in_as">Logged in as %1$s</string>
+    <string name="settings_remove_account_confirmation">Are you sure you want to permanently remove your account and all progress?</string>
 
     <!-- Achievements -->
     <string name="achievements_title">Achievements</string>

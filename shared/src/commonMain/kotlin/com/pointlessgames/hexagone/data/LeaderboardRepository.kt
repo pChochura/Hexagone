@@ -3,13 +3,13 @@ package com.pointlessgames.hexagone.data
 import com.pointlessgames.hexagone.game.model.DetailedGameResult
 import com.pointlessgames.hexagone.game.model.PlayerProfile
 import com.pointlessgames.hexagone.game.model.RankingInfo
+import com.pointlessgames.hexagone.utils.generateUUID
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
@@ -145,7 +145,7 @@ class LeaderboardRepository(
     suspend fun createProfile(username: String, region: String): PlayerProfile = withContext(Dispatchers.IO) {
         // For KMP, we might use a simple device ID or Supabase Auth. 
         // For now, let's assume we use a generated UUID if not using Auth.
-        val playerId = settingsRepository.getPlayerId() ?: com.pointlessgames.hexagone.utils.generateUUID().also {
+        val playerId = settingsRepository.getPlayerId() ?: generateUUID().also {
             settingsRepository.setPlayerId(it)
         }
         
