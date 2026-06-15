@@ -70,11 +70,11 @@ import hexagone.shared.generated.resources.ic_diamond
 import hexagone.shared.generated.resources.ic_duplicate
 import hexagone.shared.generated.resources.ic_freeze
 import hexagone.shared.generated.resources.ic_fusion
+import hexagone.shared.generated.resources.ic_legendary_perk
 import hexagone.shared.generated.resources.ic_move
 import hexagone.shared.generated.resources.ic_path_merge
 import hexagone.shared.generated.resources.ic_pause
 import hexagone.shared.generated.resources.ic_rare_perk
-import hexagone.shared.generated.resources.ic_legendary_perk
 import hexagone.shared.generated.resources.ic_roll
 import hexagone.shared.generated.resources.ic_star
 import hexagone.shared.generated.resources.ic_swap
@@ -493,11 +493,14 @@ fun ShopButton(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.padding(horizontal = spacing.tiny.scaled),
+        modifier = modifier
+            .clip(MaterialTheme.shapes.large)
+            .clickable(onClick = onClick)
+            .padding(spacing.tiny.scaled),
     ) {
         Box(
             modifier = Modifier.size(width = buttonSize, height = buttonSize * heightScale),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             if (isHighlighted) {
                 val infiniteTransition = rememberInfiniteTransition(label = "shop_highlight")
@@ -506,14 +509,20 @@ fun ShopButton(
                     targetValue = 0.6f,
                     animationSpec = infiniteRepeatable(
                         animation = tween(800),
-                        repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+                        repeatMode = RepeatMode.Reverse,
                     ),
                     label = "glow",
                 )
                 Box(
                     modifier = Modifier
-                        .size(width = buttonSize + 8.dp.scaled, height = (buttonSize + 8.dp.scaled) * heightScale)
-                        .background(perkColor.copy(alpha = glowAlpha.value), FlatTopHexagonShape())
+                        .size(
+                            width = buttonSize + 8.dp.scaled,
+                            height = (buttonSize + 8.dp.scaled) * heightScale,
+                        )
+                        .background(
+                            perkColor.copy(alpha = glowAlpha.value * 0.4f),
+                            FlatTopHexagonShape(),
+                        ),
                 )
             }
 
@@ -526,18 +535,29 @@ fun ShopButton(
                         width = 2.dp.scaled,
                         color = perkColor.copy(alpha = 0.5f),
                         shape = FlatTopHexagonShape(),
-                    )
-                    .clickable(onClick = onClick),
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_diamond),
                     contentDescription = null,
                     tint = perkColor,
-                    modifier = Modifier.size(buttonSize * 0.45f)
+                    modifier = Modifier.size(buttonSize * 0.45f),
                 )
             }
         }
+
+        Spacer(Modifier.height(spacing.medium.scaled))
+
+        Text(
+            text = "SHOP",
+            color = perkColor.copy(alpha = 0.8f),
+            fontSize = 11.sp.scaled,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+            lineHeight = 11.sp.scaled,
+            modifier = Modifier.width(buttonSize + spacing.semiMedium.scaled),
+        )
     }
 }
 
@@ -576,12 +596,12 @@ fun VoucherButton(
                     Badge(
                         containerColor = color,
                         contentColor = Color.Black,
-                        modifier = Modifier.offset(x = (-4).dp, y = 4.dp)
+                        modifier = Modifier.offset(x = (-4).dp, y = 4.dp),
                     ) {
                         Text(
                             text = count.toString(),
                             fontWeight = FontWeight.Black,
-                            fontSize = 10.sp.scaled
+                            fontSize = 10.sp.scaled,
                         )
                     }
                 }
@@ -611,7 +631,7 @@ fun VoucherButton(
                         .clip(FlatTopHexagonShape())
                         .drawBehind {
                             drawRect(color.copy(alpha = glowAlpha.value * 0.3f))
-                        }
+                        },
                 )
             }
 
@@ -623,19 +643,31 @@ fun VoucherButton(
                     .border(
                         width = 1.dp.scaled,
                         brush = SolidColor(color.copy(alpha = if (showGlow) 0.8f else 0.4f)),
-                        shape = FlatTopHexagonShape()
+                        shape = FlatTopHexagonShape(),
                     )
                     .clickable(enabled = count > 0 || showGlow, onClick = onClick),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = null,
                     tint = color.copy(alpha = if (showGlow) 0.9f else 0.6f),
-                    modifier = Modifier.size(buttonSize * 0.45f)
+                    modifier = Modifier.size(buttonSize * 0.45f),
                 )
             }
         }
+
+        Spacer(Modifier.height(spacing.medium.scaled))
+
+        Text(
+            text = category.name.uppercase(),
+            color = Color.White.copy(alpha = 0.6f),
+            fontSize = 11.sp.scaled,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+            lineHeight = 11.sp.scaled,
+            modifier = Modifier.width(buttonSize + spacing.semiMedium.scaled),
+        )
     }
 }
 

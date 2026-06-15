@@ -39,8 +39,8 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 │   │       ├── HexDialogComponents.kt # Atoms: Premium Alert Dialogs & Cards
 │   │       ├── GameGridOverlay.kt # Grid orchestrator & gesture handling
 │   │       ├── ScoreSection.kt    # HUD: liquid progress & combo indicators
-│   │       ├── PerkBar.kt         # Strategic tool selection shelf
-│   │       └── GameOverlays.kt    # Dialog orchestration (Level Up, Game Over)
+│   │       ├── PerkBar.kt         # Strategic floating shelf: perks & vouchers
+│   │       └── GameOverlays.kt    # Overlay orchestrator (Revive, Level Up, Game Over)
 ├── di/
 │   └── GameModule.kt             # Koin DI & Navigation Routing
 ├── Navigator.kt                  # navigation3 Implementation & Routes
@@ -98,6 +98,12 @@ A merge occurs when 2+ tiles of the same value touch.
     *   The combo resets when a tile is placed from the queue without triggering a merge.
     *   **Chain Merge Rule**: Using `CHAIN_MERGE` forces a combo reset to 0 if no chain reaction occurs, unless the initial merge was complex enough to maintain the combo naturally (multi-group or path merge).
 
+### Save Me (Revive) Mechanic
+When the board is full and no moves or perks are available, the game triggers a high-stakes **Revive Dialog**.
+*   **One-Time Offer**: Only available once per game session.
+*   **Inventory Integration**: Players can use an existing voucher or purchase one instantly with Diamonds.
+*   **Loss Aversion**: The dialog highlights current score and level to emphasize what's at stake.
+
 ---
 
 ## 4. Achievement System
@@ -141,8 +147,10 @@ A merge occurs when 2+ tiles of the same value touch.
 
 ### Perk & Voucher Economy
 *   **Rarity Groups**: Common (VCMN), Rare (VRARE), Legendary (VLGD).
-*   **Voucher System**: Category-based vouchers can be exchanged for any perk within that rarity tier on-demand.
-*   **Cloud-Synced Balances**: Inventory is stored server-side via RevenueCat.
+*   **Integrated Access**: Vouchers are accessible directly from the **PerkBar** in a dedicated floating pod.
+*   **Blueprint Styling**: Vouchers use a distinct "Blueprint" visual language (dashed borders, rarity colors) to distinguish them from active, ready-to-use perks.
+*   **Voucher Exchange**: Category-based vouchers can be exchanged for any perk within that rarity tier on-demand via the `VoucherSelectionDialog`.
+*   **Persistence**: Inventory and currency balances are preserved across game restarts and app reloads.
 
 ---
 
@@ -151,4 +159,5 @@ A merge occurs when 2+ tiles of the same value touch.
 *   **Design Tokens**: Strict adherence to `MaterialTheme.spacing` and `cornerRadius`.
 *   **Draw-Phase Animations**: High-frequency effects (like the podium glow) are optimized to run in the draw phase, eliminating unnecessary recompositions.
 *   **Shallow UI Tree**: Minimal nesting through the use of `Arrangement.spacedBy()` and modifier stacking.
+*   **Floating Pod Architecture**: HUD elements (like the `PerkBar`) use decoupled floating "pods" to avoid layout clipping and provide a modern, airy feel.
 *   **Consistent Immersive Depth**: Content visibility through translucent headers is standard.

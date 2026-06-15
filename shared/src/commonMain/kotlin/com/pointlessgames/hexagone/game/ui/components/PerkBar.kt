@@ -6,9 +6,21 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -35,8 +47,8 @@ import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
-import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.ui.theme.scaled
+import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.perk_bar_empty_hint
 import org.jetbrains.compose.resources.stringResource
@@ -99,144 +111,174 @@ fun PerkBar(
         previousCounts.putAll(counts)
     }
 
-    val shape = if (isVertical) {
-        RoundedCornerShape(topStart = cornerRadius.extraLarge, bottomStart = cornerRadius.extraLarge)
-    } else {
-        RoundedCornerShape(topStart = cornerRadius.extraLarge, topEnd = cornerRadius.extraLarge)
-    }
-
-    val persistentActions = @Composable {
-        ShopButton(
-            onClick = onShopClick,
-            isHighlighted = isStuck,
-            modifier = Modifier.padding(
-                horizontal = if (isVertical) 0.dp else spacing.small.scaled,
-                vertical = if (isVertical) spacing.small.scaled else 0.dp
-            )
-        )
-    }
+    val shape = RoundedCornerShape(cornerRadius.full)
+    val barBackground = surfaceColor.copy(alpha = 0.95f)
 
     Box(
         modifier = modifier
-            .then(if (isVertical) Modifier.fillMaxHeight() else Modifier.fillMaxWidth())
+            .padding(spacing.large.scaled)
+            .safeDrawingPadding()
             .graphicsLayer { clip = false },
         contentAlignment = if (isVertical) Alignment.CenterEnd else Alignment.BottomCenter
     ) {
-        if (collectedPerks.isEmpty() && vouchers.isEmpty()) {
-            Row(
-                modifier = Modifier
-                    .then(if (isVertical) Modifier.width(100.dp.scaled).fillMaxHeight() else Modifier.fillMaxWidth())
-                    .background(surfaceColor, shape)
-                    .border(
-                        spacing.extraTiny,
-                        Color.White.copy(alpha = 0.08f),
-                        shape,
-                    )
-                    .navigationBarsPadding()
-                    .padding(spacing.large.scaled),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+        if (isVertical) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.Bottom),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxHeight()
             ) {
-                Text(
-                    text = stringResource(Res.string.perk_bar_empty_hint),
-                    color = Color.White.copy(alpha = 0.3f),
-                    fontSize = 13.sp.scaled,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 18.sp.scaled,
-                    modifier = Modifier.weight(1f).padding(spacing.large.scaled),
-                )
-                persistentActions()
+                // Floating Item Bar
+                Box(
+                    modifier = Modifier
+                        .background(barBackground, shape)
+                        .border(spacing.extraTiny, Color.White.copy(alpha = 0.1f), shape)
+                        .clip(shape)
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (collectedPerks.isEmpty() && vouchers.all { it.value == 0 }) {
+                        Text(
+                            text = stringResource(Res.string.perk_bar_empty_hint),
+                            color = Color.White.copy(alpha = 0.3f),
+                            fontSize = 12.sp.scaled,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = spacing.extraLarge.scaled, horizontal = spacing.large.scaled).width(64.dp.scaled),
+                        )
+                    } else {
+                        LazyColumn(
+                            state = listState,
+                            contentPadding = PaddingValues(vertical = spacing.large.scaled, horizontal = spacing.medium.scaled),
+                            verticalArrangement = Arrangement.spacedBy(spacing.large.scaled, Alignment.CenterVertically),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            items(distinctPerks, key = { it.name }) { perk ->
+                                val isActive = activePerk == perk
+                                val isEnabled = !isStuck || stuckPerks.contains(perk)
+                                val count = counts[perk] ?: 0
+                                val scale = animationStates[perk]?.value ?: 1f
+
+                                PerkButton(
+                                    perk = perk,
+                                    count = count,
+                                    isActive = isActive,
+                                    isEnabled = isEnabled,
+                                    tooltipDescription = perk.descriptionRes,
+                                    onClick = { onPerkClick(perk) },
+                                    modifier = Modifier.graphicsLayer {
+                                        scaleX = scale
+                                        scaleY = scale
+                                    },
+                                )
+                            }
+
+                            if (vouchers.any { it.value > 0 }) {
+                                if (collectedPerks.isNotEmpty()) {
+                                    item { VoucherSeparator(isVertical = true) }
+                                }
+
+                                val sortedCategories = vouchers.filter { it.value > 0 }.keys.toList().sortedBy { it.ordinal }
+                                items(sortedCategories, key = { it.name }) { category ->
+                                    VoucherButton(
+                                        category = category,
+                                        count = vouchers[category] ?: 0,
+                                        onClick = { onVoucherClick(category) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Floating Shop Pod
+                Box(
+                    modifier = Modifier.width(IntrinsicSize.Min),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ShopButton(
+                        onClick = onShopClick,
+                        isHighlighted = isStuck,
+                    )
+                }
             }
         } else {
-            val content: LazyListScope.() -> Unit = {
-                items(distinctPerks, key = { it.name }) { perk ->
-                    val isActive = activePerk == perk
-                    val isEnabled = !isStuck || stuckPerks.contains(perk)
-                    val count = counts[perk] ?: 0
-                    val scale = animationStates[perk]?.value ?: 1f
-
-                    PerkButton(
-                        perk = perk,
-                        count = count,
-                        isActive = isActive,
-                        isEnabled = isEnabled,
-                        tooltipDescription = perk.descriptionRes,
-                        onClick = { onPerkClick(perk) },
-                        modifier = Modifier
-                            .graphicsLayer {
-                                scaleX = scale
-                                scaleY = scale
-                            },
-                    )
-                }
-
-                if (vouchers.any { it.value > 0 }) {
-                    item {
-                        VoucherSeparator(isVertical = isVertical)
-                    }
-
-                    val sortedCategories = vouchers.filter { it.value > 0 }.keys.toList().sortedBy { it.ordinal }
-                    items(sortedCategories, key = { it.name }) { category ->
-                        VoucherButton(
-                            category = category,
-                            count = vouchers[category] ?: 0,
-                            onClick = { onVoucherClick(category) }
-                        )
-                    }
-                }
-            }
-
-            if (isVertical) {
-                Column(
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Floating Item Bar
+                Box(
                     modifier = Modifier
-                        .width(100.dp.scaled)
-                        .fillMaxHeight()
-                        .background(surfaceColor, shape)
-                        .border(
-                            spacing.extraTiny,
-                            Color.White.copy(alpha = 0.08f),
-                            shape,
-                        )
+                        .background(barBackground, shape)
+                        .border(spacing.extraTiny, Color.White.copy(alpha = 0.1f), shape)
                         .clip(shape)
-                        .navigationBarsPadding(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
                 ) {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(vertical = spacing.large.scaled, horizontal = spacing.medium.scaled),
-                        verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterVertically),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        content = content
-                    )
-                    persistentActions()
-                    Spacer(Modifier.height(spacing.medium.scaled))
+                    if (collectedPerks.isEmpty() && vouchers.all { it.value == 0 }) {
+                        Text(
+                            text = stringResource(Res.string.perk_bar_empty_hint),
+                            color = Color.White.copy(alpha = 0.3f),
+                            fontSize = 13.sp.scaled,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = spacing.large.scaled, horizontal = spacing.extraHuge.scaled),
+                        )
+                    } else {
+                        LazyRow(
+                            state = listState,
+                            contentPadding = PaddingValues(horizontal = spacing.large.scaled, vertical = spacing.medium.scaled),
+                            horizontalArrangement = Arrangement.spacedBy(spacing.large.scaled, Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            items(distinctPerks, key = { it.name }) { perk ->
+                                val isActive = activePerk == perk
+                                val isEnabled = !isStuck || stuckPerks.contains(perk)
+                                val count = counts[perk] ?: 0
+                                val scale = animationStates[perk]?.value ?: 1f
+
+                                PerkButton(
+                                    perk = perk,
+                                    count = count,
+                                    isActive = isActive,
+                                    isEnabled = isEnabled,
+                                    tooltipDescription = perk.descriptionRes,
+                                    onClick = { onPerkClick(perk) },
+                                    modifier = Modifier.graphicsLayer {
+                                        scaleX = scale
+                                        scaleY = scale
+                                    },
+                                )
+                            }
+
+                            if (vouchers.any { it.value > 0 }) {
+                                if (collectedPerks.isNotEmpty()) {
+                                    item { VoucherSeparator(isVertical = false) }
+                                }
+
+                                val sortedCategories = vouchers.filter { it.value > 0 }.keys.toList().sortedBy { it.ordinal }
+                                items(sortedCategories, key = { it.name }) { category ->
+                                    VoucherButton(
+                                        category = category,
+                                        count = vouchers[category] ?: 0,
+                                        onClick = { onVoucherClick(category) }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
-            } else {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(surfaceColor, shape)
-                        .border(
-                            spacing.extraTiny,
-                            Color.White.copy(alpha = 0.08f),
-                            shape,
-                        )
-                        .clip(shape)
-                        .navigationBarsPadding(),
-                    verticalAlignment = Alignment.CenterVertically,
+
+                // Floating Shop Pod
+                Box(
+                    modifier = Modifier.width(IntrinsicSize.Min),
+                    contentAlignment = Alignment.Center
                 ) {
-                    LazyRow(
-                        state = listState,
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = spacing.large.scaled, vertical = spacing.medium.scaled),
-                        horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally),
-                        verticalAlignment = Alignment.CenterVertically,
-                        content = content
+                    ShopButton(
+                        onClick = onShopClick,
+                        isHighlighted = isStuck,
                     )
-                    persistentActions()
-                    Spacer(Modifier.width(spacing.medium.scaled))
                 }
             }
         }

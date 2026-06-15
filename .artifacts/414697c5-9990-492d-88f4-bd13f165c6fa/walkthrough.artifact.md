@@ -1,34 +1,34 @@
-# Walkthrough - Premium Revive & UI Polish
+# Walkthrough - PerkBar Refinement & Shop Visuals
 
-I have completely overhauled the "Revive" experience to create a high-stakes, premium feel that encourages players to keep their run alive.
+I have refined the `PerkBar` UI to improve spacing, alignment, and the overall premium feel of the interface.
 
 ## Key UI Enhancements
 
-### 1. Cinematic Impact
-- **Dramatic Title**: The "SAVE ME?" title now features a specialized **Shadow Glow** and expanded letter spacing for a high-fidelity entrance.
-- **Run at Stake**: A dedicated stats section displays the current **Score** and **Level**, leveraging loss aversion to make the revive decision more meaningful.
+### 1. Unified Alignment & Labels
+- **Consistent Heights**: Added simplified labels ("COMMON", "RARE", "LEGENDARY") to the voucher buttons. These labels now match the typography and spacing of the existing perk buttons, ensuring all items in the bar have a uniform height and baseline.
+- **Shop Label**: Added a "SHOP" label underneath the floating shop button, aligning it perfectly with the perks and vouchers.
 
-### 2. Premium Revive Cards
-- **Equal Width Layout**: All revive options are now presented in cards of identical width (using `Modifier.weight(1f)`), creating a balanced and professional look regardless of screen size.
-- **Visual Tiering**:
-    - The **Legendary** tier is highlighted with a **"BEST VALUE"** badge and a subtle background gradient.
-    - **Blueprint Glows** are applied to recommended options and owned vouchers to guide the player's eye.
+### 2. Floating Shop Button
+- **Lightweight Design**: Removed the solid "pod" background and border from the shop button. It now floats freely as a clean icon with a label, making it feel more integrated into the HUD without adding visual weight.
+- **Interactive Highlight**: Kept the glowing pulse effect for the shop button when the player is stuck, ensuring it remains an obvious call-to-action.
 
-### 3. Monetization & Shop Integration
-- **Contextual Top-up**: The dialog now displays the player's current **Diamond Balance** right next to a "GET MORE" shortcut to the shop.
-- **Clear CTA**: Each card clearly shows either a "USE" action (for owned vouchers) or the diamond cost for an instant purchase.
+### 3. Smart Layout & Spacing
+- **Safe Area Support**: Added `safeDrawingPadding()` to the `PerkBar`. This ensures the floating pods correctly avoid navigation bars (on Android/iOS) and status bars in both portrait and landscape orientations.
+- **Increased Breathability**: Increased the internal `contentPadding` and external `padding` of the bar to give the UI more breathing room.
+- **Conditional Divider**: The divider between perks and vouchers now only appears if there are perks present. If you only have vouchers, the list starts immediately for a cleaner look.
 
-## Technical Improvements
+## Technical Implementation
 
-### UI Polish
-- **[ReviveDialog.kt](file:///Users/pipistrelus/AndroidStudioProjects/Hexagone/shared/src/commonMain/kotlin/com/pointlessgames/hexagone/game/ui/components/ReviveDialog.kt)**:
-    - Switched to a flex-based layout for equal-width cards.
-    - Added `Shadow` and `TextStyle` refinements.
+### Components
 - **[HexagonComponents.kt](file:///Users/pipistrelus/AndroidStudioProjects/Hexagone/shared/src/commonMain/kotlin/com/pointlessgames/hexagone/game/ui/components/HexagonComponents.kt)**:
-    - Enhanced `VoucherButton` with optional blueprint glow animations.
+    - Simplified `ShopButton` structure.
+    - Updated `VoucherButton` to include its label.
+- **[PerkBar.kt](file:///Users/pipistrelus/AndroidStudioProjects/Hexagone/shared/src/commonMain/kotlin/com/pointlessgames/hexagone/game/ui/components/PerkBar.kt)**:
+    - Updated root padding and safe area handling.
+    - Implemented conditional divider logic.
 
 ## Verification Results
 
 - **Build**: Successfully built the `:androidApp` module.
-- **Visuals**: Confirmed that the revive options are now uniform in size and the typography reflects the "Solid UI" premium standard.
-- **Responsiveness**: The weight-based layout ensures the cards look great on different screen widths.
+- **Visuals**: Verified that all elements (Perks, Vouchers, Shop) align perfectly and respect system safe areas.
+- **Empty States**: Confirmed the UI remains clean and balanced even with few or no items.
