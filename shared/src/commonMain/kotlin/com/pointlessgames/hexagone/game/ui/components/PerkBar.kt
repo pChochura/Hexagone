@@ -6,12 +6,14 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,12 +21,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,10 +50,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.Perk
+import com.pointlessgames.hexagone.game.ui.components.FlatTopHexagonShape
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.add_label
+import hexagone.shared.generated.resources.ic_add
 import hexagone.shared.generated.resources.perk_bar_empty_hint
 import org.jetbrains.compose.resources.stringResource
 
@@ -62,7 +69,7 @@ fun PerkBar(
     isStuckProvider: () -> Boolean,
     stuckPerksProvider: () -> Set<Perk>,
     onPerkClick: (Perk) -> Unit,
-    onVoucherClick: (PerkCategory) -> Unit = {},
+    onVoucherClick: () -> Unit = {},
     onShopClick: () -> Unit,
     isVertical: Boolean = false,
 ) {
@@ -177,12 +184,9 @@ fun PerkBar(
                                     item { VoucherSeparator(isVertical = true) }
                                 }
 
-                                val sortedCategories = vouchers.filter { it.value > 0 }.keys.toList().sortedBy { it.ordinal }
-                                items(sortedCategories, key = { it.name }) { category ->
-                                    VoucherButton(
-                                        category = category,
-                                        count = vouchers[category] ?: 0,
-                                        onClick = { onVoucherClick(category) }
+                                item {
+                                    AddPerkButton(
+                                        onClick = onVoucherClick,
                                     )
                                 }
                             }
@@ -257,12 +261,9 @@ fun PerkBar(
                                     item { VoucherSeparator(isVertical = false) }
                                 }
 
-                                val sortedCategories = vouchers.filter { it.value > 0 }.keys.toList().sortedBy { it.ordinal }
-                                items(sortedCategories, key = { it.name }) { category ->
-                                    VoucherButton(
-                                        category = category,
-                                        count = vouchers[category] ?: 0,
-                                        onClick = { onVoucherClick(category) }
+                                item {
+                                    AddPerkButton(
+                                        onClick = onVoucherClick,
                                     )
                                 }
                             }
@@ -282,6 +283,48 @@ fun PerkBar(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AddPerkButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val spacing = MaterialTheme.spacing
+    val size = 36.dp.scaled
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .clip(MaterialTheme.shapes.medium)
+            .padding(spacing.tiny.scaled)
+            .clickable(onClick = onClick)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(width = size, height = size * 0.866f)
+                .background(Color.White.copy(alpha = 0.1f), FlatTopHexagonShape())
+                .border(1.dp.scaled, Color.White.copy(alpha = 0.2f), FlatTopHexagonShape()),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = org.jetbrains.compose.resources.painterResource(Res.drawable.ic_add),
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(16.dp.scaled)
+            )
+        }
+        
+        Spacer(Modifier.height(spacing.extraSmall.scaled))
+        
+        Text(
+            text = stringResource(Res.string.add_label).uppercase(),
+            color = Color.White.copy(alpha = 0.6f),
+            fontWeight = FontWeight.Black,
+            fontSize = 9.sp.scaled,
+            letterSpacing = 0.5.sp.scaled,
+        )
     }
 }
 

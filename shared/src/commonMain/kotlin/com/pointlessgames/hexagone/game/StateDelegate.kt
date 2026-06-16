@@ -103,6 +103,7 @@ internal class StateDelegate(
             activePerk = state.activePerk,
             selectedCellId = state.selectedCellId,
             hasRevived = state.hasRevived,
+            perksBankCategory = state.perksBankCategory,
             dailyChallenges = state.dailyChallenges,
             persistentCompletedMissionIds = state.persistentCompletedMissionIds,
             dailyMissionDate = state.dailyMissionDate,
@@ -178,6 +179,7 @@ internal class StateDelegate(
                 selectedCellId = null,
                 isBusy = false,
                 hasRevived = previousState.hasRevived,
+                perksBankCategory = previousState.perksBankCategory,
                 dailyChallenges = previousState.dailyChallenges,
                 persistentCompletedMissionIds = previousState.persistentCompletedMissionIds,
             )

@@ -14,7 +14,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -67,9 +66,9 @@ import com.pointlessgames.hexagone.game.ui.components.GameOverlays
 import com.pointlessgames.hexagone.game.ui.components.HexAlertDialog
 import com.pointlessgames.hexagone.game.ui.components.MissionRefreshPopup
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
+import com.pointlessgames.hexagone.game.ui.components.PerksBankDialog
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
 import com.pointlessgames.hexagone.game.ui.components.TipOverlay
-import com.pointlessgames.hexagone.game.ui.components.VoucherSelectionDialog
 import com.pointlessgames.hexagone.game.ui.components.trackTipTarget
 import com.pointlessgames.hexagone.ui.theme.IsSmallDevice
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
@@ -141,6 +140,12 @@ internal fun GameScreen(
         }.collectAsState(
             viewModel.uiState.value.isVoucherProcessing,
         )
+    val isPerksBankVisibleState =
+        remember(uiState) {
+            uiState.map { it.isPerksBankVisible }.distinctUntilChanged()
+        }.collectAsState(
+            viewModel.uiState.value.isPerksBankVisible,
+        )
 
     // Helper delegates for GameScreen's own logic.
     // Accessing these 'by' variables will trigger recomposition of GameScreen.
@@ -155,6 +160,7 @@ internal fun GameScreen(
     val isDebugMode by isDebugModeState
     val activeTip by activeTipState
     val isVoucherProcessing by isVoucherProcessingState
+    val isPerksBankVisible by isPerksBankVisibleState
     val showReviveOptionState = remember(uiState) {
         uiState.map { it.showReviveOption }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.showReviveOption)
@@ -169,13 +175,6 @@ internal fun GameScreen(
         remember(uiState) { uiState.map { it.missionRefreshState }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.missionRefreshState,
         )
-    val activeVoucherSelectionState =
-        remember(uiState) {
-            uiState.map { it.activeVoucherSelection }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.activeVoucherSelection,
-        )
-    val activeVoucherSelection by activeVoucherSelectionState
 
     // Other states primarily used by providers passed to children.
     // GameScreen won't recompose when these change unless it reads them directly.
@@ -323,6 +322,16 @@ internal fun GameScreen(
         )
         }
     }
+    val onAddPerkClick = remember(viewModel, playClickSound) {
+        {
+            playClickSound(); viewModel.onUseVoucher()
+        }
+    }
+    val onReviveWithCategory = remember(viewModel, playClickSound) {
+        { category: PerkCategory ->
+            playClickSound(); viewModel.onUseVoucher(category)
+        }
+    }
     val onShopClick = remember(viewModel, playClickSound) {
         {
             playClickSound(); navigator.navigateTo(
@@ -336,7 +345,7 @@ internal fun GameScreen(
     val onDebugToggle = remember(viewModel) { viewModel::toggleDebugMode }
     val onDebugCellClick = remember(viewModel) { viewModel::onDebugCellClicked }
 
-    BackHandler(enabled = activeVoucherSelection != null) {
+    BackHandler(enabled = isPerksBankVisible) {
         viewModel.onDismissVoucherSelection()
     }
 
@@ -734,7 +743,7 @@ internal fun GameScreen(
                             isStuckProvider = isStuckProvider,
                             stuckPerksProvider = stuckPerksProvider,
                             onPerkClick = onPerkClick,
-                            onVoucherClick = viewModel::onUseVoucher,
+                            onVoucherClick = onAddPerkClick,
                             onShopClick = onShopClick,
                             isVertical = isLandscape,
                             modifier = Modifier
@@ -780,7 +789,7 @@ internal fun GameScreen(
             rankingInfoProvider = currentRankProvider,
             showReviveOptionProvider = showReviveOptionProvider,
             vouchersProvider = vouchersProvider,
-            onRevive = viewModel::onUseVoucher,
+            onRevive = onReviveWithCategory,
             onBuyAndRevive = viewModel::onBuyAndRevive,
             onOpenShop = onShopClick,
             onDeclineRevive = viewModel::onDeclineRevive,
@@ -815,39 +824,19 @@ internal fun GameScreen(
             )
         }
 
-        val lastVoucher = remember { mutableStateOf<PerkCategory?>(null) }
-        if (activeVoucherSelection != null) {
-            lastVoucher.value = activeVoucherSelection
-        }
-
         AnimatedVisibility(
-            visible = activeVoucherSelection != null,
+            visible = isPerksBankVisible,
             enter = fadeIn() + scaleIn(initialScale = 0.9f),
             exit = fadeOut(),
             modifier = Modifier.fillMaxSize(),
         ) {
-            val voucherToDisplay = activeVoucherSelection ?: lastVoucher.value
-            if (voucherToDisplay != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.6f))
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { viewModel.onDismissVoucherSelection() },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    VoucherSelectionDialog(
-                        category = voucherToDisplay,
-                        isProcessing = isVoucherProcessing,
-                        onPerkSelected = { perk ->
-                            viewModel.onPerkFromVoucherSelected(perk, voucherToDisplay)
-                        },
-                        onDismiss = viewModel::onDismissVoucherSelection,
-                    )
-                }
-            }
+            PerksBankDialog(
+                vouchers = vouchersState.value,
+                targetCategory = uiState.value.perksBankCategory,
+                isProcessing = isVoucherProcessing,
+                onPerkSelected = viewModel::onPerkFromVoucherSelected,
+                onDismiss = viewModel::onDismissVoucherSelection,
+            )
         }
 
         if (activeDialog != null) {

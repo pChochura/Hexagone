@@ -56,6 +56,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -81,6 +82,8 @@ internal class GameViewModel(
 
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
+
+    private val inFlightActions = MutableStateFlow(0)
 
     private val _storeProducts = MutableStateFlow<List<BillingProduct>>(emptyList())
     val storeProducts: StateFlow<List<BillingProduct>> = _storeProducts.asStateFlow()
@@ -389,7 +392,11 @@ internal class GameViewModel(
                 }
             }
             launch {
-                billingManager.currencyBalances.collect { balances ->
+                combine(billingManager.currencyBalances, inFlightActions) { balances, inFlightCount ->
+                    if (inFlightCount == 0) balances else null
+                }.collect { balances ->
+                    if (balances == null) return@collect
+
                     val vouchers = mapOf(
                         PerkCategory.COMMON to (balances["VCMN"] ?: 0),
                         PerkCategory.RARE to (balances["VRARE"] ?: 0),
@@ -899,9 +906,19 @@ internal class GameViewModel(
                         formatArgs = listOf(cost, getString(nameRes)),
                         onConfirm = {
                             viewModelScope.launch {
-                                _uiState.update { s -> s.copy(isShopProcessing = true) }
+                                inFlightActions.update { it + 1 }
+                                _uiState.update { s ->
+                                    val newVouchers = s.vouchers.toMutableMap()
+                                    newVouchers[category] = (newVouchers[category] ?: 0) + 1
+                                    s.copy(
+                                        diamonds = s.diamonds - cost,
+                                        vouchers = newVouchers,
+                                        isShopProcessing = true
+                                    )
+                                }
                                 monetizationRepository.buyPerkVoucher(category)
                                 _uiState.update { s -> s.copy(isShopProcessing = false) }
+                                inFlightActions.update { it - 1 }
                             }
                         },
                     ),
@@ -910,12 +927,12 @@ internal class GameViewModel(
         }
     }
 
-    fun onUseVoucher(category: PerkCategory) {
-        _uiState.update { it.copy(activeVoucherSelection = category) }
+    fun onUseVoucher(category: PerkCategory? = null) {
+        _uiState.update { it.copy(isPerksBankVisible = true, perksBankCategory = category) }
     }
 
     fun onDismissVoucherSelection() {
-        _uiState.update { it.copy(activeVoucherSelection = null) }
+        _uiState.update { it.copy(isPerksBankVisible = false, perksBankCategory = null) }
     }
 
     fun onDeclineRevive() {
@@ -929,12 +946,22 @@ internal class GameViewModel(
 
     fun onPerkFromVoucherSelected(perk: Perk, category: PerkCategory) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isVoucherProcessing = true) }
+            inFlightActions.update { it + 1 }
+            _uiState.update { s ->
+                val newVouchers = s.vouchers.toMutableMap()
+                val current = newVouchers[category] ?: 0
+                if (current > 0) newVouchers[category] = current - 1
+                s.copy(
+                    vouchers = newVouchers,
+                    isVoucherProcessing = true
+                )
+            }
             if (monetizationRepository.usePerkVoucher(category)) {
                 _uiState.update {
                     it.copy(
                         collectedPerks = it.collectedPerks + perk,
-                        activeVoucherSelection = null,
+                        perksBankCategory = null,
+                        isPerksBankVisible = false,
                         isVoucherProcessing = false,
                         showReviveOption = false,
                         hasRevived = it.showReviveOption || it.hasRevived,
@@ -945,14 +972,17 @@ internal class GameViewModel(
             } else {
                 _uiState.update { it.copy(isVoucherProcessing = false) }
             }
+            inFlightActions.update { it - 1 }
         }
     }
 
     fun onBuyPremiumProduct(product: BillingProduct) {
         viewModelScope.launch {
+            inFlightActions.update { it + 1 }
             _uiState.update { it.copy(isShopProcessing = true) }
             billingManager.purchase(product)
             _uiState.update { it.copy(isShopProcessing = false) }
+            inFlightActions.update { it - 1 }
         }
     }
 
@@ -1013,7 +1043,9 @@ internal class GameViewModel(
                         newStreak,
                     )
                 if (reward != null) {
+                    inFlightActions.update { it + 1 }
                     monetizationRepository.awardStreakRewards(reward)
+                    inFlightActions.update { it - 1 }
                 }
 
                 _uiState.update {

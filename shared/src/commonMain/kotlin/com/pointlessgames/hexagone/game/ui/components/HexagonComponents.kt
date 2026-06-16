@@ -695,7 +695,7 @@ fun PerkButton(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .padding(horizontal = spacing.tiny.scaled)
-            .graphicsLayer { alpha = if (isEnabled) 1f else 0.1f },
+            .graphicsLayer { alpha = if (isEnabled) 1f else 0.4f },
     ) {
         val hexagonContent = @Composable {
             BadgedBox(

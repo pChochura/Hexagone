@@ -13,7 +13,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
 
 class RevenueCatBillingManager : BillingManager {
 
@@ -82,7 +84,7 @@ class RevenueCatBillingManager : BillingManager {
         val pkg = packageMap[product.id] ?: return
         try {
             Purchases.sharedInstance.awaitPurchase(pkg)
-            updateBalance()
+            updateBalanceSuspended()
             _purchaseEvents.emit(
                 PurchaseResult.Success(
                     productId = product.id,
@@ -96,7 +98,19 @@ class RevenueCatBillingManager : BillingManager {
 
     override suspend fun refreshBalance() {
         Purchases.sharedInstance.invalidateVirtualCurrenciesCache()
-        updateBalance()
+        updateBalanceSuspended()
+    }
+
+    private suspend fun updateBalanceSuspended() = suspendCancellableCoroutine<Unit> { continuation ->
+        Purchases.sharedInstance.getVirtualCurrencies(
+            onError = { error ->
+                continuation.resume(Unit)
+            },
+            onSuccess = { currencies ->
+                _currencyBalances.value = currencies.all.mapValues { it.value.balance }
+                continuation.resume(Unit)
+            }
+        )
     }
 
     private fun updateBalance() {
