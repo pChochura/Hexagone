@@ -62,6 +62,7 @@ internal fun PerksBankDialog(
     modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
+    val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -183,7 +184,10 @@ internal fun PerksBankDialog(
                                         modifier = Modifier
                                             .clip(CircleShape)
                                             .background(if (canAfford) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f))
-                                            .clickable(enabled = canAfford && !isProcessing) { onBuyClick(category) }
+                                            .clickable(enabled = canAfford && !isProcessing) { 
+                                                playButtonSound()
+                                                onBuyClick(category) 
+                                            }
                                             .padding(horizontal = 8.dp.scaled, vertical = 2.dp.scaled),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(4.dp.scaled)
@@ -239,7 +243,10 @@ internal fun PerksBankDialog(
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.05f))
-                        .clickable(enabled = !isProcessing) { onDismiss() }
+                        .clickable(enabled = !isProcessing) { 
+                            playButtonSound()
+                            onDismiss() 
+                        }
                         .padding(
                             horizontal = spacing.extraLarge.scaled,
                             vertical = spacing.medium.scaled,

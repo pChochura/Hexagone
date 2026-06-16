@@ -127,6 +127,7 @@ internal fun GameOverlays(
     val spacing = MaterialTheme.spacing
     val cornerRadius = MaterialTheme.cornerRadius
     val primaryColor = MaterialTheme.colorScheme.primary
+    val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
 
     LaunchedEffect(isNewBest) {
         if (isNewBest && !hasSpawnedConfetti) {
@@ -354,7 +355,10 @@ internal fun GameOverlays(
                                 Color.White.copy(alpha = 0.2f),
                                 RoundedCornerShape(cornerRadius.full),
                             )
-                            .clickable { onViewBoardToggle() }
+                            .clickable { 
+                                playButtonSound()
+                                onViewBoardToggle() 
+                            }
                             .padding(horizontal = spacing.extraLarge.scaled, vertical = spacing.medium.scaled),
                         contentAlignment = Alignment.Center,
                     ) {

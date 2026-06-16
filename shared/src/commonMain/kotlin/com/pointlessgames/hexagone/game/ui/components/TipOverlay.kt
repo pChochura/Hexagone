@@ -40,13 +40,17 @@ fun TipOverlay(
 ) {
     val tip = activeTip ?: return
     val targetRect = targetRects[tip.targetType]
+    val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .clickable(
                 enabled = true,
-                onClick = onDismiss,
+                onClick = {
+                    playButtonSound()
+                    onDismiss()
+                },
                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                 indication = null
             )

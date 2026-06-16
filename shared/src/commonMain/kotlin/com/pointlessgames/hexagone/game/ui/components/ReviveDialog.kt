@@ -64,6 +64,7 @@ internal fun ReviveDialog(
 ) {
     val spacing = MaterialTheme.spacing
     val cornerRadius = MaterialTheme.cornerRadius
+    val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     
     DialogContainer(modifier = modifier) {
         Column(
@@ -129,6 +130,7 @@ internal fun ReviveDialog(
                         count = vouchers[category] ?: 0,
                         diamonds = diamonds,
                         onAction = {
+                            playButtonSound()
                             if ((vouchers[category] ?: 0) > 0) {
                                 onRevive(category)
                             } else {
@@ -152,7 +154,10 @@ internal fun ReviveDialog(
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.05f))
-                        .clickable { onOpenShop() }
+                        .clickable { 
+                            playButtonSound()
+                            onOpenShop() 
+                        }
                         .border(1.dp.scaled, Color(0xFFFFD54F).copy(alpha = 0.2f), CircleShape)
                         .padding(horizontal = spacing.large.scaled, vertical = spacing.small.scaled),
                     verticalAlignment = Alignment.CenterVertically
@@ -188,7 +193,10 @@ internal fun ReviveDialog(
                     fontSize = 14.sp.scaled,
                     modifier = Modifier
                         .clip(CircleShape)
-                        .clickable { onDecline() }
+                        .clickable { 
+                            playButtonSound()
+                            onDecline() 
+                        }
                         .padding(horizontal = spacing.extraLarge.scaled, vertical = spacing.medium.scaled)
                 )
             }
@@ -238,6 +246,7 @@ private fun ReviveCard(
     val isRecommended = category == PerkCategory.LEGENDARY
     val canAfford = diamonds >= cost
     val isEnabled = count > 0 || canAfford
+    val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
 
     Box(
         modifier = modifier
@@ -288,7 +297,10 @@ private fun ReviveCard(
                     .fillMaxWidth(0.85f)
                     .clip(CircleShape)
                     .background(if (isEnabled) color else color.copy(alpha = 0.2f), CircleShape)
-                    .clickable(enabled = isEnabled) { onAction() }
+                    .clickable(enabled = isEnabled) { 
+                        playButtonSound()
+                        onAction() 
+                    }
                     .padding(vertical = spacing.small.scaled),
                 contentAlignment = Alignment.Center
             ) {

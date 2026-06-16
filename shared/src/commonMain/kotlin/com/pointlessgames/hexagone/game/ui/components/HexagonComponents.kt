@@ -490,6 +490,7 @@ fun ShopButton(
     buttonSize: Dp = MaterialTheme.spacing.extraHuge.scaled,
 ) {
     val spacing = MaterialTheme.spacing
+    val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     val perkColor = Color(0xFFFFD54F) // Diamond color
     val heightScale = 0.866f
 
@@ -510,7 +511,10 @@ fun ShopButton(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .clip(MaterialTheme.shapes.large)
-            .clickable(onClick = onClick)
+            .clickable(onClick = { 
+                playButtonSound()
+                onClick() 
+            })
             .padding(spacing.tiny.scaled),
     ) {
         Box(
@@ -583,6 +587,7 @@ fun VoucherButton(
     showGlow: Boolean = false,
 ) {
     val spacing = MaterialTheme.spacing
+    val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     val color = when (category) {
         PerkCategory.COMMON -> Color.Gray
         PerkCategory.RARE -> Color(0xFF4FC3F7)
@@ -661,7 +666,10 @@ fun VoucherButton(
                         brush = SolidColor(color.copy(alpha = if (showGlow) 0.8f else 0.4f)),
                         shape = FlatTopHexagonShape(),
                     )
-                    .clickable(enabled = count > 0 || showGlow, onClick = onClick),
+                    .clickable(enabled = count > 0 || showGlow, onClick = { 
+                        playButtonSound()
+                        onClick() 
+                    }),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(

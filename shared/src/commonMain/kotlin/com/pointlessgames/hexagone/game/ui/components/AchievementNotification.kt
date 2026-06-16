@@ -56,6 +56,7 @@ fun AchievementNotification(
     modifier: Modifier = Modifier
 ) {
     var isVisible by remember { mutableStateOf(false) }
+    val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
 
     LaunchedEffect(achievement) {
         isVisible = true
@@ -98,7 +99,10 @@ fun AchievementNotification(
                             Color.White.copy(alpha = 0.2f),
                             RoundedCornerShape(MaterialTheme.cornerRadius.medium)
                         )
-                        .clickable { onClick() }
+                        .clickable { 
+                            playButtonSound()
+                            onClick() 
+                        }
                         .padding(MaterialTheme.spacing.medium),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
