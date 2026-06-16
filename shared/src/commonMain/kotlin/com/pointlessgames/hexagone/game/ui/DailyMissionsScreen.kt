@@ -447,9 +447,9 @@ private fun NextRewardCard(
         }
 
         if (reward != null) {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
+                verticalArrangement = Arrangement.spacedBy(spacing.small.scaled),
             ) {
                 if (reward.diamonds > 0) {
                     RewardItem(
@@ -459,7 +459,7 @@ private fun NextRewardCard(
                             reward.diamonds,
                         ),
                         color = Color(0xFFFFD54F),
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
 
@@ -487,7 +487,7 @@ private fun NextRewardCard(
                             categoryName,
                         ),
                         color = color,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
