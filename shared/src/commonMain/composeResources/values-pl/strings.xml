@@ -357,4 +357,12 @@
     <string name="shop_buy_failure_message">Coś poszło nie tak. Spróbuj ponownie później.</string>
     <string name="shop_voucher_explanation">Wymiana vouchera doda wybrany perk do Twojej obecnej gry. Ta akcja jest trwała i zużywa voucher.</string>
     <string name="confirm">POTWIERDŹ</string>
+
+    <!-- Mission Refresh -->
+    <string name="mission_refresh_restore_title">PRZYWRÓCIĆ MISJE?</string>
+    <string name="mission_refresh_restore_desc">Masz zaległe misje z %1$s. Zatrzymaj je, aby uratować swoją serię, lub odśwież (seria zostanie zresetowana).</string>
+    <string name="mission_refresh_keep_button">ZACHOWAJ MISJE</string>
+    <string name="mission_refresh_reset_button">ODŚWIEŻ (RESET SERII)</string>
+    <string name="mission_refresh_lost_title">SERIA PRZERWANA</string>
+    <string name="mission_refresh_lost_desc">Twoja seria została zresetowana, a misje odświeżone, ponieważ pominąłeś dzień.</string>
 </resources>

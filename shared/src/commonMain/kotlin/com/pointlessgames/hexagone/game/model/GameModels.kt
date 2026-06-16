@@ -18,6 +18,13 @@ data class GameItem(
 )
 
 @Immutable
+sealed interface MissionRefreshState {
+    data object NONE : MissionRefreshState
+    data class CAN_KEEP(val oldDate: Long) : MissionRefreshState
+    data class HARD_REFRESH(val oldDate: Long) : MissionRefreshState
+}
+
+@Immutable
 data class GameUiState(
     val grid: List<HexagonCell> = emptyList(),
     val mergeHints: List<MergeHint> = emptyList(),
@@ -78,6 +85,7 @@ data class GameUiState(
     val previewIdCounter: Int = 0,
     val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
     val persistentCompletedMissionIds: Set<String> = emptySet(),
+    val dailyMissionDate: Long = 0L,
     val challengeStreak: Int = 0,
     val completedChallengeDates: Set<Long> = emptySet(),
     val isStreakCollectedToday: Boolean = false,
@@ -86,6 +94,7 @@ data class GameUiState(
     val consecutiveTacticalNoSpawn: Int = 0,
     val thawedIds: Set<String> = emptySet(),
     val activeTip: GameTip? = null,
+    val missionRefreshState: MissionRefreshState = MissionRefreshState.NONE,
     val isShopVisible: Boolean = false,
     val isShopLoading: Boolean = false,
     val isShopProcessing: Boolean = false,
@@ -133,7 +142,7 @@ data class GameTip(
 )
 
 enum class TipId { MERGE, PERK, POST_GAME, DAILY }
-enum class TipTarget { GRID, PERK_BAR, SCORE_SECTION, GAME_OVER_BUTTONS, NONE }
+enum class TipTarget { GRID, PERK_BAR, SCORE_SECTION, GAME_OVER_BUTTONS, DAILY_MISSIONS_BUTTON, NONE }
 
 @Immutable
 data class RankingInfo(
@@ -283,6 +292,7 @@ data class GameState(
     val hasRevived: Boolean = false,
     val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
     val persistentCompletedMissionIds: Set<String> = emptySet(),
+    val dailyMissionDate: Long = 0L,
     val completedChallengeDates: Set<Long> = emptySet(),
     val movesWithoutPerk: Int = 0,
     val comboMaintenanceTurns: Int = 0,

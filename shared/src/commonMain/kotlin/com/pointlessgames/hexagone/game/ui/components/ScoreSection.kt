@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
+import com.pointlessgames.hexagone.game.model.TipTarget
 import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
@@ -103,6 +104,7 @@ fun ScoreSection(
     onAchievementsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onDailyChallengeClick: () -> Unit = {},
+    onTargetPosition: (TipTarget, androidx.compose.ui.geometry.Rect) -> Unit = { _, _ -> },
 ) {
     val score = scoreProvider()
     val bestScore = bestScoreProvider()
@@ -191,6 +193,7 @@ fun ScoreSection(
                         borderColor = if (isDailyChallengeCompleted)
                             MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
                         else Color.White.copy(alpha = 0.1f),
+                        modifier = Modifier.trackTipTarget(TipTarget.DAILY_MISSIONS_BUTTON, onTargetPosition),
                     )
 
                     HexagonIconButton(
@@ -274,6 +277,7 @@ fun ScoreSection(
                         borderColor = if (isDailyChallengeCompleted)
                             MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
                         else Color.White.copy(alpha = 0.1f),
+                        modifier = Modifier.trackTipTarget(TipTarget.DAILY_MISSIONS_BUTTON, onTargetPosition),
                     )
 
                     HexagonIconButton(

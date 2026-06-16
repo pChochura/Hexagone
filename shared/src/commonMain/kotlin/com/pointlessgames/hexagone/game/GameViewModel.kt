@@ -24,6 +24,7 @@ import com.pointlessgames.hexagone.game.model.HexDialogState.Confirmation
 import com.pointlessgames.hexagone.game.model.HexDialogState.Info
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
+import com.pointlessgames.hexagone.game.model.MissionRefreshState
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.TipId
 import com.pointlessgames.hexagone.game.model.TipId.DAILY
@@ -58,8 +59,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
+import kotlinx.datetime.number
 import kotlinx.datetime.todayIn
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.getString
@@ -199,11 +202,20 @@ internal class GameViewModel(
 
             var persistentCompletedMissionIds = settingsRepository.getPersistentCompletedMissionIds()
             val dailyMissionDate = settingsRepository.getDailyMissionDate()
+            var missionRefreshState: MissionRefreshState = MissionRefreshState.NONE
 
-            if (dailyMissionDate != dateSeed) {
+            if (dailyMissionDate != 0L && dailyMissionDate != dateSeed) {
+                if (dailyMissionDate == yesterdaySeed) {
+                    missionRefreshState = MissionRefreshState.CAN_KEEP(dailyMissionDate)
+                } else {
+                    missionRefreshState = MissionRefreshState.HARD_REFRESH(dailyMissionDate)
+                    settingsRepository.setDailyMissionDate(dateSeed)
+                    settingsRepository.clearPersistentCompletedMissionIds()
+                    settingsRepository.setChallengeStreak(0)
+                    persistentCompletedMissionIds = emptySet()
+                }
+            } else if (dailyMissionDate == 0L) {
                 settingsRepository.setDailyMissionDate(dateSeed)
-                settingsRepository.clearPersistentCompletedMissionIds()
-                persistentCompletedMissionIds = emptySet()
             }
 
             val lastCompletedDate = settingsRepository.getLastCompletedChallengeDate()
@@ -217,8 +229,14 @@ internal class GameViewModel(
                 settingsRepository.setChallengeStreak(0)
             }
 
+            val effectiveMissionDate = if (missionRefreshState is MissionRefreshState.CAN_KEEP) {
+                yesterday
+            } else {
+                today
+            }
+
             val currentDailyChallenges =
-                DailyChallengeProvider.getChallengesForDate(today, challengeStreak)
+                DailyChallengeProvider.getChallengesForDate(effectiveMissionDate, challengeStreak)
 
             if (savedStateJson != null) {
                 try {
@@ -234,10 +252,12 @@ internal class GameViewModel(
                                 challengeStreak = challengeStreak,
                                 isStreakCollectedToday = lastCompletedDate == dateSeed,
                                 persistentCompletedMissionIds = persistentCompletedMissionIds,
+                                dailyMissionDate = dailyMissionDate,
                                 completedChallengeDates = completedDates,
                                 mergeHintsEnabled = hintsEnabled,
                                 diamonds = savedState.diamonds,
                                 vouchers = savedState.vouchers,
+                                missionRefreshState = missionRefreshState,
                             )
                         }
                         restartGame()
@@ -293,9 +313,11 @@ internal class GameViewModel(
                                     completedDates
                                 },
                                 persistentCompletedMissionIds = persistentCompletedMissionIds,
+                                dailyMissionDate = dailyMissionDate,
                                 challengeStreak = challengeStreak,
                                 isStreakCollectedToday = lastCompletedDate == dateSeed,
                                 hasRevived = savedState.hasRevived,
+                                missionRefreshState = missionRefreshState,
                             )
                         }
                         stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
@@ -315,6 +337,7 @@ internal class GameViewModel(
                             completedChallengeDates = completedDates,
                             challengeStreak = challengeStreak,
                             isStreakCollectedToday = lastCompletedDate == dateSeed,
+                            missionRefreshState = missionRefreshState,
                         )
                     }
                     restartGame()
@@ -331,6 +354,8 @@ internal class GameViewModel(
                         challengeStreak = challengeStreak,
                         isStreakCollectedToday = lastCompletedDate == dateSeed,
                         persistentCompletedMissionIds = persistentCompletedMissionIds,
+                        dailyMissionDate = dailyMissionDate,
+                        missionRefreshState = missionRefreshState,
                     )
                 }
                 restartGame()
@@ -579,6 +604,37 @@ internal class GameViewModel(
         checkValidMoves()
     }
 
+    fun onKeepMissionsClicked() {
+        _uiState.update { it.copy(missionRefreshState = MissionRefreshState.NONE) }
+    }
+
+    fun onRefreshMissionsClicked() {
+        viewModelScope.launch {
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+            val dateSeed = today.year * 10000L + (today.month.ordinal + 1) * 100L + today.day
+            
+            settingsRepository.setDailyMissionDate(dateSeed)
+            settingsRepository.clearPersistentCompletedMissionIds()
+            settingsRepository.setChallengeStreak(0)
+            
+            val currentDailyChallenges = DailyChallengeProvider.getChallengesForDate(today, 0)
+            
+            _uiState.update {
+                it.copy(
+                    missionRefreshState = MissionRefreshState.NONE,
+                    dailyChallenges = currentDailyChallenges.map { c -> DailyChallengeProgress(c) },
+                    persistentCompletedMissionIds = emptySet(),
+                    challengeStreak = 0,
+                    isStreakCollectedToday = false,
+                )
+            }
+        }
+    }
+
+    fun onAcknowledgeHardRefresh() {
+        _uiState.update { it.copy(missionRefreshState = MissionRefreshState.NONE) }
+    }
+
     fun onRestartClicked() {
         restartGame()
     }
@@ -626,6 +682,7 @@ internal class GameViewModel(
                 },
                 completedChallengeDates = it.completedChallengeDates,
                 persistentCompletedMissionIds = it.persistentCompletedMissionIds,
+                dailyMissionDate = it.dailyMissionDate,
                 challengeStreak = it.challengeStreak,
                 isStreakCollectedToday = it.isStreakCollectedToday,
                 debugUsed = false,
@@ -913,7 +970,7 @@ internal class GameViewModel(
         val isFirstTimeToday = !_uiState.value.persistentCompletedMissionIds.contains(challenge.id)
 
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        val dateSeed = today.year * 10000L + (today.month.ordinal + 1) * 100L + today.day
+        val dateSeed = today.year * 10000L + (today.month.number) * 100L + today.day
 
         var isDayCompleted = false
         var newStreakValue = 0
@@ -927,20 +984,29 @@ internal class GameViewModel(
         // Check if ALL daily challenges are now persistent-completed to update streak
         val allPersistentCompleted = _uiState.value.persistentCompletedMissionIds.size >= 3
         if (allPersistentCompleted && !_uiState.value.isStreakCollectedToday) {
-            val lastDate = settingsRepository.getLastCompletedChallengeDate()
-            if (lastDate != dateSeed) {
+            val missionDateSeed = settingsRepository.getDailyMissionDate()
+            val lastCompletedDate = settingsRepository.getLastCompletedChallengeDate()
+            
+            // We complete for the day the missions were from
+            if (lastCompletedDate != missionDateSeed) {
                 val currentStreak = settingsRepository.getChallengeStreak()
-                val yesterday = today.minus(1, DateTimeUnit.DAY)
-                val yesterdaySeed =
-                    yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.day
+                
+                // Yesterday of missionDate
+                val missionDate = LocalDate(
+                    (missionDateSeed / 10000).toInt(),
+                    (missionDateSeed % 10000 / 100).toInt(),
+                    (missionDateSeed % 100).toInt()
+                )
+                val missionYesterday = missionDate.minus(1, DateTimeUnit.DAY)
+                val missionYesterdaySeed = missionYesterday.year * 10000L + missionYesterday.month.number * 100L + missionYesterday.day
 
-                val newStreak = if (lastDate == yesterdaySeed) currentStreak + 1 else 1
+                val newStreak = if (lastCompletedDate == missionYesterdaySeed) currentStreak + 1 else 1
                 isDayCompleted = true
                 newStreakValue = newStreak
 
-                settingsRepository.setLastCompletedChallengeDate(dateSeed)
+                settingsRepository.setLastCompletedChallengeDate(missionDateSeed)
                 settingsRepository.setChallengeStreak(newStreak)
-                settingsRepository.addCompletedChallengeDate(dateSeed.toString())
+                settingsRepository.addCompletedChallengeDate(missionDateSeed.toString())
 
                 val reward =
                     com.pointlessgames.hexagone.game.logic.StreakMilestones.getRewardForStreak(
@@ -953,8 +1019,8 @@ internal class GameViewModel(
                 _uiState.update {
                     it.copy(
                         challengeStreak = newStreak,
-                        completedChallengeDates = it.completedChallengeDates + dateSeed,
-                        isStreakCollectedToday = true,
+                        completedChallengeDates = it.completedChallengeDates + missionDateSeed,
+                        isStreakCollectedToday = missionDateSeed == dateSeed,
                     )
                 }
             }

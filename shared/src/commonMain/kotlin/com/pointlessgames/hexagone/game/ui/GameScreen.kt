@@ -65,6 +65,7 @@ import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
 import com.pointlessgames.hexagone.game.ui.components.HexAlertDialog
+import com.pointlessgames.hexagone.game.ui.components.MissionRefreshPopup
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
 import com.pointlessgames.hexagone.game.ui.components.TipOverlay
@@ -164,6 +165,10 @@ internal fun GameScreen(
             viewModel.uiState.value.activeDialog,
         )
     val activeDialog by activeDialogState
+    val missionRefreshState =
+        remember(uiState) { uiState.map { it.missionRefreshState }.distinctUntilChanged() }.collectAsState(
+            viewModel.uiState.value.missionRefreshState,
+        )
     val activeVoucherSelectionState =
         remember(uiState) {
             uiState.map { it.activeVoucherSelection }.distinctUntilChanged()
@@ -506,6 +511,9 @@ internal fun GameScreen(
                                 onSettingsClick = { navigator.navigateTo(Route.Settings) },
                                 onDailyChallengeClick = { navigator.navigateTo(Route.DailyMissions) },
                                 isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
+                                onTargetPosition = { target, rect ->
+                                    targetRects[target] = rect
+                                },
                                 modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
                                     targetRects[target] = rect
                                 },
@@ -595,6 +603,9 @@ internal fun GameScreen(
                                 onSettingsClick = { navigator.navigateTo(Route.Settings) },
                                 onDailyChallengeClick = { navigator.navigateTo(Route.DailyMissions) },
                                 isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
+                                onTargetPosition = { target, rect ->
+                                    targetRects[target] = rect
+                                },
                                 modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
                                     targetRects[target] = rect
                                 },
@@ -784,6 +795,14 @@ internal fun GameScreen(
             activeTip = activeTip,
             targetRects = targetRects,
             onDismiss = viewModel::onDismissTip,
+        )
+
+        MissionRefreshPopup(
+            state = missionRefreshState.value,
+            targetRect = targetRects[TipTarget.DAILY_MISSIONS_BUTTON],
+            onKeep = viewModel::onKeepMissionsClicked,
+            onRefresh = viewModel::onRefreshMissionsClicked,
+            onAcknowledge = viewModel::onAcknowledgeHardRefresh,
         )
 
         activeAchievement?.let { achievement ->

@@ -105,6 +105,7 @@ internal class StateDelegate(
             hasRevived = state.hasRevived,
             dailyChallenges = state.dailyChallenges,
             persistentCompletedMissionIds = state.persistentCompletedMissionIds,
+            dailyMissionDate = state.dailyMissionDate,
             completedChallengeDates = state.completedChallengeDates,
             movesWithoutPerk = state.movesWithoutPerk,
             comboMaintenanceTurns = state.comboMaintenanceTurns,

@@ -357,4 +357,12 @@
     <string name="shop_buy_failure_message">Something went wrong. Please try again later.</string>
     <string name="shop_voucher_explanation">Exchanging a voucher will add the selected perk to your current game. This action is permanent and consumes the voucher.</string>
     <string name="confirm">CONFIRM</string>
+
+    <!-- Mission Refresh -->
+    <string name="mission_refresh_restore_title">RESTORE MISSIONS?</string>
+    <string name="mission_refresh_restore_desc">You have pending missions from %1$s. Keep them to save your streak, or refresh for new ones (streak will reset).</string>
+    <string name="mission_refresh_keep_button">KEEP MISSIONS</string>
+    <string name="mission_refresh_reset_button">REFRESH (RESET STREAK)</string>
+    <string name="mission_refresh_lost_title">STREAK LOST</string>
+    <string name="mission_refresh_lost_desc">Your streak was reset and missions were refreshed because you skipped a day.</string>
 </resources>
