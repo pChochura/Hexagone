@@ -359,6 +359,10 @@
     <string name="add_label">ADD</string>
     <string name="perks_bank_title">PERKS BANK</string>
     <string name="available_vouchers_label">%1$d AVAILABLE</string>
+    <string name="revive_title">SAVE ME?</string>
+    <string name="revive_get_more">GET MORE</string>
+    <string name="revive_finish_game">FINISH GAME</string>
+    <string name="revive_use_voucher">USE</string>
     <string name="confirm">CONFIRM</string>
 
     <!-- Mission Refresh -->

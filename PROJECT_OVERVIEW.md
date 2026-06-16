@@ -47,9 +47,11 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 │   │   └── components/
 │   │       ├── ScreenScaffold.kt  # Organism: Translucent "Glass" headers
 │   │       ├── HexDialogComponents.kt # Atoms: Premium Alert Dialogs & Cards
+│   │       ├── PerksBankDialog.kt # Unified strategic inventory management
+│   │       ├── MissionRefreshPopup.kt # Anchored cross-day streak recovery
 │   │       ├── GameGridOverlay.kt # Grid orchestrator & gesture handling
 │   │       ├── ScoreSection.kt    # HUD: liquid progress & combo indicators
-│   │       ├── PerkBar.kt         # Strategic floating shelf: perks & vouchers
+│   │       ├── PerkBar.kt         # Strategic floating shelf: unified ADD button
 │   │       └── GameOverlays.kt    # Overlay orchestrator (Revive, Level Up, Game Over)
 ├── di/
 │   └── GameModule.kt             # Koin DI & Navigation Routing
@@ -129,6 +131,7 @@ A merge occurs when 2+ tiles of the same value touch.
 When the board is full and no moves or perks are available, the game triggers a high-stakes **Revive Dialog**.
 *   **One-Time Offer**: Only available once per game session.
 *   **Inventory Integration**: Players can use an existing voucher or purchase one instantly with Diamonds.
+*   **Balance Validation**: The dialog dynamically dims and disables "BUY" options if the current Diamond balance is insufficient, preventing invalid transaction attempts.
 *   **Loss Aversion**: The dialog highlights current score and level to emphasize what's at stake.
 
 ---
@@ -144,9 +147,17 @@ When the board is full and no moves or perks are available, the game triggers a 
 ## 6. Daily Missions & Streak
 
 ### Immersive Progress
-*   **Prominent Streak**: Current streak is the focal point with massive bold typography.
+*   **Prominent Streak**: Current streak is the focal point with massive bold typography and a dedicated Milestone Rewards section.
 *   **Mission Log**: A custom month-view calendar highlighting daily completion.
-*   **Persistent Rewards**: Completing all daily missions triggers server-side reward grants.
+*   **Persistent Completion**: Completion status for the Daily Streak is persistent across match sessions and app reloads.
+*   **Repeatable Session Rewards**: Missions reset to 0% progress at the start of every game session, allowing players to earn bonus rewards (Score/Perks) multiple times a day while working towards their persistent streak goal.
+
+### Streak Protection Logic
+*   **Cross-Day Grace**: If a player opens the app with unfinished missions from the previous day, an anchored **MissionRefreshPopup** appears.
+*   **The Choice**: 
+    *   **KEEP**: Finish yesterday's missions today to save the streak (completion attributes back to the original date).
+    *   **REFRESH**: Reset the streak to 0 and get fresh missions for today.
+*   **Automatic Reset**: If more than one full day is skipped, the system automatically resets the streak and refreshes missions to maintain the competitive integrity of the leaderboards.
 
 ---
 
@@ -171,9 +182,9 @@ When the board is full and no moves or perks are available, the game triggers a 
 
 ### Perk & Voucher Economy
 *   **Rarity Groups**: Common (VCMN), Rare (VRARE), Legendary (VLGD).
-*   **Integrated Access**: Vouchers are accessible directly from the **PerkBar** in a dedicated floating pod.
-*   **Blueprint Styling**: Vouchers use a distinct "Blueprint" visual language (dashed borders, rarity colors) to distinguish them from active, ready-to-use perks.
-*   **Voucher Exchange**: Category-based vouchers can be exchanged for any perk within that rarity tier on-demand via the `VoucherSelectionDialog`.
+*   **Unified Access**: Vouchers are managed via a single **"ADD" button** in the PerkBar, replacing individual rarity buttons to reduce UI clutter.
+*   **Perks Bank Dialog**: A central hub that groups all available perks by rarity, displaying real-time voucher counts. Unavailable categories are automatically dimmed and disabled.
+*   **Optimistic UI & Sync**: Currency and voucher updates are applied instantly to the UI using an "Optimistic" pattern, with an **in-flight locking mechanism** that prevents flickering while background server synchronization (RevenueCat/Supabase) completes.
 *   **Persistence**: Inventory and currency balances are preserved across game restarts and app reloads.
 
 ---

@@ -1,24 +1,32 @@
 package com.pointlessgames.hexagone.game.ui.components
 
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -29,7 +37,16 @@ import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.*
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.ic_diamond
+import hexagone.shared.generated.resources.label_level
+import hexagone.shared.generated.resources.revive_finish_game
+import hexagone.shared.generated.resources.revive_get_more
+import hexagone.shared.generated.resources.revive_title
+import hexagone.shared.generated.resources.revive_use_voucher
+import hexagone.shared.generated.resources.score_label
+import hexagone.shared.generated.resources.shop_best_value
+import hexagone.shared.generated.resources.shop_quick_revive_hint
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -56,7 +73,7 @@ internal fun ReviveDialog(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "SAVE ME?".uppercase(),
+                text = stringResource(Res.string.revive_title).uppercase(),
                 style = TextStyle(
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Black,
@@ -81,9 +98,9 @@ internal fun ReviveDialog(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(spacing.large.scaled)
             ) {
-                StatItem(label = "SCORE", value = score.toString())
+                StatItem(label = stringResource(Res.string.score_label).uppercase(), value = score.toString())
                 Box(modifier = Modifier.width(1.dp.scaled).height(24.dp.scaled).background(Color.White.copy(alpha = 0.1f)))
-                StatItem(label = "LEVEL", value = level.toString())
+                StatItem(label = stringResource(Res.string.label_level).uppercase(), value = level.toString())
             }
 
             Spacer(Modifier.height(spacing.large.scaled))
@@ -110,6 +127,7 @@ internal fun ReviveDialog(
                     ReviveCard(
                         category = category,
                         count = vouchers[category] ?: 0,
+                        diamonds = diamonds,
                         onAction = {
                             if ((vouchers[category] ?: 0) > 0) {
                                 onRevive(category)
@@ -154,7 +172,7 @@ internal fun ReviveDialog(
                     )
                     Spacer(Modifier.width(spacing.medium.scaled))
                     Text(
-                        text = "GET MORE",
+                        text = stringResource(Res.string.revive_get_more).uppercase(),
                         color = Color.White.copy(alpha = 0.6f),
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp.scaled,
@@ -164,7 +182,7 @@ internal fun ReviveDialog(
 
                 // Finish Game Button
                 Text(
-                    text = "FINISH GAME",
+                    text = stringResource(Res.string.revive_finish_game).uppercase(),
                     color = Color.White.copy(alpha = 0.3f),
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp.scaled,
@@ -201,6 +219,7 @@ private fun StatItem(label: String, value: String) {
 private fun ReviveCard(
     category: PerkCategory,
     count: Int,
+    diamonds: Int,
     onAction: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -217,9 +236,16 @@ private fun ReviveCard(
         PerkCategory.LEGENDARY -> 500
     }
     val isRecommended = category == PerkCategory.LEGENDARY
+    val canAfford = diamonds >= cost
+    val isEnabled = count > 0 || canAfford
 
     Box(
-        modifier = modifier,
+        modifier = modifier
+            .padding(top = 10.dp.scaled) // Provide space for the offset badge
+            .graphicsLayer {
+                alpha = if (isEnabled) 1f else 0.5f
+                clip = false // Ensure the badge isn't clipped by the layer bounds
+            },
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
@@ -228,7 +254,7 @@ private fun ReviveCard(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(cornerRadius.large.scaled))
                 .background(
-                    if (isRecommended) {
+                    if (isRecommended && isEnabled) {
                         Brush.verticalGradient(
                             listOf(color.copy(alpha = 0.15f), Color.Transparent)
                         )
@@ -238,19 +264,20 @@ private fun ReviveCard(
                 )
                 .border(
                     1.dp.scaled,
-                    if (isRecommended) color.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.1f),
+                    if (isRecommended && isEnabled) color.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.1f),
                     RoundedCornerShape(cornerRadius.large.scaled)
                 )
                 .padding(vertical = spacing.large.scaled)
         ) {
-            Spacer(Modifier.height(if (isRecommended) spacing.medium.scaled else 0.dp))
+            // Remove the Spacer that was pushing content down, since we added padding to the Box
+            // Spacer(Modifier.height(if (isRecommended) spacing.medium.scaled else 0.dp))
             
             VoucherButton(
                 category = category,
                 count = count,
                 onClick = onAction,
                 buttonSize = 64.dp.scaled,
-                showGlow = count > 0 || isRecommended
+                showGlow = (count > 0 || isRecommended) && isEnabled
             )
 
             Spacer(Modifier.height(spacing.large.scaled))
@@ -260,14 +287,14 @@ private fun ReviveCard(
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
                     .clip(CircleShape)
-                    .background(color, CircleShape)
-                    .clickable { onAction() }
+                    .background(if (isEnabled) color else color.copy(alpha = 0.2f), CircleShape)
+                    .clickable(enabled = isEnabled) { onAction() }
                     .padding(vertical = spacing.small.scaled),
                 contentAlignment = Alignment.Center
             ) {
                 if (count > 0) {
                     Text(
-                        text = "USE",
+                        text = stringResource(Res.string.revive_use_voucher).uppercase(),
                         color = Color.Black,
                         fontWeight = FontWeight.Black,
                         fontSize = 12.sp.scaled
@@ -276,7 +303,7 @@ private fun ReviveCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = cost.toString(),
-                            color = Color.Black,
+                            color = Color.Black.copy(alpha = if (canAfford) 1f else 0.5f),
                             fontWeight = FontWeight.Black,
                             fontSize = 12.sp.scaled
                         )
@@ -284,7 +311,7 @@ private fun ReviveCard(
                         Icon(
                             painter = painterResource(Res.drawable.ic_diamond),
                             contentDescription = null,
-                            tint = Color.Black,
+                            tint = Color.Black.copy(alpha = if (canAfford) 1f else 0.5f),
                             modifier = Modifier.size(11.dp.scaled)
                         )
                     }
@@ -296,12 +323,12 @@ private fun ReviveCard(
             Box(
                 modifier = Modifier
                     .offset(y = (-10).dp.scaled)
-                    .background(color, RoundedCornerShape(4.dp.scaled))
+                    .background(color.copy(alpha = if (isEnabled) 1f else 0.4f), RoundedCornerShape(4.dp.scaled))
                     .padding(horizontal = 6.dp.scaled, vertical = 2.dp.scaled)
             ) {
                 Text(
-                    text = "BEST VALUE",
-                    color = Color.Black,
+                    text = stringResource(Res.string.shop_best_value),
+                    color = Color.Black.copy(alpha = if (isEnabled) 1f else 0.6f),
                     fontWeight = FontWeight.Black,
                     fontSize = 8.sp.scaled
                 )

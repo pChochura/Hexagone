@@ -359,6 +359,10 @@
     <string name="add_label">DODAJ</string>
     <string name="perks_bank_title">BANK PERKÓW</string>
     <string name="available_vouchers_label">DOSTĘPNE: %1$d</string>
+    <string name="revive_title">RATUJ MNIE?</string>
+    <string name="revive_get_more">ZDOBĄDŹ WIĘCEJ</string>
+    <string name="revive_finish_game">ZAKOŃCZ GRĘ</string>
+    <string name="revive_use_voucher">UŻYJ</string>
     <string name="confirm">POTWIERDŹ</string>
 
     <!-- Mission Refresh -->
