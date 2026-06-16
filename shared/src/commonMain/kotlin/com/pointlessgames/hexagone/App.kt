@@ -49,7 +49,7 @@ fun App(modifier: Modifier = Modifier) {
 
                 LaunchedEffect(Unit) {
                     leaderboardRepository.syncPendingScores()
-                    startingRoute = if (settingsRepository.getPlayerId() != null) {
+                    startingRoute = if (settingsRepository.getPlayerId() != null && settingsRepository.getPlayerName() != null) {
                         Route.Game
                     } else {
                         Route.Login

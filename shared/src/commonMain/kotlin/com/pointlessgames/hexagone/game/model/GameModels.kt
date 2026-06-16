@@ -68,7 +68,6 @@ data class GameUiState(
     val ghostPerkUsedInSession: Boolean = false,
     val barRaisedThisTurn: Int = 0,
     val tacticalGhostsThisTurn: Int = 0,
-    val pendingResult: DetailedGameResult? = null,
     val finalResult: DetailedGameResult? = null,
     val achievementNotification: GameAchievement? = null,
     val earnedRewardsThisTurn: List<GameEffect.TierReward> = emptyList(),
@@ -139,7 +138,13 @@ enum class TipTarget { GRID, PERK_BAR, SCORE_SECTION, GAME_OVER_BUTTONS, NONE }
 data class RankingInfo(
     val rank: Int,
     val isRegional: Boolean,
-)
+) {
+    @Serializable
+    data class RankRow(
+        @SerialName("score_position")
+        val scorePosition: Int,
+    )
+}
 
 @Immutable
 data class PotentialMerge(
@@ -298,7 +303,6 @@ data class DetailedGameResult(
     val perksAvailable: List<Perk>,
     val region: String,
     val username: String? = null,
-    val debugUsed: Boolean = false,
     @SerialName("daily_challenges")
     val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
 )

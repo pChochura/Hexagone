@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.pointlessgames.hexagone.achievements.AchievementManager
 import com.pointlessgames.hexagone.billing.BillingManager
 import com.pointlessgames.hexagone.billing.BillingProduct
+import com.pointlessgames.hexagone.billing.PurchaseResult.Error
+import com.pointlessgames.hexagone.billing.PurchaseResult.Success
 import com.pointlessgames.hexagone.data.LeaderboardRepository
 import com.pointlessgames.hexagone.data.MonetizationRepository
 import com.pointlessgames.hexagone.data.SettingsRepository
@@ -16,11 +18,22 @@ import com.pointlessgames.hexagone.game.model.DailyChallengeProgress
 import com.pointlessgames.hexagone.game.model.DetailedGameResult
 import com.pointlessgames.hexagone.game.model.GameEffect
 import com.pointlessgames.hexagone.game.model.GameState
+import com.pointlessgames.hexagone.game.model.GameTip
 import com.pointlessgames.hexagone.game.model.GameUiState
 import com.pointlessgames.hexagone.game.model.HexDialogState.Confirmation
+import com.pointlessgames.hexagone.game.model.HexDialogState.Info
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.Perk
+import com.pointlessgames.hexagone.game.model.TipId
+import com.pointlessgames.hexagone.game.model.TipId.DAILY
+import com.pointlessgames.hexagone.game.model.TipId.MERGE
+import com.pointlessgames.hexagone.game.model.TipId.PERK
+import com.pointlessgames.hexagone.game.model.TipId.POST_GAME
+import com.pointlessgames.hexagone.game.model.TipTarget.GAME_OVER_BUTTONS
+import com.pointlessgames.hexagone.game.model.TipTarget.GRID
+import com.pointlessgames.hexagone.game.model.TipTarget.PERK_BAR
+import com.pointlessgames.hexagone.game.model.TipTarget.SCORE_SECTION
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.shop_buy_confirmation_message
 import hexagone.shared.generated.resources.shop_buy_confirmation_title
@@ -31,9 +44,6 @@ import hexagone.shared.generated.resources.shop_buy_success_title
 import hexagone.shared.generated.resources.shop_common_bundle
 import hexagone.shared.generated.resources.shop_legendary_bundle
 import hexagone.shared.generated.resources.shop_rare_bundle
-import hexagone.shared.generated.resources.streak_milestone_diamonds
-import hexagone.shared.generated.resources.streak_milestone_perks
-import hexagone.shared.generated.resources.streak_milestone_reward_details
 import hexagone.shared.generated.resources.tip_daily_message
 import hexagone.shared.generated.resources.tip_merge_message
 import hexagone.shared.generated.resources.tip_perk_message
@@ -54,6 +64,7 @@ import kotlinx.datetime.todayIn
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.getString
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class GameViewModel(
     private val settingsRepository: SettingsRepository,
@@ -147,48 +158,24 @@ internal class GameViewModel(
         val currentTip = _uiState.value.activeTip ?: return
         viewModelScope.launch {
             when (currentTip.id) {
-                com.pointlessgames.hexagone.game.model.TipId.MERGE -> settingsRepository.setHasShownMergeTip(
-                    true,
-                )
-
-                com.pointlessgames.hexagone.game.model.TipId.PERK -> settingsRepository.setHasShownPerkTip(
-                    true,
-                )
-
-                com.pointlessgames.hexagone.game.model.TipId.POST_GAME -> settingsRepository.setHasShownPostGameTip(
-                    true,
-                )
-
-                com.pointlessgames.hexagone.game.model.TipId.DAILY -> settingsRepository.setHasShownDailyChallengeTip(
-                    true,
-                )
+                MERGE -> settingsRepository.setHasShownMergeTip(true)
+                PERK -> settingsRepository.setHasShownPerkTip(true)
+                POST_GAME -> settingsRepository.setHasShownPostGameTip(true)
+                DAILY -> settingsRepository.setHasShownDailyChallengeTip(true)
             }
             _uiState.update { it.copy(activeTip = null) }
         }
     }
 
-    private fun triggerTip(id: com.pointlessgames.hexagone.game.model.TipId) {
+    private fun triggerTip(id: TipId) {
         val tipData = when (id) {
-            com.pointlessgames.hexagone.game.model.TipId.MERGE ->
-                Res.string.tip_merge_message to com.pointlessgames.hexagone.game.model.TipTarget.GRID
-
-            com.pointlessgames.hexagone.game.model.TipId.PERK ->
-                Res.string.tip_perk_message to com.pointlessgames.hexagone.game.model.TipTarget.PERK_BAR
-
-            com.pointlessgames.hexagone.game.model.TipId.POST_GAME ->
-                Res.string.tip_post_game_message to com.pointlessgames.hexagone.game.model.TipTarget.GAME_OVER_BUTTONS
-
-            com.pointlessgames.hexagone.game.model.TipId.DAILY ->
-                Res.string.tip_daily_message to com.pointlessgames.hexagone.game.model.TipTarget.SCORE_SECTION
+            MERGE -> Res.string.tip_merge_message to GRID
+            PERK -> Res.string.tip_perk_message to PERK_BAR
+            POST_GAME -> Res.string.tip_post_game_message to GAME_OVER_BUTTONS
+            DAILY -> Res.string.tip_daily_message to SCORE_SECTION
         }
         _uiState.update {
-            it.copy(
-                activeTip = com.pointlessgames.hexagone.game.model.GameTip(
-                    id,
-                    tipData.first,
-                    tipData.second,
-                ),
-            )
+            it.copy(activeTip = GameTip(id, tipData.first, tipData.second))
         }
     }
 
@@ -312,9 +299,7 @@ internal class GameViewModel(
                             sessionBestScore = best,
                             mergeHintsEnabled = hintsEnabled,
                             dailyChallenges = currentDailyChallenges.map { c ->
-                                DailyChallengeProgress(
-                                    c,
-                                )
+                                DailyChallengeProgress(c)
                             },
                             completedChallengeDates = completedDates,
                             challengeStreak = challengeStreak,
@@ -341,9 +326,9 @@ internal class GameViewModel(
             recalculateHints()
 
             if (!settingsRepository.getHasShownMergeTip() && _uiState.value.totalMerges == 0) {
-                triggerTip(com.pointlessgames.hexagone.game.model.TipId.MERGE)
+                triggerTip(MERGE)
             } else if (!settingsRepository.getHasShownDailyChallengeTip()) {
-                triggerTip(com.pointlessgames.hexagone.game.model.TipId.DAILY)
+                triggerTip(DAILY)
             }
         }
 
@@ -389,10 +374,10 @@ internal class GameViewModel(
             launch {
                 billingManager.purchaseEvents.collect { result ->
                     when (result) {
-                        is com.pointlessgames.hexagone.billing.PurchaseResult.Success -> {
+                        is Success -> {
                             _uiState.update {
                                 it.copy(
-                                    activeDialog = com.pointlessgames.hexagone.game.model.HexDialogState.Info(
+                                    activeDialog = Info(
                                         title = Res.string.shop_buy_success_title,
                                         message = Res.string.shop_buy_success_message,
                                     ),
@@ -400,10 +385,10 @@ internal class GameViewModel(
                             }
                         }
 
-                        is com.pointlessgames.hexagone.billing.PurchaseResult.Error -> {
+                        is Error -> {
                             _uiState.update {
                                 it.copy(
-                                    activeDialog = com.pointlessgames.hexagone.game.model.HexDialogState.Info(
+                                    activeDialog = Info(
                                         title = Res.string.shop_buy_failure_title,
                                         message = Res.string.shop_buy_failure_message,
                                         isError = true,
@@ -551,7 +536,7 @@ internal class GameViewModel(
         }
         viewModelScope.launch {
             if (!settingsRepository.getHasShownPerkTip()) {
-                triggerTip(com.pointlessgames.hexagone.game.model.TipId.PERK)
+                triggerTip(PERK)
             }
         }
         achievementDelegate.checkPerkAchievements(perk, _uiState.value)
@@ -624,7 +609,9 @@ internal class GameViewModel(
                 seed = random.nextLong(),
                 cellIdCounter = nextIdCounter,
                 previewIdCounter = nextPreviewIdCounter,
-                dailyChallenges = currentDailyChallenges.map { challenge -> DailyChallengeProgress(challenge) },
+                dailyChallenges = currentDailyChallenges.map { challenge ->
+                    DailyChallengeProgress(challenge)
+                },
                 completedChallengeDates = it.completedChallengeDates,
                 challengeStreak = it.challengeStreak,
                 isStreakCollectedToday = it.isStreakCollectedToday,
@@ -676,8 +663,8 @@ internal class GameViewModel(
 
         if (!isPossible && hasPerkOptions.not() && actionablePerks.isEmpty() && !state.isDebugMode) {
             viewModelScope.launch {
-                delay(1000)
-                
+                delay(1000.milliseconds)
+
                 if (!state.hasRevived) {
                     _uiState.update { it.copy(showReviveOption = true) }
                     return@launch
@@ -693,27 +680,28 @@ internal class GameViewModel(
                     perksAvailable = state.collectedPerks,
                     region = settingsRepository.getPlayerRegion() ?: "Global",
                     dailyChallenges = state.dailyChallenges,
-                    debugUsed = state.debugUsed,
                 )
 
-                val playerName = settingsRepository.getPlayerName()
                 _uiState.update {
                     it.copy(
                         isGameOver = true,
-                        pendingResult = if (playerName == null && !state.debugUsed) finalResult else null,
                         finalResult = finalResult,
+                        currentRank = null,
+                        bestScore = maxOf(it.bestScore, state.score),
+                        sessionBestScore = maxOf(it.sessionBestScore, state.score)
                     )
                 }
+                stateDelegate.persistBestScore(state.score)
                 achievementDelegate.onGameFinished()
                 settingsRepository.setGameState(null)
 
-                if (playerName != null && !state.debugUsed) {
+                if (!state.debugUsed) {
                     val rankInfo = leaderboardRepository.submitResult(finalResult)
                     _uiState.update { it.copy(currentRank = rankInfo) }
                 }
 
                 if (!settingsRepository.getHasShownPostGameTip()) {
-                    triggerTip(com.pointlessgames.hexagone.game.model.TipId.POST_GAME)
+                    triggerTip(POST_GAME)
                 }
             }
         }
@@ -816,44 +804,8 @@ internal class GameViewModel(
 
     fun getAchievementManager(): AchievementManager = achievementManager
 
-    fun onShopClicked() {
-        _uiState.update { it.copy(isShopVisible = true) }
-    }
-
-    fun onDismissShop() {
-        _uiState.update { it.copy(isShopVisible = false) }
-    }
-
     fun onDismissDialog() {
         _uiState.update { it.copy(activeDialog = null) }
-    }
-
-    fun onShowMilestoneDetails(day: Int) {
-        val reward = com.pointlessgames.hexagone.game.logic.StreakMilestones.getRewardForStreak(day) ?: return
-        
-        viewModelScope.launch {
-            val details = mutableListOf<String>()
-            if (reward.diamonds > 0) {
-                details.add(getString(Res.string.streak_milestone_diamonds, reward.diamonds))
-            }
-            reward.perkRewards.forEach { (category, count) ->
-                val categoryName = when (category) {
-                    PerkCategory.COMMON -> getString(Res.string.shop_common_bundle)
-                    PerkCategory.RARE -> getString(Res.string.shop_rare_bundle)
-                    PerkCategory.LEGENDARY -> getString(Res.string.shop_legendary_bundle)
-                }
-                details.add(getString(Res.string.streak_milestone_perks, count, categoryName))
-            }
-
-            _uiState.update { 
-                it.copy(
-                    activeDialog = com.pointlessgames.hexagone.game.model.HexDialogState.Info(
-                        title = Res.string.streak_milestone_reward_details,
-                        messageText = details.joinToString("\n") { detail -> "• $detail" }
-                    )
-                )
-            }
-        }
     }
 
     fun onBuyPerk(category: PerkCategory) {
@@ -932,10 +884,6 @@ internal class GameViewModel(
             billingManager.purchase(product)
             _uiState.update { it.copy(isShopProcessing = false) }
         }
-    }
-
-    fun onReviveWithPerk(category: PerkCategory) {
-        onUseVoucher(category)
     }
 
     private suspend fun handleChallengeComplete(challenge: DailyChallenge) {

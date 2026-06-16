@@ -20,7 +20,6 @@
     <string name="view_stats_button">ZOBACZ STATYSTYKI</string>
     <string name="restart_game_button">RESTARTUJ GRĘ</string>
     <string name="share_label">UDOSTĘPNIJ</string>
-    <string name="settings_label">USTAWIENIA</string>
     <string name="perk_bar_empty_hint">Zdobywaj poziomy, aby odblokować perki i ulepszyć swoją strategię!</string>
     <string name="perk_selection_hint">Przytrzymaj perk, aby zobaczyć jego opis</string>
     <string name="no_moves_left_warning">BRAK RUCHÓW! UŻYJ PERKA</string>

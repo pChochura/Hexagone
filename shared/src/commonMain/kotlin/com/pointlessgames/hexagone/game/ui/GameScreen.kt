@@ -12,8 +12,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -46,7 +44,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -58,29 +55,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pointlessgames.hexagone.Route
 import com.pointlessgames.hexagone.game.GameViewModel
+import com.pointlessgames.hexagone.game.logic.PerkCategory
+import com.pointlessgames.hexagone.game.model.GameEffect
 import com.pointlessgames.hexagone.game.model.TipTarget
 import com.pointlessgames.hexagone.game.ui.components.AchievementNotification
 import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameOverlays
+import com.pointlessgames.hexagone.game.ui.components.HexAlertDialog
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
 import com.pointlessgames.hexagone.game.ui.components.TipOverlay
 import com.pointlessgames.hexagone.game.ui.components.VoucherSelectionDialog
 import com.pointlessgames.hexagone.game.ui.components.trackTipTarget
-import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
 import com.pointlessgames.hexagone.ui.theme.IsSmallDevice
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.utils.BackHandler
+import com.pointlessgames.hexagone.utils.SoundManager
+import com.pointlessgames.hexagone.utils.isDebug
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.no_moves_left_warning
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 internal fun GameScreen(
@@ -90,14 +91,16 @@ internal fun GameScreen(
     val navigator = com.pointlessgames.hexagone.LocalNavigator.current
     val player = com.pointlessgames.hexagone.LocalMediaPlayer.current
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
-    
+
     val uiState = viewModel.uiState
-    val isSoundEnabledState = remember(uiState) { uiState.map { it.isSoundEnabled }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.isSoundEnabled)
+    val isSoundEnabledState = remember(uiState) {
+        uiState.map { it.isSoundEnabled }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.isSoundEnabled)
 
     val playClickSound = remember(player, coroutineScope) {
         {
             if (isSoundEnabledState.value) {
-                com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "click.wav", coroutineScope)
+                SoundManager.playSound(player, "click.wav", coroutineScope)
             }
         }
     }
@@ -127,9 +130,6 @@ internal fun GameScreen(
         remember(uiState) { uiState.map { it.isDebugMode }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.isDebugMode,
         )
-    val pendingResultState = remember(uiState) {
-        uiState.map { it.pendingResult }.distinctUntilChanged()
-    }.collectAsState(viewModel.uiState.value.pendingResult)
     val activeTipState =
         remember(uiState) { uiState.map { it.activeTip }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.activeTip,
@@ -144,17 +144,14 @@ internal fun GameScreen(
     // Helper delegates for GameScreen's own logic.
     // Accessing these 'by' variables will trigger recomposition of GameScreen.
     val isGameOver by isGameOverState
-    
+
     LaunchedEffect(isGameOver) {
         if (isGameOver && isSoundEnabledState.value) {
-            com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "game_over.wav", coroutineScope)
+            SoundManager.playSound(player, "game_over.wav", coroutineScope)
         }
     }
     val showGameOverBoard by showGameOverBoardState
-    val isStuck by isStuckState
-    val activePerk by activePerkState
     val isDebugMode by isDebugModeState
-    val pendingResult by pendingResultState
     val activeTip by activeTipState
     val isVoucherProcessing by isVoucherProcessingState
     val showReviveOptionState = remember(uiState) {
@@ -245,9 +242,6 @@ internal fun GameScreen(
     val challengeStreakState = remember(uiState) {
         uiState.map { it.challengeStreak }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.challengeStreak)
-    val isStreakCollectedTodayState = remember(uiState) {
-        uiState.map { it.isStreakCollectedToday }.distinctUntilChanged()
-    }.collectAsState(viewModel.uiState.value.isStreakCollectedToday)
     val debugUsedState =
         remember(uiState) { uiState.map { it.debugUsed }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.debugUsed,
@@ -281,15 +275,6 @@ internal fun GameScreen(
     val selectedCellIdState = remember(uiState) {
         uiState.map { it.selectedCellId }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.selectedCellId)
-    val storeProductsState = viewModel.storeProducts.collectAsState()
-
-    var initiallySelectedAchievement by remember {
-        mutableStateOf<com.pointlessgames.hexagone.achievements.GameAchievement?>(
-            null,
-        )
-    }
-    val leaderboardViewModel: LeaderboardViewModel = koinViewModel()
-
     val targetRects = remember { mutableStateMapOf<TipTarget, Rect>() }
 
     val tierRewardQueue =
@@ -304,15 +289,42 @@ internal fun GameScreen(
         remember { mutableStateListOf<com.pointlessgames.hexagone.achievements.GameAchievement>() }
     val activeAchievement = achievementQueue.firstOrNull()
 
-    val onEmptySpaceClick = remember(viewModel, playClickSound) { { x: Int, y: Int -> playClickSound(); viewModel.onEmptySpaceClicked(x, y) } }
+    val onEmptySpaceClick = remember(
+        viewModel,
+        playClickSound,
+    ) { { x: Int, y: Int -> playClickSound(); viewModel.onEmptySpaceClicked(x, y) } }
     val onEmptySpaceTouchDown = remember(viewModel) { viewModel::onEmptySpaceTouchDown }
     val onEmptySpaceTouchUp = remember(viewModel) { viewModel::onEmptySpaceTouchUp }
     val onCellTouchDown = remember(viewModel) { viewModel::onCellTouchDown }
     val onCellTouchUp = remember(viewModel) { viewModel::onCellTouchUp }
-    val onCellClick = remember(viewModel, playClickSound) { { cell: com.pointlessgames.hexagone.game.model.HexagonCell -> playClickSound(); viewModel.onCellClicked(cell) } }
+    val onCellClick = remember(
+        viewModel,
+        playClickSound,
+    ) {
+        { cell: com.pointlessgames.hexagone.game.model.HexagonCell ->
+            playClickSound(); viewModel.onCellClicked(
+            cell,
+        )
+        }
+    }
     val onMergeAnimationFinished = remember(viewModel) { viewModel::onMergeAnimationFinished }
-    val onPerkClick = remember(viewModel, playClickSound) { { perk: com.pointlessgames.hexagone.game.model.Perk -> playClickSound(); viewModel.onUsePerkClicked(perk) } }
-    val onShopClick = remember(viewModel, playClickSound) { { playClickSound(); navigator.navigateTo(com.pointlessgames.hexagone.Route.Shop) } }
+    val onPerkClick = remember(
+        viewModel,
+        playClickSound,
+    ) {
+        { perk: com.pointlessgames.hexagone.game.model.Perk ->
+            playClickSound(); viewModel.onUsePerkClicked(
+            perk,
+        )
+        }
+    }
+    val onShopClick = remember(viewModel, playClickSound) {
+        {
+            playClickSound(); navigator.navigateTo(
+            Route.Shop,
+        )
+        }
+    }
     val onPerkSelected = remember(viewModel) { viewModel::onPerkSelected }
     val onRestart = remember(viewModel) { viewModel::onRestartClicked }
     val onViewBoardToggle = remember(viewModel) { viewModel::onViewBoardToggled }
@@ -399,40 +411,52 @@ internal fun GameScreen(
     }
     val pendingMergeProvider = remember { { pendingMergeState.value } }
     val activeMergeStepIndexProvider = remember { { activeMergeStepIndexState.value } }
-    val pendingMergeScoreProvider = remember { { pendingMergeScoreState.value } }
     val selectedCellIdProvider = remember { { selectedCellIdState.value } }
-
-    LaunchedEffect(pendingResult) {
-        if (pendingResult != null) {
-            leaderboardViewModel.setPendingResult(pendingResult)
-            navigator.navigateTo(com.pointlessgames.hexagone.Route.Leaderboard)
-        }
-    }
 
     LaunchedEffect(viewModel.effects) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is com.pointlessgames.hexagone.game.model.GameEffect.TierReward -> {
+                is GameEffect.TierReward -> {
                     tierRewardQueue.add(effect.tier to effect.perk)
-                    if (isSoundEnabledState.value) com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "combo_tier.wav", coroutineScope)
+                    if (isSoundEnabledState.value) SoundManager.playSound(
+                        player,
+                        "combo_tier.wav",
+                        coroutineScope,
+                    )
                 }
 
-                is com.pointlessgames.hexagone.game.model.GameEffect.AchievementUnlock -> {
+                is GameEffect.AchievementUnlock -> {
                     achievementQueue.add(effect.achievement)
-                    if (isSoundEnabledState.value) com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "achievement.wav", coroutineScope)
+                    if (isSoundEnabledState.value) SoundManager.playSound(
+                        player,
+                        "achievement.wav",
+                        coroutineScope,
+                    )
                 }
 
-                is com.pointlessgames.hexagone.game.model.GameEffect.DailyChallengeComplete -> {
+                is GameEffect.DailyChallengeComplete -> {
                     challengeRewardQueue.add(effect.challenge)
-                    if (isSoundEnabledState.value) com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "daily_mission.wav", coroutineScope)
+                    if (isSoundEnabledState.value) SoundManager.playSound(
+                        player,
+                        "daily_mission.wav",
+                        coroutineScope,
+                    )
                 }
 
-                is com.pointlessgames.hexagone.game.model.GameEffect.MergeParticles -> {
-                    if (isSoundEnabledState.value) com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "merge.wav", coroutineScope)
+                is GameEffect.MergeParticles -> {
+                    if (isSoundEnabledState.value) SoundManager.playSound(
+                        player,
+                        "merge.wav",
+                        coroutineScope,
+                    )
                 }
-                
-                is com.pointlessgames.hexagone.game.model.GameEffect.PerkPopup -> {
-                    if (isSoundEnabledState.value) com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "perk_collect.wav", coroutineScope)
+
+                is GameEffect.PerkPopup -> {
+                    if (isSoundEnabledState.value) SoundManager.playSound(
+                        player,
+                        "perk_collect.wav",
+                        coroutineScope,
+                    )
                 }
 
                 else -> {}
@@ -476,11 +500,11 @@ internal fun GameScreen(
                                 highestValueProvider = highestValueProvider,
                                 activePerkProvider = activePerkProvider,
                                 isVertical = true,
-                                onLevelClick = if (com.pointlessgames.hexagone.utils.isDebug) onDebugToggle else ({}),
-                                onLeaderboardClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Leaderboard) },
-                                onAchievementsClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Achievements()) },
-                                onSettingsClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Settings) },
-                                onDailyChallengeClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.DailyMissions) },
+                                onLevelClick = if (isDebug) onDebugToggle else ({}),
+                                onLeaderboardClick = { navigator.navigateTo(Route.Leaderboard) },
+                                onAchievementsClick = { navigator.navigateTo(Route.Achievements()) },
+                                onSettingsClick = { navigator.navigateTo(Route.Settings) },
+                                onDailyChallengeClick = { navigator.navigateTo(Route.DailyMissions) },
                                 isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
                                 modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
                                     targetRects[target] = rect
@@ -565,11 +589,11 @@ internal fun GameScreen(
                                 progressProvider = { viewModel.getLevelProgress() },
                                 highestValueProvider = highestValueProvider,
                                 activePerkProvider = activePerkProvider,
-                                onLevelClick = if (com.pointlessgames.hexagone.utils.isDebug) onDebugToggle else ({}),
-                                onLeaderboardClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Leaderboard) },
-                                onAchievementsClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Achievements()) },
-                                onSettingsClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Settings) },
-                                onDailyChallengeClick = { navigator.navigateTo(com.pointlessgames.hexagone.Route.DailyMissions) },
+                                onLevelClick = if (isDebug) onDebugToggle else ({}),
+                                onLeaderboardClick = { navigator.navigateTo(Route.Leaderboard) },
+                                onAchievementsClick = { navigator.navigateTo(Route.Achievements()) },
+                                onSettingsClick = { navigator.navigateTo(Route.Settings) },
+                                onDailyChallengeClick = { navigator.navigateTo(Route.DailyMissions) },
                                 isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
                                 modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
                                     targetRects[target] = rect
@@ -640,12 +664,13 @@ internal fun GameScreen(
 
         // Persistent Perk Bar (Moved before GameOverlays to be covered)
         if (!isDebugModeProvider()) {
-            val isOverlayVisible = showReviveOption || isGameOver || activeTierReward != null || activeChallengeReward != null || perkOptionsProvider().isNotEmpty()
-            
+            val isOverlayVisible =
+                showReviveOption || isGameOver || activeTierReward != null || activeChallengeReward != null || perkOptionsProvider().isNotEmpty()
+
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer { alpha = if (isOverlayVisible) 0f else 1f }
+                    .graphicsLayer { alpha = if (isOverlayVisible) 0f else 1f },
             ) {
                 val isLandscape = maxWidth > maxHeight
                 Box(
@@ -732,7 +757,7 @@ internal fun GameScreen(
             onRestart = onRestart,
             onViewBoardToggle = onViewBoardToggle,
             onShare = { /* TODO: Implement snapshot and share */ },
-            onLeaderboard = { navigator.navigateTo(com.pointlessgames.hexagone.Route.Leaderboard) },
+            onLeaderboard = { navigator.navigateTo(Route.Leaderboard) },
             activeTierReward = activeTierReward,
             onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
             activeChallengeReward = activeChallengeReward,
@@ -764,13 +789,13 @@ internal fun GameScreen(
             AchievementNotification(
                 achievement = achievement,
                 onClick = {
-                    navigator.navigateTo(com.pointlessgames.hexagone.Route.Achievements(achievement.id))
+                    navigator.navigateTo(Route.Achievements(achievement.id))
                 },
                 onFinished = { if (achievementQueue.isNotEmpty()) achievementQueue.removeAt(0) },
             )
         }
 
-        val lastVoucher = remember { mutableStateOf<com.pointlessgames.hexagone.game.logic.PerkCategory?>(null) }
+        val lastVoucher = remember { mutableStateOf<PerkCategory?>(null) }
         if (activeVoucherSelection != null) {
             lastVoucher.value = activeVoucherSelection
         }
@@ -779,7 +804,7 @@ internal fun GameScreen(
             visible = activeVoucherSelection != null,
             enter = fadeIn() + scaleIn(initialScale = 0.9f),
             exit = fadeOut(),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) {
             val voucherToDisplay = activeVoucherSelection ?: lastVoucher.value
             if (voucherToDisplay != null) {
@@ -806,9 +831,9 @@ internal fun GameScreen(
         }
 
         if (activeDialog != null) {
-            com.pointlessgames.hexagone.game.ui.components.HexAlertDialog(
+            HexAlertDialog(
                 state = activeDialog!!,
-                onDismiss = viewModel::onDismissDialog
+                onDismiss = viewModel::onDismissDialog,
             )
         }
     }

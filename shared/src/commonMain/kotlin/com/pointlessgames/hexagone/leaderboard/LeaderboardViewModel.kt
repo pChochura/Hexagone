@@ -28,7 +28,6 @@ internal class LeaderboardViewModel(
         val playerName: String? = null,
         val onboardingName: String = "",
         val isCreatingProfile: Boolean = false,
-        val pendingResult: DetailedGameResult? = null,
         val currentRank: RankingInfo? = null,
     )
 
@@ -56,45 +55,6 @@ internal class LeaderboardViewModel(
         }
     }
 
-    fun onOnboardingNameChanged(name: String) {
-        _uiState.value = _uiState.value.copy(onboardingName = name, error = null)
-    }
-
-    fun onCreateProfile() {
-        val name = _uiState.value.onboardingName.trim()
-        if (name.isEmpty()) {
-            _uiState.value = _uiState.value.copy(error = "Username cannot be empty")
-            return
-        }
-
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isCreatingProfile = true, error = null)
-            try {
-                val profile = leaderboardRepository.createProfile(name, "Global")
-                val pendingResult = _uiState.value.pendingResult
-                var rank: RankingInfo? = null
-                if (pendingResult != null) {
-                    rank = leaderboardRepository.submitResult(pendingResult)
-                }
-
-                _uiState.value = _uiState.value.copy(
-                    isCreatingProfile = false,
-                    playerName = profile.username,
-                    playerRegion = profile.region,
-                    pendingResult = null,
-                    currentRank = rank
-                )
-                loadRankings()
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isCreatingProfile = false, error = e.message ?: "Unknown error")
-            }
-        }
-    }
-
-    fun setPendingResult(result: DetailedGameResult?) {
-        _uiState.value = _uiState.value.copy(pendingResult = result)
-    }
-
     fun loadRankings() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
@@ -110,15 +70,9 @@ internal class LeaderboardViewModel(
                 val scores = leaderboardRepository.getTopScores(region = region)
                 _uiState.value = _uiState.value.copy(rankings = scores, isLoading = false)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Unknown error")
+                _uiState.value =
+                    _uiState.value.copy(isLoading = false, error = e.message ?: "Unknown error")
             }
-        }
-    }
-
-    fun onFilterChanged(filter: Filter) {
-        if (_uiState.value.filter != filter) {
-            _uiState.value = _uiState.value.copy(filter = filter)
-            loadRankings()
         }
     }
 }
