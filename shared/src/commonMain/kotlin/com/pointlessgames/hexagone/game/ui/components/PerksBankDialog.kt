@@ -2,15 +2,25 @@ package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,16 +28,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.*
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.available_vouchers_label
+import hexagone.shared.generated.resources.cancel
+import hexagone.shared.generated.resources.perk_category_common
+import hexagone.shared.generated.resources.perk_category_legendary
+import hexagone.shared.generated.resources.perk_category_rare
+import hexagone.shared.generated.resources.perks_bank_title
+import hexagone.shared.generated.resources.shop_voucher_explanation
 import org.jetbrains.compose.resources.stringResource
-
-import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun PerksBankDialog(
@@ -42,7 +58,7 @@ internal fun PerksBankDialog(
 
     Box(
         modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         DialogContainer(
             modifier = Modifier
@@ -52,10 +68,10 @@ internal fun PerksBankDialog(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Spacer(Modifier.height(spacing.extraLarge.scaled))
-                
+
                 val title = if (targetCategory != null) {
                     val categoryName = when (targetCategory) {
                         PerkCategory.COMMON -> stringResource(Res.string.perk_category_common)
@@ -85,7 +101,7 @@ internal fun PerksBankDialog(
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = spacing.extraLarge.scaled)
+                        .padding(horizontal = spacing.extraLarge.scaled),
                 )
 
                 Spacer(Modifier.height(spacing.large.scaled))
@@ -94,12 +110,11 @@ internal fun PerksBankDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f, fill = false),
-                    contentPadding = PaddingValues(horizontal = spacing.extraLarge.scaled),
-                    verticalArrangement = Arrangement.spacedBy(spacing.extraLarge.scaled)
+                    verticalArrangement = Arrangement.spacedBy(spacing.extraLarge.scaled),
                 ) {
                     val categories = targetCategory?.let { listOf(it) }
                         ?: listOf(PerkCategory.LEGENDARY, PerkCategory.RARE, PerkCategory.COMMON)
-                    
+
                     items(categories) { category ->
                         val count = vouchers[category] ?: 0
                         val isAvailable = count > 0
@@ -110,13 +125,17 @@ internal fun PerksBankDialog(
                         }
 
                         Column(
-                            modifier = Modifier.graphicsLayer { alpha = if (isAvailable) 1f else 0.6f },
-                            verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled)
+                            modifier = Modifier.graphicsLayer {
+                                alpha = if (isAvailable) 1f else 0.6f
+                            },
+                            verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
                         ) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = spacing.extraLarge.scaled),
                                 horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 val categoryName = when (category) {
                                     PerkCategory.COMMON -> stringResource(Res.string.perk_category_common)
@@ -128,37 +147,39 @@ internal fun PerksBankDialog(
                                     color = Color.White,
                                     fontWeight = FontWeight.Black,
                                     fontSize = 13.sp.scaled,
-                                    letterSpacing = 1.sp.scaled
+                                    letterSpacing = 1.sp.scaled,
                                 )
-                                
+
                                 Box(
                                     modifier = Modifier
                                         .clip(CircleShape)
                                         .background(Color.White.copy(alpha = 0.1f))
-                                        .padding(horizontal = 8.dp.scaled, vertical = 2.dp.scaled)
+                                        .padding(horizontal = 8.dp.scaled, vertical = 2.dp.scaled),
                                 ) {
                                     Text(
                                         text = stringResource(Res.string.available_vouchers_label, count),
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 9.sp.scaled
+                                        fontSize = 9.sp.scaled,
                                     )
                                 }
                             }
 
-                            // Grid of perks for this category
-                            FlowRow(
+                            LazyRow(
+                                contentPadding = PaddingValues(horizontal = spacing.extraLarge.scaled),
                                 horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
-                                verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
-                                modifier = Modifier.fillMaxWidth()
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                perks.forEach { perk ->
+                                items(perks) { perk ->
                                     PerkButton(
                                         perk = perk,
-                                        onClick = { if (isAvailable && !isProcessing) onPerkSelected(perk, category) },
+                                        onClick = {
+                                            if (isAvailable && !isProcessing)
+                                                onPerkSelected(perk, category)
+                                        },
                                         buttonSize = 64.dp.scaled,
                                         isEnabled = isAvailable && !isProcessing,
-                                        tooltipDescription = perk.descriptionRes
+                                        tooltipDescription = perk.descriptionRes,
                                     )
                                 }
                             }
@@ -174,17 +195,20 @@ internal fun PerksBankDialog(
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.05f))
                         .clickable(enabled = !isProcessing) { onDismiss() }
-                        .padding(horizontal = spacing.extraLarge.scaled, vertical = spacing.medium.scaled)
+                        .padding(
+                            horizontal = spacing.extraLarge.scaled,
+                            vertical = spacing.medium.scaled,
+                        ),
                 ) {
                     Text(
                         text = stringResource(Res.string.cancel).uppercase(),
                         color = Color.White.copy(alpha = 0.6f),
                         fontWeight = FontWeight.Black,
                         fontSize = 12.sp.scaled,
-                        letterSpacing = 1.sp.scaled
+                        letterSpacing = 1.sp.scaled,
                     )
                 }
-                
+
                 Spacer(Modifier.height(spacing.extraLarge.scaled))
             }
         }
@@ -197,13 +221,13 @@ private fun FlowRow(
     modifier: Modifier = Modifier,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     androidx.compose.foundation.layout.FlowRow(
         modifier = modifier,
         horizontalArrangement = horizontalArrangement,
         verticalArrangement = verticalArrangement,
-        content = { content() }
+        content = { content() },
     )
 }
 
@@ -215,10 +239,10 @@ private fun PerksBankDialogPreview() {
             vouchers = mapOf(
                 PerkCategory.LEGENDARY to 1,
                 PerkCategory.RARE to 0,
-                PerkCategory.COMMON to 5
+                PerkCategory.COMMON to 5,
             ),
             onPerkSelected = { _, _ -> },
-            onDismiss = {}
+            onDismiss = {},
         )
     }
 }
