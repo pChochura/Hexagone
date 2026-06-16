@@ -14,7 +14,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -41,7 +40,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -694,19 +692,18 @@ internal fun GameScreen(
             ) {
                 val isLandscape = maxWidth > maxHeight
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                     contentAlignment = if (isLandscape) Alignment.CenterEnd else Alignment.BottomCenter,
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Bottom,
-                        modifier = Modifier.then(if (isLandscape) Modifier.fillMaxHeight() else Modifier.fillMaxWidth()),
-                    ) {
-                        if (!isLandscape && isStuckProvider() && activePerkProvider() == null) {
+                    val isStuck = isStuckProvider() && activePerkProvider() == null
+
+                    val warning = @Composable {
+                        if (isStuck) {
                             Box(
                                 modifier = Modifier
-                                    .offset { IntOffset(0, stuckBounceProvider().dp.roundToPx()) }
-                                    .offset(y = -MaterialTheme.spacing.semiMedium)
+                                    .offset {
+                                        IntOffset(0, stuckBounceProvider().dp.roundToPx())
+                                    }
                                     .shadow(
                                         elevation = MaterialTheme.spacing.medium,
                                         shape = RoundedCornerShape(MaterialTheme.cornerRadius.small),
@@ -733,26 +730,63 @@ internal fun GameScreen(
                                     letterSpacing = 1.sp.scaled,
                                 )
                             }
-                            Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
+                            if (isLandscape) {
+                                Spacer(Modifier.width(MaterialTheme.spacing.medium.scaled))
+                            } else {
+                                Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
+                            }
                         }
+                    }
 
-                        PerkBar(
-                            collectedPerksProvider = collectedPerksProvider,
-                            vouchersProvider = vouchersProvider,
-                            activePerkProvider = activePerkProvider,
-                            isStuckProvider = isStuckProvider,
-                            stuckPerksProvider = stuckPerksProvider,
-                            onPerkClick = onPerkClick,
-                            onVoucherClick = onAddPerkClick,
-                            onShopClick = onShopClick,
-                            isVertical = isLandscape,
-                            modifier = Modifier
-                                .then(if (isLandscape) Modifier.fillMaxHeight() else Modifier.fillMaxWidth())
-                                .graphicsLayer { clip = false }
-                                .trackTipTarget(TipTarget.PERK_BAR) { target, rect ->
-                                    targetRects[target] = rect
-                                },
-                        )
+                    if (isLandscape) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxHeight(),
+                        ) {
+                            warning()
+                            PerkBar(
+                                collectedPerksProvider = collectedPerksProvider,
+                                vouchersProvider = vouchersProvider,
+                                activePerkProvider = activePerkProvider,
+                                isStuckProvider = isStuckProvider,
+                                stuckPerksProvider = stuckPerksProvider,
+                                onPerkClick = onPerkClick,
+                                onVoucherClick = onAddPerkClick,
+                                onShopClick = onShopClick,
+                                isVertical = true,
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .graphicsLayer { clip = false }
+                                    .trackTipTarget(TipTarget.PERK_BAR) { target, rect ->
+                                        targetRects[target] = rect
+                                    },
+                            )
+                        }
+                    } else {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Bottom,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            warning()
+                            PerkBar(
+                                collectedPerksProvider = collectedPerksProvider,
+                                vouchersProvider = vouchersProvider,
+                                activePerkProvider = activePerkProvider,
+                                isStuckProvider = isStuckProvider,
+                                stuckPerksProvider = stuckPerksProvider,
+                                onPerkClick = onPerkClick,
+                                onVoucherClick = onAddPerkClick,
+                                onShopClick = onShopClick,
+                                isVertical = false,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .graphicsLayer { clip = false }
+                                    .trackTipTarget(TipTarget.PERK_BAR) { target, rect ->
+                                        targetRects[target] = rect
+                                    },
+                            )
+                        }
                     }
                 }
             }

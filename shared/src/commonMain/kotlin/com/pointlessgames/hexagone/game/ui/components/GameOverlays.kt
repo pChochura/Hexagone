@@ -18,8 +18,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -47,6 +47,7 @@ import com.pointlessgames.hexagone.game.model.ConfettiPiece
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.RankingInfo
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.view_stats_button
@@ -340,8 +341,8 @@ internal fun GameOverlays(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .navigationBarsPadding()
-                        .padding(bottom = spacing.massive),
+                        .safeDrawingPadding()
+                        .padding(bottom = if (isLandscape) spacing.medium.scaled else spacing.extraHuge.scaled),
                     contentAlignment = Alignment.BottomCenter,
                 ) {
                     Box(
@@ -354,15 +355,15 @@ internal fun GameOverlays(
                                 RoundedCornerShape(cornerRadius.full),
                             )
                             .clickable { onViewBoardToggle() }
-                            .padding(horizontal = spacing.extraLarge, vertical = spacing.medium),
+                            .padding(horizontal = spacing.extraLarge.scaled, vertical = spacing.medium.scaled),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = stringResource(Res.string.view_stats_button).uppercase(),
                             color = Color.White,
                             fontWeight = FontWeight.Black,
-                            fontSize = 12.sp,
-                            letterSpacing = 1.sp,
+                            fontSize = 12.sp.scaled,
+                            letterSpacing = 1.sp.scaled,
                         )
                     }
                 }

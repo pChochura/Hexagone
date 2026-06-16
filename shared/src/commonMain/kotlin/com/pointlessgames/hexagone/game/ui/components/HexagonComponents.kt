@@ -43,8 +43,10 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.font.FontWeight
@@ -491,6 +493,19 @@ fun ShopButton(
     val perkColor = Color(0xFFFFD54F) // Diamond color
     val heightScale = 0.866f
 
+    val infiniteTransition = rememberInfiniteTransition(label = "shop_highlight")
+    val glowAlphaState = infiniteTransition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 0.6f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "glow",
+    )
+    val shape = remember { FlatTopHexagonShape() }
+    val glowPadding = 4.dp.scaled
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
@@ -499,33 +514,29 @@ fun ShopButton(
             .padding(spacing.tiny.scaled),
     ) {
         Box(
-            modifier = Modifier.size(width = buttonSize, height = buttonSize * heightScale),
+            modifier = Modifier
+                .size(width = buttonSize, height = buttonSize * heightScale)
+                .clip(FlatTopHexagonShape())
+                .drawBehind {
+                    if (isHighlighted) {
+                        val alpha = glowAlphaState.value
+                        val paddingPx = glowPadding.toPx()
+                        val extendedSize = Size(
+                            width = size.width + paddingPx * 2,
+                            height = size.height + (paddingPx * 2) * heightScale
+                        )
+                        val outline = shape.createOutline(extendedSize, layoutDirection, this)
+                        translate(left = -paddingPx, top = -paddingPx * heightScale) {
+                            drawOutline(
+                                outline = outline,
+                                color = perkColor,
+                                alpha = alpha * 0.4f
+                            )
+                        }
+                    }
+                },
             contentAlignment = Alignment.Center,
         ) {
-            if (isHighlighted) {
-                val infiniteTransition = rememberInfiniteTransition(label = "shop_highlight")
-                val glowAlpha = infiniteTransition.animateFloat(
-                    initialValue = 0.2f,
-                    targetValue = 0.6f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(800),
-                        repeatMode = RepeatMode.Reverse,
-                    ),
-                    label = "glow",
-                )
-                Box(
-                    modifier = Modifier
-                        .size(
-                            width = buttonSize + 8.dp.scaled,
-                            height = (buttonSize + 8.dp.scaled) * heightScale,
-                        )
-                        .background(
-                            perkColor.copy(alpha = glowAlpha.value * 0.4f),
-                            FlatTopHexagonShape(),
-                        ),
-                )
-            }
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()
