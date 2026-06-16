@@ -197,6 +197,15 @@ internal class GameViewModel(
             val yesterdaySeed =
                 yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.day
 
+            var persistentCompletedMissionIds = settingsRepository.getPersistentCompletedMissionIds()
+            val dailyMissionDate = settingsRepository.getDailyMissionDate()
+
+            if (dailyMissionDate != dateSeed) {
+                settingsRepository.setDailyMissionDate(dateSeed)
+                settingsRepository.clearPersistentCompletedMissionIds()
+                persistentCompletedMissionIds = emptySet()
+            }
+
             val lastCompletedDate = settingsRepository.getLastCompletedChallengeDate()
             var challengeStreak = settingsRepository.getChallengeStreak()
             val completedDates =
@@ -224,6 +233,7 @@ internal class GameViewModel(
                             it.copy(
                                 challengeStreak = challengeStreak,
                                 isStreakCollectedToday = lastCompletedDate == dateSeed,
+                                persistentCompletedMissionIds = persistentCompletedMissionIds,
                                 completedChallengeDates = completedDates,
                                 mergeHintsEnabled = hintsEnabled,
                                 diamonds = savedState.diamonds,
@@ -282,6 +292,7 @@ internal class GameViewModel(
                                 } else {
                                     completedDates
                                 },
+                                persistentCompletedMissionIds = persistentCompletedMissionIds,
                                 challengeStreak = challengeStreak,
                                 isStreakCollectedToday = lastCompletedDate == dateSeed,
                                 hasRevived = savedState.hasRevived,
@@ -319,6 +330,7 @@ internal class GameViewModel(
                         completedChallengeDates = completedDates,
                         challengeStreak = challengeStreak,
                         isStreakCollectedToday = lastCompletedDate == dateSeed,
+                        persistentCompletedMissionIds = persistentCompletedMissionIds,
                     )
                 }
                 restartGame()
@@ -613,6 +625,7 @@ internal class GameViewModel(
                     DailyChallengeProgress(challenge)
                 },
                 completedChallengeDates = it.completedChallengeDates,
+                persistentCompletedMissionIds = it.persistentCompletedMissionIds,
                 challengeStreak = it.challengeStreak,
                 isStreakCollectedToday = it.isStreakCollectedToday,
                 debugUsed = false,
@@ -897,12 +910,23 @@ internal class GameViewModel(
             _uiState.update { it.copy(collectedPerks = it.collectedPerks + challenge.rewardPerk) }
         }
 
+        val isFirstTimeToday = !_uiState.value.persistentCompletedMissionIds.contains(challenge.id)
+
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val dateSeed = today.year * 10000L + (today.month.ordinal + 1) * 100L + today.day
 
-        // Check if ALL daily challenges are now completed in the CURRENT GAME to update streak
-        val allCompleted = _uiState.value.dailyChallenges.all { it.isCompleted }
-        if (allCompleted && !_uiState.value.isStreakCollectedToday) {
+        var isDayCompleted = false
+        var newStreakValue = 0
+
+        // Add to persistent completed missions
+        if (isFirstTimeToday) {
+            settingsRepository.addPersistentCompletedMissionId(challenge.id)
+            _uiState.update { it.copy(persistentCompletedMissionIds = it.persistentCompletedMissionIds + challenge.id) }
+        }
+
+        // Check if ALL daily challenges are now persistent-completed to update streak
+        val allPersistentCompleted = _uiState.value.persistentCompletedMissionIds.size >= 3
+        if (allPersistentCompleted && !_uiState.value.isStreakCollectedToday) {
             val lastDate = settingsRepository.getLastCompletedChallengeDate()
             if (lastDate != dateSeed) {
                 val currentStreak = settingsRepository.getChallengeStreak()
@@ -911,6 +935,8 @@ internal class GameViewModel(
                     yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.day
 
                 val newStreak = if (lastDate == yesterdaySeed) currentStreak + 1 else 1
+                isDayCompleted = true
+                newStreakValue = newStreak
 
                 settingsRepository.setLastCompletedChallengeDate(dateSeed)
                 settingsRepository.setChallengeStreak(newStreak)
@@ -934,6 +960,6 @@ internal class GameViewModel(
             }
         }
 
-        _effects.emit(GameEffect.DailyChallengeComplete(challenge))
+        _effects.emit(GameEffect.DailyChallengeComplete(challenge, isFirstTimeToday, isDayCompleted, newStreakValue))
     }
 }

@@ -63,6 +63,11 @@ interface SettingsRepository {
     suspend fun addCompletedChallengeDate(dateSeed: String): Preferences
     suspend fun getChallengeStreak(): Int
     suspend fun setChallengeStreak(streak: Int): Preferences
+    suspend fun getPersistentCompletedMissionIds(): Set<String>
+    suspend fun addPersistentCompletedMissionId(missionId: String): Preferences
+    suspend fun clearPersistentCompletedMissionIds(): Preferences
+    suspend fun getDailyMissionDate(): Long
+    suspend fun setDailyMissionDate(date: Long): Preferences
     suspend fun getHasShownMergeTip(): Boolean
     suspend fun setHasShownMergeTip(shown: Boolean): Preferences
     suspend fun getHasShownPerkTip(): Boolean
@@ -103,6 +108,8 @@ class DataStoreSettingsRepository(
     private val lastCompletedChallengeDateKey = longPreferencesKey("last_completed_challenge_date")
     private val completedChallengeDatesKey = stringSetPreferencesKey("completed_challenge_dates")
     private val challengeStreakKey = intPreferencesKey("challenge_streak")
+    private val persistentCompletedMissionIdsKey = stringSetPreferencesKey("persistent_completed_mission_ids")
+    private val dailyMissionDateKey = longPreferencesKey("daily_mission_date")
     private val hasShownMergeTipKey = booleanPreferencesKey("has_shown_merge_tip")
     private val hasShownPerkTipKey = booleanPreferencesKey("has_shown_perk_tip")
     private val hasShownPostGameTipKey = booleanPreferencesKey("has_shown_post_game_tip")
@@ -467,6 +474,39 @@ class DataStoreSettingsRepository(
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[challengeStreakKey] = streak
+            }
+        }
+    }
+
+    override suspend fun getPersistentCompletedMissionIds(): Set<String> = withContext(Dispatchers.IO) {
+        appSettings.data.first()[persistentCompletedMissionIdsKey] ?: emptySet()
+    }
+
+    override suspend fun addPersistentCompletedMissionId(missionId: String) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[persistentCompletedMissionIdsKey] ?: emptySet()
+                prefs[persistentCompletedMissionIdsKey] = current + missionId
+            }
+        }
+    }
+
+    override suspend fun clearPersistentCompletedMissionIds() = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs.remove(persistentCompletedMissionIdsKey)
+            }
+        }
+    }
+
+    override suspend fun getDailyMissionDate(): Long = withContext(Dispatchers.IO) {
+        appSettings.data.first()[dailyMissionDateKey] ?: 0L
+    }
+
+    override suspend fun setDailyMissionDate(date: Long) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[dailyMissionDateKey] = date
             }
         }
     }

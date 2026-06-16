@@ -1,9 +1,21 @@
 package com.pointlessgames.hexagone.game.ui.components
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.EaseOutExpo
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -24,35 +36,63 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pointlessgames.hexagone.game.logic.PerkCategory
+import com.pointlessgames.hexagone.game.logic.StreakMilestones
 import com.pointlessgames.hexagone.game.model.DailyChallenge
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.*
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.bonus_reward_msg
+import hexagone.shared.generated.resources.bonus_reward_title
+import hexagone.shared.generated.resources.daily_challenge_completed
+import hexagone.shared.generated.resources.daily_reward_granted
+import hexagone.shared.generated.resources.ic_daily_challenge
+import hexagone.shared.generated.resources.ic_diamond
+import hexagone.shared.generated.resources.ic_legendary_perk
+import hexagone.shared.generated.resources.ic_rare_perk
+import hexagone.shared.generated.resources.ic_roll
+import hexagone.shared.generated.resources.match_bonus_granted
+import hexagone.shared.generated.resources.perk_category_common
+import hexagone.shared.generated.resources.perk_category_legendary
+import hexagone.shared.generated.resources.perk_category_rare
+import hexagone.shared.generated.resources.reward_score_added
+import hexagone.shared.generated.resources.streak_milestone_diamonds
+import hexagone.shared.generated.resources.streak_milestone_perks
+import hexagone.shared.generated.resources.streak_milestone_reached
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 internal fun DailyChallengeRewardOverlay(
     challenge: DailyChallenge,
-    onFinished: () -> Unit
+    isFirstTimeToday: Boolean = true,
+    isDayCompleted: Boolean = false,
+    newStreak: Int = 0,
+    onFinished: () -> Unit,
 ) {
     val spacing = MaterialTheme.spacing
     val cornerRadius = MaterialTheme.cornerRadius
-    
+
     val infiniteTransition = rememberInfiniteTransition(label = "glow")
     val glowScale by infiniteTransition.animateFloat(
         initialValue = 1f,
         targetValue = 1.15f,
         animationSpec = infiniteRepeatable(
             animation = tween(800, easing = EaseOutExpo),
-            repeatMode = RepeatMode.Reverse
+            repeatMode = RepeatMode.Reverse,
         ),
-        label = "glow_scale"
+        label = "glow_scale",
     )
 
-    LaunchedEffect(challenge) {
-        delay(3000.milliseconds)
+    val streakReward = remember(newStreak) {
+        if (isDayCompleted) StreakMilestones.getRewardForStreak(newStreak) else null
+    }
+
+    LaunchedEffect(challenge, isDayCompleted) {
+        delay(if (isDayCompleted) 5000.milliseconds else 3000.milliseconds)
         onFinished()
     }
 
@@ -62,13 +102,15 @@ internal fun DailyChallengeRewardOverlay(
         modifier = Modifier
             .fillMaxSize()
             .padding(spacing.extraLarge),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(spacing.large),
         ) {
             Text(
-                text = stringResource(Res.string.daily_challenge_completed).uppercase(),
+                text = (if (isFirstTimeToday) stringResource(Res.string.daily_challenge_completed)
+                else stringResource(Res.string.bonus_reward_title)).uppercase(),
                 color = primaryColor,
                 fontWeight = FontWeight.Black,
                 fontSize = 32.sp,
@@ -76,74 +118,185 @@ internal fun DailyChallengeRewardOverlay(
                     shadow = Shadow(
                         color = primaryColor.copy(alpha = 0.5f),
                         offset = Offset(0f, 0f),
-                        blurRadius = 40f * glowScale
-                    )
+                        blurRadius = 40f * glowScale,
+                    ),
                 ),
                 letterSpacing = 4.sp,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.graphicsLayer {
                     scaleX = glowScale
                     scaleY = glowScale
-                }
+                },
             )
-
-            Spacer(Modifier.height(spacing.extraLarge))
 
             // Reward Info Card
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(cornerRadius.large))
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
-                    .border(spacing.extraTiny, Color.White.copy(alpha = 0.1f), RoundedCornerShape(cornerRadius.large))
-                    .padding(spacing.large)
+                    .border(
+                        spacing.extraTiny,
+                        Color.White.copy(alpha = 0.1f),
+                        RoundedCornerShape(cornerRadius.large),
+                    )
+                    .padding(spacing.large),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(spacing.medium)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                 ) {
                     Box(
                         modifier = Modifier
                             .size(spacing.giant)
                             .background(primaryColor.copy(alpha = 0.1f), CircleShape)
-                            .border(spacing.extraTiny, primaryColor.copy(alpha = 0.3f), CircleShape),
-                        contentAlignment = Alignment.Center
+                            .border(
+                                spacing.extraTiny,
+                                primaryColor.copy(alpha = 0.3f),
+                                CircleShape,
+                            ),
+                        contentAlignment = Alignment.Center,
                     ) {
                         androidx.compose.material3.Icon(
-                            painter = org.jetbrains.compose.resources.painterResource(Res.drawable.ic_daily_challenge),
+                            painter = painterResource(Res.drawable.ic_daily_challenge),
                             contentDescription = null,
                             tint = primaryColor,
-                            modifier = Modifier.size(spacing.extraLarge)
+                            modifier = Modifier.size(spacing.extraLarge),
                         )
                     }
 
                     Column {
                         if (challenge.rewardScore > 0) {
                             Text(
-                                text = stringResource(Res.string.reward_score_added, challenge.rewardScore),
+                                text = stringResource(
+                                    Res.string.reward_score_added,
+                                    challenge.rewardScore,
+                                ),
                                 color = Color.White,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 18.sp,
-                                letterSpacing = 1.sp
+                                letterSpacing = 1.sp,
                             )
                         }
-                        if (challenge.rewardPerk != null) {
+                        challenge.rewardPerk?.let {
                             Text(
-                                text = stringResource(challenge.rewardPerk.displayNameRes).uppercase(),
+                                text = stringResource(it.displayNameRes).uppercase(),
                                 color = Color.White,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 18.sp,
-                                letterSpacing = 1.sp
+                                letterSpacing = 1.sp,
                             )
                         }
                         Text(
-                            text = stringResource(Res.string.daily_reward_granted),
+                            text = if (isFirstTimeToday) stringResource(Res.string.daily_reward_granted)
+                            else stringResource(Res.string.match_bonus_granted),
                             color = Color.White.copy(alpha = 0.5f),
                             fontSize = 12.sp,
-                            lineHeight = 16.sp
+                            lineHeight = 16.sp,
                         )
                     }
                 }
             }
+
+            if (!isFirstTimeToday) {
+                Text(
+                    text = stringResource(Res.string.bonus_reward_msg),
+                    color = primaryColor.copy(alpha = 0.8f),
+                    fontWeight = FontWeight.Black,
+                    fontSize = 14.sp,
+                    letterSpacing = 2.sp,
+                )
+            }
+
+            if (isDayCompleted && (streakReward != null)) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(spacing.medium),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.streak_milestone_reached, newStreak),
+                        color = Color(0xFFFFD54F),
+                        fontWeight = FontWeight.Black,
+                        fontSize = 16.sp,
+                        letterSpacing = 1.sp,
+                    )
+
+                    Row(
+                        modifier = Modifier.wrapContentWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                    ) {
+                        if (streakReward.diamonds > 0) {
+                            RewardItem(
+                                icon = Res.drawable.ic_diamond,
+                                label = stringResource(
+                                    Res.string.streak_milestone_diamonds,
+                                    streakReward.diamonds,
+                                ),
+                                color = Color(0xFFFFD54F),
+                            )
+                        }
+
+                        streakReward.perkRewards.forEach { (category, count) ->
+                            val icon = when (category) {
+                                PerkCategory.COMMON -> Res.drawable.ic_roll
+                                PerkCategory.RARE -> Res.drawable.ic_rare_perk
+                                PerkCategory.LEGENDARY -> Res.drawable.ic_legendary_perk
+                            }
+                            val color = when (category) {
+                                PerkCategory.COMMON -> Color.Gray
+                                PerkCategory.RARE -> Color(0xFF4FC3F7)
+                                PerkCategory.LEGENDARY -> Color(0xFFFFD54F)
+                            }
+                            val categoryName = when (category) {
+                                PerkCategory.COMMON -> stringResource(Res.string.perk_category_common)
+                                PerkCategory.RARE -> stringResource(Res.string.perk_category_rare)
+                                PerkCategory.LEGENDARY -> stringResource(Res.string.perk_category_legendary)
+                            }
+                            RewardItem(
+                                icon = icon,
+                                label = stringResource(
+                                    Res.string.streak_milestone_perks,
+                                    count,
+                                    categoryName,
+                                ),
+                                color = color,
+                            )
+                        }
+                    }
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun RewardItem(
+    icon: DrawableResource,
+    label: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    val spacing = MaterialTheme.spacing
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.White.copy(alpha = 0.05f))
+            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+            .padding(horizontal = spacing.medium, vertical = spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(spacing.small),
+    ) {
+        androidx.compose.material3.Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(16.dp),
+        )
+        Text(
+            text = label.uppercase(),
+            color = Color.White.copy(alpha = 0.9f),
+            fontWeight = FontWeight.Black,
+            fontSize = 10.sp,
+            letterSpacing = 0.5.sp,
+        )
     }
 }

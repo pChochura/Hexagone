@@ -82,7 +82,8 @@ internal fun GameOverlays(
     onLeaderboard: () -> Unit,
     activeTierReward: Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>?,
     onTierRewardFinished: () -> Unit,
-    activeChallengeReward: com.pointlessgames.hexagone.game.model.DailyChallenge?,
+    activeChallengeReward: com.pointlessgames.hexagone.game.model.GameEffect.DailyChallengeComplete?,
+    persistentCompletedMissionIdsProvider: () -> Set<String> = { emptySet() },
     onChallengeRewardFinished: () -> Unit,
     rankingInfoProvider: () -> RankingInfo?,
     showReviveOptionProvider: () -> Boolean = { false },
@@ -225,9 +226,12 @@ internal fun GameOverlays(
                 ),
                 modifier = Modifier.align(Alignment.Center),
             ) {
-                activeChallengeReward?.let { challenge ->
+                activeChallengeReward?.let { effect ->
                     DailyChallengeRewardOverlay(
-                        challenge = challenge,
+                        challenge = effect.challenge,
+                        isFirstTimeToday = effect.isFirstTimeToday,
+                        isDayCompleted = effect.isDayCompleted,
+                        newStreak = effect.newStreak,
                         onFinished = onChallengeRewardFinished,
                     )
                 }
@@ -276,6 +280,7 @@ internal fun GameOverlays(
                     highestValue = highestValue,
                     rankingInfo = rankingInfo,
                     dailyChallenges = finalResult?.dailyChallenges ?: emptyList(),
+                    persistentCompletedMissionIds = persistentCompletedMissionIdsProvider(),
                     debugUsed = debugUsedProvider(),
                     onViewBoard = onViewBoardToggle,
                     onRestart = onRestart,

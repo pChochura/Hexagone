@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,14 +16,12 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.itemsIndexed as lazyRowItemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,12 +36,10 @@ import com.pointlessgames.hexagone.game.ui.components.HexAlertDialog
 import com.pointlessgames.hexagone.game.ui.components.ProductCard
 import com.pointlessgames.hexagone.game.ui.components.ProductGridItem
 import com.pointlessgames.hexagone.game.ui.components.ScreenScaffold
-import com.pointlessgames.hexagone.game.ui.components.ShopSectionTitle
-import com.pointlessgames.hexagone.game.ui.components.VoucherItem
+import com.pointlessgames.hexagone.game.ui.components.SectionTitle
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.ic_diamond
 import hexagone.shared.generated.resources.ic_legendary_perk
 import hexagone.shared.generated.resources.ic_rare_perk
 import hexagone.shared.generated.resources.ic_roll
@@ -59,6 +54,7 @@ import hexagone.shared.generated.resources.shop_title
 import hexagone.shared.generated.resources.shop_vouchers_desc
 import hexagone.shared.generated.resources.shop_vouchers_title
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.foundation.lazy.itemsIndexed as lazyRowItemsIndexed
 
 @Composable
 internal fun ShopScreen(
@@ -106,7 +102,7 @@ internal fun ShopScreen(
                     if (storeProducts.isNotEmpty()) {
                         item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
                             Column(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
-                                ShopSectionTitle(text = stringResource(Res.string.shop_products_title))
+                                SectionTitle(text = stringResource(Res.string.shop_products_title))
                                 Text(
                                     text = stringResource(Res.string.shop_products_desc),
                                     color = Color.White.copy(alpha = 0.5f),
@@ -150,7 +146,7 @@ internal fun ShopScreen(
                     item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
                         Column(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
                             Spacer(Modifier.height(spacing.large.scaled))
-                            ShopSectionTitle(text = stringResource(Res.string.shop_vouchers_title))
+                            SectionTitle(text = stringResource(Res.string.shop_vouchers_title))
                             Text(
                                 text = stringResource(Res.string.shop_vouchers_desc),
                                 color = Color.White.copy(alpha = 0.5f),

@@ -108,6 +108,7 @@ internal fun GameOverDialog(
     highestValue: Int,
     rankingInfo: RankingInfo?,
     dailyChallenges: List<DailyChallengeProgress> = emptyList(),
+    persistentCompletedMissionIds: Set<String> = emptySet(),
     debugUsed: Boolean = false,
     onViewBoard: () -> Unit,
     onRestart: () -> Unit,
@@ -235,6 +236,7 @@ internal fun GameOverDialog(
                             if (completedChallenges.isNotEmpty()) {
                                 ChallengesSummary(
                                     completedChallenges = completedChallenges,
+                                    persistentCompletedMissionIds = persistentCompletedMissionIds,
                                     spacing = spacing
                                 )
                             }
@@ -267,6 +269,7 @@ internal fun GameOverDialog(
                     Spacer(Modifier.height(spacing.large.scaled))
                     ChallengesSummary(
                         completedChallenges = completedChallenges,
+                        persistentCompletedMissionIds = persistentCompletedMissionIds,
                         spacing = spacing
                     )
                 }
@@ -461,6 +464,7 @@ private fun ScoreSectionContent(
 @Composable
 private fun ChallengesSummary(
     completedChallenges: List<DailyChallengeProgress>,
+    persistentCompletedMissionIds: Set<String>,
     spacing: com.pointlessgames.hexagone.ui.theme.Spacing
 ) {
     Column(
@@ -486,7 +490,10 @@ private fun ChallengesSummary(
         )
 
         completedChallenges.forEach { progress ->
-            DailyChallengeSummaryRow(progress)
+            DailyChallengeSummaryRow(
+                progress = progress,
+                isPersistentCompleted = persistentCompletedMissionIds.contains(progress.challenge.id)
+            )
         }
     }
 }
@@ -535,6 +542,7 @@ private fun StatsRow(
 @Composable
 private fun DailyChallengeSummaryRow(
     progress: DailyChallengeProgress,
+    isPersistentCompleted: Boolean,
 ) {
     val challenge = progress.challenge
     val goalText = when (challenge.goal) {
@@ -631,7 +639,7 @@ private fun DailyChallengeSummaryRow(
             Icon(
                 painter = painterResource(Res.drawable.ic_star),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = if (isPersistentCompleted) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.4f),
                 modifier = Modifier.size(14.dp.scaled),
             )
             Spacer(Modifier.width(MaterialTheme.spacing.extraSmall.scaled))
@@ -642,6 +650,16 @@ private fun DailyChallengeSummaryRow(
                 fontSize = 11.sp.scaled,
                 maxLines = 1,
             )
+            
+            if (isPersistentCompleted) {
+                Spacer(Modifier.width(MaterialTheme.spacing.extraSmall.scaled))
+                Text(
+                    text = "STREAK+",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 8.sp.scaled,
+                )
+            }
         }
 
         Text(

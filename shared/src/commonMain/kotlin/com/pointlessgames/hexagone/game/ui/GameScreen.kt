@@ -280,7 +280,7 @@ internal fun GameScreen(
     val tierRewardQueue =
         remember { mutableStateListOf<Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>>() }
     val challengeRewardQueue =
-        remember { mutableStateListOf<com.pointlessgames.hexagone.game.model.DailyChallenge>() }
+        remember { mutableStateListOf<com.pointlessgames.hexagone.game.model.GameEffect.DailyChallengeComplete>() }
 
     val activeTierReward = tierRewardQueue.firstOrNull()
     val activeChallengeReward = challengeRewardQueue.firstOrNull()
@@ -435,7 +435,7 @@ internal fun GameScreen(
                 }
 
                 is GameEffect.DailyChallengeComplete -> {
-                    challengeRewardQueue.add(effect.challenge)
+                    challengeRewardQueue.add(effect)
                     if (isSoundEnabledState.value) SoundManager.playSound(
                         player,
                         "daily_mission.wav",
@@ -761,6 +761,7 @@ internal fun GameScreen(
             activeTierReward = activeTierReward,
             onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
             activeChallengeReward = activeChallengeReward,
+            persistentCompletedMissionIdsProvider = remember { { uiState.value.persistentCompletedMissionIds } },
             onChallengeRewardFinished = {
                 if (challengeRewardQueue.isNotEmpty())
                     challengeRewardQueue.removeAt(0)

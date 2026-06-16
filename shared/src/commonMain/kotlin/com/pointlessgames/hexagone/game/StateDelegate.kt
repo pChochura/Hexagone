@@ -104,6 +104,12 @@ internal class StateDelegate(
             selectedCellId = state.selectedCellId,
             hasRevived = state.hasRevived,
             dailyChallenges = state.dailyChallenges,
+            persistentCompletedMissionIds = state.persistentCompletedMissionIds,
+            completedChallengeDates = state.completedChallengeDates,
+            movesWithoutPerk = state.movesWithoutPerk,
+            comboMaintenanceTurns = state.comboMaintenanceTurns,
+            consecutiveTacticalNoSpawn = state.consecutiveTacticalNoSpawn,
+            thawedIds = state.thawedIds,
         )
     }
 
@@ -172,6 +178,7 @@ internal class StateDelegate(
                 isBusy = false,
                 hasRevived = previousState.hasRevived,
                 dailyChallenges = previousState.dailyChallenges,
+                persistentCompletedMissionIds = previousState.persistentCompletedMissionIds,
             )
         }
 

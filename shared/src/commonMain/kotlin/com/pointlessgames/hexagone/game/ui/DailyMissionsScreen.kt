@@ -1,5 +1,11 @@
 package com.pointlessgames.hexagone.game.ui
 
+import androidx.compose.animation.core.EaseInOutSine
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -30,8 +36,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -44,12 +52,14 @@ import com.pointlessgames.hexagone.game.logic.StreakMilestones
 import com.pointlessgames.hexagone.game.model.ChallengeGoal
 import com.pointlessgames.hexagone.game.model.DailyChallengeProgress
 import com.pointlessgames.hexagone.game.ui.components.ScreenScaffold
-import com.pointlessgames.hexagone.game.ui.components.ShopSectionTitle
+import com.pointlessgames.hexagone.game.ui.components.SectionTitle
 import com.pointlessgames.hexagone.game.ui.components.displayNameRes
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.active_missions_title
+import hexagone.shared.generated.resources.bonus_reward_prefix
 import hexagone.shared.generated.resources.daily_challenge
 import hexagone.shared.generated.resources.daily_challenge_completed
 import hexagone.shared.generated.resources.daily_challenge_goal_combo
@@ -69,20 +79,39 @@ import hexagone.shared.generated.resources.daily_challenge_goal_perk_restriction
 import hexagone.shared.generated.resources.daily_challenge_goal_score
 import hexagone.shared.generated.resources.daily_challenge_goal_tactical
 import hexagone.shared.generated.resources.daily_challenge_goal_value
+import hexagone.shared.generated.resources.day_fri
+import hexagone.shared.generated.resources.day_mon
+import hexagone.shared.generated.resources.day_sat
+import hexagone.shared.generated.resources.day_sun
+import hexagone.shared.generated.resources.day_thu
+import hexagone.shared.generated.resources.day_tue
+import hexagone.shared.generated.resources.day_wed
 import hexagone.shared.generated.resources.ic_daily_challenge
 import hexagone.shared.generated.resources.ic_diamond
+import hexagone.shared.generated.resources.ic_help
 import hexagone.shared.generated.resources.ic_legendary_perk
 import hexagone.shared.generated.resources.ic_rare_perk
 import hexagone.shared.generated.resources.ic_roll
 import hexagone.shared.generated.resources.ic_star
+import hexagone.shared.generated.resources.mission_complete_badge
+import hexagone.shared.generated.resources.mission_log_title
+import hexagone.shared.generated.resources.next_milestone_hint
+import hexagone.shared.generated.resources.next_milestone_label
 import hexagone.shared.generated.resources.pattern_great_wall
 import hexagone.shared.generated.resources.pattern_ring_of_fire
 import hexagone.shared.generated.resources.pattern_the_prism
 import hexagone.shared.generated.resources.pattern_twin_peaks
+import hexagone.shared.generated.resources.perk_category_common
+import hexagone.shared.generated.resources.perk_category_legendary
+import hexagone.shared.generated.resources.perk_category_rare
 import hexagone.shared.generated.resources.progress_fraction
 import hexagone.shared.generated.resources.reward_perk_label
 import hexagone.shared.generated.resources.reward_score_label
+import hexagone.shared.generated.resources.streak_explanation
 import hexagone.shared.generated.resources.streak_label
+import hexagone.shared.generated.resources.streak_milestone_diamonds
+import hexagone.shared.generated.resources.streak_milestone_perks
+import hexagone.shared.generated.resources.streak_motivation
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -125,10 +154,10 @@ internal fun DailyMissionsScreen(
                         .fillMaxWidth()
                         .padding(
                             horizontal = spacing.extraLarge.scaled,
-                            vertical = spacing.large.scaled,
+                            vertical = spacing.medium.scaled,
                         ),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(spacing.small.scaled),
+                    verticalArrangement = Arrangement.spacedBy(spacing.extraSmall.scaled),
                 ) {
                     Text(
                         text = stringResource(
@@ -145,7 +174,7 @@ internal fun DailyMissionsScreen(
                     )
 
                     Text(
-                        text = "Don't let the fire go out!".uppercase(),
+                        text = stringResource(Res.string.streak_motivation).uppercase(),
                         color = Color.White.copy(alpha = 0.4f),
                         fontSize = 11.sp.scaled,
                         fontWeight = FontWeight.Bold,
@@ -158,66 +187,58 @@ internal fun DailyMissionsScreen(
             item {
                 val nextMilestone = remember(uiState.challengeStreak) {
                     val milestones = listOf(
-                        3,
-                        5,
-                        7,
-                        14,
-                        21,
-                        30,
-                        60,
-                        90,
-                        120,
-                        150,
-                        180,
-                        210,
-                        240,
-                        270,
-                        300,
-                        330,
-                        365,
+                        3, 5, 7, 14, 21, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 365,
                     )
                     milestones.firstOrNull { it > uiState.challengeStreak }
                 }
 
                 if (nextMilestone != null) {
-                    Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
-                        NextRewardCard(
-                            streak = uiState.challengeStreak,
-                            nextMilestone = nextMilestone,
-                        )
-                    }
+                    NextRewardCard(
+                        streak = uiState.challengeStreak,
+                        nextMilestone = nextMilestone,
+                        modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled),
+                    )
                 }
             }
 
             item {
-                Spacer(Modifier.height(spacing.medium.scaled))
+                Column {
+                    SectionTitle(
+                        text = stringResource(Res.string.active_missions_title),
+                        modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled),
+                    )
+
+                    HelpRow()
+                    Spacer(Modifier.height(spacing.medium.scaled))
+                }
             }
 
             // Active Missions
             items(uiState.dailyChallenges) { progress ->
                 Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
-                    ChallengeCard(progress)
+                    ChallengeCard(
+                        progress = progress,
+                        isPersistentCompleted = uiState.persistentCompletedMissionIds.contains(
+                            progress.challenge.id,
+                        ),
+                    )
                 }
-            }
-
-            item {
-                Spacer(Modifier.height(spacing.large.scaled))
             }
 
             // Calendar Section (Bottom)
             item {
-                Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
-                    ShopSectionTitle(text = "MISSION LOG")
-                }
+                SectionTitle(
+                    text = stringResource(Res.string.mission_log_title),
+                    modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled),
+                )
             }
 
             item {
-                Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
-                    HexCalendar(
-                        today = today,
-                        completedDates = uiState.completedChallengeDates,
-                    )
-                }
+                HexCalendar(
+                    today = today,
+                    completedDates = uiState.completedChallengeDates,
+                    modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled),
+                )
             }
         }
     }
@@ -266,9 +287,17 @@ private fun HexCalendar(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-            listOf("M", "T", "W", "T", "F", "S", "S").forEach { day ->
+            listOf(
+                Res.string.day_mon,
+                Res.string.day_tue,
+                Res.string.day_wed,
+                Res.string.day_thu,
+                Res.string.day_fri,
+                Res.string.day_sat,
+                Res.string.day_sun,
+            ).forEach { day ->
                 Text(
-                    text = day,
+                    text = stringResource(day),
                     color = Color.White.copy(alpha = 0.3f),
                     fontSize = 10.sp.scaled,
                     fontWeight = FontWeight.Bold,
@@ -367,7 +396,6 @@ private fun NextRewardCard(
     val spacing = MaterialTheme.spacing
     val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
     val reward = StreakMilestones.getRewardForStreak(nextMilestone)
-    val colorScheme = MaterialTheme.colorScheme
 
     Column(
         modifier = modifier
@@ -385,14 +413,14 @@ private fun NextRewardCard(
         ) {
             Column {
                 Text(
-                    text = "NEXT MILESTONE: DAY $nextMilestone",
+                    text = stringResource(Res.string.next_milestone_label, nextMilestone),
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Black,
                     fontSize = 14.sp.scaled,
                     letterSpacing = 1.sp.scaled,
                 )
                 Text(
-                    text = "Keep your streak going to unlock!",
+                    text = stringResource(Res.string.next_milestone_hint),
                     color = Color.White.copy(alpha = 0.4f),
                     fontSize = 11.sp.scaled,
                     fontWeight = FontWeight.Medium,
@@ -426,7 +454,10 @@ private fun NextRewardCard(
                 if (reward.diamonds > 0) {
                     RewardItem(
                         icon = Res.drawable.ic_diamond,
-                        label = "${reward.diamonds} Diamonds",
+                        label = stringResource(
+                            Res.string.streak_milestone_diamonds,
+                            reward.diamonds,
+                        ),
                         color = Color(0xFFFFD54F),
                         modifier = Modifier.weight(1f),
                     )
@@ -443,9 +474,18 @@ private fun NextRewardCard(
                         PerkCategory.RARE -> Color(0xFF4FC3F7)
                         PerkCategory.LEGENDARY -> Color(0xFFFFD54F)
                     }
+                    val categoryName = when (category) {
+                        PerkCategory.COMMON -> stringResource(Res.string.perk_category_common)
+                        PerkCategory.RARE -> stringResource(Res.string.perk_category_rare)
+                        PerkCategory.LEGENDARY -> stringResource(Res.string.perk_category_legendary)
+                    }
                     RewardItem(
                         icon = icon,
-                        label = "$count ${category.name} Perk",
+                        label = stringResource(
+                            Res.string.streak_milestone_perks,
+                            count,
+                            categoryName,
+                        ),
                         color = color,
                         modifier = Modifier.weight(1f),
                     )
@@ -488,11 +528,38 @@ private fun RewardItem(
 }
 
 @Composable
+private fun HelpRow(modifier: Modifier = Modifier) {
+    val spacing = MaterialTheme.spacing
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = spacing.extraLarge.scaled),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(spacing.small.scaled),
+    ) {
+        Icon(
+            painter = painterResource(Res.drawable.ic_help),
+            contentDescription = null,
+            tint = Color.White.copy(alpha = 0.4f),
+            modifier = Modifier.size(16.dp.scaled),
+        )
+        Text(
+            text = stringResource(Res.string.streak_explanation),
+            color = Color.White.copy(alpha = 0.6f),
+            fontSize = 11.sp.scaled,
+            lineHeight = 16.sp.scaled,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
 private fun ChallengeCard(
     progress: DailyChallengeProgress,
+    isPersistentCompleted: Boolean,
 ) {
     val challenge = progress.challenge
-    val isCompleted = progress.isCompleted
+    val isSessionCompleted = progress.isCompleted
 
     val goalText = when (challenge.goal) {
         ChallengeGoal.MERGE_COUNT -> stringResource(
@@ -577,18 +644,44 @@ private fun ChallengeCard(
         (progress.progress.toFloat() / challenge.target.toFloat()).coerceIn(0f, 1f)
     val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
 
+    val infiniteTransition = rememberInfiniteTransition(label = "card_glow")
+    val glowAlphaState = infiniteTransition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 0.6f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "glow_alpha",
+    )
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
             .clip(shape)
             .background(MaterialTheme.colorScheme.background)
-            .border(
-                1.dp.scaled,
-                if (isCompleted) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else Color.White.copy(
-                    alpha = 0.1f,
-                ),
-                shape,
+            .then(
+                if (isSessionCompleted) {
+                    val primary = MaterialTheme.colorScheme.primary
+                    val strokeWidth = 1.dp.scaled
+                    Modifier.drawBehind {
+                        val alpha = glowAlphaState.value
+                        drawOutline(
+                            outline = shape.createOutline(size, layoutDirection, this),
+                            color = primary,
+                            alpha = alpha,
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(strokeWidth.toPx()),
+                        )
+                    }
+                } else {
+                    Modifier.border(
+                        1.dp.scaled,
+                        if (isPersistentCompleted) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        else Color.White.copy(alpha = 0.1f),
+                        shape,
+                    )
+                },
             ),
     ) {
         Box(
@@ -596,8 +689,11 @@ private fun ChallengeCard(
                 .fillMaxWidth(progressFraction)
                 .fillMaxHeight()
                 .background(
-                    if (isCompleted) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                    else Color.White.copy(alpha = 0.03f),
+                    when {
+                        isSessionCompleted -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        isPersistentCompleted -> Color.White.copy(alpha = 0.05f)
+                        else -> Color.White.copy(alpha = 0.03f)
+                    },
                 ),
         )
 
@@ -612,38 +708,79 @@ private fun ChallengeCard(
                     .size(40.dp.scaled)
                     .clip(CircleShape)
                     .background(
-                        if (isCompleted) Brush.linearGradient(
-                            listOf(
-                                Color(0xFFF2994A),
-                                Color(0xFFF2C94C),
-                            ),
-                        )
-                        else Brush.linearGradient(
-                            listOf(
-                                Color.White.copy(alpha = 0.1f),
-                                Color.White.copy(alpha = 0.05f),
-                            ),
-                        ),
+                        when {
+                            isSessionCompleted -> Brush.linearGradient(
+                                listOf(Color(0xFFF2994A), Color(0xFFF2C94C)),
+                            )
+
+                            isPersistentCompleted -> Brush.linearGradient(
+                                listOf(
+                                    Color.White.copy(alpha = 0.15f),
+                                    Color.White.copy(alpha = 0.1f),
+                                ),
+                            )
+
+                            else -> Brush.linearGradient(
+                                listOf(
+                                    Color.White.copy(alpha = 0.1f),
+                                    Color.White.copy(alpha = 0.05f),
+                                ),
+                            )
+                        },
                     ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(if (isCompleted) Res.drawable.ic_star else Res.drawable.ic_daily_challenge),
+                    painter = painterResource(
+                        if (isSessionCompleted || isPersistentCompleted) Res.drawable.ic_star
+                        else Res.drawable.ic_daily_challenge,
+                    ),
                     contentDescription = null,
-                    tint = if (isCompleted) Color.White else Color.White.copy(alpha = 0.5f),
+                    tint = when {
+                        isSessionCompleted -> Color.White
+                        isPersistentCompleted -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                        else -> Color.White.copy(alpha = 0.5f)
+                    },
                     modifier = Modifier.size(20.dp.scaled),
                 )
             }
 
             Spacer(Modifier.width(MaterialTheme.spacing.medium.scaled))
 
-            Column {
-                Text(
-                    text = goalText,
-                    color = if (isCompleted) Color.White else Color.White.copy(alpha = 0.8f),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp.scaled,
-                )
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small.scaled),
+                ) {
+                    Text(
+                        text = goalText,
+                        color = when {
+                            isSessionCompleted -> Color.White
+                            isPersistentCompleted -> Color.White.copy(alpha = 0.9f)
+                            else -> Color.White.copy(alpha = 0.8f)
+                        },
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp.scaled,
+                        modifier = Modifier.weight(1f),
+                    )
+
+                    if (isPersistentCompleted) {
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                                .padding(horizontal = 8.dp.scaled, vertical = 3.dp.scaled),
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.mission_complete_badge),
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 9.sp.scaled,
+                                letterSpacing = 1.sp.scaled,
+                            )
+                        }
+                    }
+                }
 
                 val rewardText = when {
                     challenge.rewardScore > 0 -> stringResource(
@@ -661,15 +798,17 @@ private fun ChallengeCard(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = if (isCompleted) stringResource(Res.string.daily_challenge_completed)
+                        text = if (isSessionCompleted) stringResource(Res.string.daily_challenge_completed)
                         else stringResource(
                             Res.string.progress_fraction,
                             progress.progress,
                             challenge.target,
                         ),
-                        color = if (isCompleted) MaterialTheme.colorScheme.primary else Color.White.copy(
-                            alpha = 0.4f,
-                        ),
+                        color = when {
+                            isSessionCompleted -> MaterialTheme.colorScheme.primary
+                            isPersistentCompleted -> Color.White.copy(alpha = 0.5f)
+                            else -> Color.White.copy(alpha = 0.4f)
+                        },
                         fontWeight = FontWeight.Medium,
                         fontSize = 12.sp.scaled,
                     )
@@ -681,8 +820,11 @@ private fun ChallengeCard(
                             fontSize = 12.sp.scaled,
                         )
                         Text(
-                            text = rewardText.uppercase(),
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = if (isCompleted) 1f else 0.8f),
+                            text = (if (isPersistentCompleted && !isSessionCompleted) stringResource(
+                                Res.string.bonus_reward_prefix,
+                                rewardText,
+                            ) else rewardText).uppercase(),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = if (isSessionCompleted) 1f else 0.8f),
                             fontWeight = FontWeight.Black,
                             fontSize = 10.sp.scaled,
                             letterSpacing = 0.5.sp.scaled,

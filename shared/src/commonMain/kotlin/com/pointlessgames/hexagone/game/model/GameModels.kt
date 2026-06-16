@@ -77,6 +77,7 @@ data class GameUiState(
     val cellIdCounter: Int = 0,
     val previewIdCounter: Int = 0,
     val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
+    val persistentCompletedMissionIds: Set<String> = emptySet(),
     val challengeStreak: Int = 0,
     val completedChallengeDates: Set<Long> = emptySet(),
     val isStreakCollectedToday: Boolean = false,
@@ -190,6 +191,9 @@ sealed interface GameEffect {
 
     data class DailyChallengeComplete(
         val challenge: DailyChallenge,
+        val isFirstTimeToday: Boolean = true,
+        val isDayCompleted: Boolean = false,
+        val newStreak: Int = 0,
     ) : GameEffect
 }
 
@@ -278,6 +282,7 @@ data class GameState(
     val selectedCellId: String? = null,
     val hasRevived: Boolean = false,
     val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
+    val persistentCompletedMissionIds: Set<String> = emptySet(),
     val completedChallengeDates: Set<Long> = emptySet(),
     val movesWithoutPerk: Int = 0,
     val comboMaintenanceTurns: Int = 0,

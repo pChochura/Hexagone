@@ -46,7 +46,7 @@ import com.pointlessgames.hexagone.LocalNavigator
 import com.pointlessgames.hexagone.achievements.AchievementManager
 import com.pointlessgames.hexagone.achievements.AchievementStatus
 import com.pointlessgames.hexagone.game.ui.components.ScreenScaffold
-import com.pointlessgames.hexagone.game.ui.components.ShopSectionTitle
+import com.pointlessgames.hexagone.game.ui.components.SectionTitle
 import com.pointlessgames.hexagone.game.ui.components.WavyProgressBar
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
@@ -119,7 +119,7 @@ internal fun AchievementsScreen(
             groupedStatuses.forEach { (category, categoryStatuses) ->
                 item {
                     Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
-                        ShopSectionTitle(text = stringResource(category.title))
+                        SectionTitle(text = stringResource(category.title))
                     }
                 }
 
