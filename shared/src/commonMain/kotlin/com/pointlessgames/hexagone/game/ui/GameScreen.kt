@@ -773,7 +773,6 @@ internal fun GameScreen(
                             warning()
                             PerkBar(
                                 collectedPerksProvider = collectedPerksProvider,
-                                vouchersProvider = vouchersProvider,
                                 activePerkProvider = activePerkProvider,
                                 isStuckProvider = isStuckProvider,
                                 stuckPerksProvider = stuckPerksProvider,
@@ -798,7 +797,6 @@ internal fun GameScreen(
                             warning()
                             PerkBar(
                                 collectedPerksProvider = collectedPerksProvider,
-                                vouchersProvider = vouchersProvider,
                                 activePerkProvider = activePerkProvider,
                                 isStuckProvider = isStuckProvider,
                                 stuckPerksProvider = stuckPerksProvider,
@@ -893,9 +891,11 @@ internal fun GameScreen(
         ) {
             PerksBankDialog(
                 vouchers = vouchersState.value,
+                diamonds = diamondsProvider(),
                 targetCategory = uiState.value.perksBankCategory,
                 isProcessing = isVoucherProcessing,
                 onPerkSelected = viewModel::onPerkFromVoucherSelected,
+                onBuyClick = viewModel::onBuyPerk,
                 onDismiss = viewModel::onDismissVoucherSelection,
             )
         }

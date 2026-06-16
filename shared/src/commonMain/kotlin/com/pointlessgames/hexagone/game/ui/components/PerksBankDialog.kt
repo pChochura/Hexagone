@@ -14,10 +14,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,15 +44,20 @@ import hexagone.shared.generated.resources.perk_category_common
 import hexagone.shared.generated.resources.perk_category_legendary
 import hexagone.shared.generated.resources.perk_category_rare
 import hexagone.shared.generated.resources.perks_bank_title
+import hexagone.shared.generated.resources.ic_diamond
+import hexagone.shared.generated.resources.shop_buy_button
 import hexagone.shared.generated.resources.shop_voucher_explanation
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun PerksBankDialog(
     vouchers: Map<PerkCategory, Int>,
+    diamonds: Int = 0,
     targetCategory: PerkCategory? = null,
     isProcessing: Boolean = false,
     onPerkSelected: (Perk, PerkCategory) -> Unit,
+    onBuyClick: (PerkCategory) -> Unit = {},
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -150,18 +157,56 @@ internal fun PerksBankDialog(
                                     letterSpacing = 1.sp.scaled,
                                 )
 
-                                Box(
-                                    modifier = Modifier
-                                        .clip(CircleShape)
-                                        .background(Color.White.copy(alpha = 0.1f))
-                                        .padding(horizontal = 8.dp.scaled, vertical = 2.dp.scaled),
-                                ) {
-                                    Text(
-                                        text = stringResource(Res.string.available_vouchers_label, count),
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 9.sp.scaled,
-                                    )
+                                if (count > 0) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(CircleShape)
+                                            .background(Color.White.copy(alpha = 0.1f))
+                                            .padding(horizontal = 8.dp.scaled, vertical = 2.dp.scaled),
+                                    ) {
+                                        Text(
+                                            text = stringResource(Res.string.available_vouchers_label, count),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 9.sp.scaled,
+                                        )
+                                    }
+                                } else {
+                                    val cost = when (category) {
+                                        PerkCategory.COMMON -> 50
+                                        PerkCategory.RARE -> 150
+                                        PerkCategory.LEGENDARY -> 500
+                                    }
+                                    val canAfford = diamonds >= cost
+                                    
+                                    Row(
+                                        modifier = Modifier
+                                            .clip(CircleShape)
+                                            .background(if (canAfford) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f))
+                                            .clickable(enabled = canAfford && !isProcessing) { onBuyClick(category) }
+                                            .padding(horizontal = 8.dp.scaled, vertical = 2.dp.scaled),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp.scaled)
+                                    ) {
+                                        Text(
+                                            text = stringResource(Res.string.shop_buy_button).uppercase(),
+                                            color = if (canAfford) Color.Black else Color.White.copy(alpha = 0.4f),
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 9.sp.scaled,
+                                        )
+                                        Text(
+                                            text = cost.toString(),
+                                            color = if (canAfford) Color.Black else Color.White.copy(alpha = 0.4f),
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 9.sp.scaled,
+                                        )
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_diamond),
+                                            contentDescription = null,
+                                            tint = if (canAfford) Color.Black else Color.White.copy(alpha = 0.4f),
+                                            modifier = Modifier.size(10.dp.scaled)
+                                        )
+                                    }
                                 }
                             }
 

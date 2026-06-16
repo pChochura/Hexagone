@@ -523,14 +523,14 @@ fun ShopButton(
                         val paddingPx = glowPadding.toPx()
                         val extendedSize = Size(
                             width = size.width + paddingPx * 2,
-                            height = size.height + (paddingPx * 2) * heightScale
+                            height = size.height + (paddingPx * 2) * heightScale,
                         )
                         val outline = shape.createOutline(extendedSize, layoutDirection, this)
                         translate(left = -paddingPx, top = -paddingPx * heightScale) {
                             drawOutline(
                                 outline = outline,
                                 color = perkColor,
-                                alpha = alpha * 0.4f
+                                alpha = alpha * 0.4f,
                             )
                         }
                     }
@@ -599,7 +599,10 @@ fun VoucherButton(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .padding(horizontal = spacing.tiny.scaled)
-            .graphicsLayer { alpha = if (count > 0 || showGlow) 1f else 0.4f },
+            .graphicsLayer {
+                alpha = if (count > 0 || showGlow) 1f else 0.4f
+                clip = false
+            },
     ) {
         BadgedBox(
             badge = {
@@ -617,7 +620,9 @@ fun VoucherButton(
                     }
                 }
             },
-            modifier = Modifier.size(width = buttonSize, height = buttonSize * heightScale),
+            modifier = Modifier
+                .graphicsLayer(clip = false)
+                .size(width = buttonSize, height = buttonSize * heightScale),
         ) {
             // Blueprint Glow
             if (showGlow) {
