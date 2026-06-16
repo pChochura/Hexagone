@@ -11,6 +11,16 @@ The project follows a modular Kotlin Multiplatform (KMP) architecture, utilizing
 ### Key Directory Map
 ```text
 shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
+├── auth/
+│   ├── LoginViewModel.kt         # Onboarding & Auth logic
+│   ├── SettingsViewModel.kt      # Account management logic
+│   ├── ui/
+│   │   ├── LoginScreen.kt        # Immersive landing page
+│   │   ├── SettingsScreen.kt     # Full-screen account hub
+│   │   └── components/
+│   │       ├── PlayfulTitle.kt   # Animated brand component
+│   │       ├── AuthButton.kt     # Standard high-fidelity buttons
+│   │       └── NicknamePopup.kt  # Reusable identity dialog
 ├── achievements/
 │   ├── AchievementManager.kt     # Core Interface for unlocks & tracking
 │   └── GameAchievement.kt        # Logical registry of all milestones
@@ -44,9 +54,9 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 ├── di/
 │   └── GameModule.kt             # Koin DI & Navigation Routing
 ├── Navigator.kt                  # navigation3 Implementation & Routes
-└── ui/
-    └── theme/
-        └── Theme.kt              # "Solid UI" Design System (Strict Design Tokens)
+└── utils/
+    ├── SoundManager.kt           # Audio engine & effect triggers
+    └── BackHandler.kt            # Platform-agnostic system back handling
 ```
 
 ---
@@ -55,7 +65,8 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 
 ### Full-Screen Navigation
 The game has transitioned from local overlays to a formal navigation stack using **`navigation3`**. 
-*   **Routes**: Defined as serializable objects (`Route.Shop`, `Route.Leaderboard`, etc.) in `Navigator.kt`.
+*   **Routes**: Defined as serializable objects (`Route.Shop`, `Route.Login`, etc.) in `Navigator.kt`.
+*   **Terminal Transitions**: The `Navigator` includes a `replaceAll(Route)` method to clear the backstack, ensuring clean state resets during login/logout.
 *   **Decoupled State**: Screens are independent destinations, drastically simplifying `GameScreen.kt` and improving performance.
 
 ### ScreenScaffold Organism
@@ -66,7 +77,23 @@ All secondary screens use a unified `ScreenScaffold` that provides:
 
 ---
 
-## 3. Core Game Logic
+## 3. Authentication & Onboarding
+
+### Mandatory Identity
+Hexagone requires a player profile before gameplay begins. This ensures consistent leaderboard tracking and achievement synchronization.
+*   **Initial Check**: `App.kt` checks for an existing `playerId` on startup; if missing, the user is directed to the `LoginScreen`.
+*   **Anonymous Login**: Users can start as a guest, requiring only a nickname.
+*   **Social Providers**: Placeholders for Google Play Games and Apple Game Center allow for pre-populating identity metadata.
+*   **Nickname Popup**: A shared, high-fidelity `NicknamePopup` handles name entry and confirmation with smooth scale-in animations.
+
+### Immersive Login
+The `LoginScreen` serves as the game's visual introduction:
+*   **Background Simulation**: A dimmed game board "plays itself" in the background, demonstrating mechanics to new players.
+*   **Playful Title**: The "HEXAGONE" title features dynamic per-character animations, including a sequential "Wave" jump and random "Hexagon Pop" transformations.
+
+---
+
+## 4. Core Game Logic
 
 ### Hexagonal System
 *   **Coordinate System**: Uses **axial coordinates** in a **staggered flat-top** layout (5 columns, 4 rows).
@@ -106,26 +133,24 @@ When the board is full and no moves or perks are available, the game triggers a 
 
 ---
 
-## 4. Achievement System
+## 5. Achievement System
 
 ### UI Integration
 *   **Card-Based UI**: Each achievement is presented as a high-fidelity card with a `WavyProgressBar`.
-*   **Dynamic Highlighting**: Clicking notifications deep-links directly to the relevant achievement within the full-screen view.
-*   **Sequential Notifications**: Unlocked achievements are queued and displayed via a top-level popup.
+*   **Sequential Notifications**: Unlocked achievements are queued and displayed via a top-level popup with deep-linking support.
 
 ---
 
-## 5. Daily Missions & Streak
+## 6. Daily Missions & Streak
 
 ### Immersive Progress
 *   **Prominent Streak**: Current streak is the focal point with massive bold typography.
-*   **Next Reward Card**: High-fidelity card displaying upcoming milestone rewards (Diamonds/Perks).
-*   **Mission Log**: A custom month-view calendar highlighting every day the player completed all objectives.
-*   **Persistent Rewards**: Completing all 3 daily missions triggers a server-side reward grant (Diamonds & Vouchers).
+*   **Mission Log**: A custom month-view calendar highlighting daily completion.
+*   **Persistent Rewards**: Completing all daily missions triggers server-side reward grants.
 
 ---
 
-## 6. Interactive Tip System
+## 7. Interactive Tip System
 
 ### Component Architecture
 *   **TipOverlay**: Full-screen overlay using a **Spotlight Effect** to highlight UI elements.
@@ -139,11 +164,10 @@ When the board is full and no moves or perks are available, the game triggers a 
 
 ---
 
-## 7. Strategic Features
+## 8. Strategic Features
 
 ### Prediction & Previews
 *   **Interactive Previews**: Visually simulates Swaps, Moves, and Values before commitment.
-*   **Merge Isolation**: Previews at ghost positions do not trigger merges.
 
 ### Perk & Voucher Economy
 *   **Rarity Groups**: Common (VCMN), Rare (VRARE), Legendary (VLGD).
@@ -154,10 +178,9 @@ When the board is full and no moves or perks are available, the game triggers a 
 
 ---
 
-## 8. "Solid UI" Design System
+## 9. "Solid UI" Design System
 
 *   **Design Tokens**: Strict adherence to `MaterialTheme.spacing` and `cornerRadius`.
-*   **Draw-Phase Animations**: High-frequency effects (like the podium glow) are optimized to run in the draw phase, eliminating unnecessary recompositions.
-*   **Shallow UI Tree**: Minimal nesting through the use of `Arrangement.spacedBy()` and modifier stacking.
-*   **Floating Pod Architecture**: HUD elements (like the `PerkBar`) use decoupled floating "pods" to avoid layout clipping and provide a modern, airy feel.
+*   **High-Fidelity Components**: Reusable components like `AuthButton` and `HexagonIconButton` ensure visual consistency.
+*   **Shallow UI Tree**: Optimized layouts using `Arrangement.spacedBy()` and modifier stacking.
 *   **Consistent Immersive Depth**: Content visibility through translucent headers is standard.
