@@ -72,6 +72,12 @@ internal fun SettingsScreen(
                     isAnonymous = uiState.isAnonymous,
                     onClick = viewModel::onShowNicknamePopup
                 )
+                
+                ToggleCard(
+                    label = stringResource(Res.string.settings_sound),
+                    checked = uiState.isSoundEnabled,
+                    onCheckedChange = { viewModel.toggleSound() }
+                )
 
                 Spacer(modifier = Modifier.height(spacing.medium.scaled))
 
@@ -155,5 +161,43 @@ private fun AccountCard(
                 fontWeight = FontWeight.Black
             )
         }
+    }
+}
+
+@Composable
+private fun ToggleCard(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    val spacing = MaterialTheme.spacing
+    val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.background)
+            .clickable { onCheckedChange(!checked) }
+            .padding(spacing.large.scaled),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            color = Color.White.copy(alpha = 0.5f),
+            fontSize = 12.sp.scaled,
+            fontWeight = FontWeight.Bold
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = null,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                uncheckedThumbColor = Color.White,
+                uncheckedTrackColor = Color.White.copy(alpha = 0.2f),
+            )
+        )
     }
 }

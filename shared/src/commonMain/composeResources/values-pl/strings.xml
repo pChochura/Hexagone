@@ -115,6 +115,11 @@
     <string name="onboarding_subtitle">Wprowadź nazwę użytkownika, aby rozpocząć przygodę.</string>
     <string name="onboarding_username_placeholder">Nazwa użytkownika</string>
     <string name="onboarding_submit">START</string>
+    <string name="login_subtitle">Utwórz konto lub się zaloguj, żeby rozpocząć.</string>
+    <string name="login_as_guest">Continue as guest</string>
+    <string name="login_with_google">Sign in with Google</string>
+    <string name="login_with_apple">Sign in with Apple</string>
+    <string name="login_continue">Continue</string>
 
     <!-- Leaderboard -->
     <string name="leaderboard_title">RANKING</string>
@@ -125,6 +130,18 @@
     <string name="leaderboard_score">WYNIK</string>
     <string name="leaderboard_max_piece">MAX</string>
     <string name="leaderboard_empty">Brak wyników. Bądź pierwszy!</string>
+
+    <!-- Settings & Account -->
+    <string name="settings_label">USTAWIENIA</string>
+    <string name="settings_nickname_label">Nazwa gracza</string>
+    <string name="settings_nickname_hint">Wpisz swoją nazwę gracza</string>
+    <string name="settings_change_nickname_button">ZMIEŃ</string>
+    <string name="settings_sound">EFEKTY DŹWIĘKOWE</string>
+    <string name="settings_logout_button">WYLOGUJ SIĘ</string>
+    <string name="settings_remove_account_button">USUŃ KONTO</string>
+    <string name="settings_anonymous_account">Konto Anonimowe</string>
+    <string name="settings_logged_in_as">Zalogowano jako %1$s</string>
+    <string name="settings_remove_account_confirmation">Jesteś pewien, że chcesz usunąć swoje konto i utracić wszystkie dane?</string>
 
     <!-- Achievements -->
     <string name="achievements_title">Osiągnięcia</string>

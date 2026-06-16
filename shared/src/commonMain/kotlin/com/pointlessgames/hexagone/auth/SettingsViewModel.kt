@@ -28,6 +28,7 @@ internal class SettingsViewModel(
         val error: String? = null,
         val isLoggedOut: Boolean = false,
         val showNicknamePopup: Boolean = false,
+        val isSoundEnabled: Boolean = true,
     )
 
     init {
@@ -38,17 +39,27 @@ internal class SettingsViewModel(
         viewModelScope.launch {
             val name = settingsRepository.getPlayerName() ?: ""
             val user = supabaseClient.auth.currentUserOrNull()
+            val soundEnabled = settingsRepository.getSoundEnabled()
             _uiState.value = _uiState.value.copy(
                 nickname = name,
                 originalNickname = name,
                 isAnonymous = user?.isAnonymous ?: true,
-                isLoggedOut = false
+                isLoggedOut = false,
+                isSoundEnabled = soundEnabled
             )
         }
     }
 
     fun consumeLoggedOut() {
         _uiState.value = _uiState.value.copy(isLoggedOut = false)
+    }
+
+    fun toggleSound() {
+        viewModelScope.launch {
+            val newState = !_uiState.value.isSoundEnabled
+            settingsRepository.setSoundEnabled(newState)
+            _uiState.value = _uiState.value.copy(isSoundEnabled = newState)
+        }
     }
 
     fun onNicknameChanged(name: String) {

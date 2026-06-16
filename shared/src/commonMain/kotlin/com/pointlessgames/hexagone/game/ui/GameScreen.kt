@@ -88,10 +88,22 @@ internal fun GameScreen(
     viewModel: GameViewModel,
 ) {
     val navigator = com.pointlessgames.hexagone.LocalNavigator.current
+    val player = com.pointlessgames.hexagone.LocalMediaPlayer.current
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+    
+    val uiState = viewModel.uiState
+    val isSoundEnabledState = remember(uiState) { uiState.map { it.isSoundEnabled }.distinctUntilChanged() }.collectAsState(viewModel.uiState.value.isSoundEnabled)
+
+    val playClickSound = remember(player, coroutineScope) {
+        {
+            if (isSoundEnabledState.value) {
+                com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "click.wav", coroutineScope)
+            }
+        }
+    }
     // Fine-grained state collection for reactivity and optimization.
     // We collect individual fields into Compose State objects.
     // Reading from these State objects in providers ensures children and snapshotFlows are reactive.
-    val uiState = viewModel.uiState
     val isGameOverState =
         remember(uiState) { uiState.map { it.isGameOver }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.isGameOver,
@@ -132,6 +144,12 @@ internal fun GameScreen(
     // Helper delegates for GameScreen's own logic.
     // Accessing these 'by' variables will trigger recomposition of GameScreen.
     val isGameOver by isGameOverState
+    
+    LaunchedEffect(isGameOver) {
+        if (isGameOver && isSoundEnabledState.value) {
+            com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "game_over.wav", coroutineScope)
+        }
+    }
     val showGameOverBoard by showGameOverBoardState
     val isStuck by isStuckState
     val activePerk by activePerkState
@@ -286,15 +304,15 @@ internal fun GameScreen(
         remember { mutableStateListOf<com.pointlessgames.hexagone.achievements.GameAchievement>() }
     val activeAchievement = achievementQueue.firstOrNull()
 
-    val onEmptySpaceClick = remember(viewModel) { viewModel::onEmptySpaceClicked }
+    val onEmptySpaceClick = remember(viewModel, playClickSound) { { x: Int, y: Int -> playClickSound(); viewModel.onEmptySpaceClicked(x, y) } }
     val onEmptySpaceTouchDown = remember(viewModel) { viewModel::onEmptySpaceTouchDown }
     val onEmptySpaceTouchUp = remember(viewModel) { viewModel::onEmptySpaceTouchUp }
     val onCellTouchDown = remember(viewModel) { viewModel::onCellTouchDown }
     val onCellTouchUp = remember(viewModel) { viewModel::onCellTouchUp }
-    val onCellClick = remember(viewModel) { viewModel::onCellClicked }
+    val onCellClick = remember(viewModel, playClickSound) { { cell: com.pointlessgames.hexagone.game.model.HexagonCell -> playClickSound(); viewModel.onCellClicked(cell) } }
     val onMergeAnimationFinished = remember(viewModel) { viewModel::onMergeAnimationFinished }
-    val onPerkClick = remember(viewModel) { viewModel::onUsePerkClicked }
-    val onShopClick = remember(viewModel) { { navigator.navigateTo(com.pointlessgames.hexagone.Route.Shop) } }
+    val onPerkClick = remember(viewModel, playClickSound) { { perk: com.pointlessgames.hexagone.game.model.Perk -> playClickSound(); viewModel.onUsePerkClicked(perk) } }
+    val onShopClick = remember(viewModel, playClickSound) { { playClickSound(); navigator.navigateTo(com.pointlessgames.hexagone.Route.Shop) } }
     val onPerkSelected = remember(viewModel) { viewModel::onPerkSelected }
     val onRestart = remember(viewModel) { viewModel::onRestartClicked }
     val onViewBoardToggle = remember(viewModel) { viewModel::onViewBoardToggled }
@@ -396,14 +414,25 @@ internal fun GameScreen(
             when (effect) {
                 is com.pointlessgames.hexagone.game.model.GameEffect.TierReward -> {
                     tierRewardQueue.add(effect.tier to effect.perk)
+                    if (isSoundEnabledState.value) com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "combo_tier.wav", coroutineScope)
                 }
 
                 is com.pointlessgames.hexagone.game.model.GameEffect.AchievementUnlock -> {
                     achievementQueue.add(effect.achievement)
+                    if (isSoundEnabledState.value) com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "achievement.wav", coroutineScope)
                 }
 
                 is com.pointlessgames.hexagone.game.model.GameEffect.DailyChallengeComplete -> {
                     challengeRewardQueue.add(effect.challenge)
+                    if (isSoundEnabledState.value) com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "daily_mission.wav", coroutineScope)
+                }
+
+                is com.pointlessgames.hexagone.game.model.GameEffect.MergeParticles -> {
+                    if (isSoundEnabledState.value) com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "merge.wav", coroutineScope)
+                }
+                
+                is com.pointlessgames.hexagone.game.model.GameEffect.PerkPopup -> {
+                    if (isSoundEnabledState.value) com.pointlessgames.hexagone.utils.SoundManager.playSound(player, "perk_collect.wav", coroutineScope)
                 }
 
                 else -> {}

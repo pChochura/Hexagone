@@ -1,9 +1,21 @@
 package com.pointlessgames.hexagone.auth.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -20,12 +32,15 @@ import com.pointlessgames.hexagone.Route
 import com.pointlessgames.hexagone.auth.LoginViewModel
 import com.pointlessgames.hexagone.auth.ui.components.AuthButton
 import com.pointlessgames.hexagone.auth.ui.components.NicknamePopup
-import com.pointlessgames.hexagone.auth.ui.components.PlayfulTitle
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.*
+import hexagone.shared.generated.resources.app_name
+import hexagone.shared.generated.resources.login_as_guest
+import hexagone.shared.generated.resources.login_subtitle
+import hexagone.shared.generated.resources.login_with_apple
+import hexagone.shared.generated.resources.login_with_google
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.compose.resources.stringResource
 
@@ -50,7 +65,7 @@ internal fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .alpha(0.5f)
-                .graphicsLayer { scaleX = 1.2f; scaleY = 1.2f } // Slightly zoomed for effect
+                .graphicsLayer { scaleX = 1.2f; scaleY = 1.2f }, // Slightly zoomed for effect
         ) {
             GameGridOverlay(
                 gridState = uiState.backgroundGrid,
@@ -72,7 +87,7 @@ internal fun LoginScreen(
                 onCellTouchUp = { },
                 onCellClick = { },
                 onMergeAnimationFinished = viewModel::onMergeAnimationFinished,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             )
         }
 
@@ -84,10 +99,10 @@ internal fun LoginScreen(
                     Brush.verticalGradient(
                         listOf(
                             MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.85f)
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.85f),
                         ),
                     ),
-                )
+                ),
         )
 
         // Main Content
@@ -96,9 +111,21 @@ internal fun LoginScreen(
                 .fillMaxSize()
                 .padding(spacing.extraLarge.scaled),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
-            PlayfulTitle()
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = stringResource(Res.string.app_name).uppercase(),
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontSize = 32.sp.scaled,
+                    letterSpacing = 2.sp.scaled,
+                ),
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                textAlign = TextAlign.Center,
+                autoSize = TextAutoSize.StepBased(),
+            )
 
             Text(
                 text = stringResource(Res.string.login_subtitle).uppercase(),
@@ -115,20 +142,20 @@ internal fun LoginScreen(
 
             Column(
                 modifier = Modifier.fillMaxWidth(0.8f),
-                verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled)
+                verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
             ) {
                 AuthButton(
                     text = stringResource(Res.string.login_with_google),
                     onClick = viewModel::onSignInWithGoogle,
                     containerColor = Color.White.copy(alpha = 0.05f),
-                    contentColor = Color.White
+                    contentColor = Color.White,
                 )
 
                 AuthButton(
                     text = stringResource(Res.string.login_with_apple),
                     onClick = viewModel::onSignInWithApple,
                     containerColor = Color.White.copy(alpha = 0.05f),
-                    contentColor = Color.White
+                    contentColor = Color.White,
                 )
 
                 Spacer(modifier = Modifier.height(spacing.medium.scaled))
@@ -138,7 +165,7 @@ internal fun LoginScreen(
                     onClick = viewModel::onSignInAnonymously,
                     containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                     contentColor = MaterialTheme.colorScheme.primary,
-                    borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                    borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                 )
             }
         }
@@ -151,7 +178,7 @@ internal fun LoginScreen(
             onConfirm = viewModel::onCreateProfile,
             onDismiss = viewModel::onDismissNicknamePopup,
             isLoading = uiState.isLoading,
-            error = uiState.error
+            error = uiState.error,
         )
     }
 }

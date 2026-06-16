@@ -195,6 +195,11 @@ internal class GameViewModel(
 
     init {
         viewModelScope.launch {
+            settingsRepository.getSoundEnabledFlow().collect { soundEnabled ->
+                _uiState.update { it.copy(isSoundEnabled = soundEnabled) }
+            }
+        }
+        viewModelScope.launch {
             val best = settingsRepository.getBestScore()
             val hintsEnabled = settingsRepository.getMergeHintsEnabled()
             val savedStateJson = settingsRepository.getGameState()

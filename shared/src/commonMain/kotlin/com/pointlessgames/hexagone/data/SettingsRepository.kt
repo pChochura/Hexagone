@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 interface SettingsRepository {
@@ -16,6 +17,9 @@ interface SettingsRepository {
     suspend fun setPlayerName(name: String?): Preferences
     suspend fun getPlayerRegion(): String?
     suspend fun setPlayerRegion(region: String?): Preferences
+    fun getSoundEnabledFlow(): kotlinx.coroutines.flow.Flow<Boolean>
+    suspend fun getSoundEnabled(): Boolean
+    suspend fun setSoundEnabled(enabled: Boolean): Preferences
     suspend fun getMergeHintsEnabled(): Boolean
     suspend fun setMergeHintsEnabled(enabled: Boolean): Preferences
     suspend fun getGameState(): String?
@@ -73,6 +77,7 @@ class DataStoreSettingsRepository(
     private val appSettings: DataStore<Preferences>,
 ) : SettingsRepository {
     private val bestScoreKey = intPreferencesKey("best_score")
+    private val soundEnabledKey = booleanPreferencesKey("sound_enabled")
     private val mergeHintsEnabledKey = booleanPreferencesKey("merge_hints_enabled")
     private val gameStateKey = stringPreferencesKey("game_state")
     private val playerIdKey = stringPreferencesKey("player_id")
@@ -160,6 +165,24 @@ class DataStoreSettingsRepository(
                 } else {
                     prefs[playerRegionKey] = region
                 }
+            }
+        }
+    }
+
+    override fun getSoundEnabledFlow(): kotlinx.coroutines.flow.Flow<Boolean> {
+        return appSettings.data.map { preferences ->
+            preferences[soundEnabledKey] ?: true
+        }
+    }
+
+    override suspend fun getSoundEnabled(): Boolean = withContext(Dispatchers.IO) {
+        appSettings.data.first()[soundEnabledKey] ?: true
+    }
+
+    override suspend fun setSoundEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[soundEnabledKey] = enabled
             }
         }
     }
