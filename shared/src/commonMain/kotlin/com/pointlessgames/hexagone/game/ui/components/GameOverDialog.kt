@@ -650,16 +650,6 @@ private fun DailyChallengeSummaryRow(
                 fontSize = 11.sp.scaled,
                 maxLines = 1,
             )
-            
-            if (isPersistentCompleted) {
-                Spacer(Modifier.width(MaterialTheme.spacing.extraSmall.scaled))
-                Text(
-                    text = "STREAK+",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 8.sp.scaled,
-                )
-            }
         }
 
         Text(
