@@ -27,6 +27,7 @@ internal fun AuthButton(
     modifier: Modifier = Modifier,
     borderColor: Color = Color.White.copy(alpha = 0.1f)
 ) {
+    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     val spacing = MaterialTheme.spacing
     Box(
         modifier = modifier
@@ -34,7 +35,7 @@ internal fun AuthButton(
             .clip(CircleShape)
             .background(containerColor)
             .border(1.dp.scaled, borderColor, CircleShape)
-            .clickable { onClick() }
+            .clickable { playSound(); onClick() }
             .padding(vertical = spacing.medium.scaled + 4.dp.scaled),
         contentAlignment = Alignment.Center
     ) {

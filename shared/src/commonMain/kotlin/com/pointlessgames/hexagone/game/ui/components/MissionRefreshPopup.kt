@@ -158,12 +158,13 @@ private fun AuthButton(
     backgroundColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
     borderColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
 ) {
+    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled))
             .background(backgroundColor)
             .border(1.dp.scaled, borderColor, RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled))
-            .clickable { onClick() }
+            .clickable { playSound(); onClick() }
             .padding(vertical = MaterialTheme.spacing.medium.scaled),
         contentAlignment = Alignment.Center
     ) {

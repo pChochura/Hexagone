@@ -174,6 +174,12 @@ sealed interface GameEffect {
         val value: Int,
         val isPerk: Boolean = false,
         val intensity: Float = 1f,
+        val combo: Int = 1,
+    ) : GameEffect
+
+    data class TileRemoved(
+        val gridX: Int,
+        val gridY: Int,
     ) : GameEffect
 
     data class ScorePopup(
@@ -205,6 +211,9 @@ sealed interface GameEffect {
         val isDayCompleted: Boolean = false,
         val newStreak: Int = 0,
     ) : GameEffect
+    
+    data object GameOver : GameEffect
+    data object ComboBroken : GameEffect
 }
 
 @Serializable

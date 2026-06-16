@@ -26,8 +26,12 @@ internal class EffectDelegate(
         effects.emit(GameEffect.Particles(newParticles))
     }
 
-    fun addMergeParticles(gridX: Int, gridY: Int, value: Int, isPerk: Boolean = false, intensity: Float = 1f) = scope.launch {
-        effects.emit(GameEffect.MergeParticles(gridX, gridY, value, isPerk, intensity))
+    fun addMergeParticles(gridX: Int, gridY: Int, value: Int, isPerk: Boolean = false, intensity: Float = 1f, combo: Int = 1) = scope.launch {
+        effects.emit(GameEffect.MergeParticles(gridX, gridY, value, isPerk, intensity, combo))
+    }
+
+    fun addTileRemoved(gridX: Int, gridY: Int) = scope.launch {
+        effects.emit(GameEffect.TileRemoved(gridX, gridY))
     }
 
     fun addScorePopup(
@@ -42,6 +46,14 @@ internal class EffectDelegate(
 
     fun addPerkPopup(gridX: Int, gridY: Int, perk: Perk) = scope.launch {
         effects.emit(GameEffect.PerkPopup(gridX, gridY, perk))
+    }
+
+    fun addGameOver() = scope.launch {
+        effects.emit(GameEffect.GameOver)
+    }
+
+    fun addComboBroken() = scope.launch {
+        effects.emit(GameEffect.ComboBroken)
     }
 
     fun handlePopups(

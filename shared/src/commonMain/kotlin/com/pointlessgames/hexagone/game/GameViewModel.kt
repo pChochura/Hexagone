@@ -768,6 +768,7 @@ internal class GameViewModel(
                         sessionBestScore = maxOf(it.sessionBestScore, state.score)
                     )
                 }
+                effectDelegate.addGameOver()
                 stateDelegate.persistBestScore(state.score)
                 achievementDelegate.onGameFinished()
                 settingsRepository.setGameState(null)

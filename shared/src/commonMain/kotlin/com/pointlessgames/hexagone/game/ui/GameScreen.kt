@@ -95,10 +95,18 @@ internal fun GameScreen(
         uiState.map { it.isSoundEnabled }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.isSoundEnabled)
 
-    val playClickSound = remember(player, coroutineScope) {
+    val playMoveSound = remember(player, coroutineScope) {
         {
             if (isSoundEnabledState.value) {
-                SoundManager.playSound(player, "click.wav", coroutineScope)
+                SoundManager.playSound(player, "move.wav", coroutineScope)
+            }
+        }
+    }
+    
+    val playButtonSound = remember(player, coroutineScope) {
+        {
+            if (isSoundEnabledState.value) {
+                SoundManager.playSound(player, "button.wav", coroutineScope)
             }
         }
     }
@@ -149,11 +157,6 @@ internal fun GameScreen(
     // Accessing these 'by' variables will trigger recomposition of GameScreen.
     val isGameOver by isGameOverState
 
-    LaunchedEffect(isGameOver) {
-        if (isGameOver && isSoundEnabledState.value) {
-            SoundManager.playSound(player, "game_over.wav", coroutineScope)
-        }
-    }
     val showGameOverBoard by showGameOverBoardState
     val isDebugMode by isDebugModeState
     val activeTip by activeTipState
@@ -293,18 +296,18 @@ internal fun GameScreen(
 
     val onEmptySpaceClick = remember(
         viewModel,
-        playClickSound,
-    ) { { x: Int, y: Int -> playClickSound(); viewModel.onEmptySpaceClicked(x, y) } }
+        playMoveSound,
+    ) { { x: Int, y: Int -> playMoveSound(); viewModel.onEmptySpaceClicked(x, y) } }
     val onEmptySpaceTouchDown = remember(viewModel) { viewModel::onEmptySpaceTouchDown }
     val onEmptySpaceTouchUp = remember(viewModel) { viewModel::onEmptySpaceTouchUp }
     val onCellTouchDown = remember(viewModel) { viewModel::onCellTouchDown }
     val onCellTouchUp = remember(viewModel) { viewModel::onCellTouchUp }
     val onCellClick = remember(
         viewModel,
-        playClickSound,
+        playMoveSound,
     ) {
         { cell: com.pointlessgames.hexagone.game.model.HexagonCell ->
-            playClickSound(); viewModel.onCellClicked(
+            playMoveSound(); viewModel.onCellClicked(
             cell,
         )
         }
@@ -312,34 +315,34 @@ internal fun GameScreen(
     val onMergeAnimationFinished = remember(viewModel) { viewModel::onMergeAnimationFinished }
     val onPerkClick = remember(
         viewModel,
-        playClickSound,
+        playButtonSound,
     ) {
         { perk: com.pointlessgames.hexagone.game.model.Perk ->
-            playClickSound(); viewModel.onUsePerkClicked(
+            playButtonSound(); viewModel.onUsePerkClicked(
             perk,
         )
         }
     }
-    val onAddPerkClick = remember(viewModel, playClickSound) {
+    val onAddPerkClick = remember(viewModel, playButtonSound) {
         {
-            playClickSound(); viewModel.onUseVoucher()
+            playButtonSound(); viewModel.onUseVoucher()
         }
     }
-    val onReviveWithCategory = remember(viewModel, playClickSound) {
+    val onReviveWithCategory = remember(viewModel, playButtonSound) {
         { category: PerkCategory ->
-            playClickSound(); viewModel.onUseVoucher(category)
+            playButtonSound(); viewModel.onUseVoucher(category)
         }
     }
-    val onShopClick = remember(viewModel, playClickSound) {
+    val onShopClick = remember(viewModel, playButtonSound) {
         {
-            playClickSound(); navigator.navigateTo(
+            playButtonSound(); navigator.navigateTo(
             Route.Shop,
         )
         }
     }
-    val onPerkSelected = remember(viewModel) { viewModel::onPerkSelected }
-    val onRestart = remember(viewModel) { viewModel::onRestartClicked }
-    val onViewBoardToggle = remember(viewModel) { viewModel::onViewBoardToggled }
+    val onPerkSelected = remember(viewModel, playButtonSound) { { perk: com.pointlessgames.hexagone.game.model.Perk -> playButtonSound(); viewModel.onPerkSelected(perk) } }
+    val onRestart = remember(viewModel, playButtonSound) { { playButtonSound(); viewModel.onRestartClicked() } }
+    val onViewBoardToggle = remember(viewModel, playButtonSound) { { playButtonSound(); viewModel.onViewBoardToggled() } }
     val onDebugToggle = remember(viewModel) { viewModel::toggleDebugMode }
     val onDebugCellClick = remember(viewModel) { viewModel::onDebugCellClicked }
 
@@ -432,7 +435,7 @@ internal fun GameScreen(
                     tierRewardQueue.add(effect.tier to effect.perk)
                     if (isSoundEnabledState.value) SoundManager.playSound(
                         player,
-                        "combo_tier.wav",
+                        "combo_tier_${effect.tier.ordinal}.wav",
                         coroutineScope,
                     )
                 }
@@ -458,7 +461,15 @@ internal fun GameScreen(
                 is GameEffect.MergeParticles -> {
                     if (isSoundEnabledState.value) SoundManager.playSound(
                         player,
-                        "merge.wav",
+                        "merge_${minOf(effect.combo, 7)}.wav",
+                        coroutineScope,
+                    )
+                }
+                
+                is GameEffect.TileRemoved -> {
+                    if (isSoundEnabledState.value) SoundManager.playSound(
+                        player,
+                        "remove.wav",
                         coroutineScope,
                     )
                 }
@@ -467,6 +478,22 @@ internal fun GameScreen(
                     if (isSoundEnabledState.value) SoundManager.playSound(
                         player,
                         "perk_collect.wav",
+                        coroutineScope,
+                    )
+                }
+                
+                is GameEffect.GameOver -> {
+                    if (isSoundEnabledState.value) SoundManager.playSound(
+                        player,
+                        "game_over.wav",
+                        coroutineScope,
+                    )
+                }
+                
+                is GameEffect.ComboBroken -> {
+                    if (isSoundEnabledState.value) SoundManager.playSound(
+                        player,
+                        "invalid.wav",
                         coroutineScope,
                     )
                 }

@@ -106,6 +106,7 @@ fun ScoreSection(
     onDailyChallengeClick: () -> Unit = {},
     onTargetPosition: (TipTarget, androidx.compose.ui.geometry.Rect) -> Unit = { _, _ -> },
 ) {
+    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     val score = scoreProvider()
     val bestScore = bestScoreProvider()
     val combo = comboProvider()
@@ -343,6 +344,7 @@ fun ScoreSection(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                         ) {
+                            playSound()
                             onLevelClick()
                         },
                     )

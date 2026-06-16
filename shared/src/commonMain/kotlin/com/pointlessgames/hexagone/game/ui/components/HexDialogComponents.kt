@@ -183,6 +183,7 @@ fun HexAlertDialog(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally)
                         ) {
+                            val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
                             if (onConfirm != null) {
                                 // Cancel Option
                                 Box(
@@ -191,7 +192,10 @@ fun HexAlertDialog(
                                         .clip(CircleShape)
                                         .background(MaterialTheme.colorScheme.surface, CircleShape)
                                         .border(1.dp.scaled, Color.White.copy(alpha = 0.1f), CircleShape)
-                                        .clickable { onDismiss() }
+                                        .clickable {
+                                            playButtonSound()
+                                            onDismiss()
+                                        }
                                         .padding(vertical = spacing.medium.scaled),
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -221,6 +225,7 @@ fun HexAlertDialog(
                                         .clip(CircleShape)
                                         .background(MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha), CircleShape)
                                         .clickable { 
+                                            playButtonSound()
                                             onConfirm()
                                             onDismiss()
                                         }
@@ -241,7 +246,10 @@ fun HexAlertDialog(
                                         .fillMaxWidth(0.6f)
                                         .clip(CircleShape)
                                         .background(MaterialTheme.colorScheme.primary, CircleShape)
-                                        .clickable { onDismiss() }
+                                        .clickable { 
+                                            playButtonSound()
+                                            onDismiss() 
+                                        }
                                         .padding(vertical = spacing.medium.scaled),
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -510,6 +518,7 @@ fun ProductCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     val spacing = MaterialTheme.spacing
     Box(modifier = modifier.padding(vertical = 4.dp.scaled)) {
         Row(
@@ -523,7 +532,7 @@ fun ProductCard(
                     shape = RoundedCornerShape(16.dp.scaled)
                 )
                 .alpha(if (hasEnoughDiamonds) 1f else 0.6f)
-                .clickable(enabled = isEnabled && hasEnoughDiamonds) { onClick() }
+                .clickable(enabled = isEnabled && hasEnoughDiamonds) { playSound(); onClick() }
                 .padding(spacing.large.scaled),
             horizontalArrangement = Arrangement.spacedBy(spacing.large.scaled),
             verticalAlignment = Alignment.CenterVertically
@@ -631,6 +640,7 @@ fun ProductGridItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     val spacing = MaterialTheme.spacing
     val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
 
@@ -640,7 +650,7 @@ fun ProductGridItem(
             .clip(shape)
             .background(MaterialTheme.colorScheme.background)
             .border(1.dp.scaled, Color.White.copy(alpha = 0.05f), shape)
-            .clickable(enabled = isEnabled, onClick = onClick)
+            .clickable(enabled = isEnabled) { playSound(); onClick() }
             .padding(spacing.medium.scaled),
         contentAlignment = Alignment.Center
     ) {

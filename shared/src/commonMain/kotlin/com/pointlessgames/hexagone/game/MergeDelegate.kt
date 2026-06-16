@@ -138,7 +138,7 @@ internal class MergeDelegate(
             scoreResult.isExecution
         )
         val mergeIntensity = (0.4f + (finalCombo * 0.1f) + (merge.totalCells - 2) * 0.2f).coerceIn(0.2f, 2f)
-        effectDelegate.addMergeParticles(merge.targetX, merge.targetY, merge.finalValue, intensity = mergeIntensity)
+        effectDelegate.addMergeParticles(merge.targetX, merge.targetY, merge.finalValue, intensity = mergeIntensity, combo = finalCombo)
 
         val collectedOnBoard =
             currentState.onBoardPerks.find { it.x == merge.targetX && it.y == merge.targetY }?.perk
@@ -204,6 +204,10 @@ internal class MergeDelegate(
         achievementDelegate.checkMergeAchievements(merge, engine)
         achievementDelegate.checkComboAchievements(finalCombo)
         achievementDelegate.checkComboBroken(currentState.combo, finalCombo)
+        
+        if (currentState.combo > 0 && finalCombo == 0) {
+            effectDelegate.addComboBroken()
+        }
         achievementDelegate.checkLevelAchievements(uiState.value.level)
         achievementDelegate.checkScoreAchievements(finalScore)
         achievementDelegate.onMergesIncremented(uiState.value.totalMerges)
@@ -287,6 +291,9 @@ internal class MergeDelegate(
 
             if (activePerkBeforeClear == Perk.CHAIN_MERGE && !isChainStep) {
                 achievementDelegate.checkComboBroken(oldCombo, 0)
+                if (oldCombo > 0) {
+                    effectDelegate.addComboBroken()
+                }
             }
 
             if (activePerkBeforeClear == Perk.SKIP_SPAWN) {

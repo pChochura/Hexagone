@@ -69,6 +69,7 @@ internal fun PerkSelectionDialog(
     onPerkSelected: (Perk) -> Unit,
     onRerollClicked: () -> Unit,
 ) {
+    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
         confirmValueChange = { newValue ->
@@ -164,7 +165,7 @@ internal fun PerkSelectionDialog(
                             modifier = Modifier
                                 .size(spacing.extraHuge.scaled)
                                 .clip(CircleShape)
-                                .clickable { onRerollClicked() }
+                                .clickable { playSound(); onRerollClicked() }
                                 .padding(spacing.small.scaled),
                             contentAlignment = Alignment.Center
                         ) {

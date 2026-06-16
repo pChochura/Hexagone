@@ -132,6 +132,7 @@ private fun AccountCard(
     isAnonymous: Boolean,
     onClick: () -> Unit
 ) {
+    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     val spacing = MaterialTheme.spacing
     val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
 
@@ -140,7 +141,7 @@ private fun AccountCard(
             .fillMaxWidth()
             .clip(shape)
             .background(MaterialTheme.colorScheme.background)
-            .clickable { onClick() }
+            .clickable { playSound(); onClick() }
             .padding(spacing.large.scaled)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -170,6 +171,7 @@ private fun ToggleCard(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
+    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     val spacing = MaterialTheme.spacing
     val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
 
@@ -178,7 +180,7 @@ private fun ToggleCard(
             .fillMaxWidth()
             .clip(shape)
             .background(MaterialTheme.colorScheme.background)
-            .clickable { onCheckedChange(!checked) }
+            .clickable { playSound(); onCheckedChange(!checked) }
             .padding(spacing.large.scaled),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

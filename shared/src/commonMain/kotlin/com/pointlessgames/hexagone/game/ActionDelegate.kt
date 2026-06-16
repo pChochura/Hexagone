@@ -487,7 +487,7 @@ internal class ActionDelegate(
                             isTactical = scoreResult.isTactical,
                             isExecution = scoreResult.isExecution
                         )
-                        effectDelegate.addMergeParticles(tx, ty, preview.value, intensity = (preview.value / 8f + 0.3f).coerceAtMost(1.5f))
+                        effectDelegate.addTileRemoved(tx, ty)
                         achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, scoreResult.sacrificeBonus > 0)
                         mergeReport?.let { challengeDelegate.onMerge(it, scoreResult) }
                     }
@@ -849,7 +849,7 @@ internal class ActionDelegate(
                             isTactical = scoreResult.isTactical,
                             isExecution = scoreResult.isExecution
                         )
-                        effectDelegate.addMergeParticles(tx, ty, cell.value, intensity = (cell.value / 8f + 0.3f).coerceAtMost(1.5f))
+                        effectDelegate.addTileRemoved(tx, ty)
                         achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, scoreResult.sacrificeBonus > 0)
                         mergeReport?.let { challengeDelegate.onMerge(it, scoreResult) }
                     }

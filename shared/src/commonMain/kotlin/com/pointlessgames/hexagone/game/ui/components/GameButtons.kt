@@ -42,6 +42,7 @@ fun HexBackButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     val heightScale = 0.866f
     Box(
         modifier = modifier
@@ -49,7 +50,7 @@ fun HexBackButton(
             .clip(FlatTopHexagonShape())
             .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
             .border(1.dp, Color.White.copy(alpha = 0.15f), FlatTopHexagonShape())
-            .clickable(onClick = onClick),
+            .clickable { playSound(); onClick() },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -68,6 +69,7 @@ fun UnifiedTabButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     val cornerRadius = MaterialTheme.cornerRadius
     val shape = RoundedCornerShape(cornerRadius.medium)
 
@@ -84,7 +86,7 @@ fun UnifiedTabButton(
                 shape = shape,
             )
             .clip(shape)
-            .clickable { onClick() },
+            .clickable { playSound(); onClick() },
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -126,6 +128,7 @@ fun HexagonIconButton(
     borderColor: Color = Color(0xFFD63F7B).copy(alpha = 0.4f),
     size: Dp = 64.dp,
 ) {
+    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
     val onClick by rememberUpdatedState(onClick)
     val spacing = MaterialTheme.spacing
     val content = movableContentWithReceiverOf<Modifier> {
@@ -139,7 +142,7 @@ fun HexagonIconButton(
                     .clip(FlatTopHexagonShape())
                     .background(backgroundColor)
                     .border(spacing.extraTiny, borderColor, FlatTopHexagonShape())
-                    .clickable(onClick = onClick),
+                    .clickable { playSound(); onClick() },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
