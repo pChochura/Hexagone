@@ -137,6 +137,11 @@ sealed interface HexDialogState {
         val formatArgs: List<Any> = emptyList(),
         val isError: Boolean = false,
     ) : HexDialogState
+
+    data class PauseMenu(
+        val onResume: () -> Unit,
+        val onRestart: () -> Unit,
+    ) : HexDialogState
 }
 
 @Immutable

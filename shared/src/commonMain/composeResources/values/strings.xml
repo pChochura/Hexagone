@@ -23,6 +23,10 @@
     <string name="perk_selection_hint">Long press a perk to see what it does</string>
     <string name="no_moves_left_warning">NO MOVES LEFT! USE A PERK</string>
     <string name="cancel">Cancel</string>
+    <string name="pause_title">RESTART GAME?</string>
+    <string name="pause_message">Are you sure you want to restart? You will lose your current score, level, perks and daily missions progress.</string>
+    <string name="resume">RESUME</string>
+    <string name="restart_button">RESTART</string>
 
     <!-- Tips -->
     <string name="tip_merge_message">Tap between two or more identical hexes to merge them!</string>

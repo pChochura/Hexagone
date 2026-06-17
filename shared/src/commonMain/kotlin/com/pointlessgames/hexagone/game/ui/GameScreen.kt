@@ -1,6 +1,7 @@
 package com.pointlessgames.hexagone.game.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
@@ -14,6 +15,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -52,6 +54,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
@@ -60,11 +63,13 @@ import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.LocalMediaPlayer
 import com.pointlessgames.hexagone.LocalNavigator
 import com.pointlessgames.hexagone.Route
+import com.pointlessgames.hexagone.achievements.GameAchievement
 import com.pointlessgames.hexagone.auth.ui.components.NicknamePopup
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.ComboTier
 import com.pointlessgames.hexagone.game.model.GameEffect
+import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.TipTarget
 import com.pointlessgames.hexagone.game.ui.components.AchievementNotification
@@ -87,8 +92,10 @@ import com.pointlessgames.hexagone.utils.SoundManager
 import com.pointlessgames.hexagone.utils.isDebug
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.no_moves_left_warning
+import hexagone.shared.generated.resources.restart_button
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -125,65 +132,43 @@ internal fun GameScreen(
     // Reading from these State objects in providers ensures children and snapshotFlows are reactive.
     val isGameOverState = remember(uiState) {
         uiState.map { it.isGameOver }.distinctUntilChanged()
-    }.collectAsState(
-        viewModel.uiState.value.isGameOver,
-    )
+    }.collectAsState(viewModel.uiState.value.isGameOver)
     val showGameOverBoardState = remember(uiState) {
         uiState.map { it.showGameOverBoard }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.showGameOverBoard)
-    val isStuckState =
-        remember(uiState) { uiState.map { it.isStuck }.distinctUntilChanged() }.collectAsState(
-            viewModel.uiState.value.isStuck,
-        )
-    val gridState =
-        remember(uiState) { uiState.map { it.grid }.distinctUntilChanged() }.collectAsState(
-            viewModel.uiState.value.grid,
-        )
+    val isStuckState = remember(uiState) {
+        uiState.map { it.isStuck }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.isStuck)
+    val gridState = remember(uiState) {
+        uiState.map { it.grid }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.grid)
     val activePerkState = remember(uiState) {
         uiState.map { it.activePerk }.distinctUntilChanged()
-    }.collectAsState(
-        viewModel.uiState.value.activePerk,
-    )
+    }.collectAsState(viewModel.uiState.value.activePerk)
     val isDebugModeState = remember(uiState) {
         uiState.map { it.isDebugMode }.distinctUntilChanged()
-    }.collectAsState(
-        viewModel.uiState.value.isDebugMode,
-    )
+    }.collectAsState(viewModel.uiState.value.isDebugMode)
     val activeTipState = remember(uiState) {
         uiState.map { it.activeTip }.distinctUntilChanged()
-    }.collectAsState(
-        viewModel.uiState.value.activeTip,
-    )
+    }.collectAsState(viewModel.uiState.value.activeTip)
     val isVoucherProcessingState = remember(uiState) {
         uiState.map { it.isVoucherProcessing }.distinctUntilChanged()
-    }.collectAsState(
-        viewModel.uiState.value.isVoucherProcessing,
-    )
+    }.collectAsState(viewModel.uiState.value.isVoucherProcessing)
     val isPerksBankVisibleState = remember(uiState) {
         uiState.map { it.isPerksBankVisible }.distinctUntilChanged()
-    }.collectAsState(
-        viewModel.uiState.value.isPerksBankVisible,
-    )
+    }.collectAsState(viewModel.uiState.value.isPerksBankVisible)
     val isNicknamePopupVisibleState = remember(uiState) {
         uiState.map { it.isNicknamePopupVisible }.distinctUntilChanged()
-    }.collectAsState(
-        viewModel.uiState.value.isNicknamePopupVisible,
-    )
+    }.collectAsState(viewModel.uiState.value.isNicknamePopupVisible)
     val tempNicknameState = remember(uiState) {
         uiState.map { it.tempNickname }.distinctUntilChanged()
-    }.collectAsState(
-        viewModel.uiState.value.tempNickname,
-    )
+    }.collectAsState(viewModel.uiState.value.tempNickname)
     val nicknameErrorState = remember(uiState) {
         uiState.map { it.nicknameError }.distinctUntilChanged()
-    }.collectAsState(
-        viewModel.uiState.value.nicknameError,
-    )
+    }.collectAsState(viewModel.uiState.value.nicknameError)
     val playerNameState = remember(uiState) {
         uiState.map { it.playerName }.distinctUntilChanged()
-    }.collectAsState(
-        viewModel.uiState.value.playerName,
-    )
+    }.collectAsState(viewModel.uiState.value.playerName)
 
     // Helper delegates for GameScreen's own logic.
     // Accessing these 'by' variables will trigger recomposition of GameScreen.
@@ -199,46 +184,31 @@ internal fun GameScreen(
     }.collectAsState(viewModel.uiState.value.showReviveOption)
     val showReviveOption by showReviveOptionState
 
-    val activeDialogState =
-        remember(uiState) {
-            uiState.map { it.activeDialog }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.activeDialog,
-        )
+    val activeDialogState = remember(uiState) {
+        uiState.map { it.activeDialog }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.activeDialog)
     val activeDialog by activeDialogState
-    val missionRefreshState =
-        remember(uiState) {
-            uiState.map { it.missionRefreshState }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.missionRefreshState,
-        )
+    val missionRefreshState = remember(uiState) {
+        uiState.map { it.missionRefreshState }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.missionRefreshState)
 
     // Other states primarily used by providers passed to children.
     // GameScreen won't recompose when these change unless it reads them directly.
-    val scoreState =
-        remember(uiState) { uiState.map { it.score }.distinctUntilChanged() }.collectAsState(
-            viewModel.uiState.value.score,
-        )
-    val bestScoreState =
-        remember(uiState) {
-            uiState.map { it.bestScore }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.bestScore,
-        )
-    val comboState =
-        remember(uiState) { uiState.map { it.combo }.distinctUntilChanged() }.collectAsState(
-            viewModel.uiState.value.combo,
-        )
-    val levelState =
-        remember(uiState) { uiState.map { it.level }.distinctUntilChanged() }.collectAsState(
-            viewModel.uiState.value.level,
-        )
-    val highestValueState =
-        remember(uiState) {
-            uiState.map { it.highestValue }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.highestValue,
-        )
+    val scoreState = remember(uiState) {
+        uiState.map { it.score }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.score)
+    val bestScoreState = remember(uiState) {
+        uiState.map { it.bestScore }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.bestScore)
+    val comboState = remember(uiState) {
+        uiState.map { it.combo }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.combo)
+    val levelState = remember(uiState) {
+        uiState.map { it.level }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.level)
+    val highestValueState = remember(uiState) {
+        uiState.map { it.highestValue }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.highestValue)
     val dailyChallengesState = remember(uiState) {
         uiState.map { it.dailyChallenges }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.dailyChallenges)
@@ -251,37 +221,24 @@ internal fun GameScreen(
     val sessionBestScoreState = remember(uiState) {
         uiState.map { it.sessionBestScore }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.sessionBestScore)
-    val maxComboState =
-        remember(uiState) { uiState.map { it.maxCombo }.distinctUntilChanged() }.collectAsState(
-            viewModel.uiState.value.maxCombo,
-        )
-    val perkOptionsState =
-        remember(uiState) {
-            uiState.map { it.perkOptions }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.perkOptions,
-        )
+    val maxComboState = remember(uiState) {
+        uiState.map { it.maxCombo }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.maxCombo)
+    val perkOptionsState = remember(uiState) {
+        uiState.map { it.perkOptions }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.perkOptions)
     val pendingLevelUpsState = remember(uiState) {
         uiState.map { it.pendingLevelUps }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.pendingLevelUps)
-    val canRerollState =
-        remember(uiState) {
-            uiState.map { it.canReroll }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.canReroll,
-        )
-    val currentRankState =
-        remember(uiState) {
-            uiState.map { it.currentRank }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.currentRank,
-        )
-    val finalResultState =
-        remember(uiState) {
-            uiState.map { it.finalResult }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.finalResult,
-        )
+    val canRerollState = remember(uiState) {
+        uiState.map { it.canReroll }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.canReroll)
+    val currentRankState = remember(uiState) {
+        uiState.map { it.currentRank }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.currentRank)
+    val finalResultState = remember(uiState) {
+        uiState.map { it.finalResult }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.finalResult)
     val debugSelectedValueState = remember(uiState) {
         uiState.map { it.debugSelectedValue }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.debugSelectedValue)
@@ -291,40 +248,24 @@ internal fun GameScreen(
     val challengeStreakState = remember(uiState) {
         uiState.map { it.challengeStreak }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.challengeStreak)
-    val debugUsedState =
-        remember(uiState) {
-            uiState.map { it.debugUsed }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.debugUsed,
-        )
-    val stuckPerksState =
-        remember(uiState) {
-            uiState.map { it.stuckPerks }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.stuckPerks,
-        )
-    val mergeHintsState =
-        remember(uiState) {
-            uiState.map { it.mergeHints }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.mergeHints,
-        )
-    val previewState =
-        remember(uiState) { uiState.map { it.preview }.distinctUntilChanged() }.collectAsState(
-            viewModel.uiState.value.preview,
-        )
-    val onBoardPerksState =
-        remember(uiState) {
-            uiState.map { it.onBoardPerks }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.onBoardPerks,
-        )
-    val pendingMergeState =
-        remember(uiState) {
-            uiState.map { it.pendingMerge }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.pendingMerge,
-        )
+    val debugUsedState = remember(uiState) {
+        uiState.map { it.debugUsed }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.debugUsed)
+    val stuckPerksState = remember(uiState) {
+        uiState.map { it.stuckPerks }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.stuckPerks)
+    val mergeHintsState = remember(uiState) {
+        uiState.map { it.mergeHints }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.mergeHints)
+    val previewState = remember(uiState) {
+        uiState.map { it.preview }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.preview)
+    val onBoardPerksState = remember(uiState) {
+        uiState.map { it.onBoardPerks }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.onBoardPerks)
+    val pendingMergeState = remember(uiState) {
+        uiState.map { it.pendingMerge }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.pendingMerge)
     val activeMergeStepIndexState = remember(uiState) {
         uiState.map { it.activeMergeStepIndex }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.activeMergeStepIndex)
@@ -333,63 +274,37 @@ internal fun GameScreen(
     }.collectAsState(viewModel.uiState.value.selectedCellId)
     val targetRects = remember { mutableStateMapOf<TipTarget, Rect>() }
 
-    val tierRewardQueue =
-        remember { mutableStateListOf<Pair<ComboTier, Perk>>() }
-    val challengeRewardQueue =
-        remember { mutableStateListOf<GameEffect.DailyChallengeComplete>() }
+    val tierRewardQueue = remember { mutableStateListOf<Pair<ComboTier, Perk>>() }
+    val challengeRewardQueue = remember { mutableStateListOf<GameEffect.DailyChallengeComplete>() }
 
     val activeTierReward = tierRewardQueue.firstOrNull()
     val activeChallengeReward = challengeRewardQueue.firstOrNull()
 
-    val achievementQueue =
-        remember { mutableStateListOf<com.pointlessgames.hexagone.achievements.GameAchievement>() }
+    val achievementQueue = remember { mutableStateListOf<GameAchievement>() }
     val activeAchievement = achievementQueue.firstOrNull()
 
-    val onEmptySpaceClick = remember(
-        viewModel,
-        playMoveSound,
-    ) { { x: Int, y: Int -> playMoveSound(); viewModel.onEmptySpaceClicked(x, y) } }
+    val onEmptySpaceClick = remember(viewModel, playMoveSound) {
+        { x: Int, y: Int -> playMoveSound(); viewModel.onEmptySpaceClicked(x, y) }
+    }
     val onEmptySpaceTouchDown = remember(viewModel) { viewModel::onEmptySpaceTouchDown }
     val onEmptySpaceTouchUp = remember(viewModel) { viewModel::onEmptySpaceTouchUp }
     val onCellTouchDown = remember(viewModel) { viewModel::onCellTouchDown }
     val onCellTouchUp = remember(viewModel) { viewModel::onCellTouchUp }
-    val onCellClick = remember(
-        viewModel,
-        playMoveSound,
-    ) {
-        { cell: com.pointlessgames.hexagone.game.model.HexagonCell ->
-            playMoveSound(); viewModel.onCellClicked(
-            cell,
-        )
-        }
+    val onCellClick = remember(viewModel, playMoveSound) {
+        { cell: HexagonCell -> playMoveSound(); viewModel.onCellClicked(cell) }
     }
     val onMergeAnimationFinished = remember(viewModel) { viewModel::onMergeAnimationFinished }
-    val onPerkClick = remember(
-        viewModel,
-        playButtonSound,
-    ) {
-        { perk: Perk ->
-            playButtonSound(); viewModel.onUsePerkClicked(
-            perk,
-        )
-        }
+    val onPerkClick = remember(viewModel, playButtonSound) {
+        { perk: Perk -> playButtonSound(); viewModel.onUsePerkClicked(perk) }
     }
     val onAddPerkClick = remember(viewModel, playButtonSound) {
-        {
-            playButtonSound(); viewModel.onUseVoucher()
-        }
+        { playButtonSound(); viewModel.onUseVoucher() }
     }
     val onReviveWithCategory = remember(viewModel, playButtonSound) {
-        { category: PerkCategory ->
-            playButtonSound(); viewModel.onUseVoucher(category)
-        }
+        { category: PerkCategory -> playButtonSound(); viewModel.onUseVoucher(category) }
     }
     val onShopClick = remember(viewModel, playButtonSound) {
-        {
-            playButtonSound(); navigator.navigateTo(
-            Route.Shop,
-        )
-        }
+        { playButtonSound(); navigator.navigateTo(Route.Shop) }
     }
     val onPerkSelected = remember(viewModel, playButtonSound) {
         { perk: Perk -> playButtonSound(); viewModel.onPerkSelected(perk) }
@@ -399,6 +314,9 @@ internal fun GameScreen(
     }
     val onViewBoardToggle = remember(viewModel, playButtonSound) {
         { playButtonSound(); viewModel.onViewBoardToggled() }
+    }
+    val onBack = remember(viewModel, playButtonSound) {
+        { playButtonSound(); viewModel.onBackClicked() }
     }
     val onDebugToggle = remember(viewModel) { viewModel::toggleDebugMode }
     val onDebugCellClick = remember(viewModel) { viewModel::onDebugCellClicked }
@@ -559,6 +477,9 @@ internal fun GameScreen(
         }
     }
 
+    val swipeOffset = remember { Animatable(0f) }
+    val pauseThreshold = 200f
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -570,9 +491,69 @@ internal fun GameScreen(
                         MaterialTheme.colorScheme.background,
                     ),
                 ),
-            ),
+            )
+            .pointerInput(Unit) {
+                var triggered = false
+                detectVerticalDragGestures(
+                    onDragStart = {
+                        triggered = false
+                    },
+                    onDragEnd = {
+                        if (!triggered) {
+                            if (swipeOffset.value >= pauseThreshold) {
+                                onBack()
+                                triggered = true
+                            }
+                            coroutineScope.launch { swipeOffset.animateTo(0f, spring()) }
+                        }
+                    },
+                    onDragCancel = {
+                        if (!triggered) {
+                            coroutineScope.launch { swipeOffset.animateTo(0f, spring()) }
+                        }
+                    },
+                    onVerticalDrag = { change, dragAmount ->
+                        if (triggered) return@detectVerticalDragGestures
+                        val state = viewModel.uiState.value
+                        if (!state.isGameOver && state.activeDialog == null && !state.isPerksBankVisible && !state.isNicknamePopupVisible) {
+                            val newOffset =
+                                (swipeOffset.value + dragAmount).coerceIn(0f, pauseThreshold + 150f)
+                            coroutineScope.launch { swipeOffset.snapTo(newOffset) }
+                            change.consume()
+                        }
+                    },
+                )
+            },
     ) {
-        BoxWithConstraints(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(top = MaterialTheme.spacing.medium.scaled)
+                .graphicsLayer {
+                    alpha = (swipeOffset.value / pauseThreshold).coerceIn(0f, 1f)
+                },
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            Text(
+                text = stringResource(Res.string.restart_button) + "?",
+                color = Color.White.copy(alpha = 0.8f),
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp.scaled,
+                letterSpacing = 2.sp,
+            )
+        }
+
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .graphicsLayer {
+                    val progress = (swipeOffset.value / pauseThreshold).coerceIn(0f, 1f)
+                    translationY = swipeOffset.value * 0.5f
+                    alpha = 1f - (progress * 0.5f)
+                },
+        ) {
             val isLandscape = maxWidth > maxHeight
 
             if (isLandscape) {
@@ -656,8 +637,10 @@ internal fun GameScreen(
 
                     // Placeholder for Perk Bar (to keep layout consistent)
                     if (!isDebugModeProvider()) {
-                        val expectedWidth = (MaterialTheme.spacing.extraHuge.scaled * 0.866f) + 24.dp.scaled + (MaterialTheme.spacing.medium.scaled * 2)
-                        val safePadding = WindowInsets.safeDrawing.asPaddingValues().calculateRightPadding(LayoutDirection.Ltr)
+                        val expectedWidth =
+                            (MaterialTheme.spacing.extraHuge.scaled * 0.866f) + 24.dp.scaled + (MaterialTheme.spacing.medium.scaled * 2)
+                        val safePadding = WindowInsets.safeDrawing.asPaddingValues()
+                            .calculateRightPadding(LayoutDirection.Ltr)
                         Spacer(Modifier.width(expectedWidth + safePadding))
                     }
                 }
@@ -747,8 +730,10 @@ internal fun GameScreen(
 
                     if (!isDebugModeProvider()) {
                         // Placeholder to keep space for PerkBar Shelf
-                        val expectedHeight = (MaterialTheme.spacing.extraHuge.scaled * 0.866f) + 24.dp.scaled + (MaterialTheme.spacing.medium.scaled * 2)
-                        val safePadding = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
+                        val expectedHeight =
+                            (MaterialTheme.spacing.extraHuge.scaled * 0.866f) + 24.dp.scaled + (MaterialTheme.spacing.medium.scaled * 2)
+                        val safePadding =
+                            WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
                         Spacer(Modifier.height(expectedHeight + safePadding))
                     } else {
                         DebugOverlay(
@@ -973,9 +958,9 @@ internal fun GameScreen(
             error = nicknameErrorState.value,
         )
 
-        if (activeDialog != null) {
+        if (uiState.value.activeDialog != null) {
             HexAlertDialog(
-                state = activeDialog!!,
+                state = uiState.value.activeDialog!!,
                 onDismiss = viewModel::onDismissDialog,
             )
         }

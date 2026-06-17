@@ -23,6 +23,10 @@
     <string name="perk_selection_hint">Przytrzymaj perk, aby zobaczyć jego opis</string>
     <string name="no_moves_left_warning">BRAK RUCHÓW! UŻYJ PERKA</string>
     <string name="cancel">Anuluj</string>
+    <string name="pause_title">ZRESTARTOWAĆ GRĘ?</string>
+    <string name="pause_message">Jesteś pewien, że chcesz zrestartować grę? Stracisz swój obecny wynik, poziom, perki oraz obecny postęp w dziennych misjach.</string>
+    <string name="resume">WZNÓW</string>
+    <string name="restart_button">RESTARTUJ</string>
 
     <!-- Tips -->
     <string name="tip_merge_message">Kliknij pomiędzy co najmniej dwoma identycznymi hexami, aby je połączyć!</string>

@@ -22,6 +22,7 @@ import com.pointlessgames.hexagone.game.model.GameTip
 import com.pointlessgames.hexagone.game.model.GameUiState
 import com.pointlessgames.hexagone.game.model.HexDialogState.Confirmation
 import com.pointlessgames.hexagone.game.model.HexDialogState.Info
+import com.pointlessgames.hexagone.game.model.HexDialogState.PauseMenu
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.MissionRefreshState
@@ -210,7 +211,8 @@ internal class GameViewModel(
             val yesterdaySeed =
                 yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.day
 
-            var persistentCompletedMissionIds = settingsRepository.getPersistentCompletedMissionIds()
+            var persistentCompletedMissionIds =
+                settingsRepository.getPersistentCompletedMissionIds()
             val dailyMissionDate = settingsRepository.getDailyMissionDate()
             var missionRefreshState: MissionRefreshState = MissionRefreshState.NONE
 
@@ -397,7 +399,10 @@ internal class GameViewModel(
                 }
             }
             launch {
-                combine(billingManager.currencyBalances, inFlightActions) { balances, inFlightCount ->
+                combine(
+                    billingManager.currencyBalances,
+                    inFlightActions,
+                ) { balances, inFlightCount ->
                     if (inFlightCount == 0) balances else null
                 }.collect { balances ->
                     if (balances == null) return@collect
@@ -624,12 +629,12 @@ internal class GameViewModel(
         viewModelScope.launch {
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
             val dateSeed = today.year * 10000L + (today.month.ordinal + 1) * 100L + today.day
-            
+
             settingsRepository.setDailyMissionDate(dateSeed)
             settingsRepository.clearPersistentCompletedMissionIds()
-            
+
             val currentDailyChallenges = DailyChallengeProvider.getChallengesForDate(today, 0)
-            
+
             _uiState.update {
                 it.copy(
                     missionRefreshState = MissionRefreshState.NONE,
@@ -644,6 +649,21 @@ internal class GameViewModel(
 
     fun onAcknowledgeHardRefresh() {
         _uiState.update { it.copy(missionRefreshState = MissionRefreshState.NONE) }
+    }
+
+    fun onBackClicked() {
+        val currentState = _uiState.value
+        if (currentState.isGameOver || currentState.isPerksBankVisible || currentState.isNicknamePopupVisible) return
+        if (currentState.activeDialog != null) return
+
+        _uiState.update {
+            it.copy(
+                activeDialog = PauseMenu(
+                    onResume = { onDismissDialog() },
+                    onRestart = { onRestartClicked() },
+                ),
+            )
+        }
     }
 
     fun onRestartClicked() {
@@ -768,7 +788,7 @@ internal class GameViewModel(
                         finalResult = finalResult,
                         currentRank = null,
                         bestScore = maxOf(it.bestScore, state.score),
-                        sessionBestScore = maxOf(it.sessionBestScore, state.score)
+                        sessionBestScore = maxOf(it.sessionBestScore, state.score),
                     )
                 }
                 effectDelegate.addGameOver()
@@ -917,7 +937,7 @@ internal class GameViewModel(
                                     s.copy(
                                         diamonds = s.diamonds - cost,
                                         vouchers = newVouchers,
-                                        isShopProcessing = true
+                                        isShopProcessing = true,
                                     )
                                 }
                                 monetizationRepository.buyPerkVoucher(category)
@@ -957,7 +977,7 @@ internal class GameViewModel(
                 if (current > 0) newVouchers[category] = current - 1
                 s.copy(
                     vouchers = newVouchers,
-                    isVoucherProcessing = true
+                    isVoucherProcessing = true,
                 )
             }
             if (monetizationRepository.usePerkVoucher(category)) {
@@ -991,7 +1011,13 @@ internal class GameViewModel(
     }
 
     fun onShowNicknamePopup() {
-        _uiState.update { it.copy(isNicknamePopupVisible = true, tempNickname = "", nicknameError = null) }
+        _uiState.update {
+            it.copy(
+                isNicknamePopupVisible = true,
+                tempNickname = "",
+                nicknameError = null,
+            )
+        }
     }
 
     fun onNicknameChanged(name: String) {
@@ -1024,7 +1050,13 @@ internal class GameViewModel(
                     _uiState.update { it.copy(currentRank = rankInfo) }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(nicknameError = e.message ?: getString(Res.string.onboarding_nickname_error), isBusy = false) }
+                _uiState.update {
+                    it.copy(
+                        nicknameError = e.message
+                            ?: getString(Res.string.onboarding_nickname_error),
+                        isBusy = false,
+                    )
+                }
             }
         }
     }
@@ -1059,7 +1091,7 @@ internal class GameViewModel(
         if (allPersistentCompleted && !_uiState.value.isStreakCollectedToday) {
             val missionDateSeed = settingsRepository.getDailyMissionDate()
             val lastCompletedDate = settingsRepository.getLastCompletedChallengeDate()
-            
+
             // We complete for the day the missions were from
             if (lastCompletedDate != missionDateSeed) {
                 val updatedCompletedDates = _uiState.value.completedChallengeDates + missionDateSeed
@@ -1090,7 +1122,14 @@ internal class GameViewModel(
             }
         }
 
-        _effects.emit(GameEffect.DailyChallengeComplete(challenge, isFirstTimeToday, isDayCompleted, newStreakValue))
+        _effects.emit(
+            GameEffect.DailyChallengeComplete(
+                challenge,
+                isFirstTimeToday,
+                isDayCompleted,
+                newStreakValue,
+            ),
+        )
     }
 
     private fun calculateStreak(completedDates: Set<Long>, today: LocalDate): Int {

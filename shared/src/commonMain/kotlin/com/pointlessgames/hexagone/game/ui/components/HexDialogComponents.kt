@@ -59,6 +59,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.pointlessgames.hexagone.game.model.HexDialogState.Confirmation
+import com.pointlessgames.hexagone.game.model.HexDialogState.Info
+import com.pointlessgames.hexagone.game.model.HexDialogState.PauseMenu
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
@@ -70,6 +73,10 @@ import hexagone.shared.generated.resources.done
 import hexagone.shared.generated.resources.ic_delete
 import hexagone.shared.generated.resources.ic_diamond
 import hexagone.shared.generated.resources.ic_star
+import hexagone.shared.generated.resources.pause_message
+import hexagone.shared.generated.resources.pause_title
+import hexagone.shared.generated.resources.restart_button
+import hexagone.shared.generated.resources.resume
 import hexagone.shared.generated.resources.shop_insufficient_balance
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -123,165 +130,253 @@ fun HexAlertDialog(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
                     ) {
-                        val (title, message, isError, onConfirm, icon) = when (state) {
-                            is com.pointlessgames.hexagone.game.model.HexDialogState.Confirmation -> {
-                                val msg =
-                                    stringResource(state.message, *state.formatArgs.toTypedArray())
-                                Quintuple(
-                                    stringResource(state.title),
-                                    msg,
-                                    false,
-                                    state.onConfirm,
-                                    Res.drawable.ic_diamond,
-                                )
-                            }
-
-                            is com.pointlessgames.hexagone.game.model.HexDialogState.Info -> {
-                                val msg = if (state.messageText != null) {
-                                    state.messageText
-                                } else if (state.message != null) {
-                                    stringResource(state.message, *state.formatArgs.toTypedArray())
-                                } else ""
-                                Quintuple(
-                                    stringResource(state.title),
-                                    msg,
-                                    state.isError,
-                                    null,
-                                    if (state.isError) Res.drawable.ic_delete else Res.drawable.ic_star,
-                                )
-                            }
-                        }
-
-                        // Large Type-based Icon
-                        Box(
-                            modifier = Modifier
-                                .size(64.dp.scaled)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.05f))
-                                .padding(12.dp.scaled),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                painter = painterResource(icon),
-                                contentDescription = null,
-                                tint = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        }
-
-                        Spacer(Modifier.height(spacing.extraSmall.scaled))
-
-                        Text(
-                            text = title.uppercase(),
-                            color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 20.sp.scaled,
-                            letterSpacing = 2.sp.scaled,
-                            textAlign = TextAlign.Center,
-                        )
-
-                        Text(
-                            text = message,
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp.scaled,
-                            textAlign = TextAlign.Center,
-                            lineHeight = 22.sp.scaled,
-                        )
-
-                        Spacer(Modifier.height(spacing.medium.scaled))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(
-                                spacing.medium.scaled,
-                                Alignment.CenterHorizontally,
-                            ),
-                        ) {
+                        if (state is PauseMenu) {
                             val playButtonSound = rememberPlayButtonSound()
-                            if (onConfirm != null) {
-                                // Cancel Option
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surface, CircleShape)
-                                        .border(
-                                            1.dp.scaled,
-                                            Color.White.copy(alpha = 0.1f),
-                                            CircleShape,
-                                        )
-                                        .clickable {
-                                            playButtonSound()
-                                            onDismiss()
-                                        }
-                                        .padding(vertical = spacing.medium.scaled),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        text = stringResource(Res.string.cancel).uppercase(),
-                                        color = Color.White.copy(alpha = 0.6f),
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp.scaled,
-                                    )
-                                }
+                            Spacer(Modifier.height(spacing.extraSmall.scaled))
 
-                                // Primary Confirm Action with Pulse
-                                val infiniteTransition =
-                                    rememberInfiniteTransition(label = "btn_pulse")
-                                val pulseAlpha by infiniteTransition.animateFloat(
-                                    initialValue = 0.8f,
-                                    targetValue = 1f,
-                                    animationSpec = infiniteRepeatable(
-                                        animation = tween(1000),
-                                        repeatMode = RepeatMode.Reverse,
-                                    ),
-                                    label = "alpha",
-                                )
+                            Text(
+                                text = stringResource(Res.string.pause_title).uppercase(),
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 20.sp.scaled,
+                                letterSpacing = 2.sp.scaled,
+                                textAlign = TextAlign.Center,
+                            )
 
+                            Text(
+                                text = stringResource(Res.string.pause_message),
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp.scaled,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 22.sp.scaled,
+                            )
+
+                            Spacer(Modifier.height(spacing.medium.scaled))
+
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
                                 Box(
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .clip(CircleShape)
-                                        .background(
-                                            MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha),
-                                            CircleShape,
-                                        )
-                                        .clickable {
-                                            playButtonSound()
-                                            onConfirm()
-                                            onDismiss()
-                                        }
-                                        .padding(vertical = spacing.medium.scaled),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        text = stringResource(Res.string.confirm).uppercase(),
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 14.sp.scaled,
-                                    )
-                                }
-                            } else {
-                                // OK / Dismiss Button
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(0.6f)
+                                        .fillMaxWidth()
                                         .clip(CircleShape)
                                         .background(MaterialTheme.colorScheme.primary, CircleShape)
                                         .clickable {
                                             playButtonSound()
+                                            state.onResume()
                                             onDismiss()
                                         }
                                         .padding(vertical = spacing.medium.scaled),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
-                                        text = stringResource(Res.string.done).uppercase(),
+                                        text = stringResource(Res.string.resume).uppercase(),
                                         color = Color.White,
                                         fontWeight = FontWeight.Black,
                                         fontSize = 14.sp.scaled,
                                     )
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surface, CircleShape)
+                                        .border(
+                                            1.dp.scaled,
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                            CircleShape,
+                                        )
+                                        .clickable {
+                                            playButtonSound()
+                                            state.onRestart()
+                                            onDismiss()
+                                        }
+                                        .padding(vertical = spacing.medium.scaled),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.restart_button).uppercase(),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp.scaled,
+                                    )
+                                }
+                            }
+                        } else {
+                            val (title, message, isError, onConfirm, icon) = when (state) {
+                                is Confirmation -> {
+                                    val msg =
+                                        stringResource(
+                                            state.message,
+                                            *state.formatArgs.toTypedArray(),
+                                        )
+                                    Quintuple(
+                                        stringResource(state.title),
+                                        msg,
+                                        false,
+                                        state.onConfirm,
+                                        Res.drawable.ic_diamond,
+                                    )
+                                }
+
+                                is Info -> {
+                                    val msg = state.messageText ?: if (state.message != null) {
+                                        stringResource(
+                                            state.message,
+                                            *state.formatArgs.toTypedArray(),
+                                        )
+                                    } else ""
+                                    Quintuple(
+                                        stringResource(state.title),
+                                        msg,
+                                        state.isError,
+                                        null,
+                                        if (state.isError) Res.drawable.ic_delete else Res.drawable.ic_star,
+                                    )
+                                }
+                            }
+
+                            // Large Type-based Icon
+                            Box(
+                                modifier = Modifier
+                                    .size(64.dp.scaled)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(alpha = 0.05f))
+                                    .padding(12.dp.scaled),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    painter = painterResource(icon),
+                                    contentDescription = null,
+                                    tint = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
+
+                            Spacer(Modifier.height(spacing.extraSmall.scaled))
+
+                            Text(
+                                text = title.uppercase(),
+                                color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 20.sp.scaled,
+                                letterSpacing = 2.sp.scaled,
+                                textAlign = TextAlign.Center,
+                            )
+
+                            Text(
+                                text = message,
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp.scaled,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 22.sp.scaled,
+                            )
+
+                            Spacer(Modifier.height(spacing.medium.scaled))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(
+                                    spacing.medium.scaled,
+                                    Alignment.CenterHorizontally,
+                                ),
+                            ) {
+                                val playButtonSound = rememberPlayButtonSound()
+                                if (onConfirm != null) {
+                                    // Cancel Option
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(CircleShape)
+                                            .background(
+                                                MaterialTheme.colorScheme.surface,
+                                                CircleShape,
+                                            )
+                                            .border(
+                                                1.dp.scaled,
+                                                Color.White.copy(alpha = 0.1f),
+                                                CircleShape,
+                                            )
+                                            .clickable {
+                                                playButtonSound()
+                                                onDismiss()
+                                            }
+                                            .padding(vertical = spacing.medium.scaled),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text(
+                                            text = stringResource(Res.string.cancel).uppercase(),
+                                            color = Color.White.copy(alpha = 0.6f),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp.scaled,
+                                        )
+                                    }
+
+                                    // Primary Confirm Action with Pulse
+                                    val infiniteTransition =
+                                        rememberInfiniteTransition(label = "btn_pulse")
+                                    val pulseAlpha by infiniteTransition.animateFloat(
+                                        initialValue = 0.8f,
+                                        targetValue = 1f,
+                                        animationSpec = infiniteRepeatable(
+                                            animation = tween(1000),
+                                            repeatMode = RepeatMode.Reverse,
+                                        ),
+                                        label = "alpha",
+                                    )
+
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(CircleShape)
+                                            .background(
+                                                MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha),
+                                                CircleShape,
+                                            )
+                                            .clickable {
+                                                playButtonSound()
+                                                onConfirm()
+                                                onDismiss()
+                                            }
+                                            .padding(vertical = spacing.medium.scaled),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text(
+                                            text = stringResource(Res.string.confirm).uppercase(),
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 14.sp.scaled,
+                                        )
+                                    }
+                                } else {
+                                    // OK / Dismiss Button
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth(0.6f)
+                                            .clip(CircleShape)
+                                            .background(
+                                                MaterialTheme.colorScheme.primary,
+                                                CircleShape,
+                                            )
+                                            .clickable {
+                                                playButtonSound()
+                                                onDismiss()
+                                            }
+                                            .padding(vertical = spacing.medium.scaled),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text(
+                                            text = stringResource(Res.string.done).uppercase(),
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 14.sp.scaled,
+                                        )
+                                    }
                                 }
                             }
                         }

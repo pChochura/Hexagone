@@ -9,7 +9,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,7 +37,14 @@ import com.pointlessgames.hexagone.game.model.MissionRefreshState
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.*
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.mission_refresh_keep_button
+import hexagone.shared.generated.resources.mission_refresh_lost_desc
+import hexagone.shared.generated.resources.mission_refresh_lost_title
+import hexagone.shared.generated.resources.mission_refresh_reset_button
+import hexagone.shared.generated.resources.mission_refresh_restore_desc
+import hexagone.shared.generated.resources.mission_refresh_restore_title
+import hexagone.shared.generated.resources.tip_button_got_it
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -90,7 +104,6 @@ internal fun MissionRefreshPopup(
                     val title = when (state) {
                         is MissionRefreshState.CAN_KEEP -> stringResource(Res.string.mission_refresh_restore_title)
                         is MissionRefreshState.HARD_REFRESH -> stringResource(Res.string.mission_refresh_lost_title)
-                        else -> ""
                     }
 
                     Text(
@@ -108,7 +121,6 @@ internal fun MissionRefreshPopup(
                             stringResource(Res.string.mission_refresh_restore_desc, formattedDate)
                         }
                         is MissionRefreshState.HARD_REFRESH -> stringResource(Res.string.mission_refresh_lost_desc)
-                        else -> ""
                     }
 
                     Text(
