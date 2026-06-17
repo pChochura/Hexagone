@@ -53,19 +53,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle.State.RESUMED
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.pointlessgames.hexagone.LocalMediaPlayer
 import com.pointlessgames.hexagone.LocalNavigator
 import com.pointlessgames.hexagone.Route
-import com.pointlessgames.hexagone.data.SettingsRepository
+import com.pointlessgames.hexagone.auth.ui.components.NicknamePopup
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.ComboTier
 import com.pointlessgames.hexagone.game.model.GameEffect
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.TipTarget
-import com.pointlessgames.hexagone.auth.ui.components.NicknamePopup
 import com.pointlessgames.hexagone.game.ui.components.AchievementNotification
 import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
@@ -84,14 +81,11 @@ import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.utils.BackHandler
 import com.pointlessgames.hexagone.utils.SoundManager
 import com.pointlessgames.hexagone.utils.isDebug
-import eu.iamkonstantin.kotlin.gadulka.GadulkaPlayerState
-import eu.iamkonstantin.kotlin.gadulka.rememberGadulkaLiveState
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.no_moves_left_warning
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 
 @Composable
 internal fun GameScreen(
@@ -101,39 +95,6 @@ internal fun GameScreen(
     val navigator = LocalNavigator.current
     val player = LocalMediaPlayer.current
     val coroutineScope = rememberCoroutineScope()
-
-    val bgMusicState = rememberGadulkaLiveState()
-    val settingsRepository = koinInject<SettingsRepository>()
-    val isBgMusicEnabled by remember(settingsRepository) {
-        settingsRepository.getBgMusicEnabledFlow()
-    }.collectAsState(true)
-
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
-    val isAppForeground = lifecycleState.isAtLeast(RESUMED)
-
-    LaunchedEffect(isBgMusicEnabled, bgMusicState.state, isAppForeground) {
-        if (isBgMusicEnabled && isAppForeground) {
-            if (bgMusicState.state == GadulkaPlayerState.IDLE) {
-                if (bgMusicState.state == GadulkaPlayerState.IDLE) {
-                    val url = SoundManager.getFileUrl("bg_music.wav")
-                    url?.let { bgMusicState.player.play(it) }
-                } else if (bgMusicState.state == GadulkaPlayerState.PAUSED) {
-                    bgMusicState.player.play()
-                }
-            }
-        } else if (bgMusicState.state != GadulkaPlayerState.IDLE) {
-            if (isBgMusicEnabled && !isAppForeground) {
-                bgMusicState.player.stop()
-                if (bgMusicState.state == GadulkaPlayerState.PLAYING || bgMusicState.state == GadulkaPlayerState.BUFFERING) {
-                    bgMusicState.player.pause()
-                }
-            } else if (!isBgMusicEnabled && bgMusicState.state != GadulkaPlayerState.IDLE) {
-                bgMusicState.player.stop()
-            }
-        }
-
-    }
 
     val uiState = viewModel.uiState
     val isSoundEnabledState = remember(uiState) {

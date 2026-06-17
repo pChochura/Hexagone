@@ -14,6 +14,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.Lifecycle
+import com.pointlessgames.hexagone.data.SettingsRepository
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,8 +32,11 @@ import com.pointlessgames.hexagone.ui.theme.SMALL_DEVICE_THRESHOLD_DP
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.iconsSize
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.utils.SoundManager
 import eu.iamkonstantin.kotlin.gadulka.GadulkaPlayer
+import eu.iamkonstantin.kotlin.gadulka.GadulkaPlayerState
 import eu.iamkonstantin.kotlin.gadulka.rememberGadulkaState
+import eu.iamkonstantin.kotlin.gadulka.rememberGadulkaLiveState
 import org.koin.compose.koinInject
 
 @Composable
@@ -52,6 +59,35 @@ fun App(modifier: Modifier = Modifier) {
 
                 val leaderboardRepository = koinInject<LeaderboardRepository>()
                 var startingRoute by remember { mutableStateOf<Route?>(null) }
+
+                val bgMusicState = rememberGadulkaLiveState()
+                val settingsRepository = koinInject<SettingsRepository>()
+                val isBgMusicEnabled by remember(settingsRepository) {
+                    settingsRepository.getBgMusicEnabledFlow()
+                }.collectAsState(true)
+
+                val lifecycleOwner = LocalLifecycleOwner.current
+                val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
+                val isAppForeground = lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
+
+                LaunchedEffect(isBgMusicEnabled, bgMusicState.state, isAppForeground) {
+                    if (isBgMusicEnabled && isAppForeground) {
+                        if (bgMusicState.state == GadulkaPlayerState.IDLE) {
+                            val url = SoundManager.getFileUrl("bg_music.wav")
+                            url?.let { bgMusicState.player.play(it) }
+                        } else if (bgMusicState.state == GadulkaPlayerState.PAUSED) {
+                            bgMusicState.player.play()
+                        }
+                    } else if (bgMusicState.state != GadulkaPlayerState.IDLE) {
+                        if (isBgMusicEnabled && !isAppForeground) {
+                            if (bgMusicState.state == GadulkaPlayerState.PLAYING || bgMusicState.state == GadulkaPlayerState.BUFFERING) {
+                                bgMusicState.player.pause()
+                            }
+                        } else if (!isBgMusicEnabled) {
+                            bgMusicState.player.stop()
+                        }
+                    }
+                }
 
                 LaunchedEffect(Unit) {
                     leaderboardRepository.syncPendingScores()
