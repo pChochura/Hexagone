@@ -159,6 +159,9 @@
     <string name="onboarding_subtitle">Enter your username to start your journey.</string>
     <string name="onboarding_username_placeholder">Username</string>
     <string name="onboarding_submit">START</string>
+    <string name="onboarding_nickname_prompt">SET NICKNAME TO SAVE SCORE</string>
+    <string name="onboarding_nickname_empty">Nickname cannot be empty</string>
+    <string name="onboarding_nickname_error">Failed to set nickname</string>
     <string name="login_subtitle">Create an account or log in to start.</string>
     <string name="login_as_guest">Kontynuuj jako gość</string>
     <string name="login_with_google">Zaloguj się przez Google</string>

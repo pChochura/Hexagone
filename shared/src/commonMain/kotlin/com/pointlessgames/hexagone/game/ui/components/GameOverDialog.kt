@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +43,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pointlessgames.hexagone.auth.ui.components.AuthButton
+import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.game.model.ChallengeGoal
 import com.pointlessgames.hexagone.game.model.DailyChallengeProgress
 import com.pointlessgames.hexagone.game.model.RankingInfo
@@ -81,6 +84,7 @@ import hexagone.shared.generated.resources.label_max_piece
 import hexagone.shared.generated.resources.leaderboard_disabled_debug
 import hexagone.shared.generated.resources.leaderboard_title
 import hexagone.shared.generated.resources.new_best_label
+import hexagone.shared.generated.resources.onboarding_nickname_prompt
 import hexagone.shared.generated.resources.pattern_great_wall
 import hexagone.shared.generated.resources.pattern_ring_of_fire
 import hexagone.shared.generated.resources.pattern_the_prism
@@ -96,6 +100,7 @@ import hexagone.shared.generated.resources.tooltip_share
 import hexagone.shared.generated.resources.tooltip_view_board
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 
 @Composable
 internal fun GameOverDialog(
@@ -113,6 +118,8 @@ internal fun GameOverDialog(
     onRestart: () -> Unit,
     onShare: () -> Unit,
     onLeaderboard: () -> Unit,
+    onNicknamePrompt: () -> Unit = {},
+    playerName: String? = null,
 ) {
     val animatedScore by animateIntAsState(
         targetValue = score,
@@ -248,6 +255,18 @@ internal fun GameOverDialog(
                             onShare = onShare,
                             onLeaderboard = onLeaderboard
                         )
+
+                        if (playerName == null) {
+                            Spacer(Modifier.height(spacing.medium.scaled))
+                            AuthButton(
+                                text = stringResource(Res.string.onboarding_nickname_prompt),
+                                onClick = onNicknamePrompt,
+                                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                contentColor = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.fillMaxWidth(0.8f),
+                                borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                            )
+                        }
                     }
                 }
             } else {
@@ -263,6 +282,18 @@ internal fun GameOverDialog(
                     debugUsed = debugUsed,
                     spacing = spacing
                 )
+
+                if (playerName == null) {
+                    Spacer(Modifier.height(spacing.large.scaled))
+                    AuthButton(
+                        text = stringResource(Res.string.onboarding_nickname_prompt),
+                        onClick = onNicknamePrompt,
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.fillMaxWidth(0.9f),
+                        borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                    )
+                }
 
                 if (completedChallenges.isNotEmpty()) {
                     Spacer(Modifier.height(spacing.large.scaled))

@@ -36,6 +36,8 @@ import com.pointlessgames.hexagone.game.model.TipTarget.GRID
 import com.pointlessgames.hexagone.game.model.TipTarget.PERK_BAR
 import com.pointlessgames.hexagone.game.model.TipTarget.SCORE_SECTION
 import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.onboarding_nickname_empty
+import hexagone.shared.generated.resources.onboarding_nickname_error
 import hexagone.shared.generated.resources.shop_buy_confirmation_message
 import hexagone.shared.generated.resources.shop_buy_confirmation_title
 import hexagone.shared.generated.resources.shop_buy_failure_message
@@ -190,6 +192,11 @@ internal class GameViewModel(
         viewModelScope.launch {
             settingsRepository.getSoundEnabledFlow().collect { soundEnabled ->
                 _uiState.update { it.copy(isSoundEnabled = soundEnabled) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.getPlayerNameFlow().collect { name ->
+                _uiState.update { it.copy(playerName = name) }
             }
         }
         viewModelScope.launch {
@@ -754,7 +761,7 @@ internal class GameViewModel(
                     level = state.level,
                     perksUsed = state.perksUsedTracking,
                     perksAvailable = state.collectedPerks,
-                    region = settingsRepository.getPlayerRegion() ?: "Global",
+                    username = settingsRepository.getPlayerName() ?: "Unknown",
                     dailyChallenges = state.dailyChallenges,
                 )
 
@@ -983,6 +990,45 @@ internal class GameViewModel(
             billingManager.purchase(product)
             _uiState.update { it.copy(isShopProcessing = false) }
             inFlightActions.update { it - 1 }
+        }
+    }
+
+    fun onShowNicknamePopup() {
+        _uiState.update { it.copy(isNicknamePopupVisible = true, tempNickname = "", nicknameError = null) }
+    }
+
+    fun onNicknameChanged(name: String) {
+        _uiState.update { it.copy(tempNickname = name, nicknameError = null) }
+    }
+
+    fun onDismissNicknamePopup() {
+        _uiState.update { it.copy(isNicknamePopupVisible = false) }
+    }
+
+    fun onConfirmNickname() {
+        val name = _uiState.value.tempNickname.trim()
+        if (name.isEmpty()) {
+            viewModelScope.launch {
+                _uiState.update { it.copy(nicknameError = getString(Res.string.onboarding_nickname_empty)) }
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isBusy = true) }
+            try {
+                leaderboardRepository.createProfile(name)
+                _uiState.update { it.copy(isNicknamePopupVisible = false, isBusy = false) }
+
+                // If game is over, re-trigger submission with the new nickname
+                val finalResult = _uiState.value.finalResult
+                if (_uiState.value.isGameOver && finalResult != null && !_uiState.value.debugUsed) {
+                    val rankInfo = leaderboardRepository.submitResult(finalResult)
+                    _uiState.update { it.copy(currentRank = rankInfo) }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(nicknameError = e.message ?: getString(Res.string.onboarding_nickname_error), isBusy = false) }
+            }
         }
     }
 

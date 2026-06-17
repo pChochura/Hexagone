@@ -18,6 +18,7 @@ interface SettingsRepository {
     suspend fun setBestScore(score: Int): Preferences
     suspend fun getPlayerId(): String?
     suspend fun setPlayerId(id: String?): Preferences
+    fun getPlayerNameFlow(): kotlinx.coroutines.flow.Flow<String?>
     suspend fun getPlayerName(): String?
     suspend fun setPlayerName(name: String?): Preferences
     fun getSoundEnabledFlow(): kotlinx.coroutines.flow.Flow<Boolean>
@@ -148,6 +149,12 @@ class DataStoreSettingsRepository(
                     prefs[playerIdKey] = id
                 }
             }
+        }
+    }
+
+    override fun getPlayerNameFlow(): kotlinx.coroutines.flow.Flow<String?> {
+        return appSettings.data.map { preferences ->
+            preferences[playerNameKey]
         }
     }
 

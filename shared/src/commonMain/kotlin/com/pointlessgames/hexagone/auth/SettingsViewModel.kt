@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.onboarding_nickname_empty
 
 internal class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
@@ -92,7 +95,9 @@ internal class SettingsViewModel(
     fun updateNickname() {
         val newName = _uiState.value.nickname.trim()
         if (newName.isEmpty()) {
-            _uiState.value = _uiState.value.copy(error = "Nickname cannot be empty")
+            viewModelScope.launch {
+                _uiState.value = _uiState.value.copy(error = getString(Res.string.onboarding_nickname_empty))
+            }
             return
         }
         if (newName == _uiState.value.originalNickname) return

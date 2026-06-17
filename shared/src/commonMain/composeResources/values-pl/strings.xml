@@ -135,6 +135,9 @@
     <string name="onboarding_subtitle">Wprowadź nazwę użytkownika, aby rozpocząć przygodę.</string>
     <string name="onboarding_username_placeholder">Nazwa użytkownika</string>
     <string name="onboarding_submit">START</string>
+    <string name="onboarding_nickname_prompt">USTAW NICK, ABY ZAPISAĆ WYNIK</string>
+    <string name="onboarding_nickname_empty">Pseudonim nie może być pusty</string>
+    <string name="onboarding_nickname_error">Nie udało się ustawić pseudonimu</string>
     <string name="login_subtitle">Utwórz konto lub się zaloguj, żeby rozpocząć.</string>
     <string name="login_as_guest">Continue as guest</string>
     <string name="login_with_google">Sign in with Google</string>

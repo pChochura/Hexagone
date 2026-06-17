@@ -65,6 +65,7 @@ import com.pointlessgames.hexagone.game.model.ComboTier
 import com.pointlessgames.hexagone.game.model.GameEffect
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.TipTarget
+import com.pointlessgames.hexagone.auth.ui.components.NicknamePopup
 import com.pointlessgames.hexagone.game.ui.components.AchievementNotification
 import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
 import com.pointlessgames.hexagone.game.ui.components.GameGridOverlay
@@ -197,6 +198,26 @@ internal fun GameScreen(
         uiState.map { it.isPerksBankVisible }.distinctUntilChanged()
     }.collectAsState(
         viewModel.uiState.value.isPerksBankVisible,
+    )
+    val isNicknamePopupVisibleState = remember(uiState) {
+        uiState.map { it.isNicknamePopupVisible }.distinctUntilChanged()
+    }.collectAsState(
+        viewModel.uiState.value.isNicknamePopupVisible,
+    )
+    val tempNicknameState = remember(uiState) {
+        uiState.map { it.tempNickname }.distinctUntilChanged()
+    }.collectAsState(
+        viewModel.uiState.value.tempNickname,
+    )
+    val nicknameErrorState = remember(uiState) {
+        uiState.map { it.nicknameError }.distinctUntilChanged()
+    }.collectAsState(
+        viewModel.uiState.value.nicknameError,
+    )
+    val playerNameState = remember(uiState) {
+        uiState.map { it.playerName }.distinctUntilChanged()
+    }.collectAsState(
+        viewModel.uiState.value.playerName,
     )
 
     // Helper delegates for GameScreen's own logic.
@@ -928,6 +949,8 @@ internal fun GameScreen(
             onDeclineRevive = viewModel::onDeclineRevive,
             debugUsedProvider = debugUsedProvider,
             finalResultProvider = finalResultProvider,
+            onNicknamePrompt = viewModel::onShowNicknamePopup,
+            playerNameProvider = { playerNameState.value },
             modifier = Modifier.trackTipTarget(TipTarget.GAME_OVER_BUTTONS) { target, rect ->
                 targetRects[target] = rect
             },
@@ -973,6 +996,16 @@ internal fun GameScreen(
                 onDismiss = viewModel::onDismissVoucherSelection,
             )
         }
+
+        NicknamePopup(
+            visible = isNicknamePopupVisibleState.value,
+            name = tempNicknameState.value,
+            onNameChanged = viewModel::onNicknameChanged,
+            onConfirm = viewModel::onConfirmNickname,
+            onDismiss = viewModel::onDismissNicknamePopup,
+            isLoading = uiState.value.isBusy,
+            error = nicknameErrorState.value,
+        )
 
         if (activeDialog != null) {
             HexAlertDialog(

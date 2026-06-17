@@ -104,6 +104,10 @@ data class GameUiState(
     val showReviveOption: Boolean = false,
     val hasRevived: Boolean = false,
     val activeDialog: HexDialogState? = null,
+    val isNicknamePopupVisible: Boolean = false,
+    val tempNickname: String = "",
+    val nicknameError: String? = null,
+    val playerName: String? = null,
 ) {
     fun consumePerk(perk: Perk): GameUiState {
         val perkIndex = collectedPerks.indexOf(perk)

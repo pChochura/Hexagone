@@ -45,7 +45,7 @@ internal fun SettingsScreen(
     LaunchedEffect(uiState.isLoggedOut) {
         if (uiState.isLoggedOut) {
             viewModel.consumeLoggedOut()
-            navigator.replaceAll(Route.Login)
+            navigator.replaceAll(Route.Game)
         }
     }
 

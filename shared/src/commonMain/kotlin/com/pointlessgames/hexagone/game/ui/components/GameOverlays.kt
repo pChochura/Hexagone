@@ -97,6 +97,8 @@ internal fun GameOverlays(
     onDeclineRevive: () -> Unit = {},
     debugUsedProvider: () -> Boolean = { false },
     finalResultProvider: () -> DetailedGameResult? = { null },
+    onNicknamePrompt: () -> Unit = {},
+    playerNameProvider: () -> String? = { null },
 ) {
     val isGameOver = isGameOverProvider()
     val showReviveOption = showReviveOptionProvider()
@@ -284,10 +286,12 @@ internal fun GameOverlays(
                     dailyChallenges = finalResult?.dailyChallenges ?: emptyList(),
                     persistentCompletedMissionIds = persistentCompletedMissionIdsProvider(),
                     debugUsed = debugUsedProvider(),
+                    playerName = playerNameProvider(),
                     onViewBoard = onViewBoardToggle,
                     onRestart = onRestart,
                     onShare = onShare,
                     onLeaderboard = onLeaderboard,
+                    onNicknamePrompt = onNicknamePrompt,
                 )
             }
 
