@@ -213,3 +213,9 @@ Hexagone features a multi-layered audio system built for immersive feedback:
 *   **High-Fidelity Components**: Reusable components like `AuthButton` and `HexagonIconButton` ensure visual consistency.
 *   **Shallow UI Tree**: Optimized layouts using `Arrangement.spacedBy()` and modifier stacking.
 *   **Consistent Immersive Depth**: Content visibility through translucent headers is standard.
+
+### Immersive Gestures
+*   **Swipe-to-Pause/Restart**: Instead of relying on hardware back buttons, pausing the game uses a seamless pull-down gesture on the gameplay area.
+    *   **Visual Feedback**: As the user drags down, the main game board and score sections smoothly animate downward and fade to translucent. This is implemented via `graphicsLayer` for GPU-optimized, zero-recomposition performance.
+    *   **Threshold Trigger**: The "Restart?" menu only triggers if the drag distance passes a specific threshold before the finger is released, preventing accidental pauses.
+    *   **Focused Intent**: The pause menu is stripped of generic "Quit" options. It only prompts the user to either Resume or Restart, explicitly detailing the progress at risk (score, perks, level, and daily missions) to maximize retention and focus.
