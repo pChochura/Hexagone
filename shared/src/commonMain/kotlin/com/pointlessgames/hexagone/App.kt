@@ -64,14 +64,14 @@ fun App(modifier: Modifier = Modifier) {
                 val settingsRepository = koinInject<SettingsRepository>()
                 val isBgMusicEnabled by remember(settingsRepository) {
                     settingsRepository.getBgMusicEnabledFlow()
-                }.collectAsState(true)
+                }.collectAsState(initial = null)
 
                 val lifecycleOwner = LocalLifecycleOwner.current
                 val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
                 val isAppForeground = lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
 
                 LaunchedEffect(isBgMusicEnabled, bgMusicState.state, isAppForeground) {
-                    if (isBgMusicEnabled && isAppForeground) {
+                    if (isBgMusicEnabled == true && isAppForeground) {
                         if (bgMusicState.state == GadulkaPlayerState.IDLE) {
                             val url = SoundManager.getFileUrl("bg_music.wav")
                             url?.let { bgMusicState.player.play(it) }
@@ -79,11 +79,11 @@ fun App(modifier: Modifier = Modifier) {
                             bgMusicState.player.play()
                         }
                     } else if (bgMusicState.state != GadulkaPlayerState.IDLE) {
-                        if (isBgMusicEnabled && !isAppForeground) {
+                        if (isBgMusicEnabled == true && !isAppForeground) {
                             if (bgMusicState.state == GadulkaPlayerState.PLAYING || bgMusicState.state == GadulkaPlayerState.BUFFERING) {
                                 bgMusicState.player.pause()
                             }
-                        } else if (!isBgMusicEnabled) {
+                        } else if (isBgMusicEnabled == false) {
                             bgMusicState.player.stop()
                         }
                     }
