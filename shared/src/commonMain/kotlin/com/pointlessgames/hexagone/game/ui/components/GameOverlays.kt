@@ -198,50 +198,6 @@ internal fun GameOverlays(
                     },
             )
 
-            AnimatedVisibility(
-                visible = activeTierReward != null,
-                enter = fadeIn(tween(600)) + scaleIn(
-                    initialScale = 0.8f,
-                    animationSpec = tween(600, easing = EaseOutExpo),
-                ),
-                exit = fadeOut(tween(400)) + scaleOut(
-                    targetScale = 1.2f,
-                    animationSpec = tween(400, easing = EaseInExpo),
-                ),
-                modifier = Modifier.align(Alignment.Center),
-            ) {
-                activeTierReward?.let { (tier, perk) ->
-                    TierRewardOverlay(
-                        tier = tier,
-                        perk = perk,
-                        onFinished = onTierRewardFinished,
-                    )
-                }
-            }
-
-            AnimatedVisibility(
-                visible = activeChallengeReward != null,
-                enter = fadeIn(tween(600)) + scaleIn(
-                    initialScale = 0.8f,
-                    animationSpec = tween(600, easing = EaseOutExpo),
-                ),
-                exit = fadeOut(tween(400)) + scaleOut(
-                    targetScale = 1.2f,
-                    animationSpec = tween(400, easing = EaseInExpo),
-                ),
-                modifier = Modifier.align(Alignment.Center),
-            ) {
-                activeChallengeReward?.let { effect ->
-                    DailyChallengeRewardOverlay(
-                        challenge = effect.challenge,
-                        isFirstTimeToday = effect.isFirstTimeToday,
-                        isDayCompleted = effect.isDayCompleted,
-                        newStreak = effect.newStreak,
-                        onFinished = onChallengeRewardFinished,
-                    )
-                }
-            }
-
             if (perkOptions.isNotEmpty() && activeTierReward == null && activeChallengeReward == null && !showReviveOption) {
                 PerkSelectionDialog(
                     options = perkOptions,
@@ -307,6 +263,50 @@ internal fun GameOverlays(
                     onShare = onShare,
                     onLeaderboard = onLeaderboard,
                 )
+            }
+
+            AnimatedVisibility(
+                visible = activeTierReward != null,
+                enter = fadeIn(tween(600)) + scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = tween(600, easing = EaseOutExpo),
+                ),
+                exit = fadeOut(tween(400)) + scaleOut(
+                    targetScale = 1.2f,
+                    animationSpec = tween(400, easing = EaseInExpo),
+                ),
+                modifier = Modifier.align(Alignment.Center),
+            ) {
+                activeTierReward?.let { (tier, perk) ->
+                    TierRewardOverlay(
+                        tier = tier,
+                        perk = perk,
+                        onFinished = onTierRewardFinished,
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = activeChallengeReward != null && activeTierReward == null,
+                enter = fadeIn(tween(600)) + scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = tween(600, easing = EaseOutExpo),
+                ),
+                exit = fadeOut(tween(400)) + scaleOut(
+                    targetScale = 1.2f,
+                    animationSpec = tween(400, easing = EaseInExpo),
+                ),
+                modifier = Modifier.align(Alignment.Center),
+            ) {
+                activeChallengeReward?.let { effect ->
+                    DailyChallengeRewardOverlay(
+                        challenge = effect.challenge,
+                        isFirstTimeToday = effect.isFirstTimeToday,
+                        isDayCompleted = effect.isDayCompleted,
+                        newStreak = effect.newStreak,
+                        onFinished = onChallengeRewardFinished,
+                    )
+                }
             }
 
             if (confettiPieces.isNotEmpty()) {
