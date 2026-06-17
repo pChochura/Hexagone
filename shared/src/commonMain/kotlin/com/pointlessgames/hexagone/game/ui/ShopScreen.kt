@@ -122,7 +122,10 @@ internal fun ShopScreen(
                             LazyRow(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
-                                contentPadding = PaddingValues(horizontal = spacing.extraLarge.scaled)
+                                contentPadding = PaddingValues(
+                                    horizontal = spacing.extraLarge.scaled,
+                                    vertical = 8.dp.scaled
+                                )
                             ) {
                                 lazyRowItemsIndexed(storeProducts) { index, product ->
                                     val label = when (index) {

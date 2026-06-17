@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -250,12 +249,7 @@ private fun ReviveCard(
     val playButtonSound = rememberPlayButtonSound()
 
     Box(
-        modifier = modifier
-            .padding(top = 10.dp.scaled) // Provide space for the offset badge
-            .graphicsLayer {
-                alpha = if (isEnabled) 1f else 0.5f
-                clip = false // Ensure the badge isn't clipped by the layer bounds
-            },
+        modifier = modifier.padding(top = 16.dp.scaled), // Provide space for the offset badge
         contentAlignment = Alignment.TopCenter
     ) {
         Column(

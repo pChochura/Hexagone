@@ -447,7 +447,7 @@ fun ProductCard(
 ) {
     val playSound = rememberPlayButtonSound()
     val spacing = MaterialTheme.spacing
-    Box(modifier = modifier.padding(vertical = 4.dp.scaled)) {
+    Box(modifier = modifier.padding(top = 12.dp.scaled, bottom = 4.dp.scaled)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -576,56 +576,62 @@ fun ProductGridItem(
     Box(
         modifier = modifier
             .aspectRatio(0.8f) // Vertical orientation
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.background)
-            .border(1.dp.scaled, Color.White.copy(alpha = 0.05f), shape)
-            .clickable(enabled = isEnabled) { playSound(); onClick() }
-            .padding(spacing.medium.scaled),
+            .clickable(enabled = isEnabled) { playSound(); onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.background)
+                .border(1.dp.scaled, Color.White.copy(alpha = 0.05f), shape)
+                .padding(spacing.medium.scaled),
+            contentAlignment = Alignment.Center
         ) {
-            // Icon / Visual Area
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_diamond),
-                    contentDescription = null,
-                    tint = Color(0xFFFFD54F),
-                    modifier = Modifier.size((48.dp.scaled * iconScale))
-                )
-            }
+                // Icon / Visual Area
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_diamond),
+                        contentDescription = null,
+                        tint = Color(0xFFFFD54F),
+                        modifier = Modifier.size((48.dp.scaled * iconScale))
+                    )
+                }
 
-            Text(
-                text = title.uppercase(),
-                color = Color.White,
-                fontWeight = FontWeight.Black,
-                fontSize = 13.sp.scaled,
-                textAlign = TextAlign.Center
-            )
-
-            if (description.isNotEmpty()) {
                 Text(
-                    text = description,
-                    color = Color.White.copy(alpha = 0.4f),
-                    fontSize = 9.sp.scaled,
+                    text = title.uppercase(),
+                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 13.sp.scaled,
+                    textAlign = TextAlign.Center
+                )
+
+                if (description.isNotEmpty()) {
+                    Text(
+                        text = description,
+                        color = Color.White.copy(alpha = 0.4f),
+                        fontSize = 9.sp.scaled,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                Spacer(Modifier.height(spacing.medium.scaled))
+
+                Text(
+                    text = price,
+                    color = Color(0xFF81C784),
+                    fontWeight = FontWeight.Black,
+                    fontSize = 16.sp.scaled,
                     textAlign = TextAlign.Center
                 )
             }
-
-            Spacer(Modifier.height(spacing.medium.scaled))
-
-            Text(
-                text = price,
-                color = Color(0xFF81C784),
-                fontWeight = FontWeight.Black,
-                fontSize = 16.sp.scaled,
-                textAlign = TextAlign.Center
-            )
         }
 
         if (label != null) {
