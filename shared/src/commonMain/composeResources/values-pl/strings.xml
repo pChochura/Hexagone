@@ -157,6 +157,7 @@
     <string name="settings_nickname_hint">Wpisz swoją nazwę gracza</string>
     <string name="settings_change_nickname_button">ZMIEŃ</string>
     <string name="settings_sound">EFEKTY DŹWIĘKOWE</string>
+    <string name="settings_bg_music">MUZYKA W TLE</string>
     <string name="settings_logout_button">WYLOGUJ SIĘ</string>
     <string name="settings_remove_account_button">USUŃ KONTO</string>
     <string name="settings_anonymous_account">Konto Anonimowe</string>

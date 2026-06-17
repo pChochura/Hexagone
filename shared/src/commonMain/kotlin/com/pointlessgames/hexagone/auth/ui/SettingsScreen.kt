@@ -79,6 +79,12 @@ internal fun SettingsScreen(
                     onCheckedChange = { viewModel.toggleSound() }
                 )
 
+                ToggleCard(
+                    label = stringResource(Res.string.settings_bg_music),
+                    checked = uiState.isBgMusicEnabled,
+                    onCheckedChange = { viewModel.toggleBgMusic() }
+                )
+
                 Spacer(modifier = Modifier.height(spacing.medium.scaled))
 
                 AuthButton(

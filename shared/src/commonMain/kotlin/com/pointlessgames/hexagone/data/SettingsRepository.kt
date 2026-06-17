@@ -20,6 +20,9 @@ interface SettingsRepository {
     fun getSoundEnabledFlow(): kotlinx.coroutines.flow.Flow<Boolean>
     suspend fun getSoundEnabled(): Boolean
     suspend fun setSoundEnabled(enabled: Boolean): Preferences
+    fun getBgMusicEnabledFlow(): kotlinx.coroutines.flow.Flow<Boolean>
+    suspend fun getBgMusicEnabled(): Boolean
+    suspend fun setBgMusicEnabled(enabled: Boolean): Preferences
     suspend fun getMergeHintsEnabled(): Boolean
     suspend fun setMergeHintsEnabled(enabled: Boolean): Preferences
     suspend fun getGameState(): String?
@@ -83,6 +86,7 @@ class DataStoreSettingsRepository(
 ) : SettingsRepository {
     private val bestScoreKey = intPreferencesKey("best_score")
     private val soundEnabledKey = booleanPreferencesKey("sound_enabled")
+    private val bgMusicEnabledKey = booleanPreferencesKey("bg_music_enabled")
     private val mergeHintsEnabledKey = booleanPreferencesKey("merge_hints_enabled")
     private val gameStateKey = stringPreferencesKey("game_state")
     private val playerIdKey = stringPreferencesKey("player_id")
@@ -190,6 +194,24 @@ class DataStoreSettingsRepository(
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[soundEnabledKey] = enabled
+            }
+        }
+    }
+
+    override fun getBgMusicEnabledFlow(): kotlinx.coroutines.flow.Flow<Boolean> {
+        return appSettings.data.map { preferences ->
+            preferences[bgMusicEnabledKey] ?: true
+        }
+    }
+
+    override suspend fun getBgMusicEnabled(): Boolean = withContext(Dispatchers.IO) {
+        appSettings.data.first()[bgMusicEnabledKey] ?: true
+    }
+
+    override suspend fun setBgMusicEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[bgMusicEnabledKey] = enabled
             }
         }
     }

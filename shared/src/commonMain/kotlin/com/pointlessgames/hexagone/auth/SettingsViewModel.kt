@@ -29,6 +29,7 @@ internal class SettingsViewModel(
         val isLoggedOut: Boolean = false,
         val showNicknamePopup: Boolean = false,
         val isSoundEnabled: Boolean = true,
+        val isBgMusicEnabled: Boolean = true,
     )
 
     init {
@@ -40,12 +41,14 @@ internal class SettingsViewModel(
             val name = settingsRepository.getPlayerName() ?: ""
             val user = supabaseClient.auth.currentUserOrNull()
             val soundEnabled = settingsRepository.getSoundEnabled()
+            val bgMusicEnabled = settingsRepository.getBgMusicEnabled()
             _uiState.value = _uiState.value.copy(
                 nickname = name,
                 originalNickname = name,
                 isAnonymous = user?.isAnonymous ?: true,
                 isLoggedOut = false,
-                isSoundEnabled = soundEnabled
+                isSoundEnabled = soundEnabled,
+                isBgMusicEnabled = bgMusicEnabled
             )
         }
     }
@@ -59,6 +62,14 @@ internal class SettingsViewModel(
             val newState = !_uiState.value.isSoundEnabled
             settingsRepository.setSoundEnabled(newState)
             _uiState.value = _uiState.value.copy(isSoundEnabled = newState)
+        }
+    }
+
+    fun toggleBgMusic() {
+        viewModelScope.launch {
+            val newState = !_uiState.value.isBgMusicEnabled
+            settingsRepository.setBgMusicEnabled(newState)
+            _uiState.value = _uiState.value.copy(isBgMusicEnabled = newState)
         }
     }
 

@@ -11,28 +11,30 @@ import androidx.compose.runtime.getValue
 object SoundManager {
     private val cache = mutableMapOf<String, String>()
     
+    suspend fun getFileUrl(fileName: String): String? {
+        return try {
+            val cachedPath = cache[fileName] ?: run {
+                val bytes = Res.readBytes("files/sounds/$fileName")
+                val path = writeToTempFile(fileName, bytes)
+                cache[fileName] = path
+                path
+            }
+            if (cachedPath.startsWith("http") || cachedPath.startsWith("file://")) {
+                cachedPath
+            } else {
+                "file://$cachedPath"
+            }
+        } catch (e: Exception) {
+            println("Failed to get sound url: $fileName - ${e.message}")
+            null
+        }
+    }
+    
     fun playSound(player: GadulkaPlayer, fileName: String, scope: CoroutineScope) {
         scope.launch(Dispatchers.Default) {
-            try {
-                val cachedPath = cache[fileName] ?: run {
-                    val bytes = Res.readBytes("files/sounds/$fileName")
-                    val path = writeToTempFile(fileName, bytes)
-                    cache[fileName] = path
-                    path
-                }
-                // Gadulka needs a URL format for local files on some platforms, 
-                // but absolute path usually works. For iOS we might need file:// 
-                // Let's ensure file:// prefix if not present, though Gadulka might handle it.
-                val playUrl = if (cachedPath.startsWith("http") || cachedPath.startsWith("file://")) {
-                    cachedPath
-                } else {
-                    "file://$cachedPath"
-                }
-                kotlinx.coroutines.withContext(Dispatchers.Main) {
-                    player.play(playUrl)
-                }
-            } catch (e: Exception) {
-                println("Failed to play sound: $fileName - ${e.message}")
+            val playUrl = getFileUrl(fileName) ?: return@launch
+            kotlinx.coroutines.withContext(Dispatchers.Main) {
+                player.play(playUrl)
             }
         }
     }
