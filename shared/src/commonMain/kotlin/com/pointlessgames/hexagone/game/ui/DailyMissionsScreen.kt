@@ -119,6 +119,7 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
@@ -497,7 +498,7 @@ private fun NextRewardCard(
 
 @Composable
 private fun RewardItem(
-    icon: org.jetbrains.compose.resources.DrawableResource,
+    icon: DrawableResource,
     label: String,
     color: Color,
     modifier: Modifier = Modifier,

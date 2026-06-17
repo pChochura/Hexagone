@@ -27,7 +27,6 @@ class LocalAchievementManager(
             if (achievement.id !in unlocked) {
                 settingsRepository.setAchievementUnlocked(achievement.id)
                 _unlockedAchievements.emit(achievement)
-                println("Achievement Unlocked: ${achievement.id}")
             }
         }
     }

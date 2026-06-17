@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
@@ -90,7 +91,7 @@ internal fun ShopScreen(
                 )
             ) {
                 if (uiState.isShopLoading) {
-                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -104,7 +105,7 @@ internal fun ShopScreen(
                 } else {
                     // Premium Section Header
                     if (storeProducts.isNotEmpty()) {
-                        item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
                             Column(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
                                 SectionTitle(text = stringResource(Res.string.shop_products_title))
                                 Text(
@@ -117,7 +118,7 @@ internal fun ShopScreen(
                             }
                         }
                         
-                        item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
                             LazyRow(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
@@ -147,7 +148,7 @@ internal fun ShopScreen(
                     }
 
                     // Perk Exchange Section Header
-                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
                         Column(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
                             Spacer(Modifier.height(spacing.large.scaled))
                             SectionTitle(text = stringResource(Res.string.shop_vouchers_title))
@@ -168,7 +169,7 @@ internal fun ShopScreen(
                     )
 
                     // Exchange items are full-width cards to distinguish from products
-                    itemsIndexed(exchangeItems, span = { _, _ -> androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { _, (resId, cost, category) ->
+                    itemsIndexed(exchangeItems, span = { _, _ -> GridItemSpan(maxLineSpan) }) { _, (resId, cost, category) ->
                         val icon = when (category) {
                             PerkCategory.COMMON -> Res.drawable.ic_roll
                             PerkCategory.RARE -> Res.drawable.ic_rare_perk

@@ -117,13 +117,4 @@ object StreakMilestones {
             else -> null
         }
     }
-
-    fun getRandomPerkFromCategory(category: PerkCategory, random: kotlin.random.Random): Perk {
-        val perks = when (category) {
-            PerkCategory.COMMON -> Perk.entries.filter { it.baseWeight >= 80 }
-            PerkCategory.RARE -> Perk.entries.filter { it.baseWeight in 21..79 }
-            PerkCategory.LEGENDARY -> Perk.entries.filter { it.isLegendary }
-        }
-        return perks.random(random)
-    }
 }

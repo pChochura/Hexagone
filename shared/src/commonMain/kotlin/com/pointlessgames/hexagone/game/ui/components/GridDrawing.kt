@@ -1,5 +1,6 @@
 package com.pointlessgames.hexagone.game.ui.components
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -11,6 +12,7 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -19,6 +21,7 @@ import com.pointlessgames.hexagone.game.model.GhostAnimationState
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.PreviewCell
+import com.pointlessgames.hexagone.ui.theme.Spacing
 
 internal fun drawGhost(
     drawScope: DrawScope,
@@ -29,9 +32,9 @@ internal fun drawGhost(
     wiggleValue: Float,
     stripeOffset: Float,
     starPainter: Painter,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer,
-    colorScheme: androidx.compose.material3.ColorScheme,
-    spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
+    textMeasurer: TextMeasurer,
+    colorScheme: ColorScheme,
+    spacing: Spacing,
     isHovered: Boolean = false,
     currentHoverMerge: MergeTransition? = null,
     selectedCellId: String? = null,
@@ -132,7 +135,6 @@ internal fun drawGhost(
 internal fun drawHoverResult(
     drawScope: DrawScope,
     merge: MergeTransition,
-    combo: Int,
     gridStateProvider: () -> List<HexagonCell>,
     previewStateProvider: () -> List<PreviewCell>,
     cellWidth: Float,
@@ -145,9 +147,9 @@ internal fun drawHoverResult(
     floatValue: Float,
     stripeOffset: Float,
     starPainter: Painter,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer,
-    colorScheme: androidx.compose.material3.ColorScheme,
-    spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
+    textMeasurer: TextMeasurer,
+    colorScheme: ColorScheme,
+    spacing: Spacing,
     scoreText: String = "",
 ) {
     val targetOffset = HexagonGridDefaults.calculateOffset(
@@ -249,15 +251,6 @@ internal fun drawHoverResult(
         }
     }
 
-    val displayScore = when {
-        merge.resultId.startsWith("preview_") -> merge.baseScore
-        merge.uniqueGroups > 0 -> {
-            val multiplier = (combo + 1).coerceAtMost(12)
-            merge.baseScore * multiplier
-        }
-
-        else -> merge.baseScore
-    }
     if (scoreText.isNotEmpty()) {
         val scoreTextLayout = textMeasurer.measure(
             text = scoreText,

@@ -202,7 +202,7 @@ sealed interface GameEffect {
     ) : GameEffect
 
     data class AchievementUnlock(
-        val achievement: com.pointlessgames.hexagone.achievements.GameAchievement,
+        val achievement: GameAchievement,
     ) : GameEffect
 
     data class DailyChallengeComplete(
@@ -327,7 +327,6 @@ data class DetailedGameResult(
     val perksUsed: Map<Perk, Int>,
     @SerialName("perks_available")
     val perksAvailable: List<Perk>,
-    val region: String,
     val username: String? = null,
     @SerialName("daily_challenges")
     val dailyChallenges: List<DailyChallengeProgress> = emptyList(),
@@ -337,7 +336,6 @@ data class DetailedGameResult(
 data class PlayerProfile(
     val id: String,
     val username: String,
-    val region: String,
     @SerialName("best_score")
     val bestScore: Int = 0,
 )

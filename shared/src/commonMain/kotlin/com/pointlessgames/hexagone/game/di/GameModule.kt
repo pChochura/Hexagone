@@ -6,12 +6,11 @@ import com.pointlessgames.hexagone.auth.SettingsViewModel
 import com.pointlessgames.hexagone.auth.ui.LoginScreen
 import com.pointlessgames.hexagone.auth.ui.SettingsScreen
 import com.pointlessgames.hexagone.game.GameViewModel
-import com.pointlessgames.hexagone.game.ui.GameScreen
 import com.pointlessgames.hexagone.game.ui.AchievementsScreen
 import com.pointlessgames.hexagone.game.ui.DailyMissionsScreen
-import com.pointlessgames.hexagone.game.ui.LeaderboardScreen
+import com.pointlessgames.hexagone.game.ui.GameScreen
 import com.pointlessgames.hexagone.game.ui.ShopScreen
-import com.pointlessgames.hexagone.leaderboard.LeaderboardViewModel
+import com.pointlessgames.hexagone.leaderboard.ui.LeaderboardScreen
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.module.dsl.viewModelOf

@@ -358,6 +358,7 @@
     <string name="shop_voucher_explanation">Exchanging a voucher will add the selected perk to your current game. This action is permanent and consumes the voucher.</string>
     <string name="add_label">ADD</string>
     <string name="perks_bank_title">PERKS BANK</string>
+    <string name="choose_perk">CHOOSE %1$s PERK</string>
     <string name="available_vouchers_label">%1$d AVAILABLE</string>
     <string name="revive_title">SAVE ME?</string>
     <string name="revive_get_more">GET MORE</string>

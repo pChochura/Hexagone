@@ -104,7 +104,6 @@ internal fun GameOverDialog(
     bestScore: Int,
     level: Int,
     maxCombo: Int,
-    @Suppress("UNUSED_PARAMETER") totalMerges: Int,
     highestValue: Int,
     rankingInfo: RankingInfo?,
     dailyChallenges: List<DailyChallengeProgress> = emptyList(),

@@ -2,6 +2,7 @@ package com.pointlessgames.hexagone.game.logic
 
 import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.PotentialMerge
+import com.pointlessgames.hexagone.game.model.PreviewCell
 
 internal data class PatternResult(val success: Boolean, val containsMimic: Boolean)
 
@@ -107,7 +108,7 @@ internal object PatternRecognitionEngine {
         return grid.all { it.id in allParticipatingIds }
     }
 
-    fun checkQuadruplets(previews: List<com.pointlessgames.hexagone.game.model.PreviewCell>): Boolean {
+    fun checkQuadruplets(previews: List<PreviewCell>): Boolean {
         val normalValues = previews.filter { !it.isMimic }.groupBy { it.value }
         val mimicsCount = previews.count { it.isMimic }
         
@@ -116,7 +117,7 @@ internal object PatternRecognitionEngine {
         return normalValues.any { it.value.size + mimicsCount >= 4 }
     }
 
-    fun checkTheMedium(grid: List<HexagonCell>, previews: List<com.pointlessgames.hexagone.game.model.PreviewCell>, engine: GameEngine): PatternResult {
+    fun checkTheMedium(grid: List<HexagonCell>, previews: List<PreviewCell>, engine: GameEngine): PatternResult {
         // Find if any ghost is in a position where it's surrounded by 6 same-value solid tiles
         val ghostPositions = previews.map { it.x to it.y }
         for ((gx, gy) in ghostPositions) {

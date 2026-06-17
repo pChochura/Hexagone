@@ -18,9 +18,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pointlessgames.hexagone.data.LeaderboardRepository
-import com.pointlessgames.hexagone.ui.theme.*
-import com.pointlessgames.hexagone.utils.LocalResultEventBus
-import com.pointlessgames.hexagone.utils.ResultEventBus
+import com.pointlessgames.hexagone.data.SettingsRepository
+import com.pointlessgames.hexagone.ui.theme.AdaptiveScale
+import com.pointlessgames.hexagone.ui.theme.BASELINE_WIDTH_DP
+import com.pointlessgames.hexagone.ui.theme.HexagoneTheme
+import com.pointlessgames.hexagone.ui.theme.LocalCornerRadius
+import com.pointlessgames.hexagone.ui.theme.LocalIconsSize
+import com.pointlessgames.hexagone.ui.theme.LocalSpacing
+import com.pointlessgames.hexagone.ui.theme.SMALL_DEVICE_THRESHOLD_DP
+import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.iconsSize
+import com.pointlessgames.hexagone.ui.theme.spacing
 import eu.iamkonstantin.kotlin.gadulka.GadulkaPlayer
 import eu.iamkonstantin.kotlin.gadulka.rememberGadulkaState
 import org.koin.compose.koinInject
@@ -44,16 +52,17 @@ fun App(modifier: Modifier = Modifier) {
                 val iconsSize = MaterialTheme.iconsSize
 
                 val leaderboardRepository = koinInject<LeaderboardRepository>()
-                val settingsRepository = koinInject<com.pointlessgames.hexagone.data.SettingsRepository>()
+                val settingsRepository = koinInject<SettingsRepository>()
                 var startingRoute by remember { mutableStateOf<Route?>(null) }
 
                 LaunchedEffect(Unit) {
                     leaderboardRepository.syncPendingScores()
-                    startingRoute = if (settingsRepository.getPlayerId() != null && settingsRepository.getPlayerName() != null) {
-                        Route.Game
-                    } else {
-                        Route.Login
-                    }
+                    startingRoute =
+                        if (settingsRepository.getPlayerId() != null && settingsRepository.getPlayerName() != null) {
+                            Route.Game
+                        } else {
+                            Route.Login
+                        }
                 }
 
                 CompositionLocalProvider(
@@ -61,7 +70,6 @@ fun App(modifier: Modifier = Modifier) {
                     LocalCornerRadius provides cornerRadius,
                     LocalIconsSize provides iconsSize,
                     LocalMediaPlayer provides rememberGadulkaState(),
-                    LocalResultEventBus provides remember { ResultEventBus() },
                 ) {
                     startingRoute?.let {
                         Navigator(it)

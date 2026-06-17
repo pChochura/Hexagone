@@ -100,7 +100,7 @@ internal class SettingsViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                leaderboardRepository.createProfile(newName, settingsRepository.getPlayerRegion() ?: "Global")
+                leaderboardRepository.createProfile(newName)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     originalNickname = newName,

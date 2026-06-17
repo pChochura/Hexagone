@@ -50,7 +50,6 @@ internal class GameEngine(
         currentGrid: List<HexagonCell>,
         existingPreviews: List<PreviewCell>,
         existingPerks: List<OnBoardPerk>,
-        count: Int,
         random: Random,
         initialPreviewIdCounter: Int
     ): Pair<List<PreviewCell>, Int> {
@@ -246,12 +245,6 @@ internal class GameEngine(
             return transition to currentIdCounter
         }
         return null to currentIdCounter
-    }
-
-    fun calculateBlast(x: Int, y: Int, grid: List<HexagonCell>): Set<String> {
-        val radiusCoords = getNeighbors(x, y) + (x to y)
-        return grid.filter { cell -> radiusCoords.any { it.first == cell.x && it.second == cell.y } }
-            .map { it.id }.toSet()
     }
 
     fun calculatePathMerge(x: Int, y: Int, value: Int, grid: List<HexagonCell>, idCounter: Int): Pair<MergeTransition?, Int> {
@@ -552,11 +545,6 @@ internal class GameEngine(
         return result
     }
 
-    fun getPerkDropRate(perk: Perk): Int {
-        val totalWeight = Perk.entries.sumOf { it.baseWeight }
-        return (perk.baseWeight.toFloat() / totalWeight * 100).toInt()
-    }
-
     fun isMovePossible(grid: List<HexagonCell>): Boolean {
         return countPossibleMoves(grid) > 0
     }
@@ -588,10 +576,6 @@ internal class GameEngine(
 
     fun createPreviewCell(x: Int, y: Int, value: Int, id: String? = null, isTactical: Boolean = false, isMimic: Boolean = false): PreviewCell {
         return PreviewCell(id ?: "preview_temp", x, y, value, 0, isTactical, isMimic = isMimic)
-    }
-
-    fun syncCounters(grid: List<HexagonCell>, previews: List<PreviewCell>) {
-        // No longer needed as we use state counters
     }
 
     fun calculateLevel(score: Int): Int {
@@ -687,7 +671,8 @@ internal class GameEngine(
             }
         }
 
-        val nextPreviews = pickRandomPreviews(newState, emptyList(), nextPerks, 3, random, initialPreviewIdCounter)
+        val nextPreviews = pickRandomPreviews(newState, emptyList(), nextPerks,
+            random, initialPreviewIdCounter)
         return Triple(newState, nextPreviews, nextPerks)
     }
 
@@ -812,19 +797,5 @@ internal class GameEngine(
                         }
                     }
         }
-    }
-
-    private fun checkMergeAt(x: Int, y: Int, grid: List<HexagonCell>): Boolean {
-        val neighborCoords = getNeighbors(x, y)
-        val neighborCells = grid.filter { cell ->
-            !cell.isFrozen && neighborCoords.any { it.first == cell.x && it.second == cell.y }
-        }
-        val centerCell = grid.find { it.x == x && it.y == y }?.takeIf { !it.isFrozen }
-        val groups = neighborCells.groupBy { it.value }.toMutableMap()
-        centerCell?.let { center ->
-            val group = groups[center.value] ?: emptyList()
-            groups[center.value] = group + center
-        }
-        return groups.any { it.value.size >= 2 }
     }
 }

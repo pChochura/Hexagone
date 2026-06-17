@@ -54,7 +54,8 @@ internal class LoginViewModel(
             val (initialGrid, initialId) = engine.generateInitialGrid(random)
             cellIdCounter = initialId
             var currentGrid = initialGrid
-            var currentPreviews = engine.pickRandomPreviews(currentGrid, emptyList(), emptyList(), 3, random, 0).first
+            var currentPreviews = engine.pickRandomPreviews(currentGrid, emptyList(), emptyList(),
+                random, 0).first
             
             _uiState.value = _uiState.value.copy(
                 backgroundGrid = currentGrid,
@@ -79,7 +80,8 @@ internal class LoginViewModel(
                     val (resetGrid, resetId) = engine.generateInitialGrid(random)
                     cellIdCounter = resetId
                     currentGrid = resetGrid
-                    currentPreviews = engine.pickRandomPreviews(currentGrid, emptyList(), emptyList(), 3, random, 0).first
+                    currentPreviews = engine.pickRandomPreviews(currentGrid, emptyList(), emptyList(),
+                        random, 0).first
                 } else {
                     val (tx, ty) = emptySpaces.random(random)
                     val spawnValue = random.nextInt(1, 4)
@@ -148,7 +150,7 @@ internal class LoginViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                leaderboardRepository.createProfile(name, "Global")
+                leaderboardRepository.createProfile(name)
                 _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true, showNicknamePopup = false)
             } catch (e: Exception) {
                 e.printStackTrace()

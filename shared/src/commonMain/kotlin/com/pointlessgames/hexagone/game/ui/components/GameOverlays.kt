@@ -43,7 +43,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.logic.PerkCategory
+import com.pointlessgames.hexagone.game.model.ComboTier
 import com.pointlessgames.hexagone.game.model.ConfettiPiece
+import com.pointlessgames.hexagone.game.model.DetailedGameResult
+import com.pointlessgames.hexagone.game.model.GameEffect
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.RankingInfo
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
@@ -69,7 +72,6 @@ internal fun GameOverlays(
     levelProvider: () -> Int,
     diamondsProvider: () -> Int = { 0 },
     maxComboProvider: () -> Int,
-    totalMergesProvider: () -> Int,
     highestValueProvider: () -> Int,
     showBoardProvider: () -> Boolean,
     perkOptionsProvider: () -> List<Perk>,
@@ -81,9 +83,9 @@ internal fun GameOverlays(
     onViewBoardToggle: () -> Unit,
     onShare: () -> Unit,
     onLeaderboard: () -> Unit,
-    activeTierReward: Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>?,
+    activeTierReward: Pair<ComboTier, Perk>?,
     onTierRewardFinished: () -> Unit,
-    activeChallengeReward: com.pointlessgames.hexagone.game.model.GameEffect.DailyChallengeComplete?,
+    activeChallengeReward: GameEffect.DailyChallengeComplete?,
     persistentCompletedMissionIdsProvider: () -> Set<String> = { emptySet() },
     onChallengeRewardFinished: () -> Unit,
     rankingInfoProvider: () -> RankingInfo?,
@@ -94,7 +96,7 @@ internal fun GameOverlays(
     onOpenShop: () -> Unit = {},
     onDeclineRevive: () -> Unit = {},
     debugUsedProvider: () -> Boolean = { false },
-    finalResultProvider: () -> com.pointlessgames.hexagone.game.model.DetailedGameResult? = { null },
+    finalResultProvider: () -> DetailedGameResult? = { null },
 ) {
     val isGameOver = isGameOverProvider()
     val showReviveOption = showReviveOptionProvider()
@@ -103,7 +105,6 @@ internal fun GameOverlays(
     val sessionBestScore = sessionBestScoreProvider()
     val level = levelProvider()
     val maxCombo = maxComboProvider()
-    val totalMerges = totalMergesProvider()
     val highestValue = highestValueProvider()
     val showBoard = showBoardProvider()
     val perkOptions = perkOptionsProvider()
@@ -278,7 +279,6 @@ internal fun GameOverlays(
                     bestScore = sessionBestScore,
                     level = level,
                     maxCombo = maxCombo,
-                    totalMerges = totalMerges,
                     highestValue = highestValue,
                     rankingInfo = rankingInfo,
                     dailyChallenges = finalResult?.dailyChallenges ?: emptyList(),

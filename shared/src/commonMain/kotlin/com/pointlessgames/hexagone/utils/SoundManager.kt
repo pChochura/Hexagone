@@ -1,16 +1,21 @@
 package com.pointlessgames.hexagone.utils
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import com.pointlessgames.hexagone.LocalMediaPlayer
+import com.pointlessgames.hexagone.data.SettingsRepository
 import eu.iamkonstantin.kotlin.gadulka.GadulkaPlayer
 import hexagone.shared.generated.resources.Res
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import org.koin.compose.koinInject
 
 object SoundManager {
     private val cache = mutableMapOf<String, String>()
-    
+
     suspend fun getFileUrl(fileName: String): String? {
         return try {
             val cachedPath = cache[fileName] ?: run {
@@ -29,7 +34,7 @@ object SoundManager {
             null
         }
     }
-    
+
     fun playSound(player: GadulkaPlayer, fileName: String, scope: CoroutineScope) {
         scope.launch(Dispatchers.Default) {
             val playUrl = getFileUrl(fileName) ?: return@launch
@@ -44,12 +49,14 @@ expect fun writeToTempFile(fileName: String, bytes: ByteArray): String
 
 @androidx.compose.runtime.Composable
 fun rememberPlayButtonSound(): () -> Unit {
-    val player = com.pointlessgames.hexagone.LocalMediaPlayer.current
-    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
-    val settingsRepository = org.koin.compose.koinInject<com.pointlessgames.hexagone.data.SettingsRepository>()
-    val isSoundEnabled by androidx.compose.runtime.remember(settingsRepository) { settingsRepository.getSoundEnabledFlow() }.collectAsState(true, context = kotlin.coroutines.EmptyCoroutineContext)
+    val player = LocalMediaPlayer.current
+    val coroutineScope = rememberCoroutineScope()
+    val settingsRepository = koinInject<SettingsRepository>()
+    val isSoundEnabled by remember(settingsRepository) {
+        settingsRepository.getSoundEnabledFlow()
+    }.collectAsState(true)
 
-    return androidx.compose.runtime.remember(player, coroutineScope, isSoundEnabled) {
+    return remember(player, coroutineScope, isSoundEnabled) {
         {
             if (isSoundEnabled) {
                 SoundManager.playSound(player, "button.wav", coroutineScope)

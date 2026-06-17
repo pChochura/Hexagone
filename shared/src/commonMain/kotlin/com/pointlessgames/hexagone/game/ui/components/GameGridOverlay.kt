@@ -2,6 +2,7 @@ package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -89,7 +90,6 @@ internal fun GameGridOverlay(
     activePerkProvider: () -> Perk?,
     selectedCellIdProvider: () -> String?,
     activeMergeStepIndexProvider: () -> Int,
-    comboProvider: () -> Int,
     effects: SharedFlow<GameEffect>,
     onEmptySpaceClick: (Int, Int) -> Unit,
     onEmptySpaceTouchDown: (Int, Int) -> Unit,
@@ -145,7 +145,7 @@ internal fun GameGridOverlay(
             targetValue = 11.5f,
             animationSpec = infiniteRepeatable(
                 animation = tween(3000, easing = LinearEasing),
-                repeatMode = androidx.compose.animation.core.RepeatMode.Restart,
+                repeatMode = RepeatMode.Restart,
             ),
         )
     }
@@ -373,19 +373,19 @@ internal fun GameGridOverlay(
         val wiggleState = infiniteTransition.animateFloat(
             -2f,
             2f,
-            infiniteRepeatable(tween(500), androidx.compose.animation.core.RepeatMode.Reverse),
+            infiniteRepeatable(tween(500), RepeatMode.Reverse),
             label = "wiggle",
         )
         val pulseState = infiniteTransition.animateFloat(
             0.9f,
             1.0f,
-            infiniteRepeatable(tween(800), androidx.compose.animation.core.RepeatMode.Reverse),
+            infiniteRepeatable(tween(800), RepeatMode.Reverse),
             label = "pulse",
         )
         val floatState = infiniteTransition.animateFloat(
             -5f,
             5f,
-            infiniteRepeatable(tween(1200), androidx.compose.animation.core.RepeatMode.Reverse),
+            infiniteRepeatable(tween(1200), RepeatMode.Reverse),
             label = "float",
         )
 
@@ -576,7 +576,6 @@ internal fun GameGridOverlay(
                             drawHoverResult(
                                 drawScope = this,
                                 merge = displayMerge,
-                                combo = comboProvider(),
                                 gridStateProvider = { currentGridState },
                                 previewStateProvider = { currentPreviewState },
                                 cellWidth = cellWidth,

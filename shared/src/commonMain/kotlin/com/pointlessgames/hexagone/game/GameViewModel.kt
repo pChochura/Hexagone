@@ -656,7 +656,6 @@ internal class GameViewModel(
             initialGrid,
             emptyList(),
             emptyList(),
-            3,
             random,
             0,
         )

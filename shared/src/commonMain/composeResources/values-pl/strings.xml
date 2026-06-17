@@ -358,6 +358,7 @@
     <string name="shop_voucher_explanation">Wymiana vouchera doda wybrany perk do Twojej obecnej gry. Ta akcja jest trwała i zużywa voucher.</string>
     <string name="add_label">DODAJ</string>
     <string name="perks_bank_title">BANK PERKÓW</string>
+    <string name="choose_perk">WYBIERZ %1$s PERK</string>
     <string name="available_vouchers_label">DOSTĘPNE: %1$d</string>
     <string name="revive_title">RATUJ MNIE?</string>
     <string name="revive_get_more">ZDOBĄDŹ WIĘCEJ</string>

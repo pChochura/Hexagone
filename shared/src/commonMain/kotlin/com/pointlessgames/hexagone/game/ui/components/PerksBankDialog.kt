@@ -38,9 +38,11 @@ import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.utils.rememberPlayButtonSound
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.available_vouchers_label
 import hexagone.shared.generated.resources.cancel
+import hexagone.shared.generated.resources.choose_perk
 import hexagone.shared.generated.resources.ic_diamond
 import hexagone.shared.generated.resources.ic_left
 import hexagone.shared.generated.resources.ic_right
@@ -65,7 +67,7 @@ internal fun PerksBankDialog(
     modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
-    val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
+    val playButtonSound = rememberPlayButtonSound()
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -89,7 +91,7 @@ internal fun PerksBankDialog(
                         PerkCategory.RARE -> stringResource(Res.string.perk_category_rare)
                         PerkCategory.LEGENDARY -> stringResource(Res.string.perk_category_legendary)
                     }
-                    "CHOOSE $categoryName PERK"
+                    stringResource(Res.string.choose_perk, categoryName)
                 } else {
                     stringResource(Res.string.perks_bank_title)
                 }
@@ -315,22 +317,6 @@ internal fun PerksBankDialog(
             }
         }
     }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun FlowRow(
-    modifier: Modifier = Modifier,
-    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
-    content: @Composable () -> Unit,
-) {
-    androidx.compose.foundation.layout.FlowRow(
-        modifier = modifier,
-        horizontalArrangement = horizontalArrangement,
-        verticalArrangement = verticalArrangement,
-        content = { content() },
-    )
 }
 
 @Preview

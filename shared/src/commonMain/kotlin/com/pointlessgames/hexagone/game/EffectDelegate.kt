@@ -22,10 +22,6 @@ internal class EffectDelegate(
     private val effects: MutableSharedFlow<GameEffect>,
     private val scope: CoroutineScope,
 ) {
-    fun addParticles(newParticles: List<Particle>) = scope.launch {
-        effects.emit(GameEffect.Particles(newParticles))
-    }
-
     fun addMergeParticles(gridX: Int, gridY: Int, value: Int, isPerk: Boolean = false, intensity: Float = 1f, combo: Int = 1) = scope.launch {
         effects.emit(GameEffect.MergeParticles(gridX, gridY, value, isPerk, intensity, combo))
     }

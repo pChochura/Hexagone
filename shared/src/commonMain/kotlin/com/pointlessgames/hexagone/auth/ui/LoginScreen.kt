@@ -78,7 +78,6 @@ internal fun LoginScreen(
                 activePerkProvider = { null },
                 selectedCellIdProvider = { null },
                 activeMergeStepIndexProvider = { uiState.activeMergeStepIndex },
-                comboProvider = { 0 },
                 effects = viewModel.effects,
                 onEmptySpaceClick = { _, _ -> },
                 onEmptySpaceTouchDown = { _, _ -> },

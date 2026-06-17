@@ -1,7 +1,12 @@
 package com.pointlessgames.hexagone.data
 
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.first
@@ -15,8 +20,6 @@ interface SettingsRepository {
     suspend fun setPlayerId(id: String?): Preferences
     suspend fun getPlayerName(): String?
     suspend fun setPlayerName(name: String?): Preferences
-    suspend fun getPlayerRegion(): String?
-    suspend fun setPlayerRegion(region: String?): Preferences
     fun getSoundEnabledFlow(): kotlinx.coroutines.flow.Flow<Boolean>
     suspend fun getSoundEnabled(): Boolean
     suspend fun setSoundEnabled(enabled: Boolean): Preferences
@@ -91,7 +94,6 @@ class DataStoreSettingsRepository(
     private val gameStateKey = stringPreferencesKey("game_state")
     private val playerIdKey = stringPreferencesKey("player_id")
     private val playerNameKey = stringPreferencesKey("player_name")
-    private val playerRegionKey = stringPreferencesKey("player_region")
     private val totalMergesLifetimeKey = longPreferencesKey("total_merges_lifetime")
     private val perksUsedLifetimeKey = stringSetPreferencesKey("perks_used_lifetime")
     private val unlockedAchievementsKey = stringSetPreferencesKey("unlocked_achievements")
@@ -112,7 +114,8 @@ class DataStoreSettingsRepository(
     private val lastCompletedChallengeDateKey = longPreferencesKey("last_completed_challenge_date")
     private val completedChallengeDatesKey = stringSetPreferencesKey("completed_challenge_dates")
     private val challengeStreakKey = intPreferencesKey("challenge_streak")
-    private val persistentCompletedMissionIdsKey = stringSetPreferencesKey("persistent_completed_mission_ids")
+    private val persistentCompletedMissionIdsKey =
+        stringSetPreferencesKey("persistent_completed_mission_ids")
     private val dailyMissionDateKey = longPreferencesKey("daily_mission_date")
     private val hasShownMergeTipKey = booleanPreferencesKey("has_shown_merge_tip")
     private val hasShownPerkTipKey = booleanPreferencesKey("has_shown_perk_tip")
@@ -159,22 +162,6 @@ class DataStoreSettingsRepository(
                     prefs.remove(playerNameKey)
                 } else {
                     prefs[playerNameKey] = name
-                }
-            }
-        }
-    }
-
-    override suspend fun getPlayerRegion(): String? = withContext(Dispatchers.IO) {
-        appSettings.data.first()[playerRegionKey]
-    }
-
-    override suspend fun setPlayerRegion(region: String?) = withContext(Dispatchers.IO) {
-        appSettings.updateData {
-            it.toMutablePreferences().also { prefs ->
-                if (region == null) {
-                    prefs.remove(playerRegionKey)
-                } else {
-                    prefs[playerRegionKey] = region
                 }
             }
         }
@@ -274,14 +261,15 @@ class DataStoreSettingsRepository(
         appSettings.data.first()[unlockedAchievementsKey] ?: emptySet()
     }
 
-    override suspend fun setAchievementUnlocked(achievementId: String) = withContext(Dispatchers.IO) {
-        appSettings.updateData {
-            it.toMutablePreferences().also { prefs ->
-                val current = prefs[unlockedAchievementsKey] ?: emptySet()
-                prefs[unlockedAchievementsKey] = current + achievementId
+    override suspend fun setAchievementUnlocked(achievementId: String) =
+        withContext(Dispatchers.IO) {
+            appSettings.updateData {
+                it.toMutablePreferences().also { prefs ->
+                    val current = prefs[unlockedAchievementsKey] ?: emptySet()
+                    prefs[unlockedAchievementsKey] = current + achievementId
+                }
             }
         }
-    }
 
     override suspend fun getPerksCollectedLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[perksCollectedLifetimeKey] ?: 0
@@ -352,14 +340,15 @@ class DataStoreSettingsRepository(
         appSettings.data.first()[maxConsecutiveMergesLifetimeKey] ?: 0
     }
 
-    override suspend fun updateMaxConsecutiveMergesLifetime(value: Int) = withContext(Dispatchers.IO) {
-        appSettings.updateData {
-            it.toMutablePreferences().also { prefs ->
-                val current = prefs[maxConsecutiveMergesLifetimeKey] ?: 0
-                if (value > current) prefs[maxConsecutiveMergesLifetimeKey] = value
+    override suspend fun updateMaxConsecutiveMergesLifetime(value: Int) =
+        withContext(Dispatchers.IO) {
+            appSettings.updateData {
+                it.toMutablePreferences().also { prefs ->
+                    val current = prefs[maxConsecutiveMergesLifetimeKey] ?: 0
+                    if (value > current) prefs[maxConsecutiveMergesLifetimeKey] = value
+                }
             }
         }
-    }
 
     override suspend fun getMaxTacticalMergesLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[maxTacticalMergesLifetimeKey] ?: 0
@@ -391,14 +380,15 @@ class DataStoreSettingsRepository(
         appSettings.data.first()[maxConsecutiveUndosLifetimeKey] ?: 0
     }
 
-    override suspend fun updateMaxConsecutiveUndosLifetime(value: Int) = withContext(Dispatchers.IO) {
-        appSettings.updateData {
-            it.toMutablePreferences().also { prefs ->
-                val current = prefs[maxConsecutiveUndosLifetimeKey] ?: 0
-                if (value > current) prefs[maxConsecutiveUndosLifetimeKey] = value
+    override suspend fun updateMaxConsecutiveUndosLifetime(value: Int) =
+        withContext(Dispatchers.IO) {
+            appSettings.updateData {
+                it.toMutablePreferences().also { prefs ->
+                    val current = prefs[maxConsecutiveUndosLifetimeKey] ?: 0
+                    if (value > current) prefs[maxConsecutiveUndosLifetimeKey] = value
+                }
             }
         }
-    }
 
     override suspend fun getMaxTacticalGhostsLifetime(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[maxTacticalGhostsLifetimeKey] ?: 0
@@ -500,18 +490,20 @@ class DataStoreSettingsRepository(
         }
     }
 
-    override suspend fun getPersistentCompletedMissionIds(): Set<String> = withContext(Dispatchers.IO) {
-        appSettings.data.first()[persistentCompletedMissionIdsKey] ?: emptySet()
-    }
+    override suspend fun getPersistentCompletedMissionIds(): Set<String> =
+        withContext(Dispatchers.IO) {
+            appSettings.data.first()[persistentCompletedMissionIdsKey] ?: emptySet()
+        }
 
-    override suspend fun addPersistentCompletedMissionId(missionId: String) = withContext(Dispatchers.IO) {
-        appSettings.updateData {
-            it.toMutablePreferences().also { prefs ->
-                val current = prefs[persistentCompletedMissionIdsKey] ?: emptySet()
-                prefs[persistentCompletedMissionIdsKey] = current + missionId
+    override suspend fun addPersistentCompletedMissionId(missionId: String) =
+        withContext(Dispatchers.IO) {
+            appSettings.updateData {
+                it.toMutablePreferences().also { prefs ->
+                    val current = prefs[persistentCompletedMissionIdsKey] ?: emptySet()
+                    prefs[persistentCompletedMissionIdsKey] = current + missionId
+                }
             }
         }
-    }
 
     override suspend fun clearPersistentCompletedMissionIds() = withContext(Dispatchers.IO) {
         appSettings.updateData {
@@ -573,11 +565,12 @@ class DataStoreSettingsRepository(
         appSettings.data.first()[hasShownDailyChallengeTipKey] ?: false
     }
 
-    override suspend fun setHasShownDailyChallengeTip(shown: Boolean) = withContext(Dispatchers.IO) {
-        appSettings.updateData {
-            it.toMutablePreferences().also { prefs ->
-                prefs[hasShownDailyChallengeTipKey] = shown
+    override suspend fun setHasShownDailyChallengeTip(shown: Boolean) =
+        withContext(Dispatchers.IO) {
+            appSettings.updateData {
+                it.toMutablePreferences().also { prefs ->
+                    prefs[hasShownDailyChallengeTipKey] = shown
+                }
             }
         }
-    }
 }

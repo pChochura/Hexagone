@@ -59,19 +59,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.utils.rememberPlayButtonSound
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.cancel
 import hexagone.shared.generated.resources.confirm
 import hexagone.shared.generated.resources.done
 import hexagone.shared.generated.resources.ic_delete
 import hexagone.shared.generated.resources.ic_diamond
-import hexagone.shared.generated.resources.ic_legendary_perk
-import hexagone.shared.generated.resources.ic_rare_perk
-import hexagone.shared.generated.resources.ic_roll
 import hexagone.shared.generated.resources.ic_star
 import hexagone.shared.generated.resources.shop_insufficient_balance
 import kotlinx.coroutines.launch
@@ -184,7 +181,7 @@ fun HexAlertDialog(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally)
                         ) {
-                            val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
+                            val playButtonSound = rememberPlayButtonSound()
                             if (onConfirm != null) {
                                 // Cancel Option
                                 Box(
@@ -430,78 +427,6 @@ fun SectionTitle(
 }
 
 /**
- * Molecule: Refactored banked perk item with count badge and icon.
- * Uses solid backgrounds.
- */
-@Composable
-fun VoucherItem(
-    category: PerkCategory,
-    count: Int,
-    onUse: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val icon = when (category) {
-        PerkCategory.COMMON -> Res.drawable.ic_roll
-        PerkCategory.RARE -> Res.drawable.ic_rare_perk
-        PerkCategory.LEGENDARY -> Res.drawable.ic_legendary_perk
-    }
-    val color = when (category) {
-        PerkCategory.COMMON -> Color.Gray
-        PerkCategory.RARE -> Color(0xFF4FC3F7)
-        PerkCategory.LEGENDARY -> Color(0xFFFFD54F)
-    }
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-    ) {
-        Box(contentAlignment = Alignment.TopEnd) {
-            Box(
-                modifier = Modifier
-                    .size(64.dp.scaled)
-                    .clip(CircleShape)
-                    .clickable(enabled = count > 0) { onUse() }
-                    .background(MaterialTheme.colorScheme.background, CircleShape)
-                    .border(2.dp.scaled, color.copy(alpha = 0.3f), CircleShape)
-                    .padding(14.dp.scaled),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = null,
-                    tint = color,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            if (count > 0) {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp.scaled)
-                        .background(color, CircleShape)
-                        .border(2.dp.scaled, Color(0xFF1A1A1A), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = count.toString(),
-                        color = Color.Black,
-                        fontWeight = FontWeight.Black,
-                        fontSize = 12.sp.scaled
-                    )
-                }
-            }
-        }
-        Spacer(Modifier.height(8.dp.scaled))
-        Text(
-            text = category.name.uppercase(),
-            color = if (count > 0) color else Color.White.copy(alpha = 0.2f),
-            fontSize = 10.sp.scaled,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-/**
  * Molecule: Functional unit for displaying products (diamonds or perk bundles).
  * Uses solid backgrounds.
  */
@@ -520,7 +445,7 @@ fun ProductCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
+    val playSound = rememberPlayButtonSound()
     val spacing = MaterialTheme.spacing
     Box(modifier = modifier.padding(vertical = 4.dp.scaled)) {
         Row(
@@ -644,7 +569,7 @@ fun ProductGridItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
+    val playSound = rememberPlayButtonSound()
     val spacing = MaterialTheme.spacing
     val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
 

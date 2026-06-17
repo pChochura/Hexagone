@@ -22,18 +22,12 @@ internal class LeaderboardViewModel(
     data class UiState(
         val rankings: List<DetailedGameResult> = emptyList(),
         val isLoading: Boolean = false,
-        val filter: Filter = Filter.Global,
-        val playerRegion: String? = null,
         val error: String? = null,
         val playerName: String? = null,
         val onboardingName: String = "",
         val isCreatingProfile: Boolean = false,
         val currentRank: RankingInfo? = null,
     )
-
-    enum class Filter {
-        Global, Regional
-    }
 
     init {
         loadPlayerInfo()
@@ -49,9 +43,8 @@ internal class LeaderboardViewModel(
 
     private fun loadPlayerInfo() {
         viewModelScope.launch {
-            val region = settingsRepository.getPlayerRegion()
             val name = settingsRepository.getPlayerName()
-            _uiState.value = _uiState.value.copy(playerRegion = region, playerName = name)
+            _uiState.value = _uiState.value.copy(playerName = name)
         }
     }
 
@@ -62,12 +55,7 @@ internal class LeaderboardViewModel(
                 // Try to sync any pending scores first
                 leaderboardRepository.syncPendingScores()
 
-                val region = if (_uiState.value.filter == Filter.Regional) {
-                    _uiState.value.playerRegion
-                } else {
-                    null
-                }
-                val scores = leaderboardRepository.getTopScores(region = region)
+                val scores = leaderboardRepository.getTopScores()
                 _uiState.value = _uiState.value.copy(rankings = scores, isLoading = false)
             } catch (e: Exception) {
                 _uiState.value =

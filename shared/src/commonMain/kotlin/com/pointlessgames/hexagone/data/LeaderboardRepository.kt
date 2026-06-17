@@ -28,12 +28,10 @@ class LeaderboardRepository(
         withContext(Dispatchers.IO) {
             val playerId = settingsRepository.getPlayerId() ?: return@withContext null
             val username = settingsRepository.getPlayerName() ?: "Unknown"
-            val region = settingsRepository.getPlayerRegion() ?: "Global"
 
             val finalResult = result.copy(
                 profileId = playerId,
                 username = username,
-                region = region,
             )
 
             try {
@@ -65,7 +63,6 @@ class LeaderboardRepository(
 
         val currentPlayerId = settingsRepository.getPlayerId()
         val currentUsername = settingsRepository.getPlayerName()
-        val currentRegion = settingsRepository.getPlayerRegion() ?: "Global"
 
         pending.forEach { serialized ->
             try {
@@ -75,7 +72,6 @@ class LeaderboardRepository(
                 val finalResult = result.copy(
                     profileId = result.profileId ?: currentPlayerId,
                     username = result.username ?: currentUsername,
-                    region = if (result.region == "Global" && currentRegion != "Global") currentRegion else result.region,
                 )
 
                 // Ensure we have at least an ID and username before uploading
@@ -127,27 +123,16 @@ class LeaderboardRepository(
             RankingInfo(rank = row.scorePosition, isRegional = false)
         }
 
-    suspend fun getTopScores(limit: Int = 50, region: String? = null): List<DetailedGameResult> =
+    suspend fun getTopScores(limit: Int = 50): List<DetailedGameResult> =
         withContext(Dispatchers.IO) {
-            runCatching {
-                val query = supabase.from("game_results").select() {
-                    if (region != null) {
-                        filter {
-                            eq("region", region)
-                        }
-                    }
-                    order("score", Order.DESCENDING)
-                    limit(limit.toLong())
-                }
-                query.decodeList<DetailedGameResult>()
+            val query = supabase.from("game_results").select {
+                order("score", Order.DESCENDING)
+                limit(limit.toLong())
             }
-                .onFailure {
-                    it.printStackTrace()
-                }
-                .getOrNull()!!
+            query.decodeList<DetailedGameResult>()
         }
 
-    suspend fun createProfile(username: String, region: String): PlayerProfile =
+    suspend fun createProfile(username: String): PlayerProfile =
         withContext(Dispatchers.IO) {
             // For KMP, we might use a simple device ID or Supabase Auth.
             // For now, let's assume we use a generated UUID if not using Auth.
@@ -155,10 +140,9 @@ class LeaderboardRepository(
                 settingsRepository.setPlayerId(it)
             }
 
-            val profile = PlayerProfile(id = playerId, username = username, region = region)
+            val profile = PlayerProfile(id = playerId, username = username)
             supabase.from("profiles").upsert(profile)
             settingsRepository.setPlayerName(username)
-            settingsRepository.setPlayerRegion(region)
             profile
         }
 }

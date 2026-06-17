@@ -63,60 +63,6 @@ fun HexBackButton(
 }
 
 @Composable
-fun UnifiedTabButton(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
-    val cornerRadius = MaterialTheme.cornerRadius
-    val shape = RoundedCornerShape(cornerRadius.medium)
-
-    Box(
-        modifier = modifier
-            .height(44.dp)
-            .background(
-                if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                shape,
-            )
-            .border(
-                width = 1.dp,
-                color = if (isSelected) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.05f),
-                shape = shape,
-            )
-            .clip(shape)
-            .clickable { playSound(); onClick() },
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = text.uppercase(),
-            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.4f),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 2.sp,
-        )
-    }
-}
-
-@Composable
-fun BottomSheetTitle(
-    text: String,
-    modifier: Modifier = Modifier,
-    color: Color = Color.White,
-) {
-    Text(
-        text = text.uppercase(),
-        style = MaterialTheme.typography.headlineMedium,
-        fontWeight = FontWeight.Black,
-        color = color,
-        letterSpacing = 4.sp,
-        textAlign = TextAlign.Center,
-        modifier = modifier.fillMaxWidth(),
-    )
-}
-
-@Composable
 fun HexagonIconButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,

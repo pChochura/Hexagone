@@ -61,6 +61,7 @@ import com.pointlessgames.hexagone.Route
 import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.logic.PerkCategory
+import com.pointlessgames.hexagone.game.model.ComboTier
 import com.pointlessgames.hexagone.game.model.GameEffect
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.TipTarget
@@ -268,12 +269,6 @@ internal fun GameScreen(
         remember(uiState) { uiState.map { it.maxCombo }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.maxCombo,
         )
-    val totalMergesState =
-        remember(uiState) {
-            uiState.map { it.totalMerges }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.totalMerges,
-        )
     val perkOptionsState =
         remember(uiState) {
             uiState.map { it.perkOptions }.distinctUntilChanged()
@@ -347,18 +342,15 @@ internal fun GameScreen(
     val activeMergeStepIndexState = remember(uiState) {
         uiState.map { it.activeMergeStepIndex }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.activeMergeStepIndex)
-    val pendingMergeScoreState = remember(uiState) {
-        uiState.map { it.pendingMergeScore }.distinctUntilChanged()
-    }.collectAsState(viewModel.uiState.value.pendingMergeScore)
     val selectedCellIdState = remember(uiState) {
         uiState.map { it.selectedCellId }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.selectedCellId)
     val targetRects = remember { mutableStateMapOf<TipTarget, Rect>() }
 
     val tierRewardQueue =
-        remember { mutableStateListOf<Pair<com.pointlessgames.hexagone.game.model.ComboTier, Perk>>() }
+        remember { mutableStateListOf<Pair<ComboTier, Perk>>() }
     val challengeRewardQueue =
-        remember { mutableStateListOf<com.pointlessgames.hexagone.game.model.GameEffect.DailyChallengeComplete>() }
+        remember { mutableStateListOf<GameEffect.DailyChallengeComplete>() }
 
     val activeTierReward = tierRewardQueue.firstOrNull()
     val activeChallengeReward = challengeRewardQueue.firstOrNull()
@@ -480,7 +472,6 @@ internal fun GameScreen(
     val showGameOverBoardProvider = remember { { showGameOverBoardState.value } }
     val sessionBestScoreProvider = remember { { sessionBestScoreState.value } }
     val maxComboProvider = remember { { maxComboState.value } }
-    val totalMergesProvider = remember { { totalMergesState.value } }
     val perkOptionsProvider = remember { { perkOptionsState.value } }
     val pendingLevelUpsProvider = remember { { pendingLevelUpsState.value } }
     val canRerollProvider = remember { { canRerollState.value } }
@@ -656,7 +647,6 @@ internal fun GameScreen(
                             activePerkProvider = activePerkProvider,
                             selectedCellIdProvider = selectedCellIdProvider,
                             activeMergeStepIndexProvider = activeMergeStepIndexProvider,
-                            comboProvider = comboProvider,
                             effects = viewModel.effects,
                             onEmptySpaceClick = if (isDebugMode) onDebugCellClick else onEmptySpaceClick,
                             onEmptySpaceTouchDown = if (isDebugMode) { _, _ -> } else onEmptySpaceTouchDown,
@@ -741,7 +731,6 @@ internal fun GameScreen(
                             activePerkProvider = activePerkProvider,
                             selectedCellIdProvider = selectedCellIdProvider,
                             activeMergeStepIndexProvider = activeMergeStepIndexProvider,
-                            comboProvider = comboProvider,
                             effects = viewModel.effects,
                             onEmptySpaceClick = if (isDebugMode) onDebugCellClick else onEmptySpaceClick,
                             onEmptySpaceTouchDown = if (isDebugMode) { _, _ -> } else onEmptySpaceTouchDown,
@@ -907,7 +896,6 @@ internal fun GameScreen(
             levelProvider = levelProvider,
             diamondsProvider = diamondsProvider,
             maxComboProvider = maxComboProvider,
-            totalMergesProvider = totalMergesProvider,
             highestValueProvider = highestValueProvider,
             showBoardProvider = showGameOverBoardProvider,
             perkOptionsProvider = perkOptionsProvider,

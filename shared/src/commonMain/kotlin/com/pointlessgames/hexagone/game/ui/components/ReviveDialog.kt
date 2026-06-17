@@ -37,6 +37,7 @@ import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.utils.rememberPlayButtonSound
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.ic_diamond
 import hexagone.shared.generated.resources.label_level
@@ -64,7 +65,7 @@ internal fun ReviveDialog(
 ) {
     val spacing = MaterialTheme.spacing
     val cornerRadius = MaterialTheme.cornerRadius
-    val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
+    val playButtonSound = rememberPlayButtonSound()
     
     DialogContainer(modifier = modifier) {
         Column(
@@ -246,7 +247,7 @@ private fun ReviveCard(
     val isRecommended = category == PerkCategory.LEGENDARY
     val canAfford = diamonds >= cost
     val isEnabled = count > 0 || canAfford
-    val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
+    val playButtonSound = rememberPlayButtonSound()
 
     Box(
         modifier = modifier
