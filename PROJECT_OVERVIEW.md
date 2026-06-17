@@ -51,7 +51,7 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 │   │       ├── MissionRefreshPopup.kt # Anchored cross-day streak recovery
 │   │       ├── GameGridOverlay.kt # Grid orchestrator & gesture handling
 │   │       ├── ScoreSection.kt    # HUD: liquid progress & combo indicators
-│   │       ├── PerkBar.kt         # Strategic floating shelf: unified ADD button
+│   │       ├── PerkBar.kt         # Anchored strategic shelf: unified Vouchers (ADD) and Store (SHOP) access
 │   │       └── GameOverlays.kt    # Overlay orchestrator (Revive, Level Up, Game Over)
 ├── di/
 │   └── GameModule.kt             # Koin DI & Navigation Routing
@@ -147,7 +147,7 @@ When the board is full and no moves or perks are available, the game triggers a 
 ## 6. Daily Missions & Streak
 
 ### Immersive Progress
-*   **Prominent Streak**: Current streak is the focal point with massive bold typography and a dedicated Milestone Rewards section.
+*   **Prominent Streak**: Current streak is the focal point with massive bold typography and a dedicated Milestone Rewards section. The streak is calculated dynamically from the player's completion history to ensure accuracy.
 *   **Mission Log**: A custom month-view calendar highlighting daily completion.
 *   **Persistent Completion**: Completion status for the Daily Streak is persistent across match sessions and app reloads.
 *   **Repeatable Session Rewards**: Missions reset to 0% progress at the start of every game session, allowing players to earn bonus rewards (Score/Perks) multiple times a day while working towards their persistent streak goal.
@@ -188,7 +188,9 @@ A central hub for strategic inventory management:
 *   **Intuitive Navigation**: Horizontal lists feature adaptive scroll indicators (`ic_left`/`ic_right`) that appear only when more content is available to explore.
 
 ### Perk & Voucher Economy
-*   **Unified Access**: Vouchers are managed via a single **"ADD" button** in the PerkBar, providing a consistent entry point to the Perks Bank.
+*   **Unified Access**: Strategic actions are managed via an anchored **PerkBar shelf**. This shelf provides quick access to the Perks Bank (via the **ADD button**) and the Store (via the **SHOP button**).
+    *   **Portrait**: Anchored to the bottom with top-rounded corners.
+    *   **Landscape**: Anchored to the right with left-rounded corners.
 *   **Optimistic UI & Sync**: Currency and voucher updates are applied instantly to the UI using an "Optimistic" pattern, with an **in-flight locking mechanism** that prevents flickering while background server synchronization (RevenueCat/Supabase) completes.
 *   **Persistence**: Inventory and currency balances are preserved across game restarts and app reloads.
 *   **Shop Transparency**: The main `ShopScreen` includes **Perk Previews** for every voucher tier, showing the specific icons of perks available in that category to inform purchase decisions.
