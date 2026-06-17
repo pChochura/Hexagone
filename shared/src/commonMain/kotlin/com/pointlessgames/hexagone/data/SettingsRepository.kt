@@ -68,8 +68,6 @@ interface SettingsRepository {
     suspend fun setLastCompletedChallengeDate(date: Long): Preferences
     suspend fun getCompletedChallengeDates(): Set<String>
     suspend fun addCompletedChallengeDate(dateSeed: String): Preferences
-    suspend fun getChallengeStreak(): Int
-    suspend fun setChallengeStreak(streak: Int): Preferences
     suspend fun getPersistentCompletedMissionIds(): Set<String>
     suspend fun addPersistentCompletedMissionId(missionId: String): Preferences
     suspend fun clearPersistentCompletedMissionIds(): Preferences
@@ -114,7 +112,6 @@ class DataStoreSettingsRepository(
     private val pendingScoresKey = stringSetPreferencesKey("pending_scores")
     private val lastCompletedChallengeDateKey = longPreferencesKey("last_completed_challenge_date")
     private val completedChallengeDatesKey = stringSetPreferencesKey("completed_challenge_dates")
-    private val challengeStreakKey = intPreferencesKey("challenge_streak")
     private val persistentCompletedMissionIdsKey =
         stringSetPreferencesKey("persistent_completed_mission_ids")
     private val dailyMissionDateKey = longPreferencesKey("daily_mission_date")
@@ -478,21 +475,8 @@ class DataStoreSettingsRepository(
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 val current = prefs[completedChallengeDatesKey] ?: emptySet()
-                // Keep only last 30 entries to prevent bloat
-                val next = (current + dateSeed).toList().takeLast(30).toSet()
+                val next = current + dateSeed
                 prefs[completedChallengeDatesKey] = next
-            }
-        }
-    }
-
-    override suspend fun getChallengeStreak(): Int = withContext(Dispatchers.IO) {
-        appSettings.data.first()[challengeStreakKey] ?: 0
-    }
-
-    override suspend fun setChallengeStreak(streak: Int) = withContext(Dispatchers.IO) {
-        appSettings.updateData {
-            it.toMutablePreferences().also { prefs ->
-                prefs[challengeStreakKey] = streak
             }
         }
     }

@@ -221,7 +221,6 @@ internal class GameViewModel(
                     missionRefreshState = MissionRefreshState.HARD_REFRESH(dailyMissionDate)
                     settingsRepository.setDailyMissionDate(dateSeed)
                     settingsRepository.clearPersistentCompletedMissionIds()
-                    settingsRepository.setChallengeStreak(0)
                     persistentCompletedMissionIds = emptySet()
                 }
             } else if (dailyMissionDate == 0L) {
@@ -229,14 +228,13 @@ internal class GameViewModel(
             }
 
             val lastCompletedDate = settingsRepository.getLastCompletedChallengeDate()
-            var challengeStreak = settingsRepository.getChallengeStreak()
             val completedDates =
                 settingsRepository.getCompletedChallengeDates().mapNotNull { it.toLongOrNull() }
                     .toSet()
+            var challengeStreak = calculateStreak(completedDates, today)
 
             if (lastCompletedDate != 0L && lastCompletedDate != dateSeed && lastCompletedDate != yesterdaySeed) {
                 challengeStreak = 0
-                settingsRepository.setChallengeStreak(0)
             }
 
             val effectiveMissionDate = if (missionRefreshState is MissionRefreshState.CAN_KEEP) {
@@ -629,7 +627,6 @@ internal class GameViewModel(
             
             settingsRepository.setDailyMissionDate(dateSeed)
             settingsRepository.clearPersistentCompletedMissionIds()
-            settingsRepository.setChallengeStreak(0)
             
             val currentDailyChallenges = DailyChallengeProvider.getChallengesForDate(today, 0)
             
@@ -1065,23 +1062,12 @@ internal class GameViewModel(
             
             // We complete for the day the missions were from
             if (lastCompletedDate != missionDateSeed) {
-                val currentStreak = settingsRepository.getChallengeStreak()
-                
-                // Yesterday of missionDate
-                val missionDate = LocalDate(
-                    (missionDateSeed / 10000).toInt(),
-                    (missionDateSeed % 10000 / 100).toInt(),
-                    (missionDateSeed % 100).toInt()
-                )
-                val missionYesterday = missionDate.minus(1, DateTimeUnit.DAY)
-                val missionYesterdaySeed = missionYesterday.year * 10000L + missionYesterday.month.number * 100L + missionYesterday.day
-
-                val newStreak = if (lastCompletedDate == missionYesterdaySeed) currentStreak + 1 else 1
+                val updatedCompletedDates = _uiState.value.completedChallengeDates + missionDateSeed
+                val newStreak = calculateStreak(updatedCompletedDates, today)
                 isDayCompleted = true
                 newStreakValue = newStreak
 
                 settingsRepository.setLastCompletedChallengeDate(missionDateSeed)
-                settingsRepository.setChallengeStreak(newStreak)
                 settingsRepository.addCompletedChallengeDate(missionDateSeed.toString())
 
                 val reward =
@@ -1105,5 +1091,31 @@ internal class GameViewModel(
         }
 
         _effects.emit(GameEffect.DailyChallengeComplete(challenge, isFirstTimeToday, isDayCompleted, newStreakValue))
+    }
+
+    private fun calculateStreak(completedDates: Set<Long>, today: LocalDate): Int {
+        var streak = 0
+        val todaySeed = today.year * 10000L + today.month.number * 100L + today.day
+        val yesterday = today.minus(1, DateTimeUnit.DAY)
+        val yesterdaySeed = yesterday.year * 10000L + yesterday.month.number * 100L + yesterday.day
+
+        var currentDate = if (completedDates.contains(todaySeed)) {
+            today
+        } else if (completedDates.contains(yesterdaySeed)) {
+            yesterday
+        } else {
+            return 0
+        }
+
+        while (true) {
+            val seed = currentDate.year * 10000L + currentDate.month.number * 100L + currentDate.day
+            if (completedDates.contains(seed)) {
+                streak++
+                currentDate = currentDate.minus(1, DateTimeUnit.DAY)
+            } else {
+                break
+            }
+        }
+        return streak
     }
 }
