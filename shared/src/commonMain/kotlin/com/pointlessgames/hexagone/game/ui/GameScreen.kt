@@ -53,6 +53,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle.State.RESUMED
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.pointlessgames.hexagone.LocalMediaPlayer
 import com.pointlessgames.hexagone.LocalNavigator
 import com.pointlessgames.hexagone.Route
@@ -60,6 +62,7 @@ import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.GameEffect
+import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.TipTarget
 import com.pointlessgames.hexagone.game.ui.components.AchievementNotification
 import com.pointlessgames.hexagone.game.ui.components.DebugOverlay
@@ -99,19 +102,35 @@ internal fun GameScreen(
 
     val bgMusicState = rememberGadulkaLiveState()
     val settingsRepository = koinInject<SettingsRepository>()
-    val isBgMusicEnabled by remember(settingsRepository) { settingsRepository.getBgMusicEnabledFlow() }.collectAsState(true)
+    val isBgMusicEnabled by remember(settingsRepository) {
+        settingsRepository.getBgMusicEnabledFlow()
+    }.collectAsState(true)
 
-    LaunchedEffect(isBgMusicEnabled, bgMusicState.state) {
-        if (isBgMusicEnabled) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
+    val isAppForeground = lifecycleState.isAtLeast(RESUMED)
+
+    LaunchedEffect(isBgMusicEnabled, bgMusicState.state, isAppForeground) {
+        if (isBgMusicEnabled && isAppForeground) {
             if (bgMusicState.state == GadulkaPlayerState.IDLE) {
-                val url = SoundManager.getFileUrl("bg_music.wav")
-                url?.let { bgMusicState.player.play(it) }
+                if (bgMusicState.state == GadulkaPlayerState.IDLE) {
+                    val url = SoundManager.getFileUrl("bg_music.wav")
+                    url?.let { bgMusicState.player.play(it) }
+                } else if (bgMusicState.state == GadulkaPlayerState.PAUSED) {
+                    bgMusicState.player.play()
+                }
             }
-        } else {
-            if (bgMusicState.state != GadulkaPlayerState.IDLE) {
+        } else if (bgMusicState.state != GadulkaPlayerState.IDLE) {
+            if (isBgMusicEnabled && !isAppForeground) {
+                bgMusicState.player.stop()
+                if (bgMusicState.state == GadulkaPlayerState.PLAYING || bgMusicState.state == GadulkaPlayerState.BUFFERING) {
+                    bgMusicState.player.pause()
+                }
+            } else if (!isBgMusicEnabled && bgMusicState.state != GadulkaPlayerState.IDLE) {
                 bgMusicState.player.stop()
             }
         }
+
     }
 
     val uiState = viewModel.uiState
@@ -126,7 +145,7 @@ internal fun GameScreen(
             }
         }
     }
-    
+
     val playButtonSound = remember(player, coroutineScope) {
         {
             if (isSoundEnabledState.value) {
@@ -137,10 +156,11 @@ internal fun GameScreen(
     // Fine-grained state collection for reactivity and optimization.
     // We collect individual fields into Compose State objects.
     // Reading from these State objects in providers ensures children and snapshotFlows are reactive.
-    val isGameOverState =
-        remember(uiState) { uiState.map { it.isGameOver }.distinctUntilChanged() }.collectAsState(
-            viewModel.uiState.value.isGameOver,
-        )
+    val isGameOverState = remember(uiState) {
+        uiState.map { it.isGameOver }.distinctUntilChanged()
+    }.collectAsState(
+        viewModel.uiState.value.isGameOver,
+    )
     val showGameOverBoardState = remember(uiState) {
         uiState.map { it.showGameOverBoard }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.showGameOverBoard)
@@ -152,30 +172,31 @@ internal fun GameScreen(
         remember(uiState) { uiState.map { it.grid }.distinctUntilChanged() }.collectAsState(
             viewModel.uiState.value.grid,
         )
-    val activePerkState =
-        remember(uiState) { uiState.map { it.activePerk }.distinctUntilChanged() }.collectAsState(
-            viewModel.uiState.value.activePerk,
-        )
-    val isDebugModeState =
-        remember(uiState) { uiState.map { it.isDebugMode }.distinctUntilChanged() }.collectAsState(
-            viewModel.uiState.value.isDebugMode,
-        )
-    val activeTipState =
-        remember(uiState) { uiState.map { it.activeTip }.distinctUntilChanged() }.collectAsState(
-            viewModel.uiState.value.activeTip,
-        )
-    val isVoucherProcessingState =
-        remember(uiState) {
-            uiState.map { it.isVoucherProcessing }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.isVoucherProcessing,
-        )
-    val isPerksBankVisibleState =
-        remember(uiState) {
-            uiState.map { it.isPerksBankVisible }.distinctUntilChanged()
-        }.collectAsState(
-            viewModel.uiState.value.isPerksBankVisible,
-        )
+    val activePerkState = remember(uiState) {
+        uiState.map { it.activePerk }.distinctUntilChanged()
+    }.collectAsState(
+        viewModel.uiState.value.activePerk,
+    )
+    val isDebugModeState = remember(uiState) {
+        uiState.map { it.isDebugMode }.distinctUntilChanged()
+    }.collectAsState(
+        viewModel.uiState.value.isDebugMode,
+    )
+    val activeTipState = remember(uiState) {
+        uiState.map { it.activeTip }.distinctUntilChanged()
+    }.collectAsState(
+        viewModel.uiState.value.activeTip,
+    )
+    val isVoucherProcessingState = remember(uiState) {
+        uiState.map { it.isVoucherProcessing }.distinctUntilChanged()
+    }.collectAsState(
+        viewModel.uiState.value.isVoucherProcessing,
+    )
+    val isPerksBankVisibleState = remember(uiState) {
+        uiState.map { it.isPerksBankVisible }.distinctUntilChanged()
+    }.collectAsState(
+        viewModel.uiState.value.isPerksBankVisible,
+    )
 
     // Helper delegates for GameScreen's own logic.
     // Accessing these 'by' variables will trigger recomposition of GameScreen.
@@ -192,12 +213,16 @@ internal fun GameScreen(
     val showReviveOption by showReviveOptionState
 
     val activeDialogState =
-        remember(uiState) { uiState.map { it.activeDialog }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.activeDialog }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.activeDialog,
         )
     val activeDialog by activeDialogState
     val missionRefreshState =
-        remember(uiState) { uiState.map { it.missionRefreshState }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.missionRefreshState }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.missionRefreshState,
         )
 
@@ -208,7 +233,9 @@ internal fun GameScreen(
             viewModel.uiState.value.score,
         )
     val bestScoreState =
-        remember(uiState) { uiState.map { it.bestScore }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.bestScore }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.bestScore,
         )
     val comboState =
@@ -220,7 +247,9 @@ internal fun GameScreen(
             viewModel.uiState.value.level,
         )
     val highestValueState =
-        remember(uiState) { uiState.map { it.highestValue }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.highestValue }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.highestValue,
         )
     val dailyChallengesState = remember(uiState) {
@@ -240,26 +269,36 @@ internal fun GameScreen(
             viewModel.uiState.value.maxCombo,
         )
     val totalMergesState =
-        remember(uiState) { uiState.map { it.totalMerges }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.totalMerges }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.totalMerges,
         )
     val perkOptionsState =
-        remember(uiState) { uiState.map { it.perkOptions }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.perkOptions }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.perkOptions,
         )
     val pendingLevelUpsState = remember(uiState) {
         uiState.map { it.pendingLevelUps }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.pendingLevelUps)
     val canRerollState =
-        remember(uiState) { uiState.map { it.canReroll }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.canReroll }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.canReroll,
         )
     val currentRankState =
-        remember(uiState) { uiState.map { it.currentRank }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.currentRank }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.currentRank,
         )
     val finalResultState =
-        remember(uiState) { uiState.map { it.finalResult }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.finalResult }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.finalResult,
         )
     val debugSelectedValueState = remember(uiState) {
@@ -272,15 +311,21 @@ internal fun GameScreen(
         uiState.map { it.challengeStreak }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.challengeStreak)
     val debugUsedState =
-        remember(uiState) { uiState.map { it.debugUsed }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.debugUsed }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.debugUsed,
         )
     val stuckPerksState =
-        remember(uiState) { uiState.map { it.stuckPerks }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.stuckPerks }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.stuckPerks,
         )
     val mergeHintsState =
-        remember(uiState) { uiState.map { it.mergeHints }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.mergeHints }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.mergeHints,
         )
     val previewState =
@@ -288,11 +333,15 @@ internal fun GameScreen(
             viewModel.uiState.value.preview,
         )
     val onBoardPerksState =
-        remember(uiState) { uiState.map { it.onBoardPerks }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.onBoardPerks }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.onBoardPerks,
         )
     val pendingMergeState =
-        remember(uiState) { uiState.map { it.pendingMerge }.distinctUntilChanged() }.collectAsState(
+        remember(uiState) {
+            uiState.map { it.pendingMerge }.distinctUntilChanged()
+        }.collectAsState(
             viewModel.uiState.value.pendingMerge,
         )
     val activeMergeStepIndexState = remember(uiState) {
@@ -307,7 +356,7 @@ internal fun GameScreen(
     val targetRects = remember { mutableStateMapOf<TipTarget, Rect>() }
 
     val tierRewardQueue =
-        remember { mutableStateListOf<Pair<com.pointlessgames.hexagone.game.model.ComboTier, com.pointlessgames.hexagone.game.model.Perk>>() }
+        remember { mutableStateListOf<Pair<com.pointlessgames.hexagone.game.model.ComboTier, Perk>>() }
     val challengeRewardQueue =
         remember { mutableStateListOf<com.pointlessgames.hexagone.game.model.GameEffect.DailyChallengeComplete>() }
 
@@ -341,7 +390,7 @@ internal fun GameScreen(
         viewModel,
         playButtonSound,
     ) {
-        { perk: com.pointlessgames.hexagone.game.model.Perk ->
+        { perk: Perk ->
             playButtonSound(); viewModel.onUsePerkClicked(
             perk,
         )
@@ -364,9 +413,15 @@ internal fun GameScreen(
         )
         }
     }
-    val onPerkSelected = remember(viewModel, playButtonSound) { { perk: com.pointlessgames.hexagone.game.model.Perk -> playButtonSound(); viewModel.onPerkSelected(perk) } }
-    val onRestart = remember(viewModel, playButtonSound) { { playButtonSound(); viewModel.onRestartClicked() } }
-    val onViewBoardToggle = remember(viewModel, playButtonSound) { { playButtonSound(); viewModel.onViewBoardToggled() } }
+    val onPerkSelected = remember(viewModel, playButtonSound) {
+        { perk: Perk -> playButtonSound(); viewModel.onPerkSelected(perk) }
+    }
+    val onRestart = remember(viewModel, playButtonSound) {
+        { playButtonSound(); viewModel.onRestartClicked() }
+    }
+    val onViewBoardToggle = remember(viewModel, playButtonSound) {
+        { playButtonSound(); viewModel.onViewBoardToggled() }
+    }
     val onDebugToggle = remember(viewModel) { viewModel::toggleDebugMode }
     val onDebugCellClick = remember(viewModel) { viewModel::onDebugCellClicked }
 
@@ -489,7 +544,7 @@ internal fun GameScreen(
                         coroutineScope,
                     )
                 }
-                
+
                 is GameEffect.TileRemoved -> {
                     if (isSoundEnabledState.value) SoundManager.playSound(
                         player,
@@ -505,7 +560,7 @@ internal fun GameScreen(
                         coroutineScope,
                     )
                 }
-                
+
                 is GameEffect.GameOver -> {
                     if (isSoundEnabledState.value) SoundManager.playSound(
                         player,
@@ -513,7 +568,7 @@ internal fun GameScreen(
                         coroutineScope,
                     )
                 }
-                
+
                 is GameEffect.ComboBroken -> {
                     if (isSoundEnabledState.value) SoundManager.playSound(
                         player,
@@ -533,7 +588,10 @@ internal fun GameScreen(
             .graphicsLayer { clip = false }
             .background(
                 Brush.verticalGradient(
-                    listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.background),
+                    listOf(
+                        MaterialTheme.colorScheme.surface,
+                        MaterialTheme.colorScheme.background,
+                    ),
                 ),
             ),
     ) {
@@ -862,7 +920,11 @@ internal fun GameScreen(
             onShare = { /* TODO: Implement snapshot and share */ },
             onLeaderboard = { navigator.navigateTo(Route.Leaderboard) },
             activeTierReward = activeTierReward,
-            onTierRewardFinished = { if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0) },
+            onTierRewardFinished = {
+                if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(
+                    0,
+                )
+            },
             activeChallengeReward = activeChallengeReward,
             persistentCompletedMissionIdsProvider = remember { { uiState.value.persistentCompletedMissionIds } },
             onChallengeRewardFinished = {
