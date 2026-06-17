@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,11 +41,13 @@ import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.available_vouchers_label
 import hexagone.shared.generated.resources.cancel
+import hexagone.shared.generated.resources.ic_diamond
+import hexagone.shared.generated.resources.ic_left
+import hexagone.shared.generated.resources.ic_right
 import hexagone.shared.generated.resources.perk_category_common
 import hexagone.shared.generated.resources.perk_category_legendary
 import hexagone.shared.generated.resources.perk_category_rare
 import hexagone.shared.generated.resources.perks_bank_title
-import hexagone.shared.generated.resources.ic_diamond
 import hexagone.shared.generated.resources.shop_buy_button
 import hexagone.shared.generated.resources.shop_voucher_explanation
 import org.jetbrains.compose.resources.painterResource
@@ -214,22 +217,69 @@ internal fun PerksBankDialog(
                                 }
                             }
 
-                            LazyRow(
-                                contentPadding = PaddingValues(horizontal = spacing.extraLarge.scaled),
-                                horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                items(perks) { perk ->
-                                    PerkButton(
-                                        perk = perk,
-                                        onClick = {
-                                            if (isAvailable && !isProcessing)
-                                                onPerkSelected(perk, category)
-                                        },
-                                        buttonSize = 64.dp.scaled,
-                                        isEnabled = isAvailable && !isProcessing,
-                                        tooltipDescription = perk.descriptionRes,
-                                    )
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                val listState = rememberLazyListState()
+                                
+                                LazyRow(
+                                    state = listState,
+                                    contentPadding = PaddingValues(horizontal = spacing.extraLarge.scaled),
+                                    horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    items(perks) { perk ->
+                                        PerkButton(
+                                            perk = perk,
+                                            onClick = {
+                                                if (isAvailable && !isProcessing)
+                                                    onPerkSelected(perk, category)
+                                            },
+                                            buttonSize = 64.dp.scaled,
+                                            isEnabled = isAvailable && !isProcessing,
+                                            tooltipDescription = perk.descriptionRes,
+                                        )
+                                    }
+                                }
+
+                                // Scroll Indicators
+                                if (listState.canScrollBackward) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.CenterStart)
+                                            .padding(start = spacing.small.scaled)
+                                            .size(24.dp.scaled)
+                                            .clip(CircleShape)
+                                            .background(Color.Black.copy(alpha = 0.3f))
+                                            .padding(spacing.extraSmall.scaled),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_left),
+                                            contentDescription = null,
+                                            tint = Color.White.copy(alpha = 0.6f),
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+                                }
+
+                                if (listState.canScrollForward) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.CenterEnd)
+                                            .padding(end = spacing.small.scaled)
+                                            .size(24.dp.scaled)
+                                            .clip(CircleShape)
+                                            .background(Color.Black.copy(alpha = 0.3f))
+                                            .padding(spacing.extraSmall.scaled),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_right),
+                                            contentDescription = null,
+                                            tint = Color.White.copy(alpha = 0.6f),
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
                                 }
                             }
                         }

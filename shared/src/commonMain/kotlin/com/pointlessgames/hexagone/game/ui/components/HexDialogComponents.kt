@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -515,6 +516,7 @@ fun ProductCard(
     costInDiamonds: Int? = null,
     hasEnoughDiamonds: Boolean = true,
     isEnabled: Boolean = true,
+    footerContent: @Composable (ColumnScope.() -> Unit)? = null,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -579,6 +581,8 @@ fun ProductCard(
                         modifier = Modifier.padding(top = 2.dp.scaled)
                     )
                 }
+                
+                footerContent?.invoke(this)
             }
 
             if (costInDiamonds != null) {

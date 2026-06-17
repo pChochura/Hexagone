@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -31,8 +33,10 @@ import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.LocalNavigator
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.logic.PerkCategory
+import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.ui.components.DiamondBalanceBadge
 import com.pointlessgames.hexagone.game.ui.components.HexAlertDialog
+import com.pointlessgames.hexagone.game.ui.components.PerkIcon
 import com.pointlessgames.hexagone.game.ui.components.ProductCard
 import com.pointlessgames.hexagone.game.ui.components.ProductGridItem
 import com.pointlessgames.hexagone.game.ui.components.ScreenScaffold
@@ -175,6 +179,12 @@ internal fun ShopScreen(
                             PerkCategory.RARE -> Color(0xFF4FC3F7)
                             PerkCategory.LEGENDARY -> Color(0xFFFFD54F)
                         }
+                        
+                        val perks = when (category) {
+                            PerkCategory.COMMON -> Perk.entries.filter { it.baseWeight >= 80 }
+                            PerkCategory.RARE -> Perk.entries.filter { it.baseWeight in 21..79 }
+                            PerkCategory.LEGENDARY -> Perk.entries.filter { it.isLegendary }
+                        }
 
                         Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
                             ProductCard(
@@ -185,6 +195,21 @@ internal fun ShopScreen(
                                 costInDiamonds = cost,
                                 hasEnoughDiamonds = uiState.diamonds >= cost,
                                 isEnabled = !uiState.isShopProcessing,
+                                footerContent = {
+                                    Spacer(Modifier.height(spacing.small.scaled))
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(spacing.small.scaled),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        perks.forEach { perk ->
+                                            PerkIcon(
+                                                perk = perk,
+                                                color = Color.White.copy(alpha = 0.3f),
+                                                modifier = Modifier.size(16.dp.scaled)
+                                            )
+                                        }
+                                    }
+                                },
                                 onClick = { viewModel.onBuyPerk(category) }
                             )
                         }
