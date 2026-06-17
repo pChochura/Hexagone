@@ -180,16 +180,32 @@ When the board is full and no moves or perks are available, the game triggers a 
 ### Prediction & Previews
 *   **Interactive Previews**: Visually simulates Swaps, Moves, and Values before commitment.
 
+### Perks Bank Dialog
+A central hub for strategic inventory management:
+*   **Rarity-Based Grouping**: Perks are organized by Common, Rare, and Legendary tiers.
+*   **Real-Time Counts**: Displays available vouchers per category with instant UI updates.
+*   **Direct Restocking**: If a category is empty, a functional "BUY" button appears, allowing players to purchase vouchers without leaving their current context (e.g., during a Revive choice).
+*   **Intuitive Navigation**: Horizontal lists feature adaptive scroll indicators (`ic_left`/`ic_right`) that appear only when more content is available to explore.
+
 ### Perk & Voucher Economy
-*   **Rarity Groups**: Common (VCMN), Rare (VRARE), Legendary (VLGD).
-*   **Unified Access**: Vouchers are managed via a single **"ADD" button** in the PerkBar, replacing individual rarity buttons to reduce UI clutter.
-*   **Perks Bank Dialog**: A central hub that groups all available perks by rarity, displaying real-time voucher counts. Unavailable categories are automatically dimmed and disabled.
+*   **Unified Access**: Vouchers are managed via a single **"ADD" button** in the PerkBar, providing a consistent entry point to the Perks Bank.
 *   **Optimistic UI & Sync**: Currency and voucher updates are applied instantly to the UI using an "Optimistic" pattern, with an **in-flight locking mechanism** that prevents flickering while background server synchronization (RevenueCat/Supabase) completes.
 *   **Persistence**: Inventory and currency balances are preserved across game restarts and app reloads.
+*   **Shop Transparency**: The main `ShopScreen` includes **Perk Previews** for every voucher tier, showing the specific icons of perks available in that category to inform purchase decisions.
 
 ---
 
-## 9. "Solid UI" Design System
+## 9. Audio & Atmosphere
+
+### Dynamic Soundscape
+Hexagone features a multi-layered audio system built for immersive feedback:
+*   **Background Music**: A looping, high-fidelity ambient track managed with lifecycle awareness (pauses/resumes automatically based on app visibility).
+*   **UI Feedback**: Consistent click sounds for all buttons, dialogs, and notifications using `rememberPlayButtonSound`.
+*   **Gameplay Stings**: Special audio triggers for merges, combo milestones, achievement unlocks, and game over states.
+
+---
+
+## 10. "Solid UI" Design System
 
 *   **Design Tokens**: Strict adherence to `MaterialTheme.spacing` and `cornerRadius`.
 *   **High-Fidelity Components**: Reusable components like `AuthButton` and `HexagonIconButton` ensure visual consistency.
