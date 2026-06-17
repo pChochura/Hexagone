@@ -21,12 +21,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -51,6 +54,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.LocalMediaPlayer
@@ -652,7 +656,9 @@ internal fun GameScreen(
 
                     // Placeholder for Perk Bar (to keep layout consistent)
                     if (!isDebugModeProvider()) {
-                        Spacer(Modifier.width(100.dp.scaled))
+                        val expectedWidth = (MaterialTheme.spacing.extraHuge.scaled * 0.866f) + 24.dp.scaled + (MaterialTheme.spacing.medium.scaled * 2)
+                        val safePadding = WindowInsets.safeDrawing.asPaddingValues().calculateRightPadding(LayoutDirection.Ltr)
+                        Spacer(Modifier.width(expectedWidth + safePadding))
                     }
                 }
             } else {
@@ -740,8 +746,10 @@ internal fun GameScreen(
                     }
 
                     if (!isDebugModeProvider()) {
-                        // Placeholder to keep space for PerkBar
-                        Spacer(Modifier.height(MaterialTheme.spacing.immense.scaled))
+                        // Placeholder to keep space for PerkBar Shelf
+                        val expectedHeight = (MaterialTheme.spacing.extraHuge.scaled * 0.866f) + 24.dp.scaled + (MaterialTheme.spacing.medium.scaled * 2)
+                        val safePadding = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
+                        Spacer(Modifier.height(expectedHeight + safePadding))
                     } else {
                         DebugOverlay(
                             isVisible = true,
@@ -772,7 +780,7 @@ internal fun GameScreen(
             ) {
                 val isLandscape = maxWidth > maxHeight
                 Box(
-                    modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = if (isLandscape) Alignment.CenterEnd else Alignment.BottomCenter,
                 ) {
                     val isStuck = isStuckProvider() && activePerkProvider() == null
@@ -781,6 +789,7 @@ internal fun GameScreen(
                         if (isStuck) {
                             Box(
                                 modifier = Modifier
+                                    .padding(MaterialTheme.spacing.medium.scaled)
                                     .offset {
                                         IntOffset(0, stuckBounceProvider().dp.roundToPx())
                                     }
@@ -809,11 +818,6 @@ internal fun GameScreen(
                                     fontSize = 11.sp.scaled,
                                     letterSpacing = 1.sp.scaled,
                                 )
-                            }
-                            if (isLandscape) {
-                                Spacer(Modifier.width(MaterialTheme.spacing.medium.scaled))
-                            } else {
-                                Spacer(Modifier.height(MaterialTheme.spacing.medium.scaled))
                             }
                         }
                     }
@@ -869,6 +873,7 @@ internal fun GameScreen(
                 }
             }
         }
+
 
         GameOverlays(
             isGameOverProvider = isGameOverProvider,

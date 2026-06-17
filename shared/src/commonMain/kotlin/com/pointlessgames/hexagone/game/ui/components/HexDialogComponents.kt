@@ -76,7 +76,13 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
-private data class Quintuple<A, B, C, D, E>(val first: A, val second: B, val third: C, val fourth: D, val fifth: E)
+private data class Quintuple<A, B, C, D, E>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D,
+    val fifth: E,
+)
 
 /**
  * Atom: A standardized alert dialog for Success, Error, and Confirmation messages.
@@ -85,43 +91,51 @@ private data class Quintuple<A, B, C, D, E>(val first: A, val second: B, val thi
 fun HexAlertDialog(
     state: com.pointlessgames.hexagone.game.model.HexDialogState,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
-    
+
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             // Animated Entrance
             AnimatedVisibility(
                 visible = true,
-                enter = fadeIn(tween(300)) + scaleIn(initialScale = 0.9f, animationSpec = tween(300)),
-                modifier = Modifier.fillMaxWidth(0.92f)
+                enter = fadeIn(tween(300)) + scaleIn(
+                    initialScale = 0.9f,
+                    animationSpec = tween(300),
+                ),
+                modifier = Modifier.fillMaxWidth(0.92f),
             ) {
                 DialogContainer(modifier = modifier) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = spacing.extraLarge.scaled, vertical = spacing.large.scaled),
+                            .padding(
+                                horizontal = spacing.extraLarge.scaled,
+                                vertical = spacing.large.scaled,
+                            ),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled)
+                        verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
                     ) {
                         val (title, message, isError, onConfirm, icon) = when (state) {
                             is com.pointlessgames.hexagone.game.model.HexDialogState.Confirmation -> {
-                                val msg = stringResource(state.message, *state.formatArgs.toTypedArray())
+                                val msg =
+                                    stringResource(state.message, *state.formatArgs.toTypedArray())
                                 Quintuple(
-                                    stringResource(state.title), 
-                                    msg, 
-                                    false, 
-                                    state.onConfirm, 
-                                    Res.drawable.ic_diamond
+                                    stringResource(state.title),
+                                    msg,
+                                    false,
+                                    state.onConfirm,
+                                    Res.drawable.ic_diamond,
                                 )
                             }
+
                             is com.pointlessgames.hexagone.game.model.HexDialogState.Info -> {
                                 val msg = if (state.messageText != null) {
                                     state.messageText
@@ -129,11 +143,11 @@ fun HexAlertDialog(
                                     stringResource(state.message, *state.formatArgs.toTypedArray())
                                 } else ""
                                 Quintuple(
-                                    stringResource(state.title), 
-                                    msg, 
-                                    state.isError, 
-                                    null, 
-                                    if (state.isError) Res.drawable.ic_delete else Res.drawable.ic_star
+                                    stringResource(state.title),
+                                    msg,
+                                    state.isError,
+                                    null,
+                                    if (state.isError) Res.drawable.ic_delete else Res.drawable.ic_star,
                                 )
                             }
                         }
@@ -145,13 +159,13 @@ fun HexAlertDialog(
                                 .clip(CircleShape)
                                 .background(Color.White.copy(alpha = 0.05f))
                                 .padding(12.dp.scaled),
-                            contentAlignment = Alignment.Center
+                            contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 painter = painterResource(icon),
                                 contentDescription = null,
                                 tint = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize(),
                             )
                         }
 
@@ -163,7 +177,7 @@ fun HexAlertDialog(
                             fontWeight = FontWeight.Black,
                             fontSize = 20.sp.scaled,
                             letterSpacing = 2.sp.scaled,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
                         )
 
                         Text(
@@ -172,14 +186,17 @@ fun HexAlertDialog(
                             fontWeight = FontWeight.Medium,
                             fontSize = 14.sp.scaled,
                             textAlign = TextAlign.Center,
-                            lineHeight = 22.sp.scaled
+                            lineHeight = 22.sp.scaled,
                         )
 
                         Spacer(Modifier.height(spacing.medium.scaled))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally)
+                            horizontalArrangement = Arrangement.spacedBy(
+                                spacing.medium.scaled,
+                                Alignment.CenterHorizontally,
+                            ),
                         ) {
                             val playButtonSound = rememberPlayButtonSound()
                             if (onConfirm != null) {
@@ -189,52 +206,60 @@ fun HexAlertDialog(
                                         .weight(1f)
                                         .clip(CircleShape)
                                         .background(MaterialTheme.colorScheme.surface, CircleShape)
-                                        .border(1.dp.scaled, Color.White.copy(alpha = 0.1f), CircleShape)
+                                        .border(
+                                            1.dp.scaled,
+                                            Color.White.copy(alpha = 0.1f),
+                                            CircleShape,
+                                        )
                                         .clickable {
                                             playButtonSound()
                                             onDismiss()
                                         }
                                         .padding(vertical = spacing.medium.scaled),
-                                    contentAlignment = Alignment.Center
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
                                         text = stringResource(Res.string.cancel).uppercase(),
                                         color = Color.White.copy(alpha = 0.6f),
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp.scaled
+                                        fontSize = 14.sp.scaled,
                                     )
                                 }
 
                                 // Primary Confirm Action with Pulse
-                                val infiniteTransition = rememberInfiniteTransition(label = "btn_pulse")
+                                val infiniteTransition =
+                                    rememberInfiniteTransition(label = "btn_pulse")
                                 val pulseAlpha by infiniteTransition.animateFloat(
                                     initialValue = 0.8f,
                                     targetValue = 1f,
                                     animationSpec = infiniteRepeatable(
                                         animation = tween(1000),
-                                        repeatMode = RepeatMode.Reverse
+                                        repeatMode = RepeatMode.Reverse,
                                     ),
-                                    label = "alpha"
+                                    label = "alpha",
                                 )
 
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
                                         .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha), CircleShape)
-                                        .clickable { 
+                                        .background(
+                                            MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha),
+                                            CircleShape,
+                                        )
+                                        .clickable {
                                             playButtonSound()
                                             onConfirm()
                                             onDismiss()
                                         }
                                         .padding(vertical = spacing.medium.scaled),
-                                    contentAlignment = Alignment.Center
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
                                         text = stringResource(Res.string.confirm).uppercase(),
                                         color = Color.White,
                                         fontWeight = FontWeight.Black,
-                                        fontSize = 14.sp.scaled
+                                        fontSize = 14.sp.scaled,
                                     )
                                 }
                             } else {
@@ -244,18 +269,18 @@ fun HexAlertDialog(
                                         .fillMaxWidth(0.6f)
                                         .clip(CircleShape)
                                         .background(MaterialTheme.colorScheme.primary, CircleShape)
-                                        .clickable { 
+                                        .clickable {
                                             playButtonSound()
-                                            onDismiss() 
+                                            onDismiss()
                                         }
                                         .padding(vertical = spacing.medium.scaled),
-                                    contentAlignment = Alignment.Center
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
                                         text = stringResource(Res.string.done).uppercase(),
                                         color = Color.White,
                                         fontWeight = FontWeight.Black,
-                                        fontSize = 14.sp.scaled
+                                        fontSize = 14.sp.scaled,
                                     )
                                 }
                             }
@@ -275,7 +300,7 @@ fun HexAlertDialog(
 fun DialogContainer(
     modifier: Modifier = Modifier,
     isProcessing: Boolean = false,
-    content: @Composable BoxScope.() -> Unit
+    content: @Composable BoxScope.() -> Unit,
 ) {
     val cornerRadius = MaterialTheme.cornerRadius
 
@@ -297,7 +322,7 @@ fun DialogContainer(
                 2.dp.scaled,
                 Color.White.copy(alpha = 0.05f),
                 RoundedCornerShape(cornerRadius.extraLarge.scaled),
-            )
+            ),
     ) {
         content()
 
@@ -306,13 +331,13 @@ fun DialogContainer(
             visible = isProcessing,
             enter = fadeIn(),
             exit = fadeOut(),
-            modifier = Modifier.matchParentSize()
+            modifier = Modifier.matchParentSize(),
         ) {
             Box(
                 modifier = Modifier
                     .background(Color.Black.copy(alpha = 0.4f))
                     .clickable(enabled = false) {},
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
@@ -327,13 +352,13 @@ fun DialogContainer(
 @Composable
 fun DiamondBalanceBadge(
     diamonds: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
     var previousDiamonds by remember { mutableStateOf(diamonds) }
     var displayedDiamonds by remember { mutableStateOf(diamonds) }
     var animatedDelta by remember { mutableStateOf(0) }
-    
+
     val popScale = remember { Animatable(1f) }
     val dropOffset = remember { Animatable(0f) }
     val deltaAlpha = remember { Animatable(0f) }
@@ -351,7 +376,7 @@ fun DiamondBalanceBadge(
             animatedDelta = diff
             deltaAlpha.snapTo(1f)
             dropOffset.snapTo(0f)
-            
+
             // Parallel animation for falling red text
             scope.launch {
                 dropOffset.animateTo(30f, tween(1000))
@@ -374,14 +399,18 @@ fun DiamondBalanceBadge(
                     scaleY = popScale.value
                 }
                 .background(MaterialTheme.colorScheme.background, RoundedCornerShape(16.dp.scaled))
-                .border(1.dp.scaled, Color(0xFFFFD54F).copy(alpha = 0.2f), RoundedCornerShape(16.dp.scaled))
-                .padding(horizontal = spacing.medium.scaled, vertical = spacing.small.scaled)
+                .border(
+                    1.dp.scaled,
+                    Color(0xFFFFD54F).copy(alpha = 0.2f),
+                    RoundedCornerShape(16.dp.scaled),
+                )
+                .padding(horizontal = spacing.medium.scaled, vertical = spacing.small.scaled),
         ) {
             Icon(
                 painter = painterResource(Res.drawable.ic_diamond),
                 contentDescription = null,
                 tint = Color(0xFFFFD54F),
-                modifier = Modifier.size(16.dp.scaled)
+                modifier = Modifier.size(16.dp.scaled),
             )
             Spacer(Modifier.width(spacing.extraSmall.scaled))
             Text(
@@ -401,7 +430,7 @@ fun DiamondBalanceBadge(
                 fontSize = 14.sp.scaled,
                 modifier = Modifier
                     .offset(y = dropOffset.value.dp.scaled)
-                    .alpha(deltaAlpha.value)
+                    .alpha(deltaAlpha.value),
             )
         }
     }
@@ -413,7 +442,7 @@ fun DiamondBalanceBadge(
 @Composable
 fun SectionTitle(
     text: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
     Text(
@@ -422,7 +451,7 @@ fun SectionTitle(
         fontWeight = FontWeight.ExtraBold,
         fontSize = 14.sp.scaled,
         letterSpacing = 1.sp.scaled,
-        modifier = modifier.padding(vertical = spacing.medium.scaled)
+        modifier = modifier.padding(vertical = spacing.medium.scaled),
     )
 }
 
@@ -443,11 +472,11 @@ fun ProductCard(
     isEnabled: Boolean = true,
     footerContent: @Composable (ColumnScope.() -> Unit)? = null,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val playSound = rememberPlayButtonSound()
     val spacing = MaterialTheme.spacing
-    Box(modifier = modifier.padding(top = 12.dp.scaled, bottom = 4.dp.scaled)) {
+    Box(modifier = modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -456,13 +485,13 @@ fun ProductCard(
                 .border(
                     width = if (label != null) 1.dp.scaled else 0.dp,
                     color = if (label != null) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else Color.Transparent,
-                    shape = RoundedCornerShape(16.dp.scaled)
+                    shape = RoundedCornerShape(16.dp.scaled),
                 )
                 .alpha(if (hasEnoughDiamonds) 1f else 0.6f)
                 .clickable(enabled = isEnabled && hasEnoughDiamonds) { playSound(); onClick() }
                 .padding(spacing.large.scaled),
             horizontalArrangement = Arrangement.spacedBy(spacing.large.scaled),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (leadingIcon != null) {
                 Box(
@@ -471,13 +500,13 @@ fun ProductCard(
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.05f))
                         .padding(8.dp.scaled),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painter = painterResource(leadingIcon),
                         contentDescription = null,
                         tint = leadingIconTint,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
             }
@@ -487,14 +516,14 @@ fun ProductCard(
                     text = title.uppercase(),
                     color = Color.White,
                     fontWeight = FontWeight.Black,
-                    fontSize = 15.sp.scaled
+                    fontSize = 15.sp.scaled,
                 )
                 if (description.isNotEmpty()) {
                     Text(
                         text = description,
                         color = Color.White.copy(alpha = 0.4f),
                         fontSize = 11.sp.scaled,
-                        lineHeight = 14.sp.scaled
+                        lineHeight = 14.sp.scaled,
                     )
                 }
                 if (!hasEnoughDiamonds) {
@@ -503,10 +532,10 @@ fun ProductCard(
                         color = MaterialTheme.colorScheme.error,
                         fontWeight = FontWeight.Black,
                         fontSize = 9.sp.scaled,
-                        modifier = Modifier.padding(top = 2.dp.scaled)
+                        modifier = Modifier.padding(top = 2.dp.scaled),
                     )
                 }
-                
+
                 footerContent?.invoke(this)
             }
 
@@ -516,14 +545,14 @@ fun ProductCard(
                         text = costInDiamonds.toString(),
                         color = if (hasEnoughDiamonds) Color(0xFFFFD54F) else Color.Gray,
                         fontWeight = FontWeight.Black,
-                        fontSize = 18.sp.scaled
+                        fontSize = 18.sp.scaled,
                     )
                     Spacer(Modifier.width(spacing.small.scaled))
                     Icon(
                         painter = painterResource(Res.drawable.ic_diamond),
                         contentDescription = null,
                         tint = Color(0xFFFFD54F),
-                        modifier = Modifier.size(18.dp.scaled)
+                        modifier = Modifier.size(18.dp.scaled),
                     )
                 }
             } else {
@@ -531,7 +560,7 @@ fun ProductCard(
                     text = price,
                     color = Color(0xFF81C784),
                     fontWeight = FontWeight.Black,
-                    fontSize = 18.sp.scaled
+                    fontSize = 18.sp.scaled,
                 )
             }
         }
@@ -542,13 +571,13 @@ fun ProductCard(
                     .align(Alignment.TopStart)
                     .offset(x = 12.dp.scaled, y = (-10).dp.scaled)
                     .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp.scaled))
-                    .padding(horizontal = 8.dp.scaled, vertical = 2.dp.scaled)
+                    .padding(horizontal = 8.dp.scaled, vertical = 2.dp.scaled),
             ) {
                 Text(
                     text = label,
                     color = Color.White,
                     fontWeight = FontWeight.Black,
-                    fontSize = 9.sp.scaled
+                    fontSize = 9.sp.scaled,
                 )
             }
         }
@@ -567,41 +596,41 @@ fun ProductGridItem(
     iconScale: Float = 1f,
     isEnabled: Boolean = true,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val playSound = rememberPlayButtonSound()
     val spacing = MaterialTheme.spacing
     val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
 
     Box(
-        modifier = modifier
-            .aspectRatio(0.8f) // Vertical orientation
-            .clickable(enabled = isEnabled) { playSound(); onClick() },
-        contentAlignment = Alignment.Center
+        modifier = modifier.aspectRatio(0.8f),
+        contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(shape)
+                .clickable(enabled = isEnabled) { playSound(); onClick() }
                 .background(MaterialTheme.colorScheme.background)
                 .border(1.dp.scaled, Color.White.copy(alpha = 0.05f), shape)
-                .padding(spacing.medium.scaled),
-            contentAlignment = Alignment.Center
+                .padding(spacing.medium.scaled)
+                .padding(bottom = spacing.medium.scaled),
+            contentAlignment = Alignment.Center,
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
             ) {
                 // Icon / Visual Area
                 Box(
                     modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_diamond),
                         contentDescription = null,
                         tint = Color(0xFFFFD54F),
-                        modifier = Modifier.size((48.dp.scaled * iconScale))
+                        modifier = Modifier.size((48.dp.scaled * iconScale)),
                     )
                 }
 
@@ -610,7 +639,7 @@ fun ProductGridItem(
                     color = Color.White,
                     fontWeight = FontWeight.Black,
                     fontSize = 13.sp.scaled,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
 
                 if (description.isNotEmpty()) {
@@ -618,7 +647,7 @@ fun ProductGridItem(
                         text = description,
                         color = Color.White.copy(alpha = 0.4f),
                         fontSize = 9.sp.scaled,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
                 }
 
@@ -629,7 +658,7 @@ fun ProductGridItem(
                     color = Color(0xFF81C784),
                     fontWeight = FontWeight.Black,
                     fontSize = 16.sp.scaled,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
             }
         }
@@ -640,13 +669,13 @@ fun ProductGridItem(
                     .align(Alignment.TopStart)
                     .offset(x = (-4).dp.scaled, y = (-4).dp.scaled)
                     .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(6.dp.scaled))
-                    .padding(horizontal = 6.dp.scaled, vertical = 2.dp.scaled)
+                    .padding(horizontal = 6.dp.scaled, vertical = 2.dp.scaled),
             ) {
                 Text(
                     text = label,
                     color = Color.White,
                     fontWeight = FontWeight.Black,
-                    fontSize = 8.sp.scaled
+                    fontSize = 8.sp.scaled,
                 )
             }
         }
@@ -662,7 +691,7 @@ fun ScreenScaffold(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     topBarTrailingContent: @Composable (RowScope.() -> Unit)? = null,
-    content: @Composable (PaddingValues) -> Unit
+    content: @Composable (PaddingValues) -> Unit,
 ) {
     val spacing = MaterialTheme.spacing
     var headerHeight by remember { mutableStateOf(0) }
@@ -675,7 +704,7 @@ fun ScreenScaffold(
                 Brush.verticalGradient(
                     listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.background),
                 ),
-            )
+            ),
     ) {
         // Content
         val topPadding = remember(headerHeight) {
@@ -692,30 +721,30 @@ fun ScreenScaffold(
                     Brush.verticalGradient(
                         0f to MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
                         0.7f to MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                        1f to Color.Transparent
-                    )
+                        1f to Color.Transparent,
+                    ),
                 )
                 .statusBarsPadding()
-                .padding(horizontal = spacing.extraLarge.scaled)
+                .padding(horizontal = spacing.extraLarge.scaled),
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = spacing.large.scaled, bottom = spacing.extraLarge.scaled),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled)
+                horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
             ) {
                 HexBackButton(onClick = onBack)
-                
+
                 Text(
                     text = title.uppercase(),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = 24.sp.scaled,
-                        letterSpacing = 4.sp.scaled
+                        letterSpacing = 4.sp.scaled,
                     ),
                     fontWeight = FontWeight.Black,
                     color = Color.White,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
 
                 topBarTrailingContent?.invoke(this)

@@ -63,7 +63,7 @@ import androidx.compose.foundation.lazy.itemsIndexed as lazyRowItemsIndexed
 
 @Composable
 internal fun ShopScreen(
-    viewModel: GameViewModel
+    viewModel: GameViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val storeProducts by viewModel.storeProducts.collectAsState()
@@ -75,7 +75,7 @@ internal fun ShopScreen(
         onBack = { navigator.pop() },
         topBarTrailingContent = {
             DiamondBalanceBadge(diamonds = uiState.diamonds)
-        }
+        },
     ) { contentPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             LazyVerticalGrid(
@@ -87,8 +87,8 @@ internal fun ShopScreen(
                 verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
                 contentPadding = PaddingValues(
                     top = contentPadding.calculateTopPadding(),
-                    bottom = spacing.extraLarge.scaled
-                )
+                    bottom = spacing.extraLarge.scaled,
+                ),
             ) {
                 if (uiState.isShopLoading) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
@@ -113,28 +113,35 @@ internal fun ShopScreen(
                                     color = Color.White.copy(alpha = 0.5f),
                                     fontSize = 11.sp.scaled,
                                     lineHeight = 16.sp.scaled,
-                                    modifier = Modifier.padding(bottom = spacing.medium.scaled)
                                 )
                             }
                         }
-                        
+
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             LazyRow(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
                                 contentPadding = PaddingValues(
                                     horizontal = spacing.extraLarge.scaled,
-                                    vertical = 8.dp.scaled
-                                )
+                                    vertical = 8.dp.scaled,
+                                ),
                             ) {
                                 lazyRowItemsIndexed(storeProducts) { index, product ->
                                     val label = when (index) {
                                         storeProducts.lastIndex -> stringResource(Res.string.shop_best_value)
-                                        storeProducts.lastIndex - 1 if storeProducts.size > 2 -> stringResource(Res.string.shop_extra_diamonds, 50)
-                                        1 if storeProducts.size > 1 -> stringResource(Res.string.shop_extra_diamonds, 20)
+                                        storeProducts.lastIndex - 1 if storeProducts.size > 2 -> stringResource(
+                                            Res.string.shop_extra_diamonds,
+                                            50,
+                                        )
+
+                                        1 if storeProducts.size > 1 -> stringResource(
+                                            Res.string.shop_extra_diamonds,
+                                            20,
+                                        )
+
                                         else -> null
                                     }
-                                    
+
                                     ProductGridItem(
                                         title = product.name,
                                         price = product.price,
@@ -143,7 +150,7 @@ internal fun ShopScreen(
                                         iconScale = 1f + (index * 0.15f),
                                         isEnabled = !uiState.isShopProcessing,
                                         onClick = { viewModel.onBuyPremiumProduct(product) },
-                                        modifier = Modifier.width(160.dp.scaled)
+                                        modifier = Modifier.width(160.dp.scaled),
                                     )
                                 }
                             }
@@ -153,14 +160,12 @@ internal fun ShopScreen(
                     // Perk Exchange Section Header
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         Column(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
-                            Spacer(Modifier.height(spacing.large.scaled))
                             SectionTitle(text = stringResource(Res.string.shop_vouchers_title))
                             Text(
                                 text = stringResource(Res.string.shop_vouchers_desc),
                                 color = Color.White.copy(alpha = 0.5f),
                                 fontSize = 11.sp.scaled,
                                 lineHeight = 16.sp.scaled,
-                                modifier = Modifier.padding(bottom = spacing.medium.scaled)
                             )
                         }
                     }
@@ -168,11 +173,14 @@ internal fun ShopScreen(
                     val exchangeItems = listOf(
                         Triple(Res.string.shop_common_bundle, 50, PerkCategory.COMMON),
                         Triple(Res.string.shop_rare_bundle, 150, PerkCategory.RARE),
-                        Triple(Res.string.shop_legendary_bundle, 500, PerkCategory.LEGENDARY)
+                        Triple(Res.string.shop_legendary_bundle, 500, PerkCategory.LEGENDARY),
                     )
 
                     // Exchange items are full-width cards to distinguish from products
-                    itemsIndexed(exchangeItems, span = { _, _ -> GridItemSpan(maxLineSpan) }) { _, (resId, cost, category) ->
+                    itemsIndexed(
+                        exchangeItems,
+                        span = { _, _ -> GridItemSpan(maxLineSpan) },
+                    ) { _, (resId, cost, category) ->
                         val icon = when (category) {
                             PerkCategory.COMMON -> Res.drawable.ic_roll
                             PerkCategory.RARE -> Res.drawable.ic_rare_perk
@@ -183,7 +191,7 @@ internal fun ShopScreen(
                             PerkCategory.RARE -> Color(0xFF4FC3F7)
                             PerkCategory.LEGENDARY -> Color(0xFFFFD54F)
                         }
-                        
+
                         val perks = when (category) {
                             PerkCategory.COMMON -> Perk.entries.filter { it.baseWeight >= 80 }
                             PerkCategory.RARE -> Perk.entries.filter { it.baseWeight in 21..79 }
@@ -203,18 +211,18 @@ internal fun ShopScreen(
                                     Spacer(Modifier.height(spacing.small.scaled))
                                     Row(
                                         horizontalArrangement = Arrangement.spacedBy(spacing.small.scaled),
-                                        verticalAlignment = Alignment.CenterVertically
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         perks.forEach { perk ->
                                             PerkIcon(
                                                 perk = perk,
                                                 color = Color.White.copy(alpha = 0.3f),
-                                                modifier = Modifier.size(16.dp.scaled)
+                                                modifier = Modifier.size(16.dp.scaled),
                                             )
                                         }
                                     }
                                 },
-                                onClick = { viewModel.onBuyPerk(category) }
+                                onClick = { viewModel.onBuyPerk(category) },
                             )
                         }
                     }
@@ -225,7 +233,7 @@ internal fun ShopScreen(
             if (uiState.activeDialog != null) {
                 HexAlertDialog(
                     state = uiState.activeDialog!!,
-                    onDismiss = viewModel::onDismissDialog
+                    onDismiss = viewModel::onDismissDialog,
                 )
             }
 
@@ -236,7 +244,7 @@ internal fun ShopScreen(
                         .fillMaxSize()
                         .background(Color.Black.copy(alpha = 0.4f))
                         .clickable(enabled = false) {},
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
