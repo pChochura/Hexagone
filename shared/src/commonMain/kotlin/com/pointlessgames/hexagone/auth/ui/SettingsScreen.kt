@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -27,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pointlessgames.hexagone.LocalNavigator
@@ -37,9 +39,11 @@ import com.pointlessgames.hexagone.auth.ui.components.NicknamePopup
 import com.pointlessgames.hexagone.game.model.HexDialogState
 import com.pointlessgames.hexagone.game.ui.components.HexAlertDialog
 import com.pointlessgames.hexagone.game.ui.components.ScreenScaffold
+import com.pointlessgames.hexagone.ui.theme.ThemeId
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
+import com.pointlessgames.hexagone.utils.rememberPlayButtonSound
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.settings_anonymous_account
 import hexagone.shared.generated.resources.settings_bg_music
@@ -81,39 +85,40 @@ internal fun SettingsScreen(
                 .fillMaxSize()
                 .padding(top = contentPadding.calculateTopPadding())
                 .padding(bottom = spacing.extraLarge.scaled),
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = spacing.extraLarge.scaled)
                     .padding(top = spacing.medium.scaled),
-                verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled)
+                verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
             ) {
-                AuthButton(
-                    text = stringResource(Res.string.themes_title),
+                ThemeSettingsCard(
+                    themeId = try {
+                        ThemeId.valueOf(uiState.activeTheme)
+                    } catch (e: Exception) {
+                        ThemeId.NEON_GLOW
+                    },
                     onClick = { navigator.navigateTo(Route.Themes) },
-                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
                 )
 
                 AccountCard(
                     nickname = uiState.nickname,
                     isAnonymous = uiState.isAnonymous,
-                    onClick = viewModel::onShowNicknamePopup
+                    onClick = viewModel::onShowNicknamePopup,
                 )
-                
+
                 ToggleCard(
                     label = stringResource(Res.string.settings_sound),
                     checked = uiState.isSoundEnabled,
-                    onCheckedChange = { viewModel.toggleSound() }
+                    onCheckedChange = { viewModel.toggleSound() },
                 )
 
                 ToggleCard(
                     label = stringResource(Res.string.settings_bg_music),
                     checked = uiState.isBgMusicEnabled,
-                    onCheckedChange = { viewModel.toggleBgMusic() }
+                    onCheckedChange = { viewModel.toggleBgMusic() },
                 )
 
                 Spacer(modifier = Modifier.height(spacing.medium.scaled))
@@ -122,7 +127,7 @@ internal fun SettingsScreen(
                     text = stringResource(Res.string.settings_logout_button),
                     onClick = viewModel::logout,
                     containerColor = Color.White.copy(alpha = 0.05f),
-                    contentColor = Color.White
+                    contentColor = Color.White,
                 )
             }
 
@@ -132,7 +137,7 @@ internal fun SettingsScreen(
                     onClick = { showRemoveAccountDialog = true },
                     containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
                     contentColor = MaterialTheme.colorScheme.error,
-                    borderColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
+                    borderColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
                 )
             }
         }
@@ -146,9 +151,9 @@ internal fun SettingsScreen(
                 onConfirm = {
                     viewModel.removeAccount()
                     showRemoveAccountDialog = false
-                }
+                },
             ),
-            onDismiss = { showRemoveAccountDialog = false }
+            onDismiss = { showRemoveAccountDialog = false },
         )
     }
 
@@ -159,7 +164,7 @@ internal fun SettingsScreen(
         onConfirm = viewModel::updateNickname,
         onDismiss = viewModel::onDismissNicknamePopup,
         isLoading = uiState.isLoading,
-        error = uiState.error
+        error = uiState.error,
     )
 }
 
@@ -167,9 +172,9 @@ internal fun SettingsScreen(
 private fun AccountCard(
     nickname: String,
     isAnonymous: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
-    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
+    val playSound = rememberPlayButtonSound()
     val spacing = MaterialTheme.spacing
     val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
 
@@ -179,7 +184,7 @@ private fun AccountCard(
             .clip(shape)
             .background(MaterialTheme.colorScheme.background)
             .clickable { playSound(); onClick() }
-            .padding(spacing.large.scaled)
+            .padding(spacing.large.scaled),
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
@@ -187,16 +192,16 @@ private fun AccountCard(
                 else stringResource(Res.string.settings_logged_in_as, nickname),
                 color = Color.White.copy(alpha = 0.5f),
                 fontSize = 12.sp.scaled,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
-            
+
             Spacer(modifier = Modifier.height(spacing.extraSmall.scaled))
 
             Text(
                 text = nickname,
                 color = Color.White,
                 fontSize = 20.sp.scaled,
-                fontWeight = FontWeight.Black
+                fontWeight = FontWeight.Black,
             )
         }
     }
@@ -208,7 +213,7 @@ private fun ToggleCard(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
-    val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
+    val playSound = rememberPlayButtonSound()
     val spacing = MaterialTheme.spacing
     val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
 
@@ -220,13 +225,13 @@ private fun ToggleCard(
             .clickable { playSound(); onCheckedChange(!checked) }
             .padding(spacing.large.scaled),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = label,
             color = Color.White.copy(alpha = 0.5f),
             fontSize = 12.sp.scaled,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Switch(
             checked = checked,
@@ -236,7 +241,64 @@ private fun ToggleCard(
                 checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                 uncheckedThumbColor = Color.White,
                 uncheckedTrackColor = Color.White.copy(alpha = 0.2f),
-            )
+            ),
         )
+    }
+}
+
+
+@Composable
+private fun ThemeSettingsCard(
+    themeId: ThemeId,
+    onClick: () -> Unit,
+) {
+    val playSound = rememberPlayButtonSound()
+    val spacing = MaterialTheme.spacing
+    val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
+    val themeName = getThemeNameString(themeId)
+    val previewColors = getThemeColors(themeId)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.background)
+            .clickable { playSound(); onClick() }
+            .padding(spacing.large.scaled),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column {
+            Text(
+                text = stringResource(Res.string.themes_title),
+                color = Color.White.copy(alpha = 0.5f),
+                fontSize = 12.sp.scaled,
+                fontWeight = FontWeight.Bold,
+            )
+            Spacer(modifier = Modifier.height(spacing.extraSmall.scaled))
+            Text(
+                text = themeName,
+                color = previewColors.tile1,
+                fontSize = 20.sp.scaled,
+                fontWeight = FontWeight.Black,
+            )
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp.scaled),
+        ) {
+            Box(
+                Modifier.size(24.dp.scaled)
+                    .background(previewColors.tile1, RoundedCornerShape(4.dp.scaled)),
+            )
+            Box(
+                Modifier.size(24.dp.scaled)
+                    .background(previewColors.tile2, RoundedCornerShape(4.dp.scaled)),
+            )
+            Box(
+                Modifier.size(24.dp.scaled)
+                    .background(previewColors.tile4, RoundedCornerShape(4.dp.scaled)),
+            )
+        }
     }
 }

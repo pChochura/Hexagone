@@ -33,10 +33,16 @@ internal class SettingsViewModel(
         val showNicknamePopup: Boolean = false,
         val isSoundEnabled: Boolean = true,
         val isBgMusicEnabled: Boolean = true,
+        val activeTheme: String = "",
     )
 
     init {
         loadAccountInfo()
+        viewModelScope.launch {
+            settingsRepository.getActiveThemeFlow().collect { themeId ->
+                _uiState.value = _uiState.value.copy(activeTheme = themeId)
+            }
+        }
     }
 
     fun loadAccountInfo() {
