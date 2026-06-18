@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
@@ -360,12 +361,20 @@ private fun ShopActionButton(
         Box(
             modifier = Modifier
                 .size(width = size, height = size * heightScale)
-                .background(perkColor.copy(alpha = if (isHighlighted) glowAlphaState.value else 0.1f), FlatTopHexagonShape())
-                .border(
-                    1.dp.scaled,
-                    if (isHighlighted) perkColor else perkColor.copy(alpha = 0.4f),
-                    FlatTopHexagonShape()
-                ),
+                .drawBehind {
+                    val outline = FlatTopHexagonShape().createOutline(this.size, layoutDirection, this)
+                    if (outline is androidx.compose.ui.graphics.Outline.Generic) {
+                        drawPath(
+                            outline.path,
+                            color = perkColor.copy(alpha = if (isHighlighted) glowAlphaState.value else 0.1f)
+                        )
+                        drawPath(
+                            outline.path,
+                            color = if (isHighlighted) perkColor else perkColor.copy(alpha = 0.4f),
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
+                        )
+                    }
+                },
             contentAlignment = Alignment.Center,
         ) {
             Icon(

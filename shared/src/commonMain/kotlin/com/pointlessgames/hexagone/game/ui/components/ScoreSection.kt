@@ -36,6 +36,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -108,28 +110,22 @@ fun ScoreSection(
     onTargetPosition: (TipTarget, Rect) -> Unit = { _, _ -> },
 ) {
     val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
-    val score = scoreProvider()
-    val bestScore = bestScoreProvider()
-    val combo = comboProvider()
-    val level = levelProvider()
-    val progress = progressProvider()
-    val highestValue = highestValueProvider()
-    val activePerk = activePerkProvider()
-    val isDailyChallengeCompleted = isDailyChallengeCompletedProvider()
 
     val waveIntensity = remember { Animatable(0f) }
-    var previousScore by remember { mutableStateOf(score) }
-    LaunchedEffect(score) {
-        val addedScore = score - previousScore
-        if (addedScore > 0) {
-            // Intensity scales from 0.3 to 1.0 based on the amount scored
-            // 200 points is considered a "major" move at higher levels
-            val threshold = 100f + 25f * level
-            val intensity = (addedScore / threshold).coerceIn(0.3f, 1.0f)
-            waveIntensity.snapTo(intensity)
-            waveIntensity.animateTo(0f, tween(1000))
+    var previousScore by remember { mutableStateOf(scoreProvider()) }
+    LaunchedEffect(Unit) {
+        snapshotFlow { scoreProvider() }.collect { score ->
+            val addedScore = score - previousScore
+            if (addedScore > 0) {
+                val threshold = 100f + 25f * levelProvider()
+                val intensity = (addedScore / threshold).coerceIn(0.3f, 1.0f)
+                launch {
+                    waveIntensity.snapTo(intensity)
+                    waveIntensity.animateTo(0f, tween(1000))
+                }
+            }
+            previousScore = score
         }
-        previousScore = score
     }
 
     Column(
@@ -183,19 +179,11 @@ fun ScoreSection(
                         borderColor = Color.White.copy(alpha = 0.1f),
                     )
 
-                    HexagonIconButton(
-                        onClick = onDailyChallengeClick,
-                        icon = Res.drawable.ic_daily_challenge,
-                        tooltip = Res.string.daily_challenge,
-                        tooltipPosition = Position.BELOW,
-                        size = iconSize,
-                        backgroundColor = if (isDailyChallengeCompleted)
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                        else Color.White.copy(alpha = 0.05f),
-                        borderColor = if (isDailyChallengeCompleted)
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                        else Color.White.copy(alpha = 0.1f),
-                        modifier = Modifier.trackTipTarget(TipTarget.DAILY_MISSIONS_BUTTON, onTargetPosition),
+                    DailyChallengeButtonWrapper(
+                        isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
+                        onDailyChallengeClick = onDailyChallengeClick,
+                        iconSize = iconSize,
+                        onTargetPosition = onTargetPosition,
                     )
 
                     HexagonIconButton(
@@ -267,19 +255,11 @@ fun ScoreSection(
                         alignment = Alignment.End,
                     ),
                 ) {
-                    HexagonIconButton(
-                        onClick = onDailyChallengeClick,
-                        icon = Res.drawable.ic_daily_challenge,
-                        tooltip = Res.string.daily_challenge,
-                        tooltipPosition = Position.BELOW,
-                        size = iconSize,
-                        backgroundColor = if (isDailyChallengeCompleted)
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                        else Color.White.copy(alpha = 0.05f),
-                        borderColor = if (isDailyChallengeCompleted)
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                        else Color.White.copy(alpha = 0.1f),
-                        modifier = Modifier.trackTipTarget(TipTarget.DAILY_MISSIONS_BUTTON, onTargetPosition),
+                    DailyChallengeButtonWrapper(
+                        isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
+                        onDailyChallengeClick = onDailyChallengeClick,
+                        iconSize = iconSize,
+                        onTargetPosition = onTargetPosition,
                     )
 
                     HexagonIconButton(
@@ -304,9 +284,9 @@ fun ScoreSection(
                 .height(IntrinsicSize.Min)
                 .graphicsLayer { clip = false }, // Allow children (combo) to pop outside
         ) {
-            WavyProgressBar(
-                progress = progress,
-                waveIntensity = waveIntensity.value,
+            WavyProgressBarWrapper(
+                progressProvider = progressProvider,
+                waveIntensityProvider = { waveIntensity.value },
                 modifier = Modifier.matchParentSize(),
             )
 
@@ -335,31 +315,15 @@ fun ScoreSection(
                         fontSize = 12.sp.scaled,
                     )
                     Spacer(Modifier.width(spacing.small.scaled))
-                    Text(
-                        text = stringResource(Res.string.level_label, level),
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp.scaled,
-                        letterSpacing = 1.sp.scaled,
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) {
-                            playSound()
-                            onLevelClick()
-                        },
+                    LevelTextWrapper(
+                        levelProvider = levelProvider,
+                        playSound = playSound,
+                        onLevelClick = onLevelClick,
                     )
                 }
 
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.wrapContentHeight()) {
-                    Text(
-                        text = score.toString(),
-                        color = Color.White,
-                        fontWeight = FontWeight.Black,
-                        fontSize = (if (isVertical) 32 else 48).sp.scaled,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                    )
+                    ScoreTextWrapper(scoreProvider = scoreProvider, isVertical = isVertical)
                 }
 
                 if (isVertical) {
@@ -370,27 +334,13 @@ fun ScoreSection(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        // Combo Area
-                        AnimatedVisibility(combo > 0) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier.size(spacing.giant.scaled),
-                            ) {
-                                ComboDisplay(combo = combo, spacing = spacing)
-                            }
-                        }
+                        ComboAreaWrapper(comboProvider = comboProvider, spacing = spacing)
 
-                        // Max Tile Area
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.size(spacing.giant.scaled),
-                        ) {
-                            MaxPieceDisplay(
-                                activePerk = activePerk,
-                                highestValue = highestValue,
-                                spacing = spacing,
-                            )
-                        }
+                        MaxPieceAreaWrapper(
+                            activePerkProvider = activePerkProvider,
+                            highestValueProvider = highestValueProvider,
+                            spacing = spacing,
+                        )
                     }
 
                     Spacer(Modifier.height(spacing.small.scaled))
@@ -406,12 +356,7 @@ fun ScoreSection(
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp.scaled,
                     )
-                    Text(
-                        text = bestScore.toString(),
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 14.sp.scaled,
-                    )
+                    BestScoreTextWrapper(bestScoreProvider = bestScoreProvider)
                 }
             }
 
@@ -424,7 +369,7 @@ fun ScoreSection(
                         .width(spacing.giant.scaled),
                     contentAlignment = Alignment.Center,
                 ) {
-                    ComboDisplay(combo = combo, spacing = spacing)
+                    ComboAreaWrapper(comboProvider = comboProvider, spacing = spacing)
                 }
 
                 // Integrated Max Value / Perk Section (End)
@@ -435,9 +380,9 @@ fun ScoreSection(
                         .width(spacing.giant.scaled),
                     contentAlignment = Alignment.Center,
                 ) {
-                    MaxPieceDisplay(
-                        activePerk = activePerk,
-                        highestValue = highestValue,
+                    MaxPieceAreaWrapper(
+                        activePerkProvider = activePerkProvider,
+                        highestValueProvider = highestValueProvider,
                         spacing = spacing,
                     )
                 }
@@ -598,4 +543,116 @@ private fun MaxPieceDisplay(
             }
         }
     }
+}
+
+@Composable
+private fun DailyChallengeButtonWrapper(
+    isDailyChallengeCompletedProvider: () -> Boolean,
+    onDailyChallengeClick: () -> Unit,
+    iconSize: androidx.compose.ui.unit.Dp,
+    onTargetPosition: (TipTarget, Rect) -> Unit
+) {
+    val isCompleted = isDailyChallengeCompletedProvider()
+    HexagonIconButton(
+        onClick = onDailyChallengeClick,
+        icon = Res.drawable.ic_daily_challenge,
+        tooltip = Res.string.daily_challenge,
+        tooltipPosition = Position.BELOW,
+        size = iconSize,
+        backgroundColor = if (isCompleted)
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+        else Color.White.copy(alpha = 0.05f),
+        borderColor = if (isCompleted)
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+        else Color.White.copy(alpha = 0.1f),
+        modifier = Modifier.trackTipTarget(TipTarget.DAILY_MISSIONS_BUTTON, onTargetPosition),
+    )
+}
+
+@Composable
+private fun LevelTextWrapper(
+    levelProvider: () -> Int,
+    playSound: () -> Unit,
+    onLevelClick: () -> Unit
+) {
+    Text(
+        text = stringResource(Res.string.level_label, levelProvider()),
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+        fontWeight = FontWeight.Bold,
+        fontSize = 12.sp.scaled,
+        letterSpacing = 1.sp.scaled,
+        modifier = Modifier.clickable(
+            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+            indication = null,
+        ) {
+            playSound()
+            onLevelClick()
+        },
+    )
+}
+
+@Composable
+private fun ScoreTextWrapper(scoreProvider: () -> Int, isVertical: Boolean) {
+    Text(
+        text = scoreProvider().toString(),
+        color = Color.White,
+        fontWeight = FontWeight.Black,
+        fontSize = (if (isVertical) 32 else 48).sp.scaled,
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+    )
+}
+
+@Composable
+private fun BestScoreTextWrapper(bestScoreProvider: () -> Int) {
+    Text(
+        text = bestScoreProvider().toString(),
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 14.sp.scaled,
+    )
+}
+
+@Composable
+private fun ComboAreaWrapper(comboProvider: () -> Int, spacing: com.pointlessgames.hexagone.ui.theme.Spacing) {
+    val combo = comboProvider()
+    AnimatedVisibility(combo > 0) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(spacing.giant.scaled),
+        ) {
+            ComboDisplay(combo = combo, spacing = spacing)
+        }
+    }
+}
+
+@Composable
+private fun MaxPieceAreaWrapper(
+    activePerkProvider: () -> Perk?,
+    highestValueProvider: () -> Int,
+    spacing: com.pointlessgames.hexagone.ui.theme.Spacing
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.size(spacing.giant.scaled),
+    ) {
+        MaxPieceDisplay(
+            activePerk = activePerkProvider(),
+            highestValue = highestValueProvider(),
+            spacing = spacing,
+        )
+    }
+}
+
+@Composable
+private fun WavyProgressBarWrapper(
+    progressProvider: () -> Float,
+    waveIntensityProvider: () -> Float,
+    modifier: Modifier = Modifier
+) {
+    WavyProgressBar(
+        progress = progressProvider(),
+        waveIntensity = waveIntensityProvider(),
+        modifier = modifier
+    )
 }

@@ -413,6 +413,13 @@ internal fun GameScreen(
     val pendingMergeProvider = remember { { pendingMergeState.value } }
     val activeMergeStepIndexProvider = remember { { activeMergeStepIndexState.value } }
     val selectedCellIdProvider = remember { { selectedCellIdState.value } }
+    val gridStateProvider = remember { { gridState.value } }
+    val previewStateProvider = remember { { previewState.value } }
+    val hoveredMergeState = remember(uiState) {
+        viewModel.hoveredMerge
+    }.collectAsState()
+
+    val currentHoverMergeProvider = remember { { hoveredMergeState.value } }
 
     LaunchedEffect(viewModel.effects) {
         viewModel.effects.collect { effect ->
@@ -626,12 +633,12 @@ internal fun GameScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         GameGridOverlay(
-                            gridState = gridState.value,
+                            gridStateProvider = gridStateProvider,
                             onBoardPerksProvider = onBoardPerksProvider,
                             mergeHintsProvider = mergeHintsProvider,
-                            previewState = previewState.value,
+                            previewStateProvider = previewStateProvider,
                             pendingMergeProvider = pendingMergeProvider,
-                            hoveredMergeState = viewModel.hoveredMerge,
+                            currentHoverMergeProvider = currentHoverMergeProvider,
                             potentialMergesProvider = { potentialMergesProvider.value },
                             activePerkProvider = activePerkProvider,
                             selectedCellIdProvider = selectedCellIdProvider,
@@ -721,12 +728,12 @@ internal fun GameScreen(
                         }
 
                         GameGridOverlay(
-                            gridState = gridState.value,
+                            gridStateProvider = gridStateProvider,
                             onBoardPerksProvider = onBoardPerksProvider,
                             mergeHintsProvider = mergeHintsProvider,
-                            previewState = previewState.value,
+                            previewStateProvider = previewStateProvider,
                             pendingMergeProvider = pendingMergeProvider,
-                            hoveredMergeState = viewModel.hoveredMerge,
+                            currentHoverMergeProvider = currentHoverMergeProvider,
                             potentialMergesProvider = { potentialMergesProvider.value },
                             activePerkProvider = activePerkProvider,
                             selectedCellIdProvider = selectedCellIdProvider,
@@ -921,12 +928,12 @@ internal fun GameScreen(
                 playerName = playerNameState.value,
                 boardContent = {
                     GameGridOverlay(
-                        gridState = gridState.value,
+                        gridStateProvider = gridStateProvider,
                         onBoardPerksProvider = onBoardPerksProvider,
                         mergeHintsProvider = mergeHintsProvider,
-                        previewState = previewState.value,
+                        previewStateProvider = previewStateProvider,
                         pendingMergeProvider = pendingMergeProvider,
-                        hoveredMergeState = viewModel.hoveredMerge,
+                        currentHoverMergeProvider = currentHoverMergeProvider,
                         potentialMergesProvider = { potentialMergesProvider.value },
                         activePerkProvider = activePerkProvider,
                         selectedCellIdProvider = selectedCellIdProvider,

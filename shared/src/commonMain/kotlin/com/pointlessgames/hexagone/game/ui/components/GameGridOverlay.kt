@@ -80,12 +80,12 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 internal fun GameGridOverlay(
     modifier: Modifier = Modifier,
-    gridState: List<HexagonCell>,
+    gridStateProvider: () -> List<HexagonCell>,
     onBoardPerksProvider: () -> List<OnBoardPerk>,
     mergeHintsProvider: () -> List<MergeHint>,
-    previewState: List<PreviewCell>,
+    previewStateProvider: () -> List<PreviewCell>,
     pendingMergeProvider: () -> MergeTransition?,
-    hoveredMergeState: StateFlow<MergeTransition?>,
+    currentHoverMergeProvider: () -> MergeTransition?,
     potentialMergesProvider: () -> Map<Pair<Int, Int>, PotentialMerge>,
     activePerkProvider: () -> Perk?,
     selectedCellIdProvider: () -> String?,
@@ -100,8 +100,7 @@ internal fun GameGridOverlay(
     onMergeAnimationFinished: () -> Unit,
     isSwiping: () -> Boolean,
 ) {
-    val currentGridState by androidx.compose.runtime.rememberUpdatedState(gridState)
-    val currentPreviewState by androidx.compose.runtime.rememberUpdatedState(previewState)
+    // Providers used in DrawModifiers or asynchronous callbacks get latest state automatically.
     val colorScheme = MaterialTheme.colorScheme
     val spacing = MaterialTheme.spacing
     val density = LocalDensity.current
@@ -130,8 +129,8 @@ internal fun GameGridOverlay(
         if (displayScore > 0) stringResource(Res.string.score_popup, displayScore) else ""
     } ?: ""
 
-    LaunchedEffect(hoveredMergeState) {
-        hoveredMergeState.collect {
+    LaunchedEffect(Unit) {
+        snapshotFlow { currentHoverMergeProvider() }.collect {
             activeHoverMerge.value = it
             if (it != null) hoverProgress.animateTo(1f, tween(200))
             else if (hoverProgress.value > 0f) hoverProgress.animateTo(0f, tween(200))
@@ -299,7 +298,7 @@ internal fun GameGridOverlay(
         }
 
         LaunchedEffect(cellWidth, cellHeight, gapPx) {
-            snapshotFlow { currentPreviewState to activeHoverMerge.value }.collect { (previews, currentHoverMerge) ->
+            snapshotFlow { previewStateProvider() to activeHoverMerge.value }.collect { (previews, currentHoverMerge) ->
                 val currentIds = previews.map { it.id }.toSet()
                 ghostAnimations.keys.retainAll { it in currentIds }
                 previews.forEach { preview ->
@@ -329,9 +328,9 @@ internal fun GameGridOverlay(
         }
 
         LaunchedEffect(Unit) {
-            hoveredMergeState.collect { current ->
+            snapshotFlow { currentHoverMergeProvider() }.collect { current ->
                 ghostAnimations.forEach { (id, state) ->
-                    val preview = currentPreviewState.find { it.id == id }
+                    val preview = previewStateProvider().find { it.id == id }
                     val isOverlapped = current != null && preview != null && current.targetX == preview.x && current.targetY == preview.y && (
                         current.resultId == "preview_move" || 
                         current.resultId == "preview_duplicate" || 
@@ -407,7 +406,7 @@ internal fun GameGridOverlay(
                                 delay(200.milliseconds)
                                 longPressTriggered = true
                                 initialCellPos?.let { (x, y) ->
-                                    val cell = currentGridState.find { it.x == x && it.y == y }
+                                    val cell = gridStateProvider().find { it.x == x && it.y == y }
                                     if (cell != null) {
                                         onCellTouchDown(cell)
                                     } else {
@@ -432,7 +431,7 @@ internal fun GameGridOverlay(
                                         if (!longPressTriggered) {
                                             val upCellPos = getCellAt(change.position.x, change.position.y)
                                             if (upCellPos != null && upCellPos == initialCellPos) {
-                                                val cell = currentGridState.find { it.x == upCellPos.first && it.y == upCellPos.second }
+                                                val cell = gridStateProvider().find { it.x == upCellPos.first && it.y == upCellPos.second }
                                                 if (cell != null) {
                                                     onCellClick(cell)
                                                 } else {
@@ -521,7 +520,7 @@ internal fun GameGridOverlay(
                         val progress = hoverProgress.value
                         val activePerk = activePerkProvider()
                         val selectedCellId = selectedCellIdProvider()
-                        val previews = currentPreviewState
+                        val previews = previewStateProvider()
                         val currentHoverMerge = activeHoverMerge.value
 
                         val isGhostSelectable = { preview: PreviewCell ->
@@ -584,8 +583,8 @@ internal fun GameGridOverlay(
                             drawHoverResult(
                                 drawScope = this,
                                 merge = displayMerge,
-                                gridStateProvider = { currentGridState },
-                                previewStateProvider = { currentPreviewState },
+                                gridStateProvider = gridStateProvider,
+                                previewStateProvider = previewStateProvider,
                                 cellWidth = cellWidth,
                                 cellHeight = cellHeight,
                                 gapPx = gapPx,
@@ -633,30 +632,23 @@ internal fun GameGridOverlay(
                     StaticSlot(activePerkProvider, { selectedCellIdProvider() != null }, spacing)
                 },
             ) {
-                Box {
-                    gridState.forEach { cell ->
-                        key(cell.id) {
-                            AnimatedGridHexagon(
-                                cell = cell,
-                                cellWidth = cellWidth,
-                                cellHeight = cellHeight,
-                                gapPx = gapPx,
-                                moveAnimationSpec = moveAnimationSpec,
-                                gridStateProvider = { currentGridState },
-                                selectedCellIdProvider = selectedCellIdProvider,
-                                activePerkProvider = activePerkProvider,
-                                pendingMerge = pendingMergeProvider(),
-                                activeMergeStepIndex = activeMergeStepIndexProvider(),
-                                hoveredMergeState = hoveredMergeState,
-                                density = density,
-                                itemWidth = itemWidth,
-                                itemHeight = itemHeight,
-                                onAnimationFinished = onAnimationFinishedLambda,
-                                spacing = spacing,
-                            )
-                        }
-                    }
-                }
+                HexagonGridCells(
+                    gridStateProvider = gridStateProvider,
+                    cellWidth = cellWidth,
+                    cellHeight = cellHeight,
+                    gapPx = gapPx,
+                    moveAnimationSpec = moveAnimationSpec,
+                    selectedCellIdProvider = selectedCellIdProvider,
+                    activePerkProvider = activePerkProvider,
+                    pendingMergeProvider = pendingMergeProvider,
+                    activeMergeStepIndexProvider = activeMergeStepIndexProvider,
+                    currentHoverMergeProvider = currentHoverMergeProvider,
+                    density = density,
+                    itemWidth = itemWidth,
+                    itemHeight = itemHeight,
+                    onAnimationFinishedLambda = onAnimationFinishedLambda,
+                    spacing = spacing,
+                )
             }
 
             ParticlesLayer({ localParticles })
@@ -668,6 +660,50 @@ internal fun GameGridOverlay(
                 containerWidth = totalWidth,
                 spacing = spacing,
             )
+        }
+    }
+}
+
+@Composable
+private fun HexagonGridCells(
+    gridStateProvider: () -> List<HexagonCell>,
+    cellWidth: Float,
+    cellHeight: Float,
+    gapPx: Float,
+    moveAnimationSpec: androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.unit.IntOffset>,
+    selectedCellIdProvider: () -> String?,
+    activePerkProvider: () -> Perk?,
+    pendingMergeProvider: () -> MergeTransition?,
+    activeMergeStepIndexProvider: () -> Int,
+    currentHoverMergeProvider: () -> MergeTransition?,
+    density: androidx.compose.ui.unit.Density,
+    itemWidth: Float,
+    itemHeight: Float,
+    onAnimationFinishedLambda: () -> Unit,
+    spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
+) {
+    Box {
+        gridStateProvider().forEach { cell ->
+            key(cell.id) {
+                AnimatedGridHexagon(
+                    cell = cell,
+                    cellWidth = cellWidth,
+                    cellHeight = cellHeight,
+                    gapPx = gapPx,
+                    moveAnimationSpec = moveAnimationSpec,
+                    gridStateProvider = gridStateProvider,
+                    selectedCellIdProvider = selectedCellIdProvider,
+                    activePerkProvider = activePerkProvider,
+                    pendingMergeProvider = pendingMergeProvider,
+                    activeMergeStepIndexProvider = activeMergeStepIndexProvider,
+                    currentHoverMergeProvider = currentHoverMergeProvider,
+                    density = density,
+                    itemWidth = itemWidth,
+                    itemHeight = itemHeight,
+                    onAnimationFinished = onAnimationFinishedLambda,
+                    spacing = spacing,
+                )
+            }
         }
     }
 }
