@@ -692,7 +692,7 @@ private fun DailyChallengeSummaryRow(
 }
 
 @Composable
-private fun GameOverStatHexagon(
+internal fun GameOverStatHexagon(
     label: String,
     value: String,
     backgroundColor: Color,

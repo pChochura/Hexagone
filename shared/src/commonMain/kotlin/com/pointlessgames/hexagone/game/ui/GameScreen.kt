@@ -43,26 +43,26 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.pointlessgames.hexagone.LocalMediaPlayer
 import com.pointlessgames.hexagone.LocalNavigator
 import com.pointlessgames.hexagone.Route
@@ -84,8 +84,10 @@ import com.pointlessgames.hexagone.game.ui.components.MissionRefreshPopup
 import com.pointlessgames.hexagone.game.ui.components.PerkBar
 import com.pointlessgames.hexagone.game.ui.components.PerksBankDialog
 import com.pointlessgames.hexagone.game.ui.components.ScoreSection
+import com.pointlessgames.hexagone.game.ui.components.ShareableGameOverLayout
 import com.pointlessgames.hexagone.game.ui.components.TipOverlay
 import com.pointlessgames.hexagone.game.ui.components.trackTipTarget
+import com.pointlessgames.hexagone.share.ShareManager
 import com.pointlessgames.hexagone.ui.theme.IsSmallDevice
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
@@ -100,6 +102,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 
 @Composable
 internal fun GameScreen(
@@ -109,6 +112,10 @@ internal fun GameScreen(
     val navigator = LocalNavigator.current
     val player = LocalMediaPlayer.current
     val coroutineScope = rememberCoroutineScope()
+
+    val shareManager = koinInject<ShareManager>()
+    val shareGraphicsLayer = rememberGraphicsLayer()
+
 
     val uiState = viewModel.uiState
     val isSoundEnabledState = remember(uiState) {
@@ -482,7 +489,8 @@ internal fun GameScreen(
 
     val swipeOffset = remember { Animatable(0f) }
     val isOverlayVisibleState = remember(uiState) {
-        uiState.map { it.isGameOver || it.activeDialog != null || it.isPerksBankVisible || it.isNicknamePopupVisible }.distinctUntilChanged()
+        uiState.map { it.isGameOver || it.activeDialog != null || it.isPerksBankVisible || it.isNicknamePopupVisible }
+            .distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.let { it.isGameOver || it.activeDialog != null || it.isPerksBankVisible || it.isNicknamePopupVisible })
     val pauseThreshold = 200f
 
@@ -882,7 +890,58 @@ internal fun GameScreen(
         }
 
 
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(-1f)
+                .graphicsLayer(alpha = 0.01f)
+                .drawWithCache {
+                    onDrawWithContent {
+                        shareGraphicsLayer.record {
+                            this@onDrawWithContent.drawContent()
+                        }
+                        drawContent()
+                    }
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            ShareableGameOverLayout(
+                score = scoreProvider(),
+                level = levelProvider(),
+                maxCombo = maxComboProvider(),
+                highestValue = highestValueProvider(),
+                rankingInfo = currentRankProvider(),
+                playerName = playerNameState.value,
+                boardContent = {
+                    GameGridOverlay(
+                        gridState = gridState.value,
+                        onBoardPerksProvider = onBoardPerksProvider,
+                        mergeHintsProvider = mergeHintsProvider,
+                        previewState = previewState.value,
+                        pendingMergeProvider = pendingMergeProvider,
+                        hoveredMergeState = viewModel.hoveredMerge,
+                        potentialMergesProvider = { potentialMergesProvider.value },
+                        activePerkProvider = activePerkProvider,
+                        selectedCellIdProvider = selectedCellIdProvider,
+                        activeMergeStepIndexProvider = activeMergeStepIndexProvider,
+                        effects = viewModel.effects,
+                        onEmptySpaceClick = { _, _ -> },
+                        onEmptySpaceTouchDown = { _, _ -> },
+                        onEmptySpaceTouchUp = {},
+                        onCellTouchDown = {},
+                        onCellTouchUp = {},
+                        onCellClick = {},
+                        onMergeAnimationFinished = {},
+                        isSwiping = { false },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                },
+            )
+        }
+
         GameOverlays(
+
             isGameOverProvider = isGameOverProvider,
             scoreProvider = scoreProvider,
             bestScoreProvider = bestScoreProvider,
@@ -899,7 +958,12 @@ internal fun GameScreen(
             onRerollClicked = viewModel::onRerollClicked,
             onRestart = onRestart,
             onViewBoardToggle = onViewBoardToggle,
-            onShare = { /* TODO: Implement snapshot and share */ },
+            onShare = {
+                coroutineScope.launch {
+                    val bitmap = shareGraphicsLayer.toImageBitmap()
+                    shareManager.shareImage(bitmap)
+                }
+            },
             onLeaderboard = { navigator.navigateTo(Route.Leaderboard) },
             activeTierReward = activeTierReward,
             onTierRewardFinished = {
