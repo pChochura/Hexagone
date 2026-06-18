@@ -389,6 +389,9 @@
     <string name="theme_current_label">Obecny motyw</string>
     <string name="theme_buy_confirmation_title">KUP MOTYW</string>
     <string name="theme_buy_confirmation_message">Czy chcesz kupić motyw %1$s za %2$d Diamentów?</string>
+    <string name="theme_unlock_condition_level_50">Osiągnij 50 poziom</string>
+    <string name="theme_unlock_condition_all_achievements">Wszystkie osiągnięcia</string>
+    <string name="theme_unlock_condition_daily_mission">10 dni misji z rzędu</string>
 
     <string name="theme_neon_glow">ŚWIĘCĄCY NEON</string>
     <string name="theme_ocean">OCEAN</string>

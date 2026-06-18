@@ -382,13 +382,17 @@
     <string name="mission_refresh_reset_button">REFRESH (RESET STREAK)</string>
     <string name="mission_refresh_lost_title">STREAK LOST</string>
     <string name="mission_refresh_lost_desc">Your streak was reset and missions were refreshed because you skipped a day.</string>
+
     <!-- Themes -->
     <string name="themes_title">THEMES</string>
     <string name="theme_unlocked_label">Unlocked</string>
     <string name="theme_current_label">Current Theme</string>
     <string name="theme_buy_confirmation_title">BUY THEME</string>
     <string name="theme_buy_confirmation_message">Do you want to unlock the %1$s theme for %2$d diamonds?</string>
-    
+    <string name="theme_unlock_condition_level_50">Reach level 50</string>
+    <string name="theme_unlock_condition_all_achievements">All achievements</string>
+    <string name="theme_unlock_condition_daily_mission">10 day streak</string>
+
     <string name="theme_neon_glow">NEON GLOW</string>
     <string name="theme_ocean">OCEAN</string>
     <string name="theme_firefly">FIREFLY</string>
@@ -398,6 +402,7 @@
     <string name="theme_pastel">PASTEL</string>
     <string name="theme_cyber">CYBER</string>
     <string name="theme_berry">BERRY</string>
+
     <!-- Miscellaneous -->
     <string name="theme_unlocked_overlay_title">THEME UNLOCKED</string>
 </resources>

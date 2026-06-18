@@ -40,7 +40,16 @@ import com.pointlessgames.hexagone.game.model.HexDialogState
 import com.pointlessgames.hexagone.game.ui.components.DiamondBalanceBadge
 import com.pointlessgames.hexagone.game.ui.components.HexAlertDialog
 import com.pointlessgames.hexagone.game.ui.components.ScreenScaffold
+import com.pointlessgames.hexagone.ui.theme.BerryColors
 import com.pointlessgames.hexagone.ui.theme.Colors
+import com.pointlessgames.hexagone.ui.theme.CyberColors
+import com.pointlessgames.hexagone.ui.theme.FireflyColors
+import com.pointlessgames.hexagone.ui.theme.MidnightColors
+import com.pointlessgames.hexagone.ui.theme.MintyColors
+import com.pointlessgames.hexagone.ui.theme.NeonGlowColors
+import com.pointlessgames.hexagone.ui.theme.OceanColors
+import com.pointlessgames.hexagone.ui.theme.PastelColors
+import com.pointlessgames.hexagone.ui.theme.SunsetColors
 import com.pointlessgames.hexagone.ui.theme.ThemeId
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
@@ -59,6 +68,9 @@ import hexagone.shared.generated.resources.theme_neon_glow
 import hexagone.shared.generated.resources.theme_ocean
 import hexagone.shared.generated.resources.theme_pastel
 import hexagone.shared.generated.resources.theme_sunset
+import hexagone.shared.generated.resources.theme_unlock_condition_all_achievements
+import hexagone.shared.generated.resources.theme_unlock_condition_daily_mission
+import hexagone.shared.generated.resources.theme_unlock_condition_level_50
 import hexagone.shared.generated.resources.theme_unlocked_label
 import hexagone.shared.generated.resources.themes_title
 import org.jetbrains.compose.resources.painterResource
@@ -313,25 +325,26 @@ fun getThemeCost(themeId: ThemeId): Int {
     }
 }
 
+@Composable
 fun getThemeUnlockCondition(themeId: ThemeId): String? {
     return when (themeId) {
-        ThemeId.MIDNIGHT -> "REACH LEVEL 50"
-        ThemeId.CYBER -> "ALL ACHIEVEMENTS"
-        ThemeId.BERRY -> "10-DAY STREAK"
+        ThemeId.MIDNIGHT -> stringResource(Res.string.theme_unlock_condition_level_50)
+        ThemeId.CYBER -> stringResource(Res.string.theme_unlock_condition_all_achievements)
+        ThemeId.BERRY -> stringResource(Res.string.theme_unlock_condition_daily_mission)
         else -> null
     }
 }
 
 fun getThemeColors(themeId: ThemeId): Colors {
     return when (themeId) {
-        ThemeId.NEON_GLOW -> com.pointlessgames.hexagone.ui.theme.NeonGlowColors()
-        ThemeId.OCEAN -> com.pointlessgames.hexagone.ui.theme.OceanColors()
-        ThemeId.FIREFLY -> com.pointlessgames.hexagone.ui.theme.FireflyColors()
-        ThemeId.MIDNIGHT -> com.pointlessgames.hexagone.ui.theme.MidnightColors()
-        ThemeId.SUNSET -> com.pointlessgames.hexagone.ui.theme.SunsetColors()
-        ThemeId.MINTY -> com.pointlessgames.hexagone.ui.theme.MintyColors()
-        ThemeId.PASTEL -> com.pointlessgames.hexagone.ui.theme.PastelColors()
-        ThemeId.CYBER -> com.pointlessgames.hexagone.ui.theme.CyberColors()
-        ThemeId.BERRY -> com.pointlessgames.hexagone.ui.theme.BerryColors()
+        ThemeId.NEON_GLOW -> NeonGlowColors()
+        ThemeId.OCEAN -> OceanColors()
+        ThemeId.FIREFLY -> FireflyColors()
+        ThemeId.MIDNIGHT -> MidnightColors()
+        ThemeId.SUNSET -> SunsetColors()
+        ThemeId.MINTY -> MintyColors()
+        ThemeId.PASTEL -> PastelColors()
+        ThemeId.CYBER -> CyberColors()
+        ThemeId.BERRY -> BerryColors()
     }
 }
