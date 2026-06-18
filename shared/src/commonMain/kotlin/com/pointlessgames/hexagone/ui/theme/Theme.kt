@@ -4,6 +4,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -18,7 +19,8 @@ import org.jetbrains.compose.resources.Font
 @Composable
 fun HexagoneTheme(
     adaptiveScale: AdaptiveScale = AdaptiveScale(),
-    content: @Composable () -> Unit
+    themeId: ThemeId = ThemeId.NEON_GLOW,
+    content: @Composable () -> Unit,
 ) {
     val scaleFactor = adaptiveScale.factor
     val fontFamily = FontFamily(
@@ -27,7 +29,20 @@ fun HexagoneTheme(
         Font(Res.font.Poppins_Medium, FontWeight.Medium),
     )
 
-    val colors = DefaultColors.current
+    val colors = remember(themeId) {
+        when (themeId) {
+            ThemeId.NEON_GLOW -> NeonGlowColors()
+            ThemeId.OCEAN -> OceanColors()
+            ThemeId.FIREFLY -> FireflyColors()
+            ThemeId.MIDNIGHT -> MidnightColors()
+            ThemeId.SUNSET -> SunsetColors()
+            ThemeId.MINTY -> MintyColors()
+            ThemeId.PASTEL -> PastelColors()
+            ThemeId.CYBER -> CyberColors()
+            ThemeId.BERRY -> BerryColors()
+        }
+    }
+
     val colorScheme = MaterialTheme.colorScheme.copy(
         primary = colors.pink,
         secondary = colors.purple,
@@ -90,12 +105,16 @@ fun HexagoneTheme(
         ),
     )
 
-    CompositionLocalProvider(LocalAdaptiveScale provides adaptiveScale) {
+    CompositionLocalProvider(
+        LocalAdaptiveScale provides adaptiveScale,
+        DefaultColors provides colors,
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             shapes = shapes,
             typography = typography,
-            content = content
+            content = content,
         )
     }
 }
+

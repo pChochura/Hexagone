@@ -66,6 +66,7 @@ import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.add_label
+import hexagone.shared.generated.resources.shop_title
 import hexagone.shared.generated.resources.ic_add
 import hexagone.shared.generated.resources.ic_diamond
 import org.jetbrains.compose.resources.painterResource
@@ -378,7 +379,7 @@ private fun ShopActionButton(
         Spacer(Modifier.height(spacing.extraSmall.scaled))
 
         Text(
-            text = "SHOP",
+            text = stringResource(Res.string.shop_title),
             color = perkColor.copy(alpha = 0.8f),
             fontWeight = FontWeight.Black,
             fontSize = 9.sp.scaled,

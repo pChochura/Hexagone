@@ -43,11 +43,10 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,6 +54,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -68,7 +68,6 @@ import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.ic_advance
 import hexagone.shared.generated.resources.ic_chain_merge
 import hexagone.shared.generated.resources.ic_delete
-import hexagone.shared.generated.resources.ic_diamond
 import hexagone.shared.generated.resources.ic_duplicate
 import hexagone.shared.generated.resources.ic_freeze
 import hexagone.shared.generated.resources.ic_fusion
@@ -84,6 +83,9 @@ import hexagone.shared.generated.resources.ic_undo
 import hexagone.shared.generated.resources.ic_upgrade
 import hexagone.shared.generated.resources.perk_advance_queue_desc
 import hexagone.shared.generated.resources.perk_advance_queue_name
+import hexagone.shared.generated.resources.perk_category_common
+import hexagone.shared.generated.resources.perk_category_legendary
+import hexagone.shared.generated.resources.perk_category_rare
 import hexagone.shared.generated.resources.perk_chain_merge_desc
 import hexagone.shared.generated.resources.perk_chain_merge_name
 import hexagone.shared.generated.resources.perk_duplicate_tile_desc
@@ -119,42 +121,79 @@ object HexagonGridDefaults {
     fun getColorForValue(value: Int, colorScheme: ColorScheme): Color {
         if (value <= 0) return Color.Transparent
 
-        // Base signature colors from screenshot
-        val baseColors = mapOf(
-            1 to colorScheme.surfaceContainerLowest,
-            2 to colorScheme.surfaceContainerLow,
-            4 to colorScheme.surfaceContainer,
-            8 to colorScheme.surfaceContainerHigh,
-            16 to colorScheme.surfaceContainerHighest,
+        val baseColors = listOf(
+            colorScheme.surfaceContainerLowest,
+            colorScheme.surfaceContainerLow,
+            colorScheme.surfaceContainer,
+            colorScheme.surfaceContainerHigh,
+            colorScheme.surfaceContainerHighest,
         )
 
-        baseColors[value]?.let { return it }
+        val index = value - 1
 
-        // Algorithmic color generation for infinite granularity
-        // Using golden ratio for hue distribution to keep colors distinct
-        val hue = (value * 137.508f) % 360f
-        val saturation = 0.6f + (value % 4) * 0.1f
-        val brightness = 0.7f + (value % 3) * 0.1f
+        val cycle = index / baseColors.size
+        val baseColor = baseColors[index % baseColors.size]
 
-        return Color.hsv(hue, saturation.coerceAtMost(1f), brightness.coerceAtMost(1f))
+        if (cycle == 0) return baseColor
+
+        val hsv = baseColor.toHsv()
+        val newHue = (hsv[0] + cycle * 35f) % 360f
+
+        val satShift = (cycle % 3) * 0.15f
+        val newSat = (hsv[1] + satShift).let { if (it > 1f) it - 0.5f else it }.coerceIn(0.4f, 1f)
+
+        val valShift = (cycle % 2) * 0.2f
+        val newVal = (hsv[2] + valShift).let { if (it > 1f) it - 0.4f else it }.coerceIn(0.6f, 1f)
+
+        return Color.hsv(newHue, newSat, newVal)
+    }
+
+    private fun Color.toHsv(): FloatArray {
+        val r = red
+        val g = green
+        val b = blue
+        val max = maxOf(r, g, b)
+        val min = minOf(r, g, b)
+        val delta = max - min
+
+        var h = 0f
+        if (delta > 0f) {
+            if (max == r) h = 60f * (((g - b) / delta) % 6f)
+            else if (max == g) h = 60f * (((b - r) / delta) + 2f)
+            else if (max == b) h = 60f * (((r - g) / delta) + 4f)
+        }
+        if (h < 0f) h += 360f
+
+        val s = if (max == 0f) 0f else delta / max
+        val v = max
+        return floatArrayOf(h, s, v)
     }
 
     fun getColorForPerk(perk: Perk, colorScheme: ColorScheme): Color {
-        return when (perk) {
-            Perk.UNDO -> colorScheme.outline
-            Perk.MOVE_TILE -> colorScheme.inversePrimary
-            Perk.REMOVE_TILE -> colorScheme.error
-            Perk.FUSION -> colorScheme.tertiaryContainer
-            Perk.SWAP_TILES -> colorScheme.secondaryContainer
-            Perk.CHAIN_MERGE -> colorScheme.primaryContainer
-            Perk.ADVANCE_QUEUE -> colorScheme.onTertiaryContainer
-            Perk.DUPLICATE_TILE -> colorScheme.secondary
-            Perk.SKIP_SPAWN -> colorScheme.tertiary
-            Perk.INCREMENT_TILE -> colorScheme.primary
-            Perk.PATH_MERGE -> colorScheme.errorContainer
-            Perk.FREEZE_TILE -> colorScheme.onSecondaryContainer
-            Perk.MIMIC -> colorScheme.inversePrimary
-        }
+        val baseColors = listOf(
+            colorScheme.surfaceContainerLowest,
+            colorScheme.surfaceContainerLow,
+            colorScheme.surfaceContainer,
+            colorScheme.surfaceContainerHigh,
+            colorScheme.surfaceContainerHighest,
+        )
+
+        val index = perk.ordinal
+        val cycle = index / baseColors.size
+        val baseColor = baseColors[index % baseColors.size]
+
+        if (cycle == 0) return baseColor
+
+        val hsv = baseColor.toHsv()
+        val newHue = (hsv[0] + cycle * 45f) % 360f
+
+        val satShift = (cycle % 3) * 0.15f
+        val newSat = (hsv[1] + satShift).let { if (it > 1f) it - 0.5f else it }.coerceIn(0.4f, 1f)
+
+        val valShift = (cycle % 2) * 0.2f
+        val newVal = (hsv[2] + valShift).let { if (it > 1f) it - 0.4f else it }.coerceIn(0.6f, 1f)
+
+        return Color.hsv(newHue, newSat, newVal)
     }
 
     fun getHexagonPath(size: Size): Path {
@@ -288,7 +327,7 @@ fun Hexagon(
     isFrozen: Boolean = false,
     isMimic: Boolean = false,
     seed: Int = 0,
-    maxFontSize: androidx.compose.ui.unit.TextUnit = 24.sp.scaled,
+    maxFontSize: TextUnit = 24.sp.scaled,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "hexagon_animations")
 
@@ -298,7 +337,7 @@ fun Hexagon(
             targetValue = 11.5f, // step = stripeWidth(1.5) + gap(10)
             animationSpec = infiniteRepeatable(
                 animation = tween(3000, easing = LinearEasing),
-                repeatMode = androidx.compose.animation.core.RepeatMode.Restart,
+                repeatMode = RepeatMode.Restart,
             ),
             label = "stripe_offset",
         )
@@ -311,7 +350,7 @@ fun Hexagon(
             targetValue = 2f,
             animationSpec = infiniteRepeatable(
                 animation = tween(4000, easing = LinearEasing, delayMillis = 4000),
-                repeatMode = androidx.compose.animation.core.RepeatMode.Restart,
+                repeatMode = RepeatMode.Restart,
                 initialStartOffset = StartOffset(
                     offsetMillis = seed.absoluteValue % 8000,
                     offsetType = StartOffsetType.Delay,
@@ -327,7 +366,7 @@ fun Hexagon(
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
                 animation = tween(1000),
-                repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+                repeatMode = RepeatMode.Reverse,
             ),
             label = "tactical_pulse",
         )
@@ -442,9 +481,11 @@ fun Hexagon(
                     tint = Color.White,
                 )
             } else if (value != null) {
+                val contrastColor =
+                    if (backgroundColor.luminance() > 0.5f) Color.Black else Color.White
                 Text(
                     text = value,
-                    color = Color.White,
+                    color = contrastColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = maxFontSize,
                     maxLines = 1,
@@ -457,13 +498,14 @@ fun Hexagon(
         }
 
         if (perk != null) {
+            val contrastColor = if (backgroundColor.luminance() > 0.5f) Color.Black else Color.White
             PerkIcon(
                 perk = perk,
                 modifier = Modifier
                     .size(spacing.large.scaled)
                     .align(Alignment.BottomCenter)
                     .offset(y = (-6).dp.scaled),
-                color = Color.White.copy(alpha = 0.6f),
+                color = contrastColor,
             )
         }
 
@@ -478,101 +520,6 @@ fun Hexagon(
                 color = Color.White,
             )
         }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun ShopButton(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-    isHighlighted: Boolean = false,
-    buttonSize: Dp = MaterialTheme.spacing.extraHuge.scaled,
-) {
-    val spacing = MaterialTheme.spacing
-    val playButtonSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
-    val perkColor = Color(0xFFFFD54F) // Diamond color
-    val heightScale = 0.866f
-
-    val infiniteTransition = rememberInfiniteTransition(label = "shop_highlight")
-    val glowAlphaState = infiniteTransition.animateFloat(
-        initialValue = 0.2f,
-        targetValue = 0.6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "glow",
-    )
-    val shape = remember { FlatTopHexagonShape() }
-    val glowPadding = 4.dp.scaled
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .clip(MaterialTheme.shapes.large)
-            .clickable(onClick = { 
-                playButtonSound()
-                onClick() 
-            })
-            .padding(spacing.tiny.scaled),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(width = buttonSize, height = buttonSize * heightScale)
-                .clip(FlatTopHexagonShape())
-                .drawBehind {
-                    if (isHighlighted) {
-                        val alpha = glowAlphaState.value
-                        val paddingPx = glowPadding.toPx()
-                        val extendedSize = Size(
-                            width = size.width + paddingPx * 2,
-                            height = size.height + (paddingPx * 2) * heightScale,
-                        )
-                        val outline = shape.createOutline(extendedSize, layoutDirection, this)
-                        translate(left = -paddingPx, top = -paddingPx * heightScale) {
-                            drawOutline(
-                                outline = outline,
-                                color = perkColor,
-                                alpha = alpha * 0.4f,
-                            )
-                        }
-                    }
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(FlatTopHexagonShape())
-                    .background(perkColor.copy(alpha = 0.1f))
-                    .border(
-                        width = 2.dp.scaled,
-                        color = perkColor.copy(alpha = 0.5f),
-                        shape = FlatTopHexagonShape(),
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_diamond),
-                    contentDescription = null,
-                    tint = perkColor,
-                    modifier = Modifier.size(buttonSize * 0.45f),
-                )
-            }
-        }
-
-        Spacer(Modifier.height(spacing.medium.scaled))
-
-        Text(
-            text = "SHOP",
-            color = perkColor.copy(alpha = 0.8f),
-            fontSize = 11.sp.scaled,
-            fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Center,
-            lineHeight = 11.sp.scaled,
-            modifier = Modifier.width(buttonSize + spacing.semiMedium.scaled),
-        )
     }
 }
 
@@ -614,7 +561,7 @@ fun VoucherButton(
                 if (count > 0) {
                     Badge(
                         containerColor = color,
-                        contentColor = Color.Black,
+                        contentColor = if (color.luminance() > 0.5f) Color.Black else Color.White,
                         modifier = Modifier.offset(x = (-4).dp, y = 4.dp),
                     ) {
                         Text(
@@ -666,10 +613,13 @@ fun VoucherButton(
                         brush = SolidColor(color.copy(alpha = if (showGlow) 0.8f else 0.4f)),
                         shape = FlatTopHexagonShape(),
                     )
-                    .clickable(enabled = count > 0 || showGlow, onClick = { 
-                        playButtonSound()
-                        onClick() 
-                    }),
+                    .clickable(
+                        enabled = count > 0 || showGlow,
+                        onClick = {
+                            playButtonSound()
+                            onClick()
+                        },
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -684,7 +634,13 @@ fun VoucherButton(
         Spacer(Modifier.height(spacing.medium.scaled))
 
         Text(
-            text = category.name.uppercase(),
+            text = stringResource(
+                when (category) {
+                    PerkCategory.COMMON -> Res.string.perk_category_common
+                    PerkCategory.RARE -> Res.string.perk_category_rare
+                    PerkCategory.LEGENDARY -> Res.string.perk_category_legendary
+                },
+            ),
             color = Color.White.copy(alpha = 0.6f),
             fontSize = 11.sp.scaled,
             fontWeight = FontWeight.Black,
@@ -727,7 +683,7 @@ fun PerkButton(
                     if (count != null) {
                         Badge(
                             containerColor = perkColor,
-                            contentColor = Color.White,
+                            contentColor = if (perkColor.luminance() > 0.5f) Color.Black else Color.White,
                         ) {
                             Text(text = count.toString())
                         }
@@ -743,7 +699,7 @@ fun PerkButton(
                         targetValue = 0.8f,
                         animationSpec = infiniteRepeatable(
                             animation = tween(1000),
-                            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+                            repeatMode = RepeatMode.Reverse,
                         ),
                         label = "glow",
                     )
@@ -787,10 +743,12 @@ fun PerkButton(
                         .clickable(enabled = isEnabled, onClick = onClick),
                     contentAlignment = Alignment.Center,
                 ) {
+                    val contrastColor =
+                        if (isActive && perkColor.luminance() > 0.5f) Color.Black else Color.White
                     PerkIcon(
                         perk = perk,
                         modifier = Modifier.size(buttonSize * 0.45f),
-                        color = Color.White.copy(alpha = if (isActive) 1f else if (isEnabled) 0.7f else 0.3f),
+                        color = contrastColor.copy(alpha = if (isActive) 1f else if (isEnabled) 0.7f else 0.3f),
                     )
                 }
             }

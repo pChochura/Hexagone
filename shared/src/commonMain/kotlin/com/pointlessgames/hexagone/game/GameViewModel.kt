@@ -11,6 +11,7 @@ import com.pointlessgames.hexagone.data.LeaderboardRepository
 import com.pointlessgames.hexagone.data.MonetizationRepository
 import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.game.logic.DailyChallengeProvider
+import com.pointlessgames.hexagone.game.logic.DailyMissionUtils
 import com.pointlessgames.hexagone.game.logic.GameEngine
 import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.DailyChallenge
@@ -63,7 +64,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.number
@@ -233,7 +233,7 @@ internal class GameViewModel(
             val completedDates =
                 settingsRepository.getCompletedChallengeDates().mapNotNull { it.toLongOrNull() }
                     .toSet()
-            var challengeStreak = calculateStreak(completedDates, today)
+            var challengeStreak = DailyMissionUtils.calculateStreak(completedDates, today)
 
             if (lastCompletedDate != 0L && lastCompletedDate != dateSeed && lastCompletedDate != yesterdaySeed) {
                 challengeStreak = 0
@@ -1095,7 +1095,7 @@ internal class GameViewModel(
             // We complete for the day the missions were from
             if (lastCompletedDate != missionDateSeed) {
                 val updatedCompletedDates = _uiState.value.completedChallengeDates + missionDateSeed
-                val newStreak = calculateStreak(updatedCompletedDates, today)
+                val newStreak = DailyMissionUtils.calculateStreak(updatedCompletedDates, today)
                 isDayCompleted = true
                 newStreakValue = newStreak
 
@@ -1132,29 +1132,5 @@ internal class GameViewModel(
         )
     }
 
-    private fun calculateStreak(completedDates: Set<Long>, today: LocalDate): Int {
-        var streak = 0
-        val todaySeed = today.year * 10000L + today.month.number * 100L + today.day
-        val yesterday = today.minus(1, DateTimeUnit.DAY)
-        val yesterdaySeed = yesterday.year * 10000L + yesterday.month.number * 100L + yesterday.day
 
-        var currentDate = if (completedDates.contains(todaySeed)) {
-            today
-        } else if (completedDates.contains(yesterdaySeed)) {
-            yesterday
-        } else {
-            return 0
-        }
-
-        while (true) {
-            val seed = currentDate.year * 10000L + currentDate.month.number * 100L + currentDate.day
-            if (completedDates.contains(seed)) {
-                streak++
-                currentDate = currentDate.minus(1, DateTimeUnit.DAY)
-            } else {
-                break
-            }
-        }
-        return streak
-    }
 }

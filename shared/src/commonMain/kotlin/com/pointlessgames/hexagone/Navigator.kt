@@ -37,6 +37,9 @@ internal sealed interface Route : NavKey {
 
     @Serializable
     data object Settings : Route
+
+    @Serializable
+    data object Themes : Route
 }
 
 private val navigationConfig = SavedStateConfiguration {
@@ -48,6 +51,7 @@ private val navigationConfig = SavedStateConfiguration {
             subclass(Route.DailyMissions::class, Route.DailyMissions.serializer())
             subclass(Route.Achievements::class, Route.Achievements.serializer())
             subclass(Route.Settings::class, Route.Settings.serializer())
+            subclass(Route.Themes::class, Route.Themes.serializer())
         }
     }
 }

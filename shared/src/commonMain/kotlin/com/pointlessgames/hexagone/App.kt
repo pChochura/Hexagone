@@ -9,19 +9,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.runtime.collectAsState
-import androidx.lifecycle.Lifecycle
-import com.pointlessgames.hexagone.data.SettingsRepository
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.pointlessgames.hexagone.data.LeaderboardRepository
+import com.pointlessgames.hexagone.data.SettingsRepository
 import com.pointlessgames.hexagone.ui.theme.AdaptiveScale
 import com.pointlessgames.hexagone.ui.theme.BASELINE_WIDTH_DP
 import com.pointlessgames.hexagone.ui.theme.HexagoneTheme
@@ -29,14 +29,15 @@ import com.pointlessgames.hexagone.ui.theme.LocalCornerRadius
 import com.pointlessgames.hexagone.ui.theme.LocalIconsSize
 import com.pointlessgames.hexagone.ui.theme.LocalSpacing
 import com.pointlessgames.hexagone.ui.theme.SMALL_DEVICE_THRESHOLD_DP
+import com.pointlessgames.hexagone.ui.theme.ThemeId
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.iconsSize
 import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.utils.SoundManager
 import eu.iamkonstantin.kotlin.gadulka.GadulkaPlayer
 import eu.iamkonstantin.kotlin.gadulka.GadulkaPlayerState
-import eu.iamkonstantin.kotlin.gadulka.rememberGadulkaState
 import eu.iamkonstantin.kotlin.gadulka.rememberGadulkaLiveState
+import eu.iamkonstantin.kotlin.gadulka.rememberGadulkaState
 import org.koin.compose.koinInject
 
 @Composable
@@ -47,7 +48,17 @@ fun App(modifier: Modifier = Modifier) {
         val isSmallDevice = maxWidth < SMALL_DEVICE_THRESHOLD_DP.dp
         val adaptiveScale = AdaptiveScale(scaleFactor, isSmallDevice)
 
-        HexagoneTheme(adaptiveScale = adaptiveScale) {
+        val settingsRepository = koinInject<SettingsRepository>()
+        val activeThemeStr by remember(settingsRepository) {
+            settingsRepository.getActiveThemeFlow()
+        }.collectAsState(initial = ThemeId.NEON_GLOW.name)
+        val themeId = try {
+            ThemeId.valueOf(activeThemeStr)
+        } catch (e: Exception) {
+            ThemeId.NEON_GLOW
+        }
+
+        HexagoneTheme(adaptiveScale = adaptiveScale, themeId = themeId) {
             Scaffold(
                 modifier = modifier,
                 containerColor = MaterialTheme.colorScheme.background,

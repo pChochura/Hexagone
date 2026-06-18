@@ -7,8 +7,10 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.pointlessgames.hexagone.ui.theme.ThemeId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -18,13 +20,13 @@ interface SettingsRepository {
     suspend fun setBestScore(score: Int): Preferences
     suspend fun getPlayerId(): String?
     suspend fun setPlayerId(id: String?): Preferences
-    fun getPlayerNameFlow(): kotlinx.coroutines.flow.Flow<String?>
+    fun getPlayerNameFlow(): Flow<String?>
     suspend fun getPlayerName(): String?
     suspend fun setPlayerName(name: String?): Preferences
-    fun getSoundEnabledFlow(): kotlinx.coroutines.flow.Flow<Boolean>
+    fun getSoundEnabledFlow(): Flow<Boolean>
     suspend fun getSoundEnabled(): Boolean
     suspend fun setSoundEnabled(enabled: Boolean): Preferences
-    fun getBgMusicEnabledFlow(): kotlinx.coroutines.flow.Flow<Boolean>
+    fun getBgMusicEnabledFlow(): Flow<Boolean>
     suspend fun getBgMusicEnabled(): Boolean
     suspend fun setBgMusicEnabled(enabled: Boolean): Preferences
     suspend fun getMergeHintsEnabled(): Boolean
@@ -81,6 +83,12 @@ interface SettingsRepository {
     suspend fun setHasShownPostGameTip(shown: Boolean): Preferences
     suspend fun getHasShownDailyChallengeTip(): Boolean
     suspend fun setHasShownDailyChallengeTip(shown: Boolean): Preferences
+    fun getActiveThemeFlow(): Flow<String>
+    suspend fun getActiveTheme(): String
+    suspend fun setActiveTheme(themeId: String): Preferences
+    fun getUnlockedThemesFlow(): Flow<Set<String>>
+    suspend fun getUnlockedThemes(): Set<String>
+    suspend fun unlockTheme(themeId: String): Preferences
 }
 
 class DataStoreSettingsRepository(
@@ -120,6 +128,8 @@ class DataStoreSettingsRepository(
     private val hasShownPostGameTipKey = booleanPreferencesKey("has_shown_post_game_tip")
     private val hasShownDailyChallengeTipKey =
         booleanPreferencesKey("has_shown_daily_challenge_tip")
+    private val activeThemeKey = stringPreferencesKey("active_theme")
+    private val unlockedThemesKey = stringSetPreferencesKey("unlocked_themes")
 
     override suspend fun getBestScore(): Int = withContext(Dispatchers.IO) {
         appSettings.data.first()[bestScoreKey] ?: 0
@@ -149,7 +159,7 @@ class DataStoreSettingsRepository(
         }
     }
 
-    override fun getPlayerNameFlow(): kotlinx.coroutines.flow.Flow<String?> {
+    override fun getPlayerNameFlow(): Flow<String?> {
         return appSettings.data.map { preferences ->
             preferences[playerNameKey]
         }
@@ -171,7 +181,7 @@ class DataStoreSettingsRepository(
         }
     }
 
-    override fun getSoundEnabledFlow(): kotlinx.coroutines.flow.Flow<Boolean> {
+    override fun getSoundEnabledFlow(): Flow<Boolean> {
         return appSettings.data.map { preferences ->
             preferences[soundEnabledKey] ?: true
         }
@@ -189,7 +199,7 @@ class DataStoreSettingsRepository(
         }
     }
 
-    override fun getBgMusicEnabledFlow(): kotlinx.coroutines.flow.Flow<Boolean> {
+    override fun getBgMusicEnabledFlow(): Flow<Boolean> {
         return appSettings.data.map { preferences ->
             preferences[bgMusicEnabledKey] ?: true
         }
@@ -564,4 +574,56 @@ class DataStoreSettingsRepository(
                 }
             }
         }
+
+    override fun getActiveThemeFlow(): Flow<String> {
+        return appSettings.data.map { preferences ->
+            preferences[activeThemeKey] ?: ThemeId.NEON_GLOW.name
+        }
+    }
+
+    override suspend fun getActiveTheme(): String = withContext(Dispatchers.IO) {
+        appSettings.data.first()[activeThemeKey] ?: ThemeId.NEON_GLOW.name
+    }
+
+    override suspend fun setActiveTheme(themeId: String) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[activeThemeKey] = themeId
+            }
+        }
+    }
+
+    override fun getUnlockedThemesFlow(): Flow<Set<String>> {
+        return appSettings.data.map { preferences ->
+            preferences[unlockedThemesKey] ?: setOf(
+                ThemeId.NEON_GLOW.name,
+                ThemeId.OCEAN.name,
+                ThemeId.FIREFLY.name,
+                ThemeId.MINTY.name,
+            )
+        }
+    }
+
+    override suspend fun getUnlockedThemes(): Set<String> = withContext(Dispatchers.IO) {
+        appSettings.data.first()[unlockedThemesKey] ?: setOf(
+            ThemeId.NEON_GLOW.name,
+            ThemeId.OCEAN.name,
+            ThemeId.FIREFLY.name,
+            ThemeId.MINTY.name,
+        )
+    }
+
+    override suspend fun unlockTheme(themeId: String) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val current = prefs[unlockedThemesKey] ?: setOf(
+                    ThemeId.NEON_GLOW.name,
+                    ThemeId.OCEAN.name,
+                    ThemeId.FIREFLY.name,
+                    ThemeId.MINTY.name,
+                )
+                prefs[unlockedThemesKey] = current + themeId
+            }
+        }
+    }
 }

@@ -382,4 +382,24 @@
     <string name="mission_refresh_reset_button">ODŚWIEŻ (RESET SERII)</string>
     <string name="mission_refresh_lost_title">SERIA PRZERWANA</string>
     <string name="mission_refresh_lost_desc">Twoja seria została zresetowana, a misje odświeżone, ponieważ pominąłeś dzień.</string>
+
+    <!-- Themes -->
+    <string name="themes_title">MOTYWY</string>
+    <string name="theme_unlocked_label">Odblokowany</string>
+    <string name="theme_current_label">Obecny motyw</string>
+    <string name="theme_buy_confirmation_title">KUP MOTYW</string>
+    <string name="theme_buy_confirmation_message">Czy chcesz kupić motyw %1$s za %2$d Diamentów?</string>
+
+    <string name="theme_neon_glow">ŚWIĘCĄCY NEON</string>
+    <string name="theme_ocean">OCEAN</string>
+    <string name="theme_firefly">ŚWIETLIK</string>
+    <string name="theme_midnight">PÓŁNOC</string>
+    <string name="theme_sunset">ZACHÓD</string>
+    <string name="theme_minty">MIĘTOWY</string>
+    <string name="theme_pastel">PASTELOWY</string>
+    <string name="theme_cyber">CYBER</string>
+    <string name="theme_berry">JAGODOWY</string>
+
+    <!-- Miscellaneous -->
+    <string name="theme_unlocked_overlay_title">MOTYW ODBLOKOWANY</string>
 </resources>

@@ -103,6 +103,31 @@ class MonetizationRepository(
         return false
     }
 
+    suspend fun buyTheme(themeId: String, cost: Int): Boolean {
+        val currentDiamonds = billingManager.currencyBalances.value["diamonds"] ?: 0
+        if (currentDiamonds >= cost) {
+            val appUserId = billingManager.appUserId ?: return false
+            
+            try {
+                supabase.functions.invoke(
+                    "adjust-economy",
+                    AdjustEconomyRequest(
+                        appUserId = appUserId,
+                        adjustments = mapOf(
+                            "diamonds" to -cost
+                        )
+                    )
+                )
+
+                billingManager.refreshBalance()
+                return true
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        return false
+    }
+
     suspend fun awardStreakRewards(reward: StreakReward) {
         val appUserId = billingManager.appUserId ?: return
         

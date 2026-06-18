@@ -2,7 +2,9 @@ package com.pointlessgames.hexagone.game.di
 
 import com.pointlessgames.hexagone.Route
 import com.pointlessgames.hexagone.auth.SettingsViewModel
+import com.pointlessgames.hexagone.auth.ThemesViewModel
 import com.pointlessgames.hexagone.auth.ui.SettingsScreen
+import com.pointlessgames.hexagone.auth.ui.ThemesScreen
 import com.pointlessgames.hexagone.game.GameViewModel
 import com.pointlessgames.hexagone.game.ui.AchievementsScreen
 import com.pointlessgames.hexagone.game.ui.DailyMissionsScreen
@@ -19,9 +21,16 @@ import org.koin.dsl.navigation3.navigation
 internal val gameModule = module {
     viewModelOf(::GameViewModel)
     viewModelOf(::SettingsViewModel)
+    viewModelOf(::ThemesViewModel)
 
     navigation<Route.Settings> {
         SettingsScreen(
+            viewModel = koinViewModel(),
+        )
+    }
+
+    navigation<Route.Themes> {
+        ThemesScreen(
             viewModel = koinViewModel(),
         )
     }
