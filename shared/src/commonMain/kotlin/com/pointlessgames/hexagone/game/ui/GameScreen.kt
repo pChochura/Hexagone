@@ -491,9 +491,13 @@ internal fun GameScreen(
 
     val swipeOffset = remember { Animatable(0f) }
     val isOverlayVisibleState = remember(uiState) {
-        uiState.map { it.isGameOver || it.activeDialog != null || it.isPerksBankVisible || it.isNicknamePopupVisible }
+        uiState.map { it.isGameOver || it.activeDialog != null || it.isPerksBankVisible || it.isNicknamePopupVisible || it.showReviveOption || it.perkOptions.isNotEmpty() }
             .distinctUntilChanged()
-    }.collectAsState(viewModel.uiState.value.let { it.isGameOver || it.activeDialog != null || it.isPerksBankVisible || it.isNicknamePopupVisible })
+    }.collectAsState(viewModel.uiState.value.let { it.isGameOver || it.activeDialog != null || it.isPerksBankVisible || it.isNicknamePopupVisible || it.showReviveOption || it.perkOptions.isNotEmpty() })
+
+    val isAnyOverlayVisible by derivedStateOf {
+        isOverlayVisibleState.value || activeTierReward != null || activeChallengeReward != null || activeAchievement != null
+    }
     val pauseThreshold = 200f
 
     Box(
@@ -508,8 +512,8 @@ internal fun GameScreen(
                     ),
                 ),
             )
-            .pointerInput(isOverlayVisibleState.value) {
-                if (isOverlayVisibleState.value) return@pointerInput
+            .pointerInput(isAnyOverlayVisible) {
+                if (isAnyOverlayVisible) return@pointerInput
                 var triggered = false
                 detectVerticalDragGestures(
                     onDragStart = {
@@ -645,7 +649,7 @@ internal fun GameScreen(
                                 )
                             } else onCellClick,
                             onMergeAnimationFinished = onMergeAnimationFinished,
-                            isSwiping = { swipeOffset.value > 0f || isOverlayVisibleState.value },
+                            isSwiping = { swipeOffset.value > 0f || isAnyOverlayVisible },
                             modifier = Modifier
                                 .fillMaxSize()
                                 .trackTipTarget(TipTarget.GRID) { target, rect ->
@@ -740,7 +744,7 @@ internal fun GameScreen(
                                 )
                             } else onCellClick,
                             onMergeAnimationFinished = onMergeAnimationFinished,
-                            isSwiping = { swipeOffset.value > 0f || isOverlayVisibleState.value },
+                            isSwiping = { swipeOffset.value > 0f || isAnyOverlayVisible },
                             modifier = Modifier
                                 .weight(1f, fill = false)
                                 .fillMaxWidth()
@@ -784,7 +788,7 @@ internal fun GameScreen(
         // Persistent Perk Bar (Moved before GameOverlays to be covered)
         if (!isDebugModeProvider()) {
             val isOverlayVisible =
-                showReviveOption || isGameOver || activeTierReward != null || activeChallengeReward != null || perkOptionsProvider().isNotEmpty()
+                isAnyOverlayVisible
 
             BoxWithConstraints(
                 modifier = Modifier
