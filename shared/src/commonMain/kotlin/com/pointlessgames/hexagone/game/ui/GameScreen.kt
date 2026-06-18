@@ -43,8 +43,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -478,6 +481,9 @@ internal fun GameScreen(
     }
 
     val swipeOffset = remember { Animatable(0f) }
+    val isOverlayVisibleState = remember(uiState) {
+        uiState.map { it.isGameOver || it.activeDialog != null || it.isPerksBankVisible || it.isNicknamePopupVisible }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.let { it.isGameOver || it.activeDialog != null || it.isPerksBankVisible || it.isNicknamePopupVisible })
     val pauseThreshold = 200f
 
     Box(
@@ -492,7 +498,8 @@ internal fun GameScreen(
                     ),
                 ),
             )
-            .pointerInput(Unit) {
+            .pointerInput(isOverlayVisibleState.value) {
+                if (isOverlayVisibleState.value) return@pointerInput
                 var triggered = false
                 detectVerticalDragGestures(
                     onDragStart = {
@@ -513,14 +520,11 @@ internal fun GameScreen(
                         }
                     },
                     onVerticalDrag = { change, dragAmount ->
-                        if (triggered) return@detectVerticalDragGestures
-                        val state = viewModel.uiState.value
-                        if (!state.isGameOver && state.activeDialog == null && !state.isPerksBankVisible && !state.isNicknamePopupVisible) {
-                            val newOffset =
-                                (swipeOffset.value + dragAmount).coerceIn(0f, pauseThreshold + 150f)
-                            coroutineScope.launch { swipeOffset.snapTo(newOffset) }
-                            change.consume()
-                        }
+                        if (triggered || viewModel.hoveredMerge.value != null || selectedCellIdState.value != null) return@detectVerticalDragGestures
+                        val newOffset =
+                            (swipeOffset.value + dragAmount).coerceIn(0f, pauseThreshold + 150f)
+                        coroutineScope.launch { swipeOffset.snapTo(newOffset) }
+                        change.consume()
                     },
                 )
             },
@@ -586,10 +590,14 @@ internal fun GameScreen(
                                 onDailyChallengeClick = { navigator.navigateTo(Route.DailyMissions) },
                                 isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
                                 onTargetPosition = { target, rect ->
-                                    targetRects[target] = rect
+                                    if (swipeOffset.value == 0f) {
+                                        targetRects[target] = rect
+                                    }
                                 },
                                 modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
-                                    targetRects[target] = rect
+                                    if (swipeOffset.value == 0f) {
+                                        targetRects[target] = rect
+                                    }
                                 },
                             )
                         }
@@ -627,10 +635,13 @@ internal fun GameScreen(
                                 )
                             } else onCellClick,
                             onMergeAnimationFinished = onMergeAnimationFinished,
+                            isSwiping = { swipeOffset.value > 0f || isOverlayVisibleState.value },
                             modifier = Modifier
                                 .fillMaxSize()
                                 .trackTipTarget(TipTarget.GRID) { target, rect ->
-                                    targetRects[target] = rect
+                                    if (swipeOffset.value == 0f) {
+                                        targetRects[target] = rect
+                                    }
                                 },
                         )
                     }
@@ -681,10 +692,14 @@ internal fun GameScreen(
                                 onDailyChallengeClick = { navigator.navigateTo(Route.DailyMissions) },
                                 isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
                                 onTargetPosition = { target, rect ->
-                                    targetRects[target] = rect
+                                    if (swipeOffset.value == 0f) {
+                                        targetRects[target] = rect
+                                    }
                                 },
                                 modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
-                                    targetRects[target] = rect
+                                    if (swipeOffset.value == 0f) {
+                                        targetRects[target] = rect
+                                    }
                                 },
                             )
 
@@ -715,11 +730,14 @@ internal fun GameScreen(
                                 )
                             } else onCellClick,
                             onMergeAnimationFinished = onMergeAnimationFinished,
+                            isSwiping = { swipeOffset.value > 0f || isOverlayVisibleState.value },
                             modifier = Modifier
                                 .weight(1f, fill = false)
                                 .fillMaxWidth()
                                 .trackTipTarget(TipTarget.GRID) { target, rect ->
-                                    targetRects[target] = rect
+                                    if (swipeOffset.value == 0f) {
+                                        targetRects[target] = rect
+                                    }
                                 },
                         )
 
@@ -826,7 +844,9 @@ internal fun GameScreen(
                                     .fillMaxHeight()
                                     .graphicsLayer { clip = false }
                                     .trackTipTarget(TipTarget.PERK_BAR) { target, rect ->
-                                        targetRects[target] = rect
+                                        if (swipeOffset.value == 0f) {
+                                            targetRects[target] = rect
+                                        }
                                     },
                             )
                         }
@@ -850,7 +870,9 @@ internal fun GameScreen(
                                     .fillMaxWidth()
                                     .graphicsLayer { clip = false }
                                     .trackTipTarget(TipTarget.PERK_BAR) { target, rect ->
-                                        targetRects[target] = rect
+                                        if (swipeOffset.value == 0f) {
+                                            targetRects[target] = rect
+                                        }
                                     },
                             )
                         }
@@ -903,7 +925,9 @@ internal fun GameScreen(
             onNicknamePrompt = viewModel::onShowNicknamePopup,
             playerNameProvider = { playerNameState.value },
             modifier = Modifier.trackTipTarget(TipTarget.GAME_OVER_BUTTONS) { target, rect ->
-                targetRects[target] = rect
+                if (swipeOffset.value == 0f) {
+                    targetRects[target] = rect
+                }
             },
         )
 

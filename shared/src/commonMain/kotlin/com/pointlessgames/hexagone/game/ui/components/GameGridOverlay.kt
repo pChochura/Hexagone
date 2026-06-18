@@ -98,6 +98,7 @@ internal fun GameGridOverlay(
     onCellTouchUp: () -> Unit,
     onCellClick: (HexagonCell) -> Unit,
     onMergeAnimationFinished: () -> Unit,
+    isSwiping: () -> Boolean,
 ) {
     val currentGridState by androidx.compose.runtime.rememberUpdatedState(gridState)
     val currentPreviewState by androidx.compose.runtime.rememberUpdatedState(previewState)
@@ -399,6 +400,7 @@ internal fun GameGridOverlay(
                     coroutineScope {
                         awaitEachGesture {
                             val down = awaitFirstDown()
+                            if (isSwiping()) return@awaitEachGesture
                             val initialCellPos = getCellAt(down.position.x, down.position.y)
                             var longPressTriggered = false
                             val job = launch {
@@ -416,6 +418,12 @@ internal fun GameGridOverlay(
                             try {
                                 while (true) {
                                     val event = awaitPointerEvent(PointerEventPass.Main)
+                                    if (isSwiping()) {
+                                        job.cancel()
+                                        onEmptySpaceTouchUp()
+                                        onCellTouchUp()
+                                        break
+                                    }
                                     val change = event.changes.first()
                                     if (change.changedToUp()) {
                                         job.cancel()
