@@ -20,6 +20,8 @@
     <string name="view_stats_button">ZOBACZ STATYSTYKI</string>
     <string name="restart_game_button">RESTARTUJ GRĘ</string>
     <string name="share_label">UDOSTĘPNIJ</string>
+    <string name="share_title">Mój wynik w Hexagone</string>
+    <string name="share_text">Sprawdź mój wynik w Hexagone: %1$d! Dasz radę go pobić?</string>
     <string name="perk_selection_hint">Przytrzymaj perk, aby zobaczyć jego opis</string>
     <string name="no_moves_left_warning">BRAK RUCHÓW! UŻYJ PERKA</string>
     <string name="cancel">Anuluj</string>

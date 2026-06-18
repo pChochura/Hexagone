@@ -1,5 +1,6 @@
 package com.pointlessgames.hexagone.share
 
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -10,7 +11,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 class AndroidShareManager(private val context: Context) : ShareManager {
-    override fun shareImage(image: ImageBitmap) {
+    override fun shareImage(image: ImageBitmap, title: String, text: String) {
         val bitmap = image.asAndroidBitmap()
         
         try {
@@ -26,10 +27,13 @@ class AndroidShareManager(private val context: Context) : ShareManager {
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_TITLE, title)
+                putExtra(Intent.EXTRA_TEXT, text)
+                clipData = ClipData.newUri(context.contentResolver, title, uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             
-            val chooser = Intent.createChooser(intent, "Share Image")
+            val chooser = Intent.createChooser(intent, title)
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(chooser)
         } catch (e: Exception) {

@@ -96,6 +96,8 @@ import com.pointlessgames.hexagone.utils.BackHandler
 import com.pointlessgames.hexagone.utils.SoundManager
 import com.pointlessgames.hexagone.utils.isDebug
 import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.share_text
+import hexagone.shared.generated.resources.share_title
 import hexagone.shared.generated.resources.no_moves_left_warning
 import hexagone.shared.generated.resources.restart_button
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -941,7 +943,6 @@ internal fun GameScreen(
         }
 
         GameOverlays(
-
             isGameOverProvider = isGameOverProvider,
             scoreProvider = scoreProvider,
             bestScoreProvider = bestScoreProvider,
@@ -961,15 +962,15 @@ internal fun GameScreen(
             onShare = {
                 coroutineScope.launch {
                     val bitmap = shareGraphicsLayer.toImageBitmap()
-                    shareManager.shareImage(bitmap)
+                    val title = org.jetbrains.compose.resources.getString(hexagone.shared.generated.resources.Res.string.share_title)
+                    val text = org.jetbrains.compose.resources.getString(hexagone.shared.generated.resources.Res.string.share_text, scoreProvider())
+                    shareManager.shareImage(bitmap, title, text)
                 }
             },
             onLeaderboard = { navigator.navigateTo(Route.Leaderboard) },
             activeTierReward = activeTierReward,
             onTierRewardFinished = {
-                if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(
-                    0,
-                )
+                if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0)
             },
             activeChallengeReward = activeChallengeReward,
             persistentCompletedMissionIdsProvider = remember { { uiState.value.persistentCompletedMissionIds } },

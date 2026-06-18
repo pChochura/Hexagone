@@ -18,7 +18,7 @@ import platform.UIKit.popoverPresentationController
 
 class IosShareManager : ShareManager {
     @OptIn(ExperimentalForeignApi::class)
-    override fun shareImage(image: ImageBitmap) {
+    override fun shareImage(image: ImageBitmap, title: String, text: String) {
         val skiaBitmap = image.asSkiaBitmap()
         val bytes = Image.makeFromBitmap(skiaBitmap).encodeToData(EncodedImageFormat.PNG)?.bytes ?: return
         
@@ -28,7 +28,7 @@ class IosShareManager : ShareManager {
         val uiImage = UIImage(data = nsData)
         
         val activityViewController = UIActivityViewController(
-            activityItems = listOf(uiImage),
+            activityItems = listOf(title, text, uiImage),
             applicationActivities = null
         )
         

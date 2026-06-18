@@ -20,6 +20,8 @@
     <string name="view_stats_button">VIEW STATS</string>
     <string name="restart_game_button">RESTART GAME</string>
     <string name="share_label">SHARE</string>
+    <string name="share_title">My Hexagone Score</string>
+    <string name="share_text">Check out my score in Hexagone: %1$d! Can you beat it?</string>
     <string name="perk_selection_hint">Long press a perk to see what it does</string>
     <string name="no_moves_left_warning">NO MOVES LEFT! USE A PERK</string>
     <string name="cancel">Cancel</string>
