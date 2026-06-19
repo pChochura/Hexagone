@@ -286,7 +286,7 @@
     <string name="achievement_pacifist_title">Pacifist</string>
     <string name="achievement_pacifist_desc">Reach Level 5 without ever triggering a combo</string>
     <string name="achievement_ascetic_title">Ascetic</string>
-    <string name="achievement_ascetic_desc">Reach Level 15 without ever using a Perk</string>
+    <string name="achievement_ascetic_desc">Reach Level 10 without ever using a Perk</string>
     <string name="achievement_zen_master_title">Zen Master</string>
     <string name="achievement_zen_master_desc">Reach Level 20 without ever using Undo</string>
     <string name="achievement_phantom_move_title">Phantom Move</string>

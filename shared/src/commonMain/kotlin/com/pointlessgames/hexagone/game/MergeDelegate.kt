@@ -146,7 +146,6 @@ internal class MergeDelegate(
         if (collectedOnBoard != null) {
             effectDelegate.addPerkPopup(merge.targetX, merge.targetY, collectedOnBoard)
             effectDelegate.addMergeParticles(merge.targetX, merge.targetY, collectedOnBoard.ordinal, isPerk = true)
-            achievementDelegate.checkPerkAchievements(collectedOnBoard, currentState)
             achievementDelegate.onPerkCollectedFromBoard()
         }
 

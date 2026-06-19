@@ -10,6 +10,7 @@ import com.pointlessgames.hexagone.game.model.HexagonCell
 import com.pointlessgames.hexagone.game.model.MergeTransition
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.PotentialMerge
+import com.pointlessgames.hexagone.game.model.PreviewCell
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
@@ -97,10 +98,12 @@ internal class AchievementDelegate(
         }
         if (level >= 15) {
             achievementManager.unlockAchievement(GameAchievement.SEASONED_PLAYER)
-            if (!uiState.value.perkUsedInSession) {
-                achievementManager.unlockAchievement(GameAchievement.ASCETIC)
-            }
         }
+
+        if (level >= 10 && !uiState.value.perkUsedInSession) {
+            achievementManager.unlockAchievement(GameAchievement.ASCETIC)
+        }
+
         if (level >= 5) {
             achievementManager.unlockAchievement(GameAchievement.A_NEW_BEGINNING)
             if (!uiState.value.comboTriggeredInSession) {
@@ -187,7 +190,7 @@ internal class AchievementDelegate(
     }
 
     fun onUndoUsed() {
-        uiState.update { 
+        uiState.update {
             val newCount = it.consecutiveUndos + 1
             if (newCount >= 3) {
                 achievementManager.unlockAchievement(GameAchievement.TIME_MACHINE)
@@ -208,7 +211,7 @@ internal class AchievementDelegate(
 
     fun onMergesIncremented(groups: Int) {
         achievementManager.trackMerge()
-        uiState.update { 
+        uiState.update {
             val count = maxOf(1, groups)
             val next = it.consecutiveMergesWithoutSpawn + count
             if (next >= 10) {
@@ -231,7 +234,7 @@ internal class AchievementDelegate(
         }
         if (isSacrifice) achievementManager.unlockAchievement(GameAchievement.SACRIFICE)
         if (isTactical) {
-            uiState.update { 
+            uiState.update {
                 val next = it.tacticalMergesCount + 1
                 if (next >= 5) {
                     achievementManager.unlockAchievement(GameAchievement.TACTICAL_GENIUS)
@@ -242,7 +245,13 @@ internal class AchievementDelegate(
     }
 
     fun onSpawnOccurred() {
-        uiState.update { it.copy(consecutiveMergesWithoutSpawn = 0, barRaisedThisTurn = 0, tacticalGhostsThisTurn = 0) }
+        uiState.update {
+            it.copy(
+                consecutiveMergesWithoutSpawn = 0,
+                barRaisedThisTurn = 0,
+                tacticalGhostsThisTurn = 0,
+            )
+        }
     }
 
     fun onRerollUsed() {
@@ -262,7 +271,7 @@ internal class AchievementDelegate(
     }
 
     fun onGhostMarkedTactical() {
-        uiState.update { 
+        uiState.update {
             val next = it.tacticalGhostsThisTurn + 1
             if (next >= 3) {
                 achievementManager.unlockAchievement(GameAchievement.GHOST_PROTOCOL)
@@ -275,13 +284,17 @@ internal class AchievementDelegate(
         achievementManager.unlockAchievement(GameAchievement.POSSESSION)
     }
 
-    fun checkPatternAchievements(grid: List<HexagonCell>, previews: List<com.pointlessgames.hexagone.game.model.PreviewCell>, engine: GameEngine) {
+    fun checkPatternAchievements(
+        grid: List<HexagonCell>,
+        previews: List<PreviewCell>,
+        engine: GameEngine,
+    ) {
         val patternResults = listOf(
             PatternRecognitionEngine.checkRingOfFire(grid, engine) to GameAchievement.RING_OF_FIRE,
             PatternRecognitionEngine.checkGreatWall(grid, engine) to GameAchievement.GREAT_WALL,
             PatternRecognitionEngine.checkTwinPeaks(grid, engine) to GameAchievement.TWIN_PEAKS,
             PatternRecognitionEngine.checkThePrism(grid) to GameAchievement.THE_PRISM,
-            PatternRecognitionEngine.checkTheMedium(grid, previews, engine) to GameAchievement.THE_MEDIUM
+            PatternRecognitionEngine.checkTheMedium(grid, previews, engine) to GameAchievement.THE_MEDIUM,
         )
 
         patternResults.forEach { (res, achievement) ->
@@ -302,7 +315,10 @@ internal class AchievementDelegate(
         }
     }
 
-    fun checkArchitectsDream(grid: List<HexagonCell>, potentialMerges: Map<Pair<Int, Int>, PotentialMerge>) {
+    fun checkArchitectsDream(
+        grid: List<HexagonCell>,
+        potentialMerges: Map<Pair<Int, Int>, PotentialMerge>,
+    ) {
         if (PatternRecognitionEngine.checkArchitectsDream(grid, potentialMerges)) {
             achievementManager.unlockAchievement(GameAchievement.ARCHITECTS_DREAM)
             if (grid.any { it.isMimic }) {

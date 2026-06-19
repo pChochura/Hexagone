@@ -262,7 +262,7 @@
     <string name="achievement_pacifist_title">Pacyfista</string>
     <string name="achievement_pacifist_desc">Osiągnij 5 poziom bez wywołania combo</string>
     <string name="achievement_ascetic_title">Asceta</string>
-    <string name="achievement_ascetic_desc">Osiągnij 15 poziom bez używania perka</string>
+    <string name="achievement_ascetic_desc">Osiągnij 10 poziom bez używania perka</string>
     <string name="achievement_zen_master_title">Mistrz Zen</string>
     <string name="achievement_zen_master_desc">Osiągnij 20 poziom bez używania Cofania</string>
     <string name="achievement_phantom_move_title">Fantomowy ruch</string>

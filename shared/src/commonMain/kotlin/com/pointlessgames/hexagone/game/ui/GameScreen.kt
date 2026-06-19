@@ -806,12 +806,8 @@ internal fun GameScreen(
 
         // Persistent Perk Bar (Moved before GameOverlays to be covered)
         if (!isDebugModeProvider()) {
-            val isOverlayVisible = isAnyOverlayVisible
-
             BoxWithConstraints(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer { alpha = if (isOverlayVisible) 0f else 1f },
+                modifier = Modifier.fillMaxSize(),
             ) {
                 val isLandscape = maxWidth > maxHeight
                 Box(
