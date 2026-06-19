@@ -1,6 +1,0 @@
-- [x] Simplify `ShopButton` in `HexagonComponents.kt` (remove background, keep icon/label)
-- [x] Align `VoucherButton` labels with `PerkButton` labels
-- [x] Update `PerkBar.kt` with `safeDrawingPadding()` and increased spacing
-- [x] Implement conditional divider in `PerkBar.kt`
-- [x] Remove shop pod background in `PerkBar.kt`
-- [x] Verify alignment and safe area offsets
