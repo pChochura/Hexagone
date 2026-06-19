@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -435,6 +436,12 @@ private fun ScoreSectionContent(
             fontSize = 84.sp.scaled,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled),
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 24.sp.scaled,
+                maxFontSize = 84.sp.scaled,
+                stepSize = 4.sp.scaled,
+            ),
         )
 
         if (isNewBest) {
