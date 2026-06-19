@@ -41,6 +41,8 @@ import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.mission_refresh_keep_button
 import hexagone.shared.generated.resources.mission_refresh_lost_desc
 import hexagone.shared.generated.resources.mission_refresh_lost_title
+import hexagone.shared.generated.resources.mission_refresh_new_desc
+import hexagone.shared.generated.resources.mission_refresh_new_title
 import hexagone.shared.generated.resources.mission_refresh_reset_button
 import hexagone.shared.generated.resources.mission_refresh_restore_desc
 import hexagone.shared.generated.resources.mission_refresh_restore_title
@@ -104,6 +106,7 @@ internal fun MissionRefreshPopup(
                     val title = when (state) {
                         is MissionRefreshState.CAN_KEEP -> stringResource(Res.string.mission_refresh_restore_title)
                         is MissionRefreshState.HARD_REFRESH -> stringResource(Res.string.mission_refresh_lost_title)
+                        is MissionRefreshState.MISSIONS_COMPLETED_REFRESH -> stringResource(Res.string.mission_refresh_new_title)
                     }
 
                     Text(
@@ -121,6 +124,7 @@ internal fun MissionRefreshPopup(
                             stringResource(Res.string.mission_refresh_restore_desc, formattedDate)
                         }
                         is MissionRefreshState.HARD_REFRESH -> stringResource(Res.string.mission_refresh_lost_desc)
+                        is MissionRefreshState.MISSIONS_COMPLETED_REFRESH -> stringResource(Res.string.mission_refresh_new_desc)
                     }
 
                     Text(

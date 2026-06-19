@@ -22,6 +22,7 @@ sealed interface MissionRefreshState {
     data object NONE : MissionRefreshState
     data class CAN_KEEP(val oldDate: Long) : MissionRefreshState
     data class HARD_REFRESH(val oldDate: Long) : MissionRefreshState
+    data class MISSIONS_COMPLETED_REFRESH(val oldDate: Long) : MissionRefreshState
 }
 
 @Immutable

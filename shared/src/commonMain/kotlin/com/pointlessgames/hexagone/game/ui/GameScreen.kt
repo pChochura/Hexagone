@@ -73,6 +73,7 @@ import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.model.ComboTier
 import com.pointlessgames.hexagone.game.model.GameEffect
 import com.pointlessgames.hexagone.game.model.HexagonCell
+import com.pointlessgames.hexagone.game.model.MissionRefreshState
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.TipTarget
 import com.pointlessgames.hexagone.game.ui.components.AchievementNotification
@@ -501,13 +502,15 @@ internal fun GameScreen(
         uiState.map {
             it.isGameOver || it.activeDialog != null || it.isPerksBankVisible ||
                     it.isNicknamePopupVisible || it.showReviveOption ||
-                    it.perkOptions.isNotEmpty()
+                    it.perkOptions.isNotEmpty() || 
+                    it.missionRefreshState != MissionRefreshState.NONE
         }.distinctUntilChanged()
     }.collectAsState(
         viewModel.uiState.value.let {
             it.isGameOver || it.activeDialog != null ||
                     it.isPerksBankVisible || it.isNicknamePopupVisible ||
-                    it.showReviveOption || it.perkOptions.isNotEmpty()
+                    it.showReviveOption || it.perkOptions.isNotEmpty() ||
+                    it.missionRefreshState != MissionRefreshState.NONE
         },
     )
 

@@ -211,6 +211,10 @@ internal class GameViewModel(
             val yesterdaySeed =
                 yesterday.year * 10000L + (yesterday.month.ordinal + 1) * 100L + yesterday.day
 
+            val lastCompletedDate = settingsRepository.getLastCompletedChallengeDate()
+            val completedDates =
+                settingsRepository.getCompletedChallengeDates().mapNotNull { it.toLongOrNull() }
+                    .toSet()
             var persistentCompletedMissionIds =
                 settingsRepository.getPersistentCompletedMissionIds()
             val dailyMissionDate = settingsRepository.getDailyMissionDate()
@@ -218,7 +222,14 @@ internal class GameViewModel(
 
             if (dailyMissionDate != 0L && dailyMissionDate != dateSeed) {
                 if (dailyMissionDate == yesterdaySeed) {
-                    missionRefreshState = MissionRefreshState.CAN_KEEP(dailyMissionDate)
+                    if (completedDates.contains(dailyMissionDate)) {
+                        missionRefreshState = MissionRefreshState.MISSIONS_COMPLETED_REFRESH(dailyMissionDate)
+                        settingsRepository.setDailyMissionDate(dateSeed)
+                        settingsRepository.clearPersistentCompletedMissionIds()
+                        persistentCompletedMissionIds = emptySet()
+                    } else {
+                        missionRefreshState = MissionRefreshState.CAN_KEEP(dailyMissionDate)
+                    }
                 } else {
                     missionRefreshState = MissionRefreshState.HARD_REFRESH(dailyMissionDate)
                     settingsRepository.setDailyMissionDate(dateSeed)
@@ -229,21 +240,13 @@ internal class GameViewModel(
                 settingsRepository.setDailyMissionDate(dateSeed)
             }
 
-            val lastCompletedDate = settingsRepository.getLastCompletedChallengeDate()
-            val completedDates =
-                settingsRepository.getCompletedChallengeDates().mapNotNull { it.toLongOrNull() }
-                    .toSet()
-            var challengeStreak = DailyMissionUtils.calculateStreak(completedDates, today)
-
-            if (lastCompletedDate != 0L && lastCompletedDate != dateSeed && lastCompletedDate != yesterdaySeed) {
-                challengeStreak = 0
-            }
-
             val effectiveMissionDate = if (missionRefreshState is MissionRefreshState.CAN_KEEP) {
                 yesterday
             } else {
                 today
             }
+
+            var challengeStreak = DailyMissionUtils.calculateStreak(completedDates, effectiveMissionDate)
 
             val currentDailyChallenges =
                 DailyChallengeProvider.getChallengesForDate(effectiveMissionDate, challengeStreak)
@@ -642,6 +645,7 @@ internal class GameViewModel(
                     persistentCompletedMissionIds = emptySet(),
                     challengeStreak = 0,
                     isStreakCollectedToday = false,
+                    dailyMissionDate = dateSeed,
                 )
             }
         }

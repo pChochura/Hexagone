@@ -104,6 +104,7 @@ import hexagone.shared.generated.resources.pattern_twin_peaks
 import hexagone.shared.generated.resources.perk_category_common
 import hexagone.shared.generated.resources.perk_category_legendary
 import hexagone.shared.generated.resources.perk_category_rare
+import hexagone.shared.generated.resources.previous_missions_warning
 import hexagone.shared.generated.resources.progress_fraction
 import hexagone.shared.generated.resources.reward_perk_label
 import hexagone.shared.generated.resources.reward_score_label
@@ -148,6 +149,38 @@ internal fun DailyMissionsScreen(
                 bottom = spacing.extraLarge.scaled,
             ),
         ) {
+            val isPreviousMissions =
+                uiState.dailyMissionDate != 0L && uiState.dailyMissionDate < (today.year * 10000L + (today.month.ordinal + 1) * 100L + today.day)
+
+            if (isPreviousMissions) {
+                item {
+                    Spacer(Modifier.height(spacing.small.scaled))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = spacing.extraLarge.scaled)
+                            .clip(RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled))
+                            .background(MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
+                            .border(
+                                1.dp.scaled,
+                                MaterialTheme.colorScheme.error.copy(alpha = 0.5f),
+                                RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled),
+                            )
+                            .padding(spacing.medium.scaled),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.previous_missions_warning),
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp.scaled,
+                            lineHeight = 16.sp.scaled,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+
             // Prominent Streak Section (Top)
             item {
                 Column(

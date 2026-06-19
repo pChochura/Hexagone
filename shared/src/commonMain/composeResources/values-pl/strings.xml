@@ -380,8 +380,11 @@
     <string name="mission_refresh_restore_desc">Masz zaległe misje z %1$s. Zatrzymaj je, aby uratować swoją serię, lub odśwież (seria zostanie zresetowana).</string>
     <string name="mission_refresh_keep_button">ZACHOWAJ MISJE</string>
     <string name="mission_refresh_reset_button">ODŚWIEŻ (RESET SERII)</string>
-    <string name="mission_refresh_lost_title">SERIA PRZERWANA</string>
-    <string name="mission_refresh_lost_desc">Twoja seria została zresetowana, a misje odświeżone, ponieważ pominąłeś dzień.</string>
+    <string name="mission_refresh_lost_title">UTRACONO SERIĘ</string>
+    <string name="mission_refresh_lost_desc">Twoja seria została wyzerowana i misje zostały odświeżone, ponieważ pominąłeś jeden dzień.</string>
+    <string name="mission_refresh_new_title">NOWE MISJE</string>
+    <string name="mission_refresh_new_desc">Ukończyłeś poprzednie misje! Oto twoje nowe misje na dzisiaj.</string>
+    <string name="previous_missions_warning">Obecnie przeglądasz wczorajsze misje. Ukończ je dzisiaj, aby uratować swoją serię!</string>
 
     <!-- Themes -->
     <string name="themes_title">MOTYWY</string>

@@ -382,6 +382,9 @@
     <string name="mission_refresh_reset_button">REFRESH (RESET STREAK)</string>
     <string name="mission_refresh_lost_title">STREAK LOST</string>
     <string name="mission_refresh_lost_desc">Your streak was reset and missions were refreshed because you skipped a day.</string>
+    <string name="mission_refresh_new_title">NEW MISSIONS</string>
+    <string name="mission_refresh_new_desc">You completed your previous missions! Here are your new missions for today.</string>
+    <string name="previous_missions_warning">You are currently viewing yesterday's missions. Complete them today to save your streak!</string>
 
     <!-- Themes -->
     <string name="themes_title">THEMES</string>
