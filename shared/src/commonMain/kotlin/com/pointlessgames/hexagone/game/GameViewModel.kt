@@ -1071,6 +1071,7 @@ internal class GameViewModel(
                 val newScore = it.score + challenge.rewardScore
                 it.copy(score = newScore, bestScore = maxOf(it.bestScore, newScore))
             }
+            challengeDelegate.onScoreChanged(_uiState.value.score)
         }
         if (challenge.rewardPerk != null) {
             _uiState.update { it.copy(collectedPerks = it.collectedPerks + challenge.rewardPerk) }
