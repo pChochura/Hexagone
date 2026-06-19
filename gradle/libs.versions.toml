@@ -6,22 +6,21 @@ sdk-min = "26"
 sdk-target = "37"
 
 # Kotlin
-kotlin = "2.3.21"
+kotlin = "2.4.0"
 kotlin-serialization = "1.11.0"
 kotlin-coroutines = "1.11.0"
-kotlin-immutable = "0.4.0"
+kotlin-immutable = "0.5.0"
 kotlin-datetime = "0.8.0"
 ksp = "2.3.6"
 buildKonfig = "0.21.2"
 
 # Compose
-compose-multiplatform = "1.11.0"
+compose-multiplatform = "1.11.1"
 compose-multiplatform-lifecycle = "2.10.0"
 compose-multiplatform-material3 = "1.9.0"
 
 # AndroidX
 androidx-activity = "1.13.0"
-androidx-billing = "7.1.1"
 androidx-lifecycle = "2.10.0"
 androidx-navigation3 = "1.1.1"
 androidx-material = "1.14.0"
@@ -29,10 +28,11 @@ androidx-splashscreen = "1.2.0"
 androidx-startup = "1.2.0"
 androidx-work = "2.11.2"
 androidx-datastore = "1.2.1"
-androidx-compose-ui-tooling = "1.11.2"
+androidx-compose-ui-tooling = "1.11.3"
+androidx-paging = "3.5.0"
 
 # Koin
-koin = "4.2.1"
+koin = "4.2.2"
 
 # Supabase
 supabase-bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "supabase" }
@@ -46,7 +46,7 @@ ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "kto
 # Misc
 android-version-git = "0.4.14"
 gadulka = "1.13.0"
-revenuecat = "3.0.6"
+revenuecat = "3.1.0"
 
 # Supabase
 supabase = "3.6.0"
@@ -67,6 +67,8 @@ androidx-splashscreen = { module = "androidx.core:core-splashscreen", version.re
 androidx-startup = { module = "androidx.startup:startup-runtime", version.ref = "androidx-startup" }
 androidx-work = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
 androidx-material = { module = "com.google.android.material:material", version.ref = "androidx-material" }
+androidx-paging-common = { module = "androidx.paging:paging-common", version.ref = "androidx-paging" }
+androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "androidx-paging" }
 
 # Compose
 compose-mp-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }

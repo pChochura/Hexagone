@@ -47,9 +47,10 @@ internal val gameModule = module {
         )
     }
 
-    navigation<Route.Leaderboard> {
+    navigation<Route.Leaderboard> { route ->
         LeaderboardScreen(
             viewModel = koinViewModel(),
+            targetRank = route.targetRank,
         )
     }
 

@@ -9,6 +9,10 @@ import com.pointlessgames.hexagone.game.model.RankingInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import kotlinx.coroutines.launch
 
 internal class LeaderboardViewModel(
@@ -20,7 +24,6 @@ internal class LeaderboardViewModel(
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     data class UiState(
-        val rankings: List<DetailedGameResult> = emptyList(),
         val isLoading: Boolean = false,
         val error: String? = null,
         val playerName: String? = null,
@@ -29,10 +32,10 @@ internal class LeaderboardViewModel(
         val currentRank: RankingInfo? = null,
     )
 
+
     init {
         loadPlayerInfo()
         syncPendingScores()
-        loadRankings()
     }
 
     private fun syncPendingScores() {
@@ -48,19 +51,24 @@ internal class LeaderboardViewModel(
         }
     }
 
-    fun loadRankings() {
+    fun getRankingsFlow(targetRank: Int?): Flow<PagingData<com.pointlessgames.hexagone.data.RankedGameResult>> {
+        val initialPage = if (targetRank != null && targetRank > 0) {
+            (targetRank - 1) / 20
+        } else {
+            0
+        }
+        
+        // Sync pending scores, then fetch the pager
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                // Try to sync any pending scores first
                 leaderboardRepository.syncPendingScores()
-
-                val scores = leaderboardRepository.getTopScores()
-                _uiState.value = _uiState.value.copy(rankings = scores, isLoading = false)
             } catch (e: Exception) {
-                _uiState.value =
-                    _uiState.value.copy(isLoading = false, error = e.message ?: "Unknown error")
+                // Ignore sync errors here
             }
         }
+        
+        return leaderboardRepository.getLeaderboardPager(pageSize = 20, initialPage = initialPage)
+            .flow
+            .cachedIn(viewModelScope)
     }
 }

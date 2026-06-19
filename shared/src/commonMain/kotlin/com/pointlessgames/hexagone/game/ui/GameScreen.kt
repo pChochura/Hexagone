@@ -502,7 +502,7 @@ internal fun GameScreen(
         uiState.map {
             it.isGameOver || it.activeDialog != null || it.isPerksBankVisible ||
                     it.isNicknamePopupVisible || it.showReviveOption ||
-                    it.perkOptions.isNotEmpty() || 
+                    it.perkOptions.isNotEmpty() ||
                     it.missionRefreshState != MissionRefreshState.NONE
         }.distinctUntilChanged()
     }.collectAsState(
@@ -617,7 +617,7 @@ internal fun GameScreen(
                                 activePerkProvider = activePerkProvider,
                                 isVertical = true,
                                 onLevelClick = if (isDebug) onDebugToggle else ({}),
-                                onLeaderboardClick = { navigator.navigateTo(Route.Leaderboard) },
+                                onLeaderboardClick = { navigator.navigateTo(Route.Leaderboard()) },
                                 onAchievementsClick = { navigator.navigateTo(Route.Achievements()) },
                                 onSettingsClick = { navigator.navigateTo(Route.Settings) },
                                 onDailyChallengeClick = { navigator.navigateTo(Route.DailyMissions) },
@@ -719,7 +719,7 @@ internal fun GameScreen(
                                 highestValueProvider = highestValueProvider,
                                 activePerkProvider = activePerkProvider,
                                 onLevelClick = if (isDebug) onDebugToggle else ({}),
-                                onLeaderboardClick = { navigator.navigateTo(Route.Leaderboard) },
+                                onLeaderboardClick = { navigator.navigateTo(Route.Leaderboard()) },
                                 onAchievementsClick = { navigator.navigateTo(Route.Achievements()) },
                                 onSettingsClick = { navigator.navigateTo(Route.Settings) },
                                 onDailyChallengeClick = { navigator.navigateTo(Route.DailyMissions) },
@@ -992,7 +992,7 @@ internal fun GameScreen(
                     shareManager.shareImage(bitmap, title, text)
                 }
             },
-            onLeaderboard = { navigator.navigateTo(Route.Leaderboard) },
+            onLeaderboard = { navigator.navigateTo(Route.Leaderboard(targetRank = currentRankProvider()?.rank)) },
             activeTierReward = activeTierReward,
             onTierRewardFinished = {
                 if (tierRewardQueue.isNotEmpty()) tierRewardQueue.removeAt(0)

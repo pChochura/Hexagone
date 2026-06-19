@@ -115,6 +115,9 @@ kotlin {
             implementation(libs.supabase.auth)
             implementation(libs.supabase.functions)
             implementation(libs.ktor.client.core)
+
+            implementation(libs.androidx.paging.common)
+            implementation(libs.androidx.paging.compose)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

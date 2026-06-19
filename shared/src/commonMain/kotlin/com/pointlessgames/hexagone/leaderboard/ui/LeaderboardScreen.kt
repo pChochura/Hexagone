@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +26,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,7 +44,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import com.pointlessgames.hexagone.LocalNavigator
 import com.pointlessgames.hexagone.game.model.DetailedGameResult
 import com.pointlessgames.hexagone.game.ui.components.Hexagon
@@ -60,13 +66,24 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun LeaderboardScreen(
     viewModel: LeaderboardViewModel,
+    targetRank: Int? = null,
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
     val spacing = MaterialTheme.spacing
+    val pagedRankings = remember(targetRank) { viewModel.getRankingsFlow(targetRank) }
+    val lazyPagingItems = pagedRankings.collectAsLazyPagingItems()
+    val listState = rememberLazyListState()
+    var hasScrolled by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadRankings()
+    LaunchedEffect(lazyPagingItems.itemSnapshotList, targetRank) {
+        if (targetRank != null && targetRank > 0 && lazyPagingItems.itemCount > 0 && !hasScrolled) {
+            val items = lazyPagingItems.itemSnapshotList.items
+            val index = items.indexOfFirst { it.rank == targetRank }
+            if (index != -1) {
+                listState.scrollToItem(index)
+                hasScrolled = true
+            }
+        }
     }
 
     ScreenScaffold(
@@ -74,6 +91,7 @@ internal fun LeaderboardScreen(
         onBack = { navigator.pop() },
     ) { contentPadding ->
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxWidth()
                 .graphicsLayer { clip = false },
@@ -83,37 +101,65 @@ internal fun LeaderboardScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(spacing.small.scaled),
         ) {
-            if (uiState.isLoading) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp.scaled),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    }
-                }
-            } else if (uiState.rankings.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp.scaled),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.leaderboard_empty),
-                            color = Color.White.copy(alpha = 0.4f),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp.scaled,
-                        )
-                    }
-                }
-            } else {
-                itemsIndexed(uiState.rankings) { index, result ->
+            items(
+                count = lazyPagingItems.itemCount,
+                key = lazyPagingItems.itemKey { it.rank },
+                contentType = lazyPagingItems.itemContentType { "RankItem" }
+            ) { index ->
+                val rankedResult = lazyPagingItems[index]
+                if (rankedResult != null) {
+                    val isTarget = rankedResult.rank == targetRank
                     Box(modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled)) {
-                        RankItem(rank = index + 1, result = result)
+                        RankItem(rank = rankedResult.rank, result = rankedResult.result, isTarget = isTarget)
+                    }
+                }
+            }
+
+            lazyPagingItems.apply {
+                when {
+                    loadState.refresh is LoadState.Loading -> {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp.scaled),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                    }
+                    loadState.refresh is LoadState.NotLoading && lazyPagingItems.itemCount == 0 -> {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp.scaled),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.leaderboard_empty),
+                                    color = Color.White.copy(alpha = 0.4f),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp.scaled,
+                                )
+                            }
+                        }
+                    }
+                    loadState.append is LoadState.Loading -> {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = spacing.medium.scaled),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CircularProgressIndicator(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp.scaled)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -122,7 +168,7 @@ internal fun LeaderboardScreen(
 }
 
 @Composable
-private fun RankItem(rank: Int, result: DetailedGameResult) {
+private fun RankItem(rank: Int, result: DetailedGameResult, isTarget: Boolean) {
     val spacing = MaterialTheme.spacing
     val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
     val colorScheme = MaterialTheme.colorScheme
@@ -137,13 +183,17 @@ private fun RankItem(rank: Int, result: DetailedGameResult) {
     val isFirst = rank == 1
     val isPodium = rank <= 3
 
-    val cardBackground = if (isPodium) {
+    val cardBackground = if (isTarget) {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+    } else if (isPodium) {
         podiumColor!!.copy(alpha = if (isFirst) 0.1f else 0.05f)
     } else {
         MaterialTheme.colorScheme.background
     }
 
-    val cardBorderColor = if (isPodium) {
+    val cardBorderColor = if (isTarget) {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+    } else if (isPodium) {
         podiumColor!!.copy(alpha = 0.2f)
     } else {
         Color.White.copy(alpha = 0.05f)
@@ -156,7 +206,31 @@ private fun RankItem(rank: Int, result: DetailedGameResult) {
             .clip(shape)
             .background(cardBackground)
             .then(
-                if (isFirst) {
+                if (isTarget) {
+                    val infiniteTransition =
+                        rememberInfiniteTransition(label = "target_glow")
+                    val glowAlpha = infiniteTransition.animateFloat(
+                        initialValue = 0.2f,
+                        targetValue = 0.6f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(1500),
+                            repeatMode = RepeatMode.Reverse,
+                        ),
+                        label = "glow",
+                    )
+                    val strokeWidth = 2.dp.scaled
+                    val primary = MaterialTheme.colorScheme.primary
+                    Modifier.drawWithCache {
+                        val outline = shape.createOutline(size, layoutDirection, this)
+                        onDrawBehind {
+                            drawOutline(
+                                outline = outline,
+                                color = primary.copy(alpha = glowAlpha.value),
+                                style = Stroke(width = strokeWidth.toPx()),
+                            )
+                        }
+                    }
+                } else if (isFirst) {
                     val infiniteTransition =
                         rememberInfiniteTransition(label = "first_glow")
                     val glowAlpha = infiniteTransition.animateFloat(
@@ -180,7 +254,7 @@ private fun RankItem(rank: Int, result: DetailedGameResult) {
                         }
                     }
                 } else {
-                    Modifier.border(1.dp.scaled, cardBorderColor, shape)
+                    Modifier.border(if (isTarget) 2.dp.scaled else 1.dp.scaled, cardBorderColor, shape)
                 }
             )
             .padding(spacing.large.scaled),
@@ -202,7 +276,7 @@ private fun RankItem(rank: Int, result: DetailedGameResult) {
                 }
                 withStyle(
                     style = SpanStyle(
-                        color = if (isFirst) Color.White else Color.White.copy(alpha = 0.8f),
+                        color = if (isFirst || isTarget) Color.White else Color.White.copy(alpha = 0.8f),
                         fontWeight = FontWeight.Bold,
                     ),
                 ) {
@@ -238,7 +312,7 @@ private fun RankItem(rank: Int, result: DetailedGameResult) {
                     fontSize = 20.sp.scaled,
                     letterSpacing = 1.sp.scaled,
                 ),
-                color = MaterialTheme.colorScheme.primary,
+                color = if (isTarget) Color.White else MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.End,
             )

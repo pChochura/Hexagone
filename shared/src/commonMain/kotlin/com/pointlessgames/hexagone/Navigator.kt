@@ -27,7 +27,7 @@ internal sealed interface Route : NavKey {
     data object Shop : Route
 
     @Serializable
-    data object Leaderboard : Route
+    data class Leaderboard(val targetRank: Int? = null) : Route
 
     @Serializable
     data object DailyMissions : Route

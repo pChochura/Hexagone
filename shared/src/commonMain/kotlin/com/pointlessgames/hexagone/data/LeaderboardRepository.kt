@@ -14,6 +14,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 
 class LeaderboardRepository(
     private val supabase: SupabaseClient,
@@ -131,6 +134,18 @@ class LeaderboardRepository(
             }
             query.decodeList<DetailedGameResult>()
         }
+
+    fun getLeaderboardPager(pageSize: Int = 20, initialPage: Int = 0): Pager<Int, RankedGameResult> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = pageSize,
+                enablePlaceholders = false,
+                initialLoadSize = pageSize
+            ),
+            initialKey = initialPage,
+            pagingSourceFactory = { LeaderboardPagingSource(supabase) }
+        )
+    }
 
     suspend fun createProfile(username: String): PlayerProfile =
         withContext(Dispatchers.IO) {
