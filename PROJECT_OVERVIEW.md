@@ -12,18 +12,22 @@ The project follows a modular Kotlin Multiplatform (KMP) architecture, utilizing
 ```text
 shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 ├── auth/
-│   ├── LoginViewModel.kt         # Onboarding & Auth logic
+│   ├── ThemesViewModel.kt        # Theme selection & unlock logic
 │   ├── SettingsViewModel.kt      # Account management logic
-│   ├── ui/
-│   │   ├── LoginScreen.kt        # Immersive landing page
-│   │   ├── SettingsScreen.kt     # Full-screen account hub
-│   │   └── components/
-│   │       ├── PlayfulTitle.kt   # Animated brand component
-│   │       ├── AuthButton.kt     # Standard high-fidelity buttons
-│   │       └── NicknamePopup.kt  # Reusable identity dialog
+│   └── ui/
+│       ├── ThemesScreen.kt       # Full-screen theme gallery
+│       ├── SettingsScreen.kt     # Full-screen account hub
+│       ├── ThemeUnlockedOverlay.kt # High-fidelity reward celebration
+│       └── components/
+│           ├── AuthButton.kt     # Standard high-fidelity buttons
+│           └── NicknamePopup.kt  # Reusable identity dialog
 ├── achievements/
 │   ├── AchievementManager.kt     # Core Interface for unlocks & tracking
 │   └── GameAchievement.kt        # Logical registry of all milestones
+├── leaderboard/
+│   ├── LeaderboardViewModel.kt   # Global rankings & profile logic
+│   └── ui/
+│       └── LeaderboardScreen.kt  # Full-screen rankings (Podium style)
 ├── data/
 │   ├── SettingsRepository.kt     # Game State & local persistence (DataStore)
 │   ├── LeaderboardRepository.kt  # Supabase: Scores & Profile sync
@@ -42,23 +46,26 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 │   │   ├── GameScreen.kt         # Main Gameplay Loop
 │   │   ├── ShopScreen.kt         # Full-screen Store (Grids & Horizontal scroll)
 │   │   ├── DailyMissionsScreen.kt # Full-screen Missions (Log & Rewards)
-│   │   ├── LeaderboardScreen.kt  # Full-screen Rankings (Podium style)
 │   │   ├── AchievementsScreen.kt # Full-screen Collection (Card-based)
 │   │   └── components/
 │   │       ├── ScreenScaffold.kt  # Organism: Translucent "Glass" headers
 │   │       ├── HexDialogComponents.kt # Atoms: Premium Alert Dialogs & Cards
-│   │       ├── PerksBankDialog.kt # Unified strategic inventory management
-│   │       ├── MissionRefreshPopup.kt # Anchored cross-day streak recovery
-│   │       ├── GameGridOverlay.kt # Grid orchestrator & gesture handling
-│   │       ├── ScoreSection.kt    # HUD: liquid progress & combo indicators
-│   │       ├── PerkBar.kt         # Anchored strategic shelf: unified Vouchers (ADD) and Store (SHOP) access
-│   │       └── GameOverlays.kt    # Overlay orchestrator (Revive, Level Up, Game Over)
+│   │       ├── GameOverDialog.kt  # High-stakes session wrap-up
+│   │       ├── ParticlesLayer.kt  # Visual flair & feedback
+│   │       ├── PerkBar.kt         # Anchored strategic shelf
+│   │       └── GameOverlays.kt    # Overlay orchestrator
+│   ├── ActionDelegate.kt         # offloaded VM logic: Input handling
+│   ├── StateDelegate.kt          # offloaded VM logic: UI State orchestration
+│   ├── EffectDelegate.kt         # offloaded VM logic: Animation & SFX triggers
+│   └── GameViewModel.kt          # Lean VM orchestrator (via Delegates)
+├── share/
+│   └── ShareManager.kt           # Platform-agnostic social sharing
 ├── di/
-│   └── GameModule.kt             # Koin DI & Navigation Routing
+│   ├── AppModule.kt              # Main Koin entry point
+│   ├── PlatformModule.kt         # Expected platform-specific bindings
+│   └── GameModule.kt             # Feature-specific injections
 ├── Navigator.kt                  # navigation3 Implementation & Routes
-└── utils/
-    ├── SoundManager.kt           # Audio engine & effect triggers
-    └── BackHandler.kt            # Platform-agnostic system back handling
+└── App.kt                        # Application entry & theme root
 ```
 
 ---
@@ -66,10 +73,14 @@ shared/src/commonMain/kotlin/com/pointlessgames/hexagone/
 ## 2. Navigation & Layout Architecture
 
 ### Full-Screen Navigation
-The game has transitioned from local overlays to a formal navigation stack using **`navigation3`**. 
-*   **Routes**: Defined as serializable objects (`Route.Shop`, `Route.Login`, etc.) in `Navigator.kt`.
-*   **Terminal Transitions**: The `Navigator` includes a `replaceAll(Route)` method to clear the backstack, ensuring clean state resets during login/logout.
-*   **Decoupled State**: Screens are independent destinations, drastically simplifying `GameScreen.kt` and improving performance.
+The game uses a formal navigation stack powered by **`navigation3`**. 
+*   **Routes**: Defined as serializable objects in `Navigator.kt`:
+    *   `Route.Game`: The main hexagonal grid.
+    *   `Route.Shop`: Premium store and perk previews.
+    *   `Route.Themes`: Visual customization gallery.
+    *   *Also*: `Leaderboard`, `DailyMissions`, `Achievements`, `Settings`.
+*   **Transitions**: Implements smooth `fadeIn`/`fadeOut` transitions for all screen changes.
+*   **Navigator Singleton**: Provided via `LocalNavigator`, allowing any component to trigger deep-linked navigation (e.g., clicking an achievement notification to open the `Achievements` screen).
 
 ### ScreenScaffold Organism
 All secondary screens use a unified `ScreenScaffold` that provides:
@@ -79,23 +90,37 @@ All secondary screens use a unified `ScreenScaffold` that provides:
 
 ---
 
-## 3. Authentication & Onboarding
+## 3. Identity & Profile
 
-### Mandatory Identity
-Hexagone requires a player profile before gameplay begins. This ensures consistent leaderboard tracking and achievement synchronization.
-*   **Initial Check**: `App.kt` checks for an existing `playerId` on startup; if missing, the user is directed to the `LoginScreen`.
-*   **Anonymous Login**: Users can start as a guest, requiring only a nickname.
-*   **Social Providers**: Placeholders for Google Play Games and Apple Game Center allow for pre-populating identity metadata.
-*   **Nickname Popup**: A shared, high-fidelity `NicknamePopup` handles name entry and confirmation with smooth scale-in animations.
-
-### Immersive Login
-The `LoginScreen` serves as the game's visual introduction:
-*   **Background Simulation**: A dimmed game board "plays itself" in the background, demonstrating mechanics to new players.
-*   **Playful Title**: The "HEXAGONE" title features dynamic per-character animations, including a sequential "Wave" jump and random "Hexagon Pop" transformations.
+### Anonymous First
+Hexagone prioritizes immediate play. A unique `playerId` (UUID) is generated on first launch and persisted locally via `SettingsRepository`.
+*   **Profile Creation**: Users can set a nickname at any time via the `SettingsScreen` or when submitting a high score.
+*   **Supabase Sync**: Profiles and scores are synchronized with Supabase. The system includes a **sync-on-launch** mechanism to ensure local scores are uploaded if a connection was missing during gameplay.
+*   **Nickname Popup**: A shared, high-fidelity `NicknamePopup` handles name entry with smooth scale-in animations and validation.
 
 ---
 
-## 4. Core Game Logic
+## 4. Visual Themes
+
+Hexagone features a robust theming system that alters the entire visual atmosphere (colors, gradients, and hexagon styles).
+*   **ThemeId Registry**: Includes `NEON_GLOW`, `OCEAN`, `MIDNIGHT`, `CYBER`, `BERRY`, etc.
+*   **Unlock Mechanics**:
+    *   **Progression**: Reach specific lifetime levels (e.g., Level 50 for `MIDNIGHT`).
+    *   **Mastery**: Unlock all achievements (for `CYBER`).
+    *   **Consistency**: Maintain a long Daily Mission streak (e.g., 10 days for `BERRY`).
+*   **Premium Themes**: Some themes can be purchased directly using Diamonds.
+*   **Celebration**: Unlocking a new theme triggers the `ThemeUnlockedOverlay`, showcasing the new visual style in a high-fidelity preview.
+
+---
+
+## 5. Core Game Logic
+
+### Delegate-Based Architecture
+To maintain a manageable `GameViewModel`, the logic is offloaded into specialized **Delegates**:
+*   **ActionDelegate**: Handles user inputs (clicks, drags, perk usage).
+*   **StateDelegate**: Manages the complex `GameUiState` and long-running timers.
+*   **EffectDelegate**: Orchestrates one-off animations, particle triggers, and sound effects.
+*   **MergeDelegate**: Pure logic for geometric merging and wildcard (Mimic) behavior.
 
 ### Hexagonal System
 *   **Coordinate System**: Uses **axial coordinates** in a **staggered flat-top** layout (5 columns, 4 rows).
@@ -123,7 +148,7 @@ A merge occurs when 2+ tiles of the same value touch.
 *   **Scalable Sacrifice Bonus**: Granted when removing the only remaining highest-value regular tile. Mimic tiles do not interfere with this detection.
 *   **Execution Bonus**: Granted when removing a Mimic tile. The reward is calculated based on the highest value on the board: `(highestValue * 50) + 1000`.
 *   **Redemption Bonus**: If a move's score exceeds the previous turn's baseline, a bonus is applied (`250 + 50% of the difference`).
-*   **Combo System**: Multipliers build with every merge (capped at **x12**). 
+*   **Combo System**: Multipliers build with every merge (capped at **x12**).
     *   The combo resets when a tile is placed from the queue without triggering a merge.
     *   **Chain Merge Rule**: Using `CHAIN_MERGE` forces a combo reset to 0 if no chain reaction occurs, unless the initial merge was complex enough to maintain the combo naturally (multi-group or path merge).
 
@@ -161,7 +186,17 @@ When the board is full and no moves or perks are available, the game triggers a 
 
 ---
 
-## 7. Interactive Tip System
+## 7. Social Sharing
+
+Players can share their achievements and final scores using the `ShareManager`.
+*   **High-Fidelity Captures**: The game renders a dedicated `ShareableGameOverLayout` to an `ImageBitmap`.
+*   **Contextual Meta**: Includes score, level, and a branded "Hexagone" overlay.
+*   **Platform Integration**: Uses native share sheets via platform-specific `ShareManager` implementations.
+
+
+---
+
+## 8. Interactive Tip System
 
 ### Component Architecture
 *   **TipOverlay**: Full-screen overlay using a **Spotlight Effect** to highlight UI elements.
@@ -175,7 +210,7 @@ When the board is full and no moves or perks are available, the game triggers a 
 
 ---
 
-## 8. Strategic Features
+## 9. Strategic Features
 
 ### Prediction & Previews
 *   **Interactive Previews**: Visually simulates Swaps, Moves, and Values before commitment.
@@ -197,7 +232,7 @@ A central hub for strategic inventory management:
 
 ---
 
-## 9. Audio & Atmosphere
+## 10. Audio & Atmosphere
 
 ### Dynamic Soundscape
 Hexagone features a multi-layered audio system built for immersive feedback:
@@ -207,7 +242,7 @@ Hexagone features a multi-layered audio system built for immersive feedback:
 
 ---
 
-## 10. "Solid UI" Design System
+## 11. "Solid UI" Design System
 
 *   **Design Tokens**: Strict adherence to `MaterialTheme.spacing` and `cornerRadius`.
 *   **High-Fidelity Components**: Reusable components like `AuthButton` and `HexagonIconButton` ensure visual consistency.
