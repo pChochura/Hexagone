@@ -82,9 +82,6 @@ import hexagone.shared.generated.resources.daily_challenge_goal_tactical
 import hexagone.shared.generated.resources.daily_challenge_goal_value
 import hexagone.shared.generated.resources.daily_completion_reward_hint
 import hexagone.shared.generated.resources.daily_completion_reward_title
-import hexagone.shared.generated.resources.daily_login_diamond_claimed
-import hexagone.shared.generated.resources.daily_login_diamond_unclaimed
-import hexagone.shared.generated.resources.daily_login_reward_title
 import hexagone.shared.generated.resources.day_fri
 import hexagone.shared.generated.resources.day_mon
 import hexagone.shared.generated.resources.day_sat
@@ -229,13 +226,6 @@ internal fun DailyMissionsScreen(
                 )
             }
 
-            // Daily Login Reward Banner
-            item {
-                DailyLoginRewardBanner(
-                    isClaimed = uiState.isDailyLoginClaimed,
-                    modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled),
-                )
-            }
 
             item {
                 Column {
@@ -429,84 +419,6 @@ private fun HexCalendar(
     }
 }
 
-@Composable
-private fun DailyLoginRewardBanner(
-    isClaimed: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val spacing = MaterialTheme.spacing
-    val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(
-                if (isClaimed) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color.White.copy(
-                    alpha = 0.05f,
-                ),
-            )
-            .border(
-                1.dp.scaled,
-                if (isClaimed) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else Color.White.copy(
-                    alpha = 0.1f,
-                ),
-                shape,
-            )
-            .padding(spacing.medium.scaled),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp.scaled)
-                    .clip(CircleShape)
-                    .background(Color(0xFFFFD54F).copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_diamond),
-                    contentDescription = null,
-                    tint = Color(0xFFFFD54F),
-                    modifier = Modifier.size(16.dp.scaled),
-                )
-            }
-            Column {
-                Text(
-                    text = stringResource(Res.string.daily_login_reward_title),
-                    color = Color.White,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 12.sp.scaled,
-                    letterSpacing = 1.sp.scaled,
-                )
-                Text(
-                    text = stringResource(
-                        if (isClaimed) {
-                            Res.string.daily_login_diamond_claimed
-                        } else {
-                            Res.string.daily_login_diamond_unclaimed
-                        },
-                    ),
-                    color = Color.White.copy(alpha = 0.6f),
-                    fontSize = 10.sp.scaled,
-                )
-            }
-        }
-
-        if (isClaimed) {
-            Icon(
-                painter = painterResource(Res.drawable.ic_star),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp.scaled),
-            )
-        }
-    }
-}
 
 @Composable
 private fun TodayCompletionRewardCard(

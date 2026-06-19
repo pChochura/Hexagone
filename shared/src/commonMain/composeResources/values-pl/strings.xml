@@ -139,8 +139,6 @@
     <string name="daily_login_reward_message">Dostałeś 1 diament za włączenie gry dzisiaj!</string>
     <string name="daily_completion_reward_title">DZISIEJSZA NAGRODA</string>
     <string name="daily_completion_reward_hint">Zakończ dzisiejsze misje, aby dostać nagrodę!</string>
-    <string name="daily_login_diamond_claimed">Codzienny diament otrzymany!</string>
-    <string name="daily_login_diamond_unclaimed">Dostępny codzienny diament</string>
 
     <!-- Onboarding -->
     <string name="onboarding_title">WITAJ</string>
