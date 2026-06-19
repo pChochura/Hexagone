@@ -13,108 +13,22 @@ enum class PerkCategory {
 
 object StreakMilestones {
     fun getRewardForStreak(streak: Int): StreakReward? {
-        return when (streak) {
-            3 -> StreakReward(diamonds = 1)
-            5 -> StreakReward(diamonds = 3)
-            7 -> StreakReward(
-                diamonds = 5,
-                perkRewards = mapOf(PerkCategory.COMMON to 1),
-            )
+        if (streak <= 0) return null
 
-            14 -> StreakReward(
-                diamonds = 10,
-                perkRewards = mapOf(PerkCategory.COMMON to 2),
-            )
+        val diamonds = 5 + (streak / 2).coerceAtMost(45) // max 50
+        
+        val commonVouchers = 1 + (streak / 7)
+        val rareVouchers = if (streak >= 7) 1 + (streak / 14) else 0
+        val legendaryVouchers = if (streak >= 30) 1 + (streak / 30) else 0
 
-            21 -> StreakReward(
-                diamonds = 15,
-                perkRewards = mapOf(PerkCategory.COMMON to 1, PerkCategory.RARE to 1),
-            )
+        val perkRewards = mutableMapOf<PerkCategory, Int>()
+        if (commonVouchers > 0) perkRewards[PerkCategory.COMMON] = commonVouchers
+        if (rareVouchers > 0) perkRewards[PerkCategory.RARE] = rareVouchers
+        if (legendaryVouchers > 0) perkRewards[PerkCategory.LEGENDARY] = legendaryVouchers
 
-            30 -> StreakReward(
-                diamonds = 25,
-                perkRewards = mapOf(PerkCategory.RARE to 2),
-            )
-
-            60 -> StreakReward(
-                diamonds = 50,
-                perkRewards = mapOf(PerkCategory.RARE to 2, PerkCategory.COMMON to 2),
-            )
-
-            90 -> StreakReward(
-                diamonds = 100,
-                perkRewards = mapOf(PerkCategory.LEGENDARY to 1, PerkCategory.RARE to 1),
-            )
-
-            120 -> StreakReward(
-                diamonds = 150,
-                perkRewards = mapOf(
-                    PerkCategory.LEGENDARY to 1,
-                    PerkCategory.RARE to 2,
-                    PerkCategory.COMMON to 2,
-                ),
-            )
-
-            150 -> StreakReward(
-                diamonds = 200,
-                perkRewards = mapOf(
-                    PerkCategory.LEGENDARY to 2,
-                    PerkCategory.RARE to 1,
-                ),
-            )
-
-            180 -> StreakReward(
-                diamonds = 250,
-                perkRewards = mapOf(
-                    PerkCategory.LEGENDARY to 2,
-                    PerkCategory.RARE to 2,
-                    PerkCategory.COMMON to 2,
-                ),
-            )
-
-            210 -> StreakReward(
-                diamonds = 300,
-                perkRewards = mapOf(PerkCategory.LEGENDARY to 3),
-            )
-
-            240 -> StreakReward(
-                diamonds = 400,
-                perkRewards = mapOf(
-                    PerkCategory.LEGENDARY to 3,
-                    PerkCategory.RARE to 3,
-                    PerkCategory.COMMON to 3,
-                ),
-            )
-
-            270 -> StreakReward(
-                diamonds = 500,
-                perkRewards = mapOf(PerkCategory.LEGENDARY to 3, PerkCategory.RARE to 5),
-            )
-
-            300 -> StreakReward(
-                diamonds = 600,
-                perkRewards = mapOf(PerkCategory.LEGENDARY to 4),
-            )
-
-            330 -> StreakReward(
-                diamonds = 750,
-                perkRewards = mapOf(
-                    PerkCategory.LEGENDARY to 4,
-                    PerkCategory.RARE to 4,
-                    PerkCategory.COMMON to 4,
-                ),
-            )
-
-            365 -> StreakReward(
-                diamonds = 1000,
-                perkRewards = mapOf(
-                    PerkCategory.LEGENDARY to 5,
-                    PerkCategory.RARE to 5,
-                    PerkCategory.COMMON to 5,
-                ),
-            )
-
-            else -> null
-        }
+        return StreakReward(
+            diamonds = diamonds,
+            perkRewards = perkRewards
+        )
     }
 }

@@ -25,7 +25,7 @@ class RevenueCatBillingManager : BillingManager {
     private val _purchaseEvents = MutableSharedFlow<PurchaseResult>()
     override val purchaseEvents = _purchaseEvents.asSharedFlow()
 
-    private val _currencyBalances = MutableStateFlow<Map<String, Int>>(emptyMap())
+    private val _currencyBalances = MutableStateFlow<Map<String, Int>?>(null)
     override val currencyBalances = _currencyBalances.asStateFlow()
 
     private val _isInitializing = MutableStateFlow(false)
@@ -54,7 +54,7 @@ class RevenueCatBillingManager : BillingManager {
         withContext(Dispatchers.IO) {
             try {
                 Purchases.sharedInstance.invalidateVirtualCurrenciesCache()
-                updateBalance()
+                updateBalanceSuspended()
 
                 val offerings = Purchases.sharedInstance.awaitOfferings()
                 val currentOffering = offerings.current

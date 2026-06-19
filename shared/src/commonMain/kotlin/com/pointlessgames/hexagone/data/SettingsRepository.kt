@@ -76,6 +76,8 @@ interface SettingsRepository {
     suspend fun clearPersistentCompletedMissionIds(): Preferences
     suspend fun getDailyMissionDate(): Long
     suspend fun setDailyMissionDate(date: Long): Preferences
+    suspend fun getDailyLoginDateSeed(): Long
+    suspend fun setDailyLoginDateSeed(dateSeed: Long): Preferences
     suspend fun getHasShownMergeTip(): Boolean
     suspend fun setHasShownMergeTip(shown: Boolean): Preferences
     suspend fun getHasShownPerkTip(): Boolean
@@ -126,6 +128,7 @@ class DataStoreSettingsRepository(
     private val persistentCompletedMissionIdsKey =
         stringSetPreferencesKey("persistent_completed_mission_ids")
     private val dailyMissionDateKey = longPreferencesKey("daily_mission_date")
+    private val dailyLoginDateSeedKey = longPreferencesKey("daily_login_date_seed")
     private val hasShownMergeTipKey = booleanPreferencesKey("has_shown_merge_tip")
     private val hasShownPerkTipKey = booleanPreferencesKey("has_shown_perk_tip")
     private val hasShownPostGameTipKey = booleanPreferencesKey("has_shown_post_game_tip")
@@ -525,6 +528,18 @@ class DataStoreSettingsRepository(
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[dailyMissionDateKey] = date
+            }
+        }
+    }
+
+    override suspend fun getDailyLoginDateSeed(): Long = withContext(Dispatchers.IO) {
+        appSettings.data.first()[dailyLoginDateSeedKey] ?: 0L
+    }
+
+    override suspend fun setDailyLoginDateSeed(dateSeed: Long) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[dailyLoginDateSeedKey] = dateSeed
             }
         }
     }

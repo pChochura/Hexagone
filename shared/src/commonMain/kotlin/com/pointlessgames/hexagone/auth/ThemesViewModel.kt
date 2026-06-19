@@ -50,7 +50,7 @@ class ThemesViewModel(
         } catch (e: Exception) {
             ThemeId.NEON_GLOW
         }
-        val diamonds = balances["diamonds"] ?: 0
+        val diamonds = balances?.get("diamonds") ?: state.diamondsBalance
         state.copy(
             activeTheme = activeTheme,
             unlockedThemes = unlocked,

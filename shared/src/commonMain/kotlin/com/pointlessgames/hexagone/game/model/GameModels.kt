@@ -95,6 +95,7 @@ data class GameUiState(
     val consecutiveTacticalNoSpawn: Int = 0,
     val thawedIds: Set<String> = emptySet(),
     val activeTip: GameTip? = null,
+    val isDailyLoginClaimed: Boolean = false,
     val missionRefreshState: MissionRefreshState = MissionRefreshState.NONE,
     val isShopVisible: Boolean = false,
     val isShopLoading: Boolean = false,

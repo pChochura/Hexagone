@@ -80,6 +80,11 @@ import hexagone.shared.generated.resources.daily_challenge_goal_perk_restriction
 import hexagone.shared.generated.resources.daily_challenge_goal_score
 import hexagone.shared.generated.resources.daily_challenge_goal_tactical
 import hexagone.shared.generated.resources.daily_challenge_goal_value
+import hexagone.shared.generated.resources.daily_completion_reward_hint
+import hexagone.shared.generated.resources.daily_completion_reward_title
+import hexagone.shared.generated.resources.daily_login_diamond_claimed
+import hexagone.shared.generated.resources.daily_login_diamond_unclaimed
+import hexagone.shared.generated.resources.daily_login_reward_title
 import hexagone.shared.generated.resources.day_fri
 import hexagone.shared.generated.resources.day_mon
 import hexagone.shared.generated.resources.day_sat
@@ -96,8 +101,6 @@ import hexagone.shared.generated.resources.ic_roll
 import hexagone.shared.generated.resources.ic_star
 import hexagone.shared.generated.resources.mission_complete_badge
 import hexagone.shared.generated.resources.mission_log_title
-import hexagone.shared.generated.resources.next_milestone_hint
-import hexagone.shared.generated.resources.next_milestone_label
 import hexagone.shared.generated.resources.pattern_great_wall
 import hexagone.shared.generated.resources.pattern_ring_of_fire
 import hexagone.shared.generated.resources.pattern_the_prism
@@ -218,22 +221,20 @@ internal fun DailyMissionsScreen(
                 }
             }
 
-            // Next Milestone Card (Top)
+            // Today's Completion Reward Card
             item {
-                val nextMilestone = remember(uiState.challengeStreak) {
-                    val milestones = listOf(
-                        3, 5, 7, 14, 21, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 365,
-                    )
-                    milestones.firstOrNull { it > uiState.challengeStreak }
-                }
+                TodayCompletionRewardCard(
+                    streak = uiState.challengeStreak,
+                    modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled),
+                )
+            }
 
-                if (nextMilestone != null) {
-                    NextRewardCard(
-                        streak = uiState.challengeStreak,
-                        nextMilestone = nextMilestone,
-                        modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled),
-                    )
-                }
+            // Daily Login Reward Banner
+            item {
+                DailyLoginRewardBanner(
+                    isClaimed = uiState.isDailyLoginClaimed,
+                    modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled),
+                )
             }
 
             item {
@@ -429,14 +430,92 @@ private fun HexCalendar(
 }
 
 @Composable
-private fun NextRewardCard(
-    streak: Int,
-    nextMilestone: Int,
+private fun DailyLoginRewardBanner(
+    isClaimed: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
     val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
-    val reward = StreakMilestones.getRewardForStreak(nextMilestone)
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(
+                if (isClaimed) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color.White.copy(
+                    alpha = 0.05f,
+                ),
+            )
+            .border(
+                1.dp.scaled,
+                if (isClaimed) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else Color.White.copy(
+                    alpha = 0.1f,
+                ),
+                shape,
+            )
+            .padding(spacing.medium.scaled),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp.scaled)
+                    .clip(CircleShape)
+                    .background(Color(0xFFFFD54F).copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_diamond),
+                    contentDescription = null,
+                    tint = Color(0xFFFFD54F),
+                    modifier = Modifier.size(16.dp.scaled),
+                )
+            }
+            Column {
+                Text(
+                    text = stringResource(Res.string.daily_login_reward_title),
+                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 12.sp.scaled,
+                    letterSpacing = 1.sp.scaled,
+                )
+                Text(
+                    text = stringResource(
+                        if (isClaimed) {
+                            Res.string.daily_login_diamond_claimed
+                        } else {
+                            Res.string.daily_login_diamond_unclaimed
+                        },
+                    ),
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 10.sp.scaled,
+                )
+            }
+        }
+
+        if (isClaimed) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_star),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp.scaled),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TodayCompletionRewardCard(
+    streak: Int,
+    modifier: Modifier = Modifier,
+) {
+    val spacing = MaterialTheme.spacing
+    val shape = RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled)
+    val reward = StreakMilestones.getRewardForStreak(if (streak > 0) streak else 1) ?: return
 
     Column(
         modifier = modifier
@@ -454,83 +533,63 @@ private fun NextRewardCard(
         ) {
             Column(modifier = Modifier.weight(1f).padding(end = spacing.medium.scaled)) {
                 Text(
-                    text = stringResource(Res.string.next_milestone_label, nextMilestone),
+                    text = stringResource(Res.string.daily_completion_reward_title),
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Black,
                     fontSize = 14.sp.scaled,
                     letterSpacing = 1.sp.scaled,
                 )
                 Text(
-                    text = stringResource(Res.string.next_milestone_hint),
+                    text = stringResource(Res.string.daily_completion_reward_hint),
                     color = Color.White.copy(alpha = 0.4f),
                     fontSize = 11.sp.scaled,
                     fontWeight = FontWeight.Medium,
                 )
             }
-
-            // Streak Progress Badge
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                    .padding(
-                        horizontal = spacing.medium.scaled,
-                        vertical = spacing.extraSmall.scaled,
-                    ),
-            ) {
-                Text(
-                    text = "$streak / $nextMilestone",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 12.sp.scaled,
-                )
-            }
         }
 
-        if (reward != null) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(spacing.small.scaled),
-            ) {
-                if (reward.diamonds > 0) {
-                    RewardItem(
-                        icon = Res.drawable.ic_diamond,
-                        label = stringResource(
-                            Res.string.streak_milestone_diamonds,
-                            reward.diamonds,
-                        ),
-                        color = Color(0xFFFFD54F),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(spacing.small.scaled),
+        ) {
+            if (reward.diamonds > 0) {
+                RewardItem(
+                    icon = Res.drawable.ic_diamond,
+                    label = stringResource(
+                        Res.string.streak_milestone_diamonds,
+                        reward.diamonds,
+                    ),
+                    color = Color(0xFFFFD54F),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
 
-                reward.perkRewards.forEach { (category, count) ->
-                    val icon = when (category) {
-                        PerkCategory.COMMON -> Res.drawable.ic_roll
-                        PerkCategory.RARE -> Res.drawable.ic_rare_perk
-                        PerkCategory.LEGENDARY -> Res.drawable.ic_legendary_perk
-                    }
-                    val color = when (category) {
-                        PerkCategory.COMMON -> Color.Gray
-                        PerkCategory.RARE -> Color(0xFF4FC3F7)
-                        PerkCategory.LEGENDARY -> Color(0xFFFFD54F)
-                    }
-                    val categoryName = when (category) {
-                        PerkCategory.COMMON -> stringResource(Res.string.perk_category_common)
-                        PerkCategory.RARE -> stringResource(Res.string.perk_category_rare)
-                        PerkCategory.LEGENDARY -> stringResource(Res.string.perk_category_legendary)
-                    }
-                    RewardItem(
-                        icon = icon,
-                        label = stringResource(
-                            Res.string.streak_milestone_perks,
-                            count,
-                            categoryName,
-                        ),
-                        color = color,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+            reward.perkRewards.forEach { (category, count) ->
+                val icon = when (category) {
+                    PerkCategory.COMMON -> Res.drawable.ic_roll
+                    PerkCategory.RARE -> Res.drawable.ic_rare_perk
+                    PerkCategory.LEGENDARY -> Res.drawable.ic_legendary_perk
                 }
+                val color = when (category) {
+                    PerkCategory.COMMON -> Color.Gray
+                    PerkCategory.RARE -> Color(0xFF4FC3F7)
+                    PerkCategory.LEGENDARY -> Color(0xFFFFD54F)
+                }
+                val categoryName = when (category) {
+                    PerkCategory.COMMON -> stringResource(Res.string.perk_category_common)
+                    PerkCategory.RARE -> stringResource(Res.string.perk_category_rare)
+                    PerkCategory.LEGENDARY -> stringResource(Res.string.perk_category_legendary)
+                }
+                RewardItem(
+                    icon = icon,
+                    label = stringResource(
+                        Res.string.streak_milestone_perks,
+                        count,
+                        categoryName,
+                    ),
+                    color = color,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
     }

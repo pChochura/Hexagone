@@ -21,6 +21,7 @@ import com.pointlessgames.hexagone.game.model.GameEffect
 import com.pointlessgames.hexagone.game.model.GameState
 import com.pointlessgames.hexagone.game.model.GameTip
 import com.pointlessgames.hexagone.game.model.GameUiState
+import com.pointlessgames.hexagone.game.model.HexDialogState
 import com.pointlessgames.hexagone.game.model.HexDialogState.Confirmation
 import com.pointlessgames.hexagone.game.model.HexDialogState.Info
 import com.pointlessgames.hexagone.game.model.HexDialogState.PauseMenu
@@ -38,6 +39,8 @@ import com.pointlessgames.hexagone.game.model.TipTarget.GRID
 import com.pointlessgames.hexagone.game.model.TipTarget.PERK_BAR
 import com.pointlessgames.hexagone.game.model.TipTarget.SCORE_SECTION
 import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.daily_login_reward_message
+import hexagone.shared.generated.resources.daily_login_reward_title
 import hexagone.shared.generated.resources.onboarding_nickname_empty
 import hexagone.shared.generated.resources.onboarding_nickname_error
 import hexagone.shared.generated.resources.shop_buy_confirmation_message
@@ -218,7 +221,30 @@ internal class GameViewModel(
             var persistentCompletedMissionIds =
                 settingsRepository.getPersistentCompletedMissionIds()
             val dailyMissionDate = settingsRepository.getDailyMissionDate()
+            val dailyLoginDateSeed = settingsRepository.getDailyLoginDateSeed()
             var missionRefreshState: MissionRefreshState = MissionRefreshState.NONE
+
+            var isDailyLoginClaimed = false
+            var activeDialog: HexDialogState? = null
+            var initialDiamonds = 0
+
+            if (dateSeed > dailyLoginDateSeed) {
+                isDailyLoginClaimed = true
+                settingsRepository.setDailyLoginDateSeed(dateSeed)
+                
+                // Award 1 diamond directly via monetizationRepository
+                inFlightActions.update { it + 1 }
+                monetizationRepository.awardStreakRewards(
+                    com.pointlessgames.hexagone.game.logic.StreakReward(diamonds = 1)
+                )
+                inFlightActions.update { it - 1 }
+                
+                // Set up the dialog to show
+                activeDialog = Info(
+                    title = Res.string.daily_login_reward_title,
+                    message = Res.string.daily_login_reward_message,
+                )
+            }
 
             if (dailyMissionDate != 0L && dailyMissionDate != dateSeed) {
                 if (dailyMissionDate == yesterdaySeed) {
@@ -271,6 +297,8 @@ internal class GameViewModel(
                                 diamonds = savedState.diamonds,
                                 vouchers = savedState.vouchers,
                                 missionRefreshState = missionRefreshState,
+                                isDailyLoginClaimed = isDailyLoginClaimed,
+                                activeDialog = activeDialog ?: it.activeDialog,
                             )
                         }
                         restartGame()
@@ -331,6 +359,8 @@ internal class GameViewModel(
                                 isStreakCollectedToday = lastCompletedDate == dateSeed,
                                 hasRevived = savedState.hasRevived,
                                 missionRefreshState = missionRefreshState,
+                                isDailyLoginClaimed = isDailyLoginClaimed,
+                                activeDialog = activeDialog ?: it.activeDialog,
                             )
                         }
                         stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
@@ -369,6 +399,8 @@ internal class GameViewModel(
                         persistentCompletedMissionIds = persistentCompletedMissionIds,
                         dailyMissionDate = dailyMissionDate,
                         missionRefreshState = missionRefreshState,
+                        isDailyLoginClaimed = isDailyLoginClaimed,
+                        activeDialog = activeDialog ?: it.activeDialog,
                     )
                 }
                 restartGame()
@@ -410,14 +442,14 @@ internal class GameViewModel(
                 }.collect { balances ->
                     if (balances == null) return@collect
 
-                    val vouchers = mapOf(
-                        PerkCategory.COMMON to (balances["VCMN"] ?: 0),
-                        PerkCategory.RARE to (balances["VRARE"] ?: 0),
-                        PerkCategory.LEGENDARY to (balances["VLGD"] ?: 0),
-                    )
                     _uiState.update {
+                        val vouchers = mapOf(
+                            PerkCategory.COMMON to (balances["VCMN"] ?: it.vouchers[PerkCategory.COMMON] ?: 0),
+                            PerkCategory.RARE to (balances["VRARE"] ?: it.vouchers[PerkCategory.RARE] ?: 0),
+                            PerkCategory.LEGENDARY to (balances["VLGD"] ?: it.vouchers[PerkCategory.LEGENDARY] ?: 0),
+                        )
                         it.copy(
-                            diamonds = balances["diamonds"] ?: 0,
+                            diamonds = balances["diamonds"] ?: it.diamonds,
                             vouchers = vouchers,
                         )
                     }

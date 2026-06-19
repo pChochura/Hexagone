@@ -46,7 +46,7 @@ class MonetizationRepository(
             PerkCategory.LEGENDARY -> 500
         }
 
-        val currentDiamonds = billingManager.currencyBalances.value["diamonds"] ?: 0
+        val currentDiamonds = billingManager.currencyBalances.value?.get("diamonds") ?: 0
         if (currentDiamonds >= cost) {
             val appUserId = billingManager.appUserId ?: return false
             
@@ -82,7 +82,7 @@ class MonetizationRepository(
             PerkCategory.RARE -> "VRARE"
             PerkCategory.LEGENDARY -> "VLGD"
         }
-        val currentVouchers = billingManager.currencyBalances.value[voucherKey] ?: 0
+        val currentVouchers = billingManager.currencyBalances.value?.get(voucherKey) ?: 0
         
         if (currentVouchers > 0) {
             val appUserId = billingManager.appUserId ?: return false
@@ -104,7 +104,7 @@ class MonetizationRepository(
     }
 
     suspend fun buyTheme(themeId: String, cost: Int): Boolean {
-        val currentDiamonds = billingManager.currencyBalances.value["diamonds"] ?: 0
+        val currentDiamonds = billingManager.currencyBalances.value?.get("diamonds") ?: 0
         if (currentDiamonds >= cost) {
             val appUserId = billingManager.appUserId ?: return false
             
