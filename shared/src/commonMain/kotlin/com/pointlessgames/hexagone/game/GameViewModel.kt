@@ -521,6 +521,7 @@ internal class GameViewModel(
 
         when (perk) {
             Perk.ADVANCE_QUEUE -> {
+                achievementDelegate.checkPerkAchievements(Perk.ADVANCE_QUEUE, _uiState.value)
                 stateDelegate.saveState()
                 _uiState.update {
                     it.consumePerk(Perk.ADVANCE_QUEUE)
@@ -530,6 +531,7 @@ internal class GameViewModel(
             }
 
             Perk.UNDO -> {
+                achievementDelegate.checkPerkAchievements(Perk.UNDO, _uiState.value)
                 if (stateDelegate.undoLastMove()) {
                     mergeDelegate.resetLastProcessed()
                     _uiState.update {
@@ -596,7 +598,9 @@ internal class GameViewModel(
                 triggerTip(PERK)
             }
         }
-        achievementDelegate.checkPerkAchievements(perk, _uiState.value)
+        if (_uiState.value.collectedPerks.size >= 10) {
+            achievementDelegate.unlockDeepPockets()
+        }
         achievementDelegate.onNonUndoAction()
         recalculateHints()
         checkValidMoves()

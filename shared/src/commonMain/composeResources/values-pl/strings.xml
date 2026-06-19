@@ -236,7 +236,7 @@
     <string name="achievement_tactical_genius_title">Geniusz taktyczny</string>
     <string name="achievement_tactical_genius_desc">Wykonaj 5 Połączeń Taktycznych w jednej grze</string>
     <string name="achievement_tactical_genius_elite_title">Ekspert taktyczny</string>
-    <string name="achievement_tactical_genius_elite_desc">Połączenie Taktyczne z wynikiem bazowym powyżej 1 000</string>
+    <string name="achievement_tactical_genius_elite_desc">Połączenie Taktyczne z wynikiem powyżej 1 000</string>
     <string name="achievement_master_of_fate_title">Mistrz losu</string>
     <string name="achievement_master_of_fate_desc">Użyj perka, aby wyjść ze stanu utknięcia</string>
     <string name="achievement_double_vision_title">Podwójne widzenie</string>
@@ -290,9 +290,9 @@
     <string name="achievement_time_machine_title">Wehikuł czasu</string>
     <string name="achievement_time_machine_desc">Użyj Cofania 3 razy z rzędu</string>
     <string name="achievement_living_on_the_edge_title">Życie na krawędzi</string>
-    <string name="achievement_living_on_the_edge_desc">Wykonaj połączenie, gdy na planszy jest tylko 1 wolne miejsce</string>
+    <string name="achievement_living_on_the_edge_desc">Wykonaj połączenie, gdy na planszy są maksymalnie 3 wolne miejsca</string>
     <string name="achievement_calculated_risk_title">Kalkulowane ryzyko</string>
-    <string name="achievement_calculated_risk_desc">Pomiń pojawienie się nowej płytki, gdy plansza jest prawie pełna</string>
+    <string name="achievement_calculated_risk_desc">Pomiń pojawienie się nowej płytki, gdy na planszy jest co najmniej 17 hexów</string>
     <string name="achievement_high_roller_title">Wysoka stawka</string>
     <string name="achievement_high_roller_desc">Przelosuj legendarną nagrodę za perk</string>
     <string name="achievement_missed_perk_title">Stracona okazja</string>

@@ -201,7 +201,7 @@ internal class MergeDelegate(
             )
         }
 
-        achievementDelegate.checkMergeAchievements(merge, engine)
+        achievementDelegate.checkMergeAchievements(merge, engine, scoreResult.totalScore)
         achievementDelegate.checkComboAchievements(finalCombo)
         achievementDelegate.checkComboBroken(currentState.combo, finalCombo)
         
@@ -210,7 +210,7 @@ internal class MergeDelegate(
         }
         achievementDelegate.checkLevelAchievements(uiState.value.level)
         achievementDelegate.checkScoreAchievements(finalScore)
-        achievementDelegate.onMergesIncremented(uiState.value.totalMerges)
+        achievementDelegate.onMergesIncremented(merge.uniqueGroups)
         achievementDelegate.onMergeDetails(merge.isTactical, isBarRaised, isSacrifice)
         achievementDelegate.onNonUndoAction()
         challengeDelegate.onMerge(merge, scoreResult)

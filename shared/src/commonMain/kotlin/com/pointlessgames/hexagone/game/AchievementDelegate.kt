@@ -17,7 +17,7 @@ internal class AchievementDelegate(
     private val uiState: MutableStateFlow<GameUiState>,
     private val achievementManager: AchievementManager,
 ) {
-    fun checkMergeAchievements(merge: MergeTransition, engine: GameEngine) {
+    fun checkMergeAchievements(merge: MergeTransition, engine: GameEngine, totalScore: Int) {
         // The whole gang: triggered when the player merges all 6 neighbors with the same value
         // into an empty center.
         if (merge.totalCells == 6 && merge.uniqueGroups == 1) {
@@ -39,7 +39,7 @@ internal class AchievementDelegate(
         }
 
         val previousGridSize = uiState.value.grid.size - 1 + merge.totalCells
-        if (previousGridSize >= (engine.columns * engine.rows) - 1) {
+        if (previousGridSize >= (engine.columns * engine.rows) - 3) {
             achievementManager.unlockAchievement(GameAchievement.LIVING_ON_THE_EDGE)
         }
 
@@ -50,7 +50,7 @@ internal class AchievementDelegate(
             }
         }
 
-        if (merge.isTactical && merge.baseScore > 1000) {
+        if (merge.isTactical && totalScore > 1000) {
             achievementManager.unlockAchievement(GameAchievement.TACTICAL_GENIUS_ELITE)
         }
 
@@ -125,16 +125,16 @@ internal class AchievementDelegate(
         }
     }
 
+    fun unlockDeepPockets() {
+        achievementManager.unlockAchievement(GameAchievement.DEEP_POCKETS)
+    }
+
     fun checkPerkAchievements(perk: Perk, state: GameUiState, isTargetGhost: Boolean = false) {
         uiState.update { it.copy(perkUsedInSession = true) }
         achievementManager.unlockAchievement(GameAchievement.FIRST_AID)
 
         if (isTargetGhost) {
             handleGhostPerkTrigger(perk)
-        }
-
-        if (state.collectedPerks.size >= 10) {
-            achievementManager.unlockAchievement(GameAchievement.DEEP_POCKETS)
         }
 
         if (perk == Perk.SKIP_SPAWN && state.grid.size >= 17) {
@@ -206,10 +206,11 @@ internal class AchievementDelegate(
         }
     }
 
-    fun onMergesIncremented(total: Int) {
+    fun onMergesIncremented(groups: Int) {
         achievementManager.trackMerge()
         uiState.update { 
-            val next = it.consecutiveMergesWithoutSpawn + 1
+            val count = maxOf(1, groups)
+            val next = it.consecutiveMergesWithoutSpawn + count
             if (next >= 10) {
                 achievementManager.unlockAchievement(GameAchievement.EFFICIENCY_EXPERT)
             }

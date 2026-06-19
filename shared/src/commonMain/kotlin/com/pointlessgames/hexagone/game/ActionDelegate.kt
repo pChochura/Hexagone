@@ -71,6 +71,7 @@ internal class ActionDelegate(
         }
 
         if (merge != null) {
+            if (perk != null) achievementDelegate.checkPerkAchievements(perk, state)
             challengeDelegate.onMovePerformed()
             stateDelegate.saveState()
             uiState.update { currentState ->
@@ -521,6 +522,8 @@ internal class ActionDelegate(
                     ).consumePerk(Perk.MIMIC).copy(activePerk = null, selectedCellId = null)
                 }
 
+                achievementDelegate.onGhostMarkedTactical()
+
                 if (barRaisedBonus > 0) {
                     stateDelegate.persistBestScore(uiState.value.score)
                     effectDelegate.handlePopups(
@@ -772,6 +775,7 @@ internal class ActionDelegate(
             Perk.PATH_MERGE -> {
                 val (merge, nextIdCounter) = engine.calculatePathMerge(cell.x, cell.y, state.grid, state.cellIdCounter)
                 if (merge != null) {
+                    achievementDelegate.checkPerkAchievements(Perk.PATH_MERGE, state)
                     stateDelegate.saveState()
                     uiState.update { currentState ->
                         val firstStep = merge.steps.first()
@@ -1012,7 +1016,7 @@ internal class ActionDelegate(
     }
 
     private fun swapTiles(id1: String, id2: String) {
-        var isGhostMarkedTactical = false
+        var ghostsMarkedTactical = 0
         uiState.update { currentState ->
             val item1 = currentState.grid.find { it.id == id1 }
                 ?: currentState.preview.find { it.id == id1 }
@@ -1033,8 +1037,11 @@ internal class ActionDelegate(
                     else -> cell
                 }
             }
-            if (id1.startsWith("preview") || id2.startsWith("preview")) {
-                isGhostMarkedTactical = true
+            if (id1.startsWith("preview")) {
+                ghostsMarkedTactical++
+            }
+            if (id2.startsWith("preview")) {
+                ghostsMarkedTactical++
             }
             val updatedPreview = currentState.preview.map { preview ->
                 when (preview.id) {
@@ -1066,7 +1073,7 @@ internal class ActionDelegate(
                 onBoardPerks = currentState.onBoardPerks.filterNot { (it.x == x1 && it.y == y1) || (it.x == x2 && it.y == y2) },
             ).consumePerk(Perk.SWAP_TILES).copy(activePerk = null, selectedCellId = null)
         }
-        if (isGhostMarkedTactical) {
+        repeat(ghostsMarkedTactical) {
             achievementDelegate.onGhostMarkedTactical()
         }
         achievementDelegate.checkPerkAchievements(Perk.SWAP_TILES, uiState.value, isTargetGhost = id1.startsWith("preview") || id2.startsWith("preview"))

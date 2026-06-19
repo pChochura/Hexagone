@@ -260,7 +260,7 @@
     <string name="achievement_tactical_genius_title">Tactical Genius</string>
     <string name="achievement_tactical_genius_desc">Perform 5 Tactical Merges in a single game</string>
     <string name="achievement_tactical_genius_elite_title">Tactical Expert</string>
-    <string name="achievement_tactical_genius_elite_desc">A Tactical Merge with a base score over 1,000</string>
+    <string name="achievement_tactical_genius_elite_desc">A Tactical Merge with a score over 1,000</string>
     <string name="achievement_master_of_fate_title">Master of Fate</string>
     <string name="achievement_master_of_fate_desc">Use a perk to resolve a Stuck state</string>
     <string name="achievement_double_vision_title">Double Vision</string>
@@ -314,9 +314,9 @@
     <string name="achievement_time_machine_title">Time Machine</string>
     <string name="achievement_time_machine_desc">Use Undo 3 times in a row</string>
     <string name="achievement_living_on_the_edge_title">Living on the Edge</string>
-    <string name="achievement_living_on_the_edge_desc">Perform a merge while the board has only 1 empty space</string>
+    <string name="achievement_living_on_the_edge_desc">Perform a merge while the board has 3 or fewer empty spaces</string>
     <string name="achievement_calculated_risk_title">Calculated Risk</string>
-    <string name="achievement_calculated_risk_desc">Skip a spawn when the board is nearly full</string>
+    <string name="achievement_calculated_risk_desc">Skip a spawn when the board has at least 17 tiles</string>
     <string name="achievement_high_roller_title">High Roller</string>
     <string name="achievement_high_roller_desc">Reroll a legendary perk reward</string>
     <string name="achievement_missed_perk_title">Missed Opportunity</string>
