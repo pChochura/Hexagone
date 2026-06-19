@@ -1,4 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import com.codingfeline.buildkonfig.compiler.FieldSpec
 import java.util.Properties
@@ -71,8 +70,6 @@ kotlin {
         }
     }
 
-    jvm()
-
     sourceSets {
         androidMain.dependencies {
             implementation(libs.koin.android)
@@ -129,26 +126,6 @@ kotlin {
             api("com.revenuecat.purchases:purchases-kmp-core:$rcVersion")
             implementation("com.revenuecat.purchases:purchases-kmp-models:$rcVersion")
             implementation("com.revenuecat.purchases:purchases-kmp-result:$rcVersion")
-        }
-        jvmMain.dependencies {
-            implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutines.swing)
-            implementation(libs.ktor.client.okhttp)
-        }
-        jvmTest.dependencies {
-            implementation(libs.ktor.client.okhttp)
-        }
-    }
-}
-
-compose.desktop {
-    application {
-        mainClass = "com.pointlessgames.hexagone.MainKt"
-
-        nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.pointlessgames.hexagone"
-            packageVersion = "1.0.0"
         }
     }
 }
