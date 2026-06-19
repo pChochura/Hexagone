@@ -88,6 +88,7 @@ import com.pointlessgames.hexagone.game.ui.components.ScoreSection
 import com.pointlessgames.hexagone.game.ui.components.ShareableGameOverLayout
 import com.pointlessgames.hexagone.game.ui.components.TipOverlay
 import com.pointlessgames.hexagone.game.ui.components.trackTipTarget
+import com.pointlessgames.hexagone.haptic.HapticIntensity
 import com.pointlessgames.hexagone.share.ShareManager
 import com.pointlessgames.hexagone.ui.theme.IsSmallDevice
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
@@ -124,19 +125,30 @@ internal fun GameScreen(
     val isSoundEnabledState = remember(uiState) {
         uiState.map { it.isSoundEnabled }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.isSoundEnabled)
+    val isHapticsEnabledState = remember(uiState) {
+        uiState.map { it.isHapticsEnabled }.distinctUntilChanged()
+    }.collectAsState(viewModel.uiState.value.isHapticsEnabled)
 
-    val playMoveSound = remember(player, coroutineScope) {
+    val haptic = koinInject<com.pointlessgames.hexagone.haptic.HapticManager>()
+
+    val playMoveSound = remember(player, coroutineScope, haptic, isHapticsEnabledState.value) {
         {
             if (isSoundEnabledState.value) {
                 SoundManager.playSound(player, "move.wav", coroutineScope)
             }
+            if (isHapticsEnabledState.value) {
+                haptic.playHaptic(HapticIntensity.LIGHT)
+            }
         }
     }
 
-    val playButtonSound = remember(player, coroutineScope) {
+    val playButtonSound = remember(player, coroutineScope, haptic, isHapticsEnabledState.value) {
         {
             if (isSoundEnabledState.value) {
                 SoundManager.playSound(player, "button.wav", coroutineScope)
+            }
+            if (isHapticsEnabledState.value) {
+                haptic.playHaptic(HapticIntensity.LIGHT)
             }
         }
     }
@@ -432,6 +444,7 @@ internal fun GameScreen(
                         "combo_tier_${effect.tier.ordinal}.wav",
                         coroutineScope,
                     )
+                    if (isHapticsEnabledState.value) haptic.playHaptic(HapticIntensity.HEAVY)
                 }
 
                 is GameEffect.AchievementUnlock -> {
@@ -441,6 +454,7 @@ internal fun GameScreen(
                         "achievement.wav",
                         coroutineScope,
                     )
+                    if (isHapticsEnabledState.value) haptic.playHaptic(HapticIntensity.HEAVY)
                 }
 
                 is GameEffect.DailyChallengeComplete -> {
@@ -450,6 +464,7 @@ internal fun GameScreen(
                         "daily_mission.wav",
                         coroutineScope,
                     )
+                    if (isHapticsEnabledState.value) haptic.playHaptic(HapticIntensity.HEAVY)
                 }
 
                 is GameEffect.MergeParticles -> {
@@ -458,6 +473,10 @@ internal fun GameScreen(
                         "merge_${minOf(effect.combo, 7)}.wav",
                         coroutineScope,
                     )
+                    if (isHapticsEnabledState.value) {
+                        if (effect.combo > 3) haptic.playHaptic(HapticIntensity.HEAVY)
+                        else haptic.playHaptic(HapticIntensity.LIGHT)
+                    }
                 }
 
                 is GameEffect.TileRemoved -> {
@@ -466,6 +485,7 @@ internal fun GameScreen(
                         "remove.wav",
                         coroutineScope,
                     )
+                    if (isHapticsEnabledState.value) haptic.playHaptic(HapticIntensity.HEAVY)
                 }
 
                 is GameEffect.PerkPopup -> {
@@ -474,6 +494,7 @@ internal fun GameScreen(
                         "perk_collect.wav",
                         coroutineScope,
                     )
+                    if (isHapticsEnabledState.value) haptic.playHaptic(HapticIntensity.LIGHT)
                 }
 
                 is GameEffect.GameOver -> {
@@ -482,6 +503,7 @@ internal fun GameScreen(
                         "game_over.wav",
                         coroutineScope,
                     )
+                    if (isHapticsEnabledState.value) haptic.playHaptic(HapticIntensity.HEAVY)
                 }
 
                 is GameEffect.ComboBroken -> {
@@ -490,6 +512,7 @@ internal fun GameScreen(
                         "invalid.wav",
                         coroutineScope,
                     )
+                    if (isHapticsEnabledState.value) haptic.playHaptic(HapticIntensity.HEAVY)
                 }
 
                 else -> {}

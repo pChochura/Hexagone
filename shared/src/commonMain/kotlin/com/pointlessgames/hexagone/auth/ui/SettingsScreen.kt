@@ -49,6 +49,7 @@ import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.settings_anonymous_account
 import hexagone.shared.generated.resources.settings_bg_music
 import hexagone.shared.generated.resources.settings_label
+import hexagone.shared.generated.resources.settings_haptics
 import hexagone.shared.generated.resources.settings_logged_in_as
 import hexagone.shared.generated.resources.settings_remove_account_button
 import hexagone.shared.generated.resources.settings_remove_account_confirmation
@@ -114,6 +115,12 @@ internal fun SettingsScreen(
                     label = stringResource(Res.string.settings_sound),
                     checked = uiState.isSoundEnabled,
                     onCheckedChange = { viewModel.toggleSound() },
+                )
+
+                ToggleCard(
+                    label = stringResource(Res.string.settings_haptics),
+                    checked = uiState.isHapticsEnabled,
+                    onCheckedChange = { viewModel.toggleHaptics() },
                 )
 
                 ToggleCard(

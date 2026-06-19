@@ -67,6 +67,7 @@ data class GameUiState(
     val debugAddAsGhost: Boolean = false,
     val perksUsedTracking: Map<Perk, Int> = emptyMap(),
     val isSoundEnabled: Boolean = true,
+    val isHapticsEnabled: Boolean = true,
     val consecutiveUndos: Int = 0,
     val consecutiveMergesWithoutSpawn: Int = 0,
     val tacticalMergesCount: Int = 0,

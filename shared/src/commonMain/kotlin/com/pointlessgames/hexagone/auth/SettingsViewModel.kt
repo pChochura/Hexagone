@@ -32,6 +32,7 @@ internal class SettingsViewModel(
         val isLoggedOut: Boolean = false,
         val showNicknamePopup: Boolean = false,
         val isSoundEnabled: Boolean = true,
+        val isHapticsEnabled: Boolean = true,
         val isBgMusicEnabled: Boolean = true,
         val activeTheme: String = "",
     )
@@ -50,6 +51,7 @@ internal class SettingsViewModel(
             val name = settingsRepository.getPlayerName() ?: ""
             val user = supabaseClient.auth.currentUserOrNull()
             val soundEnabled = settingsRepository.getSoundEnabled()
+            val hapticsEnabled = settingsRepository.getHapticsEnabled()
             val bgMusicEnabled = settingsRepository.getBgMusicEnabled()
             _uiState.value = _uiState.value.copy(
                 nickname = name,
@@ -57,6 +59,7 @@ internal class SettingsViewModel(
                 isAnonymous = user?.isAnonymous ?: true,
                 isLoggedOut = false,
                 isSoundEnabled = soundEnabled,
+                isHapticsEnabled = hapticsEnabled,
                 isBgMusicEnabled = bgMusicEnabled,
             )
         }
@@ -71,6 +74,14 @@ internal class SettingsViewModel(
             val newState = !_uiState.value.isSoundEnabled
             settingsRepository.setSoundEnabled(newState)
             _uiState.value = _uiState.value.copy(isSoundEnabled = newState)
+        }
+    }
+
+    fun toggleHaptics() {
+        viewModelScope.launch {
+            val newState = !_uiState.value.isHapticsEnabled
+            settingsRepository.setHapticsEnabled(newState)
+            _uiState.value = _uiState.value.copy(isHapticsEnabled = newState)
         }
     }
 

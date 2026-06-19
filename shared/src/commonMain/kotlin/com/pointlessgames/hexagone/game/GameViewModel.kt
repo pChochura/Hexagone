@@ -199,6 +199,11 @@ internal class GameViewModel(
             }
         }
         viewModelScope.launch {
+            settingsRepository.getHapticsEnabledFlow().collect { hapticsEnabled ->
+                _uiState.update { it.copy(isHapticsEnabled = hapticsEnabled) }
+            }
+        }
+        viewModelScope.launch {
             settingsRepository.getPlayerNameFlow().collect { name ->
                 _uiState.update { it.copy(playerName = name) }
             }

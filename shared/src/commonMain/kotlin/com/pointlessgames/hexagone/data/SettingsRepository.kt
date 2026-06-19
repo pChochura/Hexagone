@@ -27,6 +27,9 @@ interface SettingsRepository {
     fun getSoundEnabledFlow(): Flow<Boolean>
     suspend fun getSoundEnabled(): Boolean
     suspend fun setSoundEnabled(enabled: Boolean): Preferences
+    fun getHapticsEnabledFlow(): Flow<Boolean>
+    suspend fun getHapticsEnabled(): Boolean
+    suspend fun setHapticsEnabled(enabled: Boolean): Preferences
     fun getBgMusicEnabledFlow(): Flow<Boolean>
     suspend fun getBgMusicEnabled(): Boolean
     suspend fun setBgMusicEnabled(enabled: Boolean): Preferences
@@ -101,6 +104,7 @@ class DataStoreSettingsRepository(
 ) : SettingsRepository {
     private val bestScoreKey = intPreferencesKey("best_score")
     private val soundEnabledKey = booleanPreferencesKey("sound_enabled")
+    private val hapticsEnabledKey = booleanPreferencesKey("haptics_enabled")
     private val bgMusicEnabledKey = booleanPreferencesKey("bg_music_enabled")
     private val mergeHintsEnabledKey = booleanPreferencesKey("merge_hints_enabled")
     private val gameStateKey = stringPreferencesKey("game_state")
@@ -201,6 +205,24 @@ class DataStoreSettingsRepository(
         appSettings.updateData {
             it.toMutablePreferences().also { prefs ->
                 prefs[soundEnabledKey] = enabled
+            }
+        }
+    }
+
+    override fun getHapticsEnabledFlow(): Flow<Boolean> {
+        return appSettings.data.map { preferences ->
+            preferences[hapticsEnabledKey] ?: true
+        }
+    }
+
+    override suspend fun getHapticsEnabled(): Boolean = withContext(Dispatchers.IO) {
+        appSettings.data.first()[hapticsEnabledKey] ?: true
+    }
+
+    override suspend fun setHapticsEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
+        appSettings.updateData {
+            it.toMutablePreferences().also { prefs ->
+                prefs[hapticsEnabledKey] = enabled
             }
         }
     }

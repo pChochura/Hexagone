@@ -6,6 +6,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.pointlessgames.hexagone.LocalMediaPlayer
 import com.pointlessgames.hexagone.data.SettingsRepository
+import com.pointlessgames.hexagone.haptic.HapticIntensity
+import com.pointlessgames.hexagone.haptic.HapticManager
 import eu.iamkonstantin.kotlin.gadulka.GadulkaPlayer
 import hexagone.shared.generated.resources.Res
 import kotlinx.coroutines.CoroutineScope
@@ -55,11 +57,18 @@ fun rememberPlayButtonSound(): () -> Unit {
     val isSoundEnabled by remember(settingsRepository) {
         settingsRepository.getSoundEnabledFlow()
     }.collectAsState(true)
+    val isHapticsEnabled by remember(settingsRepository) {
+        settingsRepository.getHapticsEnabledFlow()
+    }.collectAsState(true)
+    val haptic = koinInject<HapticManager>()
 
-    return remember(player, coroutineScope, isSoundEnabled) {
+    return remember(player, coroutineScope, isSoundEnabled, isHapticsEnabled, haptic) {
         {
             if (isSoundEnabled) {
                 SoundManager.playSound(player, "button.wav", coroutineScope)
+            }
+            if (isHapticsEnabled) {
+                haptic.playHaptic(HapticIntensity.LIGHT)
             }
         }
     }
