@@ -13,7 +13,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,7 +36,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -88,6 +86,7 @@ import hexagone.shared.generated.resources.tier_zenith
 import hexagone.shared.generated.resources.tooltip_achievements
 import hexagone.shared.generated.resources.tooltip_leaderboard
 import hexagone.shared.generated.resources.tooltip_settings
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -539,6 +538,7 @@ private fun MaxPieceDisplay(
                     isOutline = true,
                     modifier = Modifier.size(spacing.huge.scaled)
                         .aspectRatio(1 / 0.866f),
+                    ignoreContrast = true,
                 )
             }
         }

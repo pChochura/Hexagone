@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -326,6 +327,7 @@ fun Hexagon(
     isTactical: Boolean = false,
     isFrozen: Boolean = false,
     isMimic: Boolean = false,
+    ignoreContrast: Boolean = false,
     seed: Int = 0,
     maxFontSize: TextUnit = 24.sp.scaled,
 ) {
@@ -472,33 +474,37 @@ fun Hexagon(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        if (value != null || isMimic) {
-            if (isMimic) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_star),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp.scaled),
-                    tint = Color.White,
-                )
-            } else if (value != null) {
-                val contrastColor =
-                    if (backgroundColor.luminance() > 0.5f) Color.Black else Color.White
-                Text(
-                    text = value,
-                    color = contrastColor,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = maxFontSize,
-                    maxLines = 1,
-                    autoSize = TextAutoSize.StepBased(
-                        minFontSize = 8.sp.scaled,
-                        maxFontSize = maxFontSize,
-                    ),
-                )
-            }
+        val contrastColor = if (!ignoreContrast && backgroundColor.luminance() > 0.5f) {
+            Color.Black
+        } else {
+            Color.White
+        }
+
+        if (isMimic) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_star),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp.scaled),
+                tint = Color.White,
+            )
+        } else if (value != null) {
+            Text(
+                text = value,
+                color = contrastColor,
+                fontWeight = FontWeight.Bold,
+                fontSize = maxFontSize,
+                maxLines = 1,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 2.dp.scaled),
+                autoSize = TextAutoSize.StepBased(
+                    minFontSize = 6.sp.scaled,
+                    maxFontSize = maxFontSize,
+                ),
+                lineHeight = 10.sp.scaled,
+            )
         }
 
         if (perk != null) {
-            val contrastColor = if (backgroundColor.luminance() > 0.5f) Color.Black else Color.White
             PerkIcon(
                 perk = perk,
                 modifier = Modifier
@@ -772,7 +778,10 @@ fun PerkButton(
             fontSize = 11.sp.scaled,
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center,
-            lineHeight = 11.sp.scaled,
+            lineHeight = 14.sp.scaled,
+            maxLines = 2,
+            minLines = 2,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.width(buttonSize + spacing.semiMedium.scaled),
         )
     }

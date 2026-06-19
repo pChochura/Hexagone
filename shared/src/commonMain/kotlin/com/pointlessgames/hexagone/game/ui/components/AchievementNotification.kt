@@ -41,11 +41,14 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.pointlessgames.hexagone.achievements.GameAchievement
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
-import hexagone.shared.generated.resources.*
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.achievement_unlocked
+import hexagone.shared.generated.resources.ic_star
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -121,19 +124,19 @@ fun AchievementNotification(
                         )
                     }
 
-                    Spacer(Modifier.width(MaterialTheme.spacing.medium))
+                    Spacer(Modifier.width(MaterialTheme.spacing.medium.scaled))
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = stringResource(Res.string.achievement_unlocked),
                             color = Color.White.copy(alpha = 0.7f),
-                            fontSize = 12.sp,
+                            fontSize = 12.sp.scaled,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = stringResource(achievement.title),
                             color = Color.White,
-                            fontSize = 16.sp,
+                            fontSize = 16.sp.scaled,
                             fontWeight = FontWeight.Black
                         )
                     }

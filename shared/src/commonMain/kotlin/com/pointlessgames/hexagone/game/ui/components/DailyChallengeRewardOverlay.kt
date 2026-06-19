@@ -40,6 +40,7 @@ import com.pointlessgames.hexagone.game.logic.PerkCategory
 import com.pointlessgames.hexagone.game.logic.StreakMilestones
 import com.pointlessgames.hexagone.game.model.DailyChallenge
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.bonus_reward_msg
@@ -101,19 +102,19 @@ internal fun DailyChallengeRewardOverlay(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(spacing.extraLarge),
+            .padding(spacing.extraLarge.scaled),
         contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(spacing.large),
+            verticalArrangement = Arrangement.spacedBy(spacing.large.scaled),
         ) {
             Text(
                 text = (if (isFirstTimeToday) stringResource(Res.string.daily_challenge_completed)
                 else stringResource(Res.string.bonus_reward_title)).uppercase(),
                 color = primaryColor,
                 fontWeight = FontWeight.Black,
-                fontSize = 32.sp,
+                fontSize = 32.sp.scaled,
                 style = TextStyle(
                     shadow = Shadow(
                         color = primaryColor.copy(alpha = 0.5f),
@@ -121,7 +122,7 @@ internal fun DailyChallengeRewardOverlay(
                         blurRadius = 40f * glowScale,
                     ),
                 ),
-                letterSpacing = 4.sp,
+                letterSpacing = 4.sp.scaled,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.graphicsLayer {
                     scaleX = glowScale
@@ -135,22 +136,22 @@ internal fun DailyChallengeRewardOverlay(
                     .clip(RoundedCornerShape(cornerRadius.large))
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
                     .border(
-                        spacing.extraTiny,
+                        spacing.extraTiny.scaled,
                         Color.White.copy(alpha = 0.1f),
                         RoundedCornerShape(cornerRadius.large),
                     )
-                    .padding(spacing.large),
+                    .padding(spacing.large.scaled),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(spacing.giant)
+                            .size(spacing.giant.scaled)
                             .background(primaryColor.copy(alpha = 0.1f), CircleShape)
                             .border(
-                                spacing.extraTiny,
+                                spacing.extraTiny.scaled,
                                 primaryColor.copy(alpha = 0.3f),
                                 CircleShape,
                             ),
@@ -160,7 +161,7 @@ internal fun DailyChallengeRewardOverlay(
                             painter = painterResource(Res.drawable.ic_daily_challenge),
                             contentDescription = null,
                             tint = primaryColor,
-                            modifier = Modifier.size(spacing.extraLarge),
+                            modifier = Modifier.size(spacing.extraLarge.scaled),
                         )
                     }
 
@@ -173,8 +174,8 @@ internal fun DailyChallengeRewardOverlay(
                                 ),
                                 color = Color.White,
                                 fontWeight = FontWeight.Black,
-                                fontSize = 18.sp,
-                                letterSpacing = 1.sp,
+                                fontSize = 18.sp.scaled,
+                                letterSpacing = 1.sp.scaled,
                             )
                         }
                         challenge.rewardPerk?.let {
@@ -182,16 +183,16 @@ internal fun DailyChallengeRewardOverlay(
                                 text = stringResource(it.displayNameRes).uppercase(),
                                 color = Color.White,
                                 fontWeight = FontWeight.Black,
-                                fontSize = 18.sp,
-                                letterSpacing = 1.sp,
+                                fontSize = 18.sp.scaled,
+                                letterSpacing = 1.sp.scaled,
                             )
                         }
                         Text(
                             text = if (isFirstTimeToday) stringResource(Res.string.daily_reward_granted)
                             else stringResource(Res.string.match_bonus_granted),
                             color = Color.White.copy(alpha = 0.5f),
-                            fontSize = 12.sp,
-                            lineHeight = 16.sp,
+                            fontSize = 12.sp.scaled,
+                            lineHeight = 16.sp.scaled,
                         )
                     }
                 }
@@ -202,27 +203,28 @@ internal fun DailyChallengeRewardOverlay(
                     text = stringResource(Res.string.bonus_reward_msg),
                     color = primaryColor.copy(alpha = 0.8f),
                     fontWeight = FontWeight.Black,
-                    fontSize = 14.sp,
-                    letterSpacing = 2.sp,
+                    fontSize = 14.sp.scaled,
+                    letterSpacing = 2.sp.scaled,
                 )
             }
 
             if (isDayCompleted && (streakReward != null)) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(spacing.medium),
+                    verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
                 ) {
                     Text(
                         text = stringResource(Res.string.streak_milestone_reached, newStreak),
                         color = Color(0xFFFFD54F),
                         fontWeight = FontWeight.Black,
-                        fontSize = 16.sp,
-                        letterSpacing = 1.sp,
+                        fontSize = 16.sp.scaled,
+                        letterSpacing = 1.sp.scaled,
+                        textAlign = TextAlign.Center,
                     )
 
                     Row(
                         modifier = Modifier.wrapContentWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                        horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
                     ) {
                         if (streakReward.diamonds > 0) {
                             RewardItem(
@@ -278,25 +280,25 @@ private fun RewardItem(
     val spacing = MaterialTheme.spacing
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(8.dp.scaled))
             .background(Color.White.copy(alpha = 0.05f))
-            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
-            .padding(horizontal = spacing.medium, vertical = spacing.small),
+            .border(1.dp.scaled, Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp.scaled))
+            .padding(horizontal = spacing.medium.scaled, vertical = spacing.small.scaled),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(spacing.small),
+        horizontalArrangement = Arrangement.spacedBy(spacing.small.scaled),
     ) {
         androidx.compose.material3.Icon(
             painter = painterResource(icon),
             contentDescription = null,
             tint = color,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(16.dp.scaled),
         )
         Text(
             text = label.uppercase(),
             color = Color.White.copy(alpha = 0.9f),
             fontWeight = FontWeight.Black,
-            fontSize = 10.sp,
-            letterSpacing = 0.5.sp,
+            fontSize = 10.sp.scaled,
+            letterSpacing = 0.5.sp.scaled,
         )
     }
 }

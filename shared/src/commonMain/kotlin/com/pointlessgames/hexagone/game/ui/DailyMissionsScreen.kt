@@ -26,6 +26,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -409,6 +410,12 @@ private fun HexCalendar(
                                         ),
                                         fontSize = 11.sp.scaled,
                                         fontWeight = if (isToday) FontWeight.Black else FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        autoSize = TextAutoSize.StepBased(
+                                            minFontSize = 7.sp.scaled,
+                                            maxFontSize = 11.sp.scaled,
+                                        ),
+                                        lineHeight = 11.sp.scaled,
                                     )
                                 }
                             }
@@ -445,7 +452,7 @@ private fun NextRewardCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f).padding(end = spacing.medium.scaled)) {
                 Text(
                     text = stringResource(Res.string.next_milestone_label, nextMilestone),
                     color = MaterialTheme.colorScheme.primary,

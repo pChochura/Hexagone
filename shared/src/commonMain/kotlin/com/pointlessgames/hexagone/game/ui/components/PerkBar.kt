@@ -137,7 +137,7 @@ fun PerkBar(
     // PerkButton height = (48.dp * 0.866) + 12.dp + 11.sp + padding
     val buttonWidth = spacing.extraHuge.scaled
     val buttonHeight = buttonWidth * 0.866f
-    val labelHeight = 24.dp.scaled // Sufficient for 11.sp label and spacing
+    val labelHeight = 36.dp.scaled // Sufficient for 2 lines of 11.sp label and spacing
     val verticalPadding = spacing.medium.scaled * 2
     val expectedContentSize = buttonHeight + labelHeight + verticalPadding
 
@@ -324,6 +324,9 @@ private fun AddPerkActionButton(
             fontSize = 9.sp.scaled,
             letterSpacing = 0.5.sp.scaled,
             textAlign = TextAlign.Center,
+            maxLines = 2,
+            minLines = 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             modifier = Modifier.width(size + spacing.semiSmall.scaled),
         )
     }
@@ -394,6 +397,9 @@ private fun ShopActionButton(
             fontSize = 9.sp.scaled,
             letterSpacing = 0.5.sp.scaled,
             textAlign = TextAlign.Center,
+            maxLines = 2,
+            minLines = 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             modifier = Modifier.width(size + spacing.semiSmall.scaled),
         )
     }

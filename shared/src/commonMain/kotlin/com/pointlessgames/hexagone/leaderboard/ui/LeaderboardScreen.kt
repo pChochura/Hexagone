@@ -214,7 +214,6 @@ private fun RankItem(rank: Int, result: DetailedGameResult) {
                 text = nameText,
                 modifier = Modifier.weight(1f),
                 fontSize = 16.sp.scaled,
-                maxLines = 1,
             )
 
             // Max Piece Hexagon
@@ -229,6 +228,7 @@ private fun RankItem(rank: Int, result: DetailedGameResult) {
                 modifier = Modifier
                     .size(24.dp.scaled)
                     .aspectRatio(1 / 0.866f),
+                ignoreContrast = true,
             )
 
             // Score

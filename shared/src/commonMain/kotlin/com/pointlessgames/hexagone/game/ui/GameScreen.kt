@@ -577,7 +577,7 @@ internal fun GameScreen(
                 color = Color.White.copy(alpha = 0.8f),
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp.scaled,
-                letterSpacing = 2.sp,
+                letterSpacing = 2.sp.scaled,
             )
         }
 
