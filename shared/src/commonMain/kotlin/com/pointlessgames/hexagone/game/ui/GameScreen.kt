@@ -96,10 +96,10 @@ import com.pointlessgames.hexagone.utils.BackHandler
 import com.pointlessgames.hexagone.utils.SoundManager
 import com.pointlessgames.hexagone.utils.isDebug
 import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.share_text
-import hexagone.shared.generated.resources.share_title
 import hexagone.shared.generated.resources.no_moves_left_warning
 import hexagone.shared.generated.resources.restart_button
+import hexagone.shared.generated.resources.share_text
+import hexagone.shared.generated.resources.share_title
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -498,12 +498,21 @@ internal fun GameScreen(
 
     val swipeOffset = remember { Animatable(0f) }
     val isOverlayVisibleState = remember(uiState) {
-        uiState.map { it.isGameOver || it.activeDialog != null || it.isPerksBankVisible || it.isNicknamePopupVisible || it.showReviveOption || it.perkOptions.isNotEmpty() }
-            .distinctUntilChanged()
-    }.collectAsState(viewModel.uiState.value.let { it.isGameOver || it.activeDialog != null || it.isPerksBankVisible || it.isNicknamePopupVisible || it.showReviveOption || it.perkOptions.isNotEmpty() })
+        uiState.map {
+            it.isGameOver || it.activeDialog != null || it.isPerksBankVisible ||
+                    it.isNicknamePopupVisible || it.showReviveOption ||
+                    it.perkOptions.isNotEmpty()
+        }.distinctUntilChanged()
+    }.collectAsState(
+        viewModel.uiState.value.let {
+            it.isGameOver || it.activeDialog != null ||
+                    it.isPerksBankVisible || it.isNicknamePopupVisible ||
+                    it.showReviveOption || it.perkOptions.isNotEmpty()
+        },
+    )
 
     val isAnyOverlayVisible by derivedStateOf {
-        isOverlayVisibleState.value || activeTierReward != null || activeChallengeReward != null || activeAchievement != null
+        isOverlayVisibleState.value || activeTierReward != null || activeChallengeReward != null
     }
     val pauseThreshold = 200f
 
@@ -794,8 +803,7 @@ internal fun GameScreen(
 
         // Persistent Perk Bar (Moved before GameOverlays to be covered)
         if (!isDebugModeProvider()) {
-            val isOverlayVisible =
-                isAnyOverlayVisible
+            val isOverlayVisible = isAnyOverlayVisible
 
             BoxWithConstraints(
                 modifier = Modifier
@@ -973,8 +981,11 @@ internal fun GameScreen(
             onShare = {
                 coroutineScope.launch {
                     val bitmap = shareGraphicsLayer.toImageBitmap()
-                    val title = org.jetbrains.compose.resources.getString(hexagone.shared.generated.resources.Res.string.share_title)
-                    val text = org.jetbrains.compose.resources.getString(hexagone.shared.generated.resources.Res.string.share_text, scoreProvider())
+                    val title = org.jetbrains.compose.resources.getString(Res.string.share_title)
+                    val text = org.jetbrains.compose.resources.getString(
+                        Res.string.share_text,
+                        scoreProvider(),
+                    )
                     shareManager.shareImage(bitmap, title, text)
                 }
             },
