@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,7 +50,6 @@ import hexagone.shared.generated.resources.settings_anonymous_account
 import hexagone.shared.generated.resources.settings_bg_music
 import hexagone.shared.generated.resources.settings_label
 import hexagone.shared.generated.resources.settings_logged_in_as
-import hexagone.shared.generated.resources.settings_logout_button
 import hexagone.shared.generated.resources.settings_remove_account_button
 import hexagone.shared.generated.resources.settings_remove_account_confirmation
 import hexagone.shared.generated.resources.settings_sound
@@ -84,7 +84,8 @@ internal fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = contentPadding.calculateTopPadding())
-                .padding(bottom = spacing.extraLarge.scaled),
+                .padding(bottom = spacing.extraLarge.scaled)
+                .navigationBarsPadding(),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(
@@ -119,15 +120,6 @@ internal fun SettingsScreen(
                     label = stringResource(Res.string.settings_bg_music),
                     checked = uiState.isBgMusicEnabled,
                     onCheckedChange = { viewModel.toggleBgMusic() },
-                )
-
-                Spacer(modifier = Modifier.height(spacing.medium.scaled))
-
-                AuthButton(
-                    text = stringResource(Res.string.settings_logout_button),
-                    onClick = viewModel::logout,
-                    containerColor = Color.White.copy(alpha = 0.05f),
-                    contentColor = Color.White,
                 )
             }
 

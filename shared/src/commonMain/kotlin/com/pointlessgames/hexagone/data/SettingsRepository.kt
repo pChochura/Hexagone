@@ -3,6 +3,7 @@ package com.pointlessgames.hexagone.data
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -89,6 +90,8 @@ interface SettingsRepository {
     fun getUnlockedThemesFlow(): Flow<Set<String>>
     suspend fun getUnlockedThemes(): Set<String>
     suspend fun unlockTheme(themeId: String): Preferences
+
+    suspend fun clear()
 }
 
 class DataStoreSettingsRepository(
@@ -625,5 +628,9 @@ class DataStoreSettingsRepository(
                 prefs[unlockedThemesKey] = current + themeId
             }
         }
+    }
+
+    override suspend fun clear() {
+        appSettings.edit { it.clear() }
     }
 }

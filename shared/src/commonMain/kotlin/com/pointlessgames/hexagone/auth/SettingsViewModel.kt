@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pointlessgames.hexagone.data.LeaderboardRepository
 import com.pointlessgames.hexagone.data.SettingsRepository
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.onboarding_nickname_empty
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,8 +13,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
-import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.onboarding_nickname_empty
 
 internal class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
@@ -57,7 +57,7 @@ internal class SettingsViewModel(
                 isAnonymous = user?.isAnonymous ?: true,
                 isLoggedOut = false,
                 isSoundEnabled = soundEnabled,
-                isBgMusicEnabled = bgMusicEnabled
+                isBgMusicEnabled = bgMusicEnabled,
             )
         }
     }
@@ -94,7 +94,7 @@ internal class SettingsViewModel(
         _uiState.value = _uiState.value.copy(
             showNicknamePopup = false,
             nickname = _uiState.value.originalNickname,
-            error = null
+            error = null,
         )
     }
 
@@ -102,7 +102,8 @@ internal class SettingsViewModel(
         val newName = _uiState.value.nickname.trim()
         if (newName.isEmpty()) {
             viewModelScope.launch {
-                _uiState.value = _uiState.value.copy(error = getString(Res.string.onboarding_nickname_empty))
+                _uiState.value =
+                    _uiState.value.copy(error = getString(Res.string.onboarding_nickname_empty))
             }
             return
         }
@@ -116,22 +117,8 @@ internal class SettingsViewModel(
                     isLoading = false,
                     originalNickname = newName,
                     error = null,
-                    showNicknamePopup = false
+                    showNicknamePopup = false,
                 )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
-            }
-        }
-    }
-
-    fun logout() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            try {
-                supabaseClient.auth.signOut()
-                settingsRepository.setPlayerId(null)
-                settingsRepository.setPlayerName(null)
-                _uiState.value = _uiState.value.copy(isLoading = false, isLoggedOut = true)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
             }
@@ -145,10 +132,7 @@ internal class SettingsViewModel(
                 // In a real app, you would call a Supabase Function or Auth Admin API to delete the user.
                 // For this implementation, we clear local data and sign out.
                 supabaseClient.auth.signOut()
-                settingsRepository.setPlayerId(null)
-                settingsRepository.setPlayerName(null)
-                settingsRepository.setBestScore(0)
-                // Additional cleanup could be done here (e.g. clearing game state)
+                settingsRepository.clear()
                 _uiState.value = _uiState.value.copy(isLoading = false, isLoggedOut = true)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
