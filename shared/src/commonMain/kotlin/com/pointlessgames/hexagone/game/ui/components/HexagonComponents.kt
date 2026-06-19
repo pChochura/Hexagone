@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -559,7 +560,7 @@ fun VoucherButton(
             .padding(horizontal = spacing.tiny.scaled)
             .graphicsLayer {
                 alpha = if (count > 0 || showGlow) 1f else 0.4f
-                clip = false
+                compositingStrategy = CompositingStrategy.ModulateAlpha
             },
     ) {
         BadgedBox(
@@ -681,7 +682,10 @@ fun PerkButton(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .padding(horizontal = spacing.tiny.scaled)
-            .graphicsLayer { alpha = if (isEnabled) 1f else 0.4f },
+            .graphicsLayer {
+                alpha = if (isEnabled) 1f else 0.4f
+                compositingStrategy = CompositingStrategy.ModulateAlpha
+            },
     ) {
         val hexagonContent = @Composable {
             BadgedBox(
