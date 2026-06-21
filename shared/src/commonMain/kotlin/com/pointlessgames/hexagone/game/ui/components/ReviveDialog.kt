@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -60,12 +61,12 @@ internal fun ReviveDialog(
     onBuyAndRevive: (PerkCategory) -> Unit,
     onOpenShop: () -> Unit,
     onDecline: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
     val cornerRadius = MaterialTheme.cornerRadius
     val playButtonSound = rememberPlayButtonSound()
-    
+
     DialogContainer(modifier = modifier) {
         Column(
             modifier = Modifier
@@ -83,9 +84,9 @@ internal fun ReviveDialog(
                     textAlign = TextAlign.Center,
                     shadow = Shadow(
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        blurRadius = 16f
-                    )
-                )
+                        blurRadius = 16f,
+                    ),
+                ),
             )
 
             Spacer(Modifier.height(spacing.medium.scaled))
@@ -97,11 +98,20 @@ internal fun ReviveDialog(
                     .background(Color.White.copy(alpha = 0.05f))
                     .padding(horizontal = spacing.large.scaled, vertical = spacing.small.scaled),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(spacing.large.scaled)
+                horizontalArrangement = Arrangement.spacedBy(spacing.large.scaled),
             ) {
-                StatItem(label = stringResource(Res.string.score_label).uppercase(), value = score.toString())
-                Box(modifier = Modifier.width(1.dp.scaled).height(24.dp.scaled).background(Color.White.copy(alpha = 0.1f)))
-                StatItem(label = stringResource(Res.string.label_level).uppercase(), value = level.toString())
+                StatItem(
+                    label = stringResource(Res.string.score_label).uppercase(),
+                    value = score.toString(),
+                )
+                Box(
+                    modifier = Modifier.width(1.dp.scaled).height(24.dp.scaled)
+                        .background(Color.White.copy(alpha = 0.1f)),
+                )
+                StatItem(
+                    label = stringResource(Res.string.label_level).uppercase(),
+                    value = level.toString(),
+                )
             }
 
             Spacer(Modifier.height(spacing.large.scaled))
@@ -112,7 +122,7 @@ internal fun ReviveDialog(
                 fontWeight = FontWeight.Medium,
                 fontSize = 13.sp.scaled,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = spacing.medium.scaled)
+                modifier = Modifier.padding(horizontal = spacing.medium.scaled),
             )
 
             Spacer(Modifier.height(spacing.extraLarge.scaled))
@@ -121,8 +131,11 @@ internal fun ReviveDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = spacing.medium.scaled),
-                horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.Bottom
+                horizontalArrangement = Arrangement.spacedBy(
+                    spacing.medium.scaled,
+                    Alignment.CenterHorizontally,
+                ),
+                verticalAlignment = Alignment.Bottom,
             ) {
                 PerkCategory.entries.forEach { category ->
                     ReviveCard(
@@ -137,7 +150,7 @@ internal fun ReviveDialog(
                                 onBuyAndRevive(category)
                             }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                 }
             }
@@ -147,33 +160,36 @@ internal fun ReviveDialog(
             // Bottom Actions
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled)
+                verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
             ) {
                 // Diamond Balance & Shop
                 Row(
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.05f))
-                        .clickable { 
+                        .clickable {
                             playButtonSound()
-                            onOpenShop() 
+                            onOpenShop()
                         }
                         .border(1.dp.scaled, Color(0xFFFFD54F).copy(alpha = 0.2f), CircleShape)
-                        .padding(horizontal = spacing.large.scaled, vertical = spacing.small.scaled),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(
+                            horizontal = spacing.large.scaled,
+                            vertical = spacing.small.scaled,
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_diamond),
                         contentDescription = null,
                         tint = Color(0xFFFFD54F),
-                        modifier = Modifier.size(16.dp.scaled)
+                        modifier = Modifier.size(16.dp.scaled),
                     )
                     Spacer(Modifier.width(spacing.small.scaled))
                     Text(
                         text = diamonds.toString(),
                         color = Color(0xFFFFD54F),
                         fontWeight = FontWeight.Black,
-                        fontSize = 16.sp.scaled
+                        fontSize = 16.sp.scaled,
                     )
                     Spacer(Modifier.width(spacing.medium.scaled))
                     Text(
@@ -181,7 +197,7 @@ internal fun ReviveDialog(
                         color = Color.White.copy(alpha = 0.6f),
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp.scaled,
-                        letterSpacing = 1.sp.scaled
+                        letterSpacing = 1.sp.scaled,
                     )
                 }
 
@@ -193,11 +209,14 @@ internal fun ReviveDialog(
                     fontSize = 14.sp.scaled,
                     modifier = Modifier
                         .clip(CircleShape)
-                        .clickable { 
+                        .clickable {
                             playButtonSound()
-                            onDecline() 
+                            onDecline()
                         }
-                        .padding(horizontal = spacing.extraLarge.scaled, vertical = spacing.medium.scaled)
+                        .padding(
+                            horizontal = spacing.extraLarge.scaled,
+                            vertical = spacing.medium.scaled,
+                        ),
                 )
             }
         }
@@ -212,13 +231,13 @@ private fun StatItem(label: String, value: String) {
             color = Color.White.copy(alpha = 0.4f),
             fontWeight = FontWeight.Bold,
             fontSize = 10.sp.scaled,
-            letterSpacing = 1.sp.scaled
+            letterSpacing = 1.sp.scaled,
         )
         Text(
             text = value,
             color = Color.White,
             fontWeight = FontWeight.Black,
-            fontSize = 20.sp.scaled
+            fontSize = 20.sp.scaled,
         )
     }
 }
@@ -229,7 +248,7 @@ private fun ReviveCard(
     count: Int,
     diamonds: Int,
     onAction: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
     val cornerRadius = MaterialTheme.cornerRadius
@@ -250,7 +269,7 @@ private fun ReviveCard(
 
     Box(
         modifier = modifier.padding(top = 16.dp.scaled), // Provide space for the offset badge
-        contentAlignment = Alignment.TopCenter
+        contentAlignment = Alignment.TopCenter,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -260,28 +279,30 @@ private fun ReviveCard(
                 .background(
                     if (isRecommended && isEnabled) {
                         Brush.verticalGradient(
-                            listOf(color.copy(alpha = 0.15f), Color.Transparent)
+                            listOf(color.copy(alpha = 0.15f), Color.Transparent),
                         )
                     } else {
                         SolidColor(Color.White.copy(alpha = 0.05f))
-                    }
+                    },
                 )
                 .border(
                     1.dp.scaled,
-                    if (isRecommended && isEnabled) color.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.1f),
-                    RoundedCornerShape(cornerRadius.large.scaled)
+                    if (isRecommended && isEnabled) color.copy(alpha = 0.4f) else Color.White.copy(
+                        alpha = 0.1f,
+                    ),
+                    RoundedCornerShape(cornerRadius.large.scaled),
                 )
-                .padding(vertical = spacing.large.scaled)
+                .padding(vertical = spacing.large.scaled),
         ) {
             // Remove the Spacer that was pushing content down, since we added padding to the Box
             // Spacer(Modifier.height(if (isRecommended) spacing.medium.scaled else 0.dp))
-            
+
             VoucherButton(
                 category = category,
                 count = count,
                 onClick = onAction,
                 buttonSize = 64.dp.scaled,
-                showGlow = (count > 0 || isRecommended) && isEnabled
+                showGlow = (count > 0 || isRecommended) && isEnabled,
             )
 
             Spacer(Modifier.height(spacing.large.scaled))
@@ -292,19 +313,19 @@ private fun ReviveCard(
                     .fillMaxWidth(0.85f)
                     .clip(CircleShape)
                     .background(if (isEnabled) color else color.copy(alpha = 0.2f), CircleShape)
-                    .clickable(enabled = isEnabled) { 
+                    .clickable(enabled = isEnabled) {
                         playButtonSound()
-                        onAction() 
+                        onAction()
                     }
                     .padding(vertical = spacing.small.scaled),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 if (count > 0) {
                     Text(
                         text = stringResource(Res.string.revive_use_voucher).uppercase(),
                         color = Color.Black,
                         fontWeight = FontWeight.Black,
-                        fontSize = 12.sp.scaled
+                        fontSize = 12.sp.scaled,
                     )
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -312,14 +333,14 @@ private fun ReviveCard(
                             text = cost.toString(),
                             color = Color.Black.copy(alpha = if (canAfford) 1f else 0.5f),
                             fontWeight = FontWeight.Black,
-                            fontSize = 12.sp.scaled
+                            fontSize = 12.sp.scaled,
                         )
                         Spacer(Modifier.width(2.dp.scaled))
                         Icon(
                             painter = painterResource(Res.drawable.ic_diamond),
                             contentDescription = null,
                             tint = Color.Black.copy(alpha = if (canAfford) 1f else 0.5f),
-                            modifier = Modifier.size(11.dp.scaled)
+                            modifier = Modifier.size(11.dp.scaled),
                         )
                     }
                 }
@@ -330,14 +351,19 @@ private fun ReviveCard(
             Box(
                 modifier = Modifier
                     .offset(y = (-10).dp.scaled)
-                    .background(color.copy(alpha = if (isEnabled) 1f else 0.4f), RoundedCornerShape(4.dp.scaled))
-                    .padding(horizontal = 6.dp.scaled, vertical = 2.dp.scaled)
+                    .background(color, RoundedCornerShape(4.dp.scaled))
+                    .padding(horizontal = 6.dp.scaled, vertical = 2.dp.scaled),
             ) {
                 Text(
                     text = stringResource(Res.string.shop_best_value),
                     color = Color.Black.copy(alpha = if (isEnabled) 1f else 0.6f),
                     fontWeight = FontWeight.Black,
-                    fontSize = 8.sp.scaled
+                    fontSize = 8.sp.scaled,
+                    textAlign = TextAlign.Center,
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 6.sp,
+                        maxFontSize = 10.sp,
+                    ),
                 )
             }
         }
