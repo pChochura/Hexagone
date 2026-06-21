@@ -180,7 +180,7 @@ internal fun AchievementItem(
     ) {
         if (progress > 0f) {
             WavyProgressBar(
-                progress = progress,
+                progressProvider = { progress },
                 modifier = Modifier.matchParentSize(),
                 showContainer = true,
                 containerColor = if (status.isUnlocked) Color.White.copy(alpha = 0.05f) else Color.Transparent,

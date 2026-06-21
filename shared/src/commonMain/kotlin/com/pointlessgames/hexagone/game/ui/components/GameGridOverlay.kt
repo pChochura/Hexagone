@@ -682,11 +682,12 @@ private fun HexagonGridCells(
     onAnimationFinishedLambda: () -> Unit,
     spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
 ) {
+    val cellIds = remember { androidx.compose.runtime.derivedStateOf { gridStateProvider().map { it.id } } }
     Box {
-        gridStateProvider().forEach { cell ->
-            key(cell.id) {
+        cellIds.value.forEach { cellId ->
+            key(cellId) {
                 AnimatedGridHexagon(
-                    cell = cell,
+                    cellId = cellId,
                     cellWidth = cellWidth,
                     cellHeight = cellHeight,
                     gapPx = gapPx,

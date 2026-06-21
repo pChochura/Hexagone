@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,20 +30,26 @@ import kotlin.math.sin
 
 @Composable
 fun WavyProgressBar(
-    progress: Float,
+    progressProvider: () -> Float,
     modifier: Modifier = Modifier,
-    waveIntensity: Float = 0f,
+    waveIntensityProvider: () -> Float = { 0f },
     showContainer: Boolean = true,
     containerColor: Color = MaterialTheme.colorScheme.surface,
     borderColor: Color = Color.White.copy(alpha = 0.05f),
     shape: Shape = RoundedCornerShape(MaterialTheme.cornerRadius.large),
     isWavy: Boolean = true
 ) {
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress.coerceIn(0f, 1f),
-        animationSpec = spring(stiffness = Spring.StiffnessLow),
-        label = "progress_animation",
-    )
+    val initialProgress = remember { progressProvider().coerceIn(0f, 1f) }
+    val animatedProgress = remember { Animatable(initialProgress) }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { progressProvider() }.collect { newProgress ->
+            animatedProgress.animateTo(
+                targetValue = newProgress.coerceIn(0f, 1f),
+                animationSpec = spring(stiffness = Spring.StiffnessLow),
+            )
+        }
+    }
 
     val waveOffset = remember { Animatable(0f) }
     LaunchedEffect(isWavy) {
@@ -53,7 +60,7 @@ fun WavyProgressBar(
             val dt = (currentTimeNanos - lastTimeNanos) / 1_000_000_000f
             lastTimeNanos = currentTimeNanos
             val baseSpeed = PI.toFloat() / 2f
-            val speed = baseSpeed * (1f + waveIntensity * 4f)
+            val speed = baseSpeed * (1f + waveIntensityProvider() * 4f)
             val delta = dt * speed
             waveOffset.snapTo((waveOffset.value + delta) % (2 * PI.toFloat()))
         }
@@ -72,17 +79,19 @@ fun WavyProgressBar(
             .clip(shape)
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
-            val width = size.width * animatedProgress
+            val width = size.width * animatedProgress.value
             val height = size.height
 
             if (width > 0) {
                 val currentWaveOffset = waveOffset.value
+                val currentIntensity = waveIntensityProvider()
+                
                 val path = Path().apply {
                     moveTo(0f, 0f)
                     lineTo(width, 0f)
 
                     val waveAmplitude = if (isWavy)
-                        (spacing.extraSmall + spacing.semiMedium * waveIntensity).toPx()
+                        (spacing.extraSmall + spacing.semiMedium * currentIntensity).toPx()
                     else 0f
                     val wavePeriod = height * 0.8f
 
@@ -103,16 +112,16 @@ fun WavyProgressBar(
                     path = path,
                     brush = Brush.horizontalGradient(
                         listOf(
-                            colorScheme.scrim.copy(alpha = 0.1f + 0.1f * waveIntensity),
-                            colorScheme.onPrimaryContainer.copy(alpha = 0.1f + 0.1f * waveIntensity),
-                            colorScheme.primary.copy(alpha = 0.1f + 0.1f * waveIntensity),
+                            colorScheme.scrim.copy(alpha = 0.1f + 0.1f * currentIntensity),
+                            colorScheme.onPrimaryContainer.copy(alpha = 0.1f + 0.1f * currentIntensity),
+                            colorScheme.primary.copy(alpha = 0.1f + 0.1f * currentIntensity),
                         ),
                     ),
                 )
 
                 val edgePath = Path().apply {
                     val waveAmplitude = if (isWavy)
-                        (spacing.extraSmall + spacing.semiMedium * waveIntensity).toPx()
+                        (spacing.extraSmall + spacing.semiMedium * currentIntensity).toPx()
                     else 0f
                     val wavePeriod = height * 0.8f
 
@@ -132,8 +141,8 @@ fun WavyProgressBar(
 
                 drawPath(
                     path = edgePath,
-                    color = Color.White.copy(alpha = 0.1f + 0.2f * waveIntensity),
-                    style = Stroke(width = (spacing.extraTiny + spacing.extraTiny * waveIntensity).toPx()),
+                    color = Color.White.copy(alpha = 0.1f + 0.2f * currentIntensity),
+                    style = Stroke(width = (spacing.extraTiny + spacing.extraTiny * currentIntensity).toPx()),
                 )
             }
         }

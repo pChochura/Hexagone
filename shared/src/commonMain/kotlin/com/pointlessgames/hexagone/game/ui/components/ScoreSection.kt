@@ -651,8 +651,8 @@ private fun WavyProgressBarWrapper(
     modifier: Modifier = Modifier
 ) {
     WavyProgressBar(
-        progress = progressProvider(),
-        waveIntensity = waveIntensityProvider(),
+        progressProvider = progressProvider,
+        waveIntensityProvider = waveIntensityProvider,
         modifier = modifier
     )
 }
