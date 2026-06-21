@@ -52,12 +52,18 @@ import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.ui.components.Position
 import com.pointlessgames.hexagone.ui.components.Tooltip
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
-import com.pointlessgames.hexagone.ui.theme.spacing
 import com.pointlessgames.hexagone.ui.theme.scaled
-import hexagone.shared.generated.resources.*
+import com.pointlessgames.hexagone.ui.theme.spacing
+import hexagone.shared.generated.resources.Res
+import hexagone.shared.generated.resources.choose_your_perk
+import hexagone.shared.generated.resources.ic_roll
+import hexagone.shared.generated.resources.level_up_title
+import hexagone.shared.generated.resources.pending_levels
+import hexagone.shared.generated.resources.perk_selection_hint
+import hexagone.shared.generated.resources.reroll_perks
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -131,6 +137,7 @@ internal fun PerkSelectionDialog(
                         fontWeight = FontWeight.Black,
                         fontSize = 32.sp.scaled,
                         textAlign = TextAlign.Center,
+                        lineHeight = 32.sp.scaled,
                         modifier = Modifier.graphicsLayer {
                             scaleX = pulseScale
                             scaleY = pulseScale

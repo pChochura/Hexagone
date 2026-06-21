@@ -629,6 +629,7 @@ internal class ActionDelegate(
                 }
                 achievementDelegate.checkPerkAchievements(Perk.INCREMENT_TILE, uiState.value, isTargetGhost = true)
                 achievementDelegate.checkScoreAchievements(uiState.value.score)
+                achievementDelegate.checkLevelAchievements(uiState.value.level)
                 challengeDelegate.onScoreChanged(uiState.value.score)
                 finalizeAction()
             }
@@ -726,6 +727,7 @@ internal class ActionDelegate(
                 }
                 achievementDelegate.checkPerkAchievements(Perk.INCREMENT_TILE, uiState.value, isTargetGhost = false)
                 achievementDelegate.checkScoreAchievements(uiState.value.score)
+                achievementDelegate.checkLevelAchievements(uiState.value.level)
                 challengeDelegate.onScoreChanged(uiState.value.score)
                 finalizeAction()
             }
@@ -904,6 +906,7 @@ internal class ActionDelegate(
     }
 
     private fun moveTile(selectedId: String, x: Int, y: Int) {
+        val isTargetGhost = uiState.value.preview.any { it.id == selectedId }
         stateDelegate.saveState()
         var isGhostMarkedTactical = false
         uiState.update { currentState ->
@@ -950,12 +953,13 @@ internal class ActionDelegate(
         if (isGhostMarkedTactical) {
             achievementDelegate.onGhostMarkedTactical()
         }
-        achievementDelegate.checkPerkAchievements(Perk.MOVE_TILE, uiState.value, isTargetGhost = selectedId.startsWith("preview"))
+        achievementDelegate.checkPerkAchievements(Perk.MOVE_TILE, uiState.value, isTargetGhost = isTargetGhost)
         stateDelegate.setRedemptionBaseline(null)
         finalizeAction()
     }
 
     private fun duplicateTile(selectedId: String, x: Int, y: Int) {
+        val isTargetGhost = uiState.value.preview.any { it.id == selectedId }
         stateDelegate.saveState()
         var isGhostMarkedTactical = false
         uiState.update { currentState ->
@@ -1010,12 +1014,13 @@ internal class ActionDelegate(
         if (isGhostMarkedTactical) {
             achievementDelegate.onGhostMarkedTactical()
         }
-        achievementDelegate.checkPerkAchievements(Perk.DUPLICATE_TILE, uiState.value, isTargetGhost = selectedId.startsWith("preview"))
+        achievementDelegate.checkPerkAchievements(Perk.DUPLICATE_TILE, uiState.value, isTargetGhost = isTargetGhost)
         stateDelegate.setRedemptionBaseline(null)
         finalizeAction()
     }
 
     private fun swapTiles(id1: String, id2: String) {
+        val isTargetGhost = uiState.value.preview.any { it.id == id1 || it.id == id2 }
         var ghostsMarkedTactical = 0
         uiState.update { currentState ->
             val item1 = currentState.grid.find { it.id == id1 }
@@ -1076,7 +1081,7 @@ internal class ActionDelegate(
         repeat(ghostsMarkedTactical) {
             achievementDelegate.onGhostMarkedTactical()
         }
-        achievementDelegate.checkPerkAchievements(Perk.SWAP_TILES, uiState.value, isTargetGhost = id1.startsWith("preview") || id2.startsWith("preview"))
+        achievementDelegate.checkPerkAchievements(Perk.SWAP_TILES, uiState.value, isTargetGhost = isTargetGhost)
         stateDelegate.setRedemptionBaseline(null)
         finalizeAction()
     }
