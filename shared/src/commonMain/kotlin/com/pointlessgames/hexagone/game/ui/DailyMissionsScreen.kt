@@ -80,6 +80,7 @@ import hexagone.shared.generated.resources.daily_challenge_goal_perk_restriction
 import hexagone.shared.generated.resources.daily_challenge_goal_score
 import hexagone.shared.generated.resources.daily_challenge_goal_tactical
 import hexagone.shared.generated.resources.daily_challenge_goal_value
+import hexagone.shared.generated.resources.daily_completion_reward_claimed
 import hexagone.shared.generated.resources.daily_completion_reward_hint
 import hexagone.shared.generated.resources.daily_completion_reward_title
 import hexagone.shared.generated.resources.day_fri
@@ -222,6 +223,7 @@ internal fun DailyMissionsScreen(
             item {
                 TodayCompletionRewardCard(
                     streak = uiState.challengeStreak,
+                    isClaimed = uiState.isStreakCollectedToday,
                     modifier = Modifier.padding(horizontal = spacing.extraLarge.scaled),
                 )
             }
@@ -423,6 +425,7 @@ private fun HexCalendar(
 @Composable
 private fun TodayCompletionRewardCard(
     streak: Int,
+    isClaimed: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
@@ -433,8 +436,8 @@ private fun TodayCompletionRewardCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(MaterialTheme.colorScheme.background)
-            .border(1.dp.scaled, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), shape)
+            .background(if (isClaimed) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.background)
+            .border(1.dp.scaled, if (isClaimed) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), shape)
             .padding(spacing.large.scaled),
         verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
     ) {
@@ -452,10 +455,18 @@ private fun TodayCompletionRewardCard(
                     letterSpacing = 1.sp.scaled,
                 )
                 Text(
-                    text = stringResource(Res.string.daily_completion_reward_hint),
-                    color = Color.White.copy(alpha = 0.4f),
+                    text = if (isClaimed) stringResource(Res.string.daily_completion_reward_claimed) else stringResource(Res.string.daily_completion_reward_hint),
+                    color = if (isClaimed) MaterialTheme.colorScheme.primary.copy(alpha = 0.8f) else Color.White.copy(alpha = 0.4f),
                     fontSize = 11.sp.scaled,
                     fontWeight = FontWeight.Medium,
+                )
+            }
+            if (isClaimed) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_star),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp.scaled),
                 )
             }
         }

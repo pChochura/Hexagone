@@ -251,11 +251,14 @@ internal class GameViewModel(
                 )
             }
 
+            var currentDailyMissionDate = dailyMissionDate
+
             if (dailyMissionDate != 0L && dailyMissionDate != dateSeed) {
                 if (dailyMissionDate == yesterdaySeed) {
                     if (completedDates.contains(dailyMissionDate)) {
                         missionRefreshState = MissionRefreshState.MISSIONS_COMPLETED_REFRESH(dailyMissionDate)
                         settingsRepository.setDailyMissionDate(dateSeed)
+                        currentDailyMissionDate = dateSeed
                         settingsRepository.clearPersistentCompletedMissionIds()
                         persistentCompletedMissionIds = emptySet()
                     } else {
@@ -264,11 +267,13 @@ internal class GameViewModel(
                 } else {
                     missionRefreshState = MissionRefreshState.HARD_REFRESH(dailyMissionDate)
                     settingsRepository.setDailyMissionDate(dateSeed)
+                    currentDailyMissionDate = dateSeed
                     settingsRepository.clearPersistentCompletedMissionIds()
                     persistentCompletedMissionIds = emptySet()
                 }
             } else if (dailyMissionDate == 0L) {
                 settingsRepository.setDailyMissionDate(dateSeed)
+                currentDailyMissionDate = dateSeed
             }
 
             val effectiveMissionDate = if (missionRefreshState is MissionRefreshState.CAN_KEEP) {
@@ -296,7 +301,7 @@ internal class GameViewModel(
                                 challengeStreak = challengeStreak,
                                 isStreakCollectedToday = lastCompletedDate == dateSeed,
                                 persistentCompletedMissionIds = persistentCompletedMissionIds,
-                                dailyMissionDate = dailyMissionDate,
+                                dailyMissionDate = currentDailyMissionDate,
                                 completedChallengeDates = completedDates,
                                 mergeHintsEnabled = hintsEnabled,
                                 diamonds = savedState.diamonds,
@@ -344,7 +349,7 @@ internal class GameViewModel(
                                 previewIdCounter = savedState.previewIdCounter,
                                 activePerk = savedState.activePerk,
                                 selectedCellId = savedState.selectedCellId,
-                                dailyChallenges = if (savedState.dailyChallenges.isNotEmpty()) {
+                                dailyChallenges = if (savedState.dailyChallenges.isNotEmpty() && (missionRefreshState is MissionRefreshState.CAN_KEEP || isSameDayChallenges)) {
                                     savedState.dailyChallenges
                                 } else {
                                     currentDailyChallenges.map { challenge ->
@@ -359,7 +364,7 @@ internal class GameViewModel(
                                     completedDates
                                 },
                                 persistentCompletedMissionIds = persistentCompletedMissionIds,
-                                dailyMissionDate = dailyMissionDate,
+                                dailyMissionDate = currentDailyMissionDate,
                                 challengeStreak = challengeStreak,
                                 isStreakCollectedToday = lastCompletedDate == dateSeed,
                                 hasRevived = savedState.hasRevived,
@@ -402,7 +407,7 @@ internal class GameViewModel(
                         challengeStreak = challengeStreak,
                         isStreakCollectedToday = lastCompletedDate == dateSeed,
                         persistentCompletedMissionIds = persistentCompletedMissionIds,
-                        dailyMissionDate = dailyMissionDate,
+                        dailyMissionDate = currentDailyMissionDate,
                         missionRefreshState = missionRefreshState,
                         isDailyLoginClaimed = isDailyLoginClaimed,
                         activeDialog = activeDialog ?: it.activeDialog,

@@ -222,9 +222,10 @@ internal fun DailyChallengeRewardOverlay(
                         textAlign = TextAlign.Center,
                     )
 
-                    Row(
+                    Column(
                         modifier = Modifier.wrapContentWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
+                        verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled),
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         if (streakReward.diamonds > 0) {
                             RewardItem(
