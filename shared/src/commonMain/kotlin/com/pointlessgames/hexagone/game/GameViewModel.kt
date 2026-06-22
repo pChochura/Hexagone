@@ -734,10 +734,6 @@ internal class GameViewModel(
             0,
         )
 
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        val currentDailyChallenges =
-            DailyChallengeProvider.getChallengesForDate(today, _uiState.value.challengeStreak)
-
         _uiState.update {
             it.copy(
                 grid = initialGrid,
@@ -757,14 +753,13 @@ internal class GameViewModel(
                 seed = random.nextLong(),
                 cellIdCounter = nextIdCounter,
                 previewIdCounter = nextPreviewIdCounter,
-                dailyChallenges = currentDailyChallenges.map { challenge ->
-                    DailyChallengeProgress(challenge)
+                dailyChallenges = it.dailyChallenges.map { challengeProgress ->
+                    if (challengeProgress.isCompleted) {
+                        challengeProgress
+                    } else {
+                        challengeProgress.copy(progress = 0)
+                    }
                 },
-                completedChallengeDates = it.completedChallengeDates,
-                persistentCompletedMissionIds = it.persistentCompletedMissionIds,
-                dailyMissionDate = it.dailyMissionDate,
-                challengeStreak = it.challengeStreak,
-                isStreakCollectedToday = it.isStreakCollectedToday,
                 debugUsed = false,
                 finalResult = null,
                 isGameOver = false,

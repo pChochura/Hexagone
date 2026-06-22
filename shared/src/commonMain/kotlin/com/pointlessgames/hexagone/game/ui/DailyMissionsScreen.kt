@@ -8,6 +8,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -99,6 +100,7 @@ import hexagone.shared.generated.resources.ic_roll
 import hexagone.shared.generated.resources.ic_star
 import hexagone.shared.generated.resources.mission_complete_badge
 import hexagone.shared.generated.resources.mission_log_title
+import hexagone.shared.generated.resources.mission_refresh_reset_button
 import hexagone.shared.generated.resources.pattern_great_wall
 import hexagone.shared.generated.resources.pattern_ring_of_fire
 import hexagone.shared.generated.resources.pattern_the_prism
@@ -157,7 +159,7 @@ internal fun DailyMissionsScreen(
             if (isPreviousMissions) {
                 item {
                     Spacer(Modifier.height(spacing.small.scaled))
-                    Box(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = spacing.extraLarge.scaled)
@@ -169,6 +171,8 @@ internal fun DailyMissionsScreen(
                                 RoundedCornerShape(MaterialTheme.cornerRadius.medium.scaled),
                             )
                             .padding(spacing.medium.scaled),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(spacing.medium.scaled)
                     ) {
                         Text(
                             text = stringResource(Res.string.previous_missions_warning),
@@ -179,6 +183,26 @@ internal fun DailyMissionsScreen(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth(),
                         )
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.error.copy(alpha = 0.15f))
+                                .border(1.dp.scaled, MaterialTheme.colorScheme.error.copy(alpha = 0.3f), CircleShape)
+                                .clickable { viewModel.onRefreshMissionsClicked() }
+                                .padding(vertical = spacing.small.scaled),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.mission_refresh_reset_button).uppercase(),
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp.scaled,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.sp.scaled,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
                     }
                 }
             }
