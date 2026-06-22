@@ -1019,7 +1019,7 @@ internal class GameViewModel(
     }
 
     fun onDismissVoucherSelection() {
-        _uiState.update { it.copy(isPerksBankVisible = false, perksBankCategory = null) }
+        _uiState.update { it.copy(isPerksBankVisible = false) }
     }
 
     fun onDeclineRevive() {
@@ -1047,7 +1047,6 @@ internal class GameViewModel(
                 _uiState.update {
                     it.copy(
                         collectedPerks = it.collectedPerks + perk,
-                        perksBankCategory = null,
                         isPerksBankVisible = false,
                         isVoucherProcessing = false,
                         showReviveOption = false,
