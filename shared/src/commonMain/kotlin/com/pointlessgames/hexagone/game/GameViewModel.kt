@@ -292,7 +292,7 @@ internal class GameViewModel(
                     val savedState = Json.decodeFromString<GameState>(savedStateJson)
                     val isGameStarted = savedState.totalMerges > 0
                     val isSameDayChallenges =
-                        savedState.dailyChallenges.map { it.challenge } == currentDailyChallenges
+                        savedState.dailyMissionDate != 0L && savedState.dailyMissionDate == dateSeed
 
                     if (!isGameStarted && !isSameDayChallenges) {
                         stateDelegate.setAbsoluteBestScore(maxOf(best, savedState.score))
@@ -753,12 +753,23 @@ internal class GameViewModel(
                 seed = random.nextLong(),
                 cellIdCounter = nextIdCounter,
                 previewIdCounter = nextPreviewIdCounter,
-                dailyChallenges = it.dailyChallenges.map { challengeProgress ->
-                    if (challengeProgress.isCompleted) {
-                        challengeProgress
-                    } else {
-                        challengeProgress.copy(progress = 0)
+                dailyChallenges = if (it.dailyChallenges.isNotEmpty()) {
+                    it.dailyChallenges.map { challengeProgress ->
+                        if (challengeProgress.isCompleted) {
+                            challengeProgress
+                        } else {
+                            challengeProgress.copy(progress = 0)
+                        }
                     }
+                } else {
+                    val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+                    val effectiveDate = if (it.missionRefreshState is MissionRefreshState.CAN_KEEP) {
+                        today.minus(1, DateTimeUnit.DAY)
+                    } else {
+                        today
+                    }
+                    DailyChallengeProvider.getChallengesForDate(effectiveDate, it.challengeStreak)
+                        .map { DailyChallengeProgress(it) }
                 },
                 debugUsed = false,
                 finalResult = null,
