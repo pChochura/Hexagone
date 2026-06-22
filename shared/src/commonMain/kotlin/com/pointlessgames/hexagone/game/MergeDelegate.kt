@@ -207,7 +207,6 @@ internal class MergeDelegate(
         if (currentState.combo > 0 && finalCombo == 0) {
             effectDelegate.addComboBroken()
         }
-        achievementDelegate.checkLevelAchievements(uiState.value.level)
         achievementDelegate.checkScoreAchievements(finalScore)
         achievementDelegate.onMergesIncremented(merge.uniqueGroups)
         achievementDelegate.onMergeDetails(merge.isTactical, isBarRaised, isSacrifice)

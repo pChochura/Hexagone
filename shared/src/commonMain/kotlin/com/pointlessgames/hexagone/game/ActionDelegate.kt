@@ -496,7 +496,6 @@ internal class ActionDelegate(
 
                 achievementDelegate.checkCleanse(state.grid, uiState.value.grid)
                 achievementDelegate.checkScoreAchievements(uiState.value.score)
-                achievementDelegate.checkLevelAchievements(uiState.value.level)
                 achievementDelegate.checkPerkAchievements(Perk.REMOVE_TILE, uiState.value, isTargetGhost = true)
                 achievementDelegate.onNonUndoAction()
                 challengeDelegate.onScoreChanged(uiState.value.score)
@@ -541,7 +540,6 @@ internal class ActionDelegate(
 
                 achievementDelegate.checkPerkAchievements(Perk.MIMIC, uiState.value, isTargetGhost = true)
                 achievementDelegate.checkScoreAchievements(uiState.value.score)
-                achievementDelegate.checkLevelAchievements(uiState.value.level)
                 achievementDelegate.onNonUndoAction()
                 challengeDelegate.onScoreChanged(uiState.value.score)
                 finalizeAction()
@@ -629,7 +627,6 @@ internal class ActionDelegate(
                 }
                 achievementDelegate.checkPerkAchievements(Perk.INCREMENT_TILE, uiState.value, isTargetGhost = true)
                 achievementDelegate.checkScoreAchievements(uiState.value.score)
-                achievementDelegate.checkLevelAchievements(uiState.value.level)
                 challengeDelegate.onScoreChanged(uiState.value.score)
                 finalizeAction()
             }
@@ -727,7 +724,6 @@ internal class ActionDelegate(
                 }
                 achievementDelegate.checkPerkAchievements(Perk.INCREMENT_TILE, uiState.value, isTargetGhost = false)
                 achievementDelegate.checkScoreAchievements(uiState.value.score)
-                achievementDelegate.checkLevelAchievements(uiState.value.level)
                 challengeDelegate.onScoreChanged(uiState.value.score)
                 finalizeAction()
             }
@@ -768,7 +764,6 @@ internal class ActionDelegate(
 
                 achievementDelegate.checkPerkAchievements(Perk.MIMIC, uiState.value, isTargetGhost = false)
                 achievementDelegate.checkScoreAchievements(uiState.value.score)
-                achievementDelegate.checkLevelAchievements(uiState.value.level)
                 achievementDelegate.onNonUndoAction()
                 challengeDelegate.onScoreChanged(uiState.value.score)
                 finalizeAction()
@@ -870,7 +865,6 @@ internal class ActionDelegate(
 
                 achievementDelegate.checkCleanse(state.grid, uiState.value.grid)
                 achievementDelegate.checkScoreAchievements(uiState.value.score)
-                achievementDelegate.checkLevelAchievements(uiState.value.level)
                 achievementDelegate.checkPerkAchievements(Perk.REMOVE_TILE, uiState.value, isTargetGhost = false)
                 achievementDelegate.onNonUndoAction()
                 challengeDelegate.onScoreChanged(uiState.value.score)

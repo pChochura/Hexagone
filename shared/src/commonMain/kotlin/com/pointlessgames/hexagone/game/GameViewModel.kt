@@ -528,6 +528,7 @@ internal class GameViewModel(
             val levelDifference = lvl - state.level
             if (levelDifference > 0) {
                 challengeDelegate.onLevelUp(lvl)
+                achievementDelegate.checkLevelAchievements(lvl)
                 val nextPerkOptions =
                     state.perkOptions.ifEmpty { engine.pickWeightedPerks(3, random) }
                 state.copy(
