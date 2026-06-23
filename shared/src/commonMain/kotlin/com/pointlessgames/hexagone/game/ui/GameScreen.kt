@@ -392,7 +392,7 @@ internal fun GameScreen(
     val highestValueProvider = remember { { highestValueState.value } }
     val activePerkProvider = remember { { activePerkState.value } }
     val isDailyChallengeCompletedProvider =
-        remember { { dailyChallengesState.value.all { it.isCompleted } } }
+        remember { { uiState.value.persistentCompletedMissionIds.size >= 3 } }
     val collectedPerksProvider = remember { { collectedPerksState.value } }
     val vouchersProvider = remember { { vouchersState.value } }
     val isStuckProvider = remember { { isStuckState.value } }

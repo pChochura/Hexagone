@@ -756,11 +756,7 @@ internal class GameViewModel(
                 previewIdCounter = nextPreviewIdCounter,
                 dailyChallenges = if (it.dailyChallenges.isNotEmpty()) {
                     it.dailyChallenges.map { challengeProgress ->
-                        if (challengeProgress.isCompleted) {
-                            challengeProgress
-                        } else {
-                            challengeProgress.copy(progress = 0)
-                        }
+                        challengeProgress.copy(progress = 0, isCompleted = false)
                     }
                 } else {
                     val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
