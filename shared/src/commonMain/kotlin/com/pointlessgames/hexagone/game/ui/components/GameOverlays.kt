@@ -99,6 +99,7 @@ internal fun GameOverlays(
     finalResultProvider: () -> DetailedGameResult? = { null },
     onNicknamePrompt: () -> Unit = {},
     playerNameProvider: () -> String? = { null },
+    onRefreshBalance: () -> Unit = {},
 ) {
     val isGameOver = isGameOverProvider()
     val showReviveOption = showReviveOptionProvider()
@@ -222,7 +223,8 @@ internal fun GameOverlays(
                     onRevive = onRevive,
                     onBuyAndRevive = onBuyAndRevive,
                     onOpenShop = onOpenShop,
-                    onDecline = onDeclineRevive
+                    onDecline = onDeclineRevive,
+                    onRefreshBalance = onRefreshBalance,
                 )
             }
 

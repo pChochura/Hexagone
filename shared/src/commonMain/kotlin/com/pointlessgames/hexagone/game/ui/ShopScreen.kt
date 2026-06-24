@@ -23,6 +23,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -69,6 +70,10 @@ internal fun ShopScreen(
     val storeProducts by viewModel.storeProducts.collectAsState()
     val navigator = LocalNavigator.current
     val spacing = MaterialTheme.spacing
+
+    LaunchedEffect(Unit) {
+        viewModel.refreshBalance()
+    }
 
     ScreenScaffold(
         title = stringResource(Res.string.shop_title),

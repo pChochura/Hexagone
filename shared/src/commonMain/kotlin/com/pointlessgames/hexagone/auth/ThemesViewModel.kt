@@ -35,7 +35,7 @@ data class ThemesUiState(
 class ThemesViewModel(
     private val settingsRepository: SettingsRepository,
     private val monetizationRepository: MonetizationRepository,
-    billingManager: BillingManager,
+    private val billingManager: BillingManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ThemesUiState())
@@ -144,5 +144,11 @@ class ThemesViewModel(
 
     fun dismissUnlockedOverlay() {
         _uiState.update { it.copy(newlyUnlockedTheme = null) }
+    }
+
+    fun refreshBalance() {
+        viewModelScope.launch {
+            billingManager.refreshBalance()
+        }
     }
 }

@@ -178,6 +178,12 @@ internal class GameViewModel(
         }
     }
 
+    fun refreshBalance() {
+        viewModelScope.launch {
+            billingManager.refreshBalance()
+        }
+    }
+
     private fun triggerTip(id: TipId, specificTargetId: String? = null) {
         val targetId = specificTargetId ?: when (id) {
             MERGE -> TipTarget.GRID

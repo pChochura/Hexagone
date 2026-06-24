@@ -1053,6 +1053,7 @@ internal fun GameScreen(
             finalResultProvider = finalResultProvider,
             onNicknamePrompt = viewModel::onShowNicknamePopup,
             playerNameProvider = { playerNameState.value },
+            onRefreshBalance = { viewModel.refreshBalance() },
             modifier = Modifier.trackTipTarget(TipTarget.GAME_OVER_BUTTONS) { target, rect ->
                 if (swipeOffset.value == 0f) {
                     targetRects[target] = rect
@@ -1106,6 +1107,7 @@ internal fun GameScreen(
                 onPerkSelected = viewModel::onPerkFromVoucherSelected,
                 onBuyClick = viewModel::onBuyPerk,
                 onDismiss = viewModel::onDismissVoucherSelection,
+                onRefreshBalance = { viewModel.refreshBalance() }
             )
         }
 
