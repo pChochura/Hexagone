@@ -1,13 +1,12 @@
 package com.pointlessgames.hexagone.ui.components
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.Spring.DampingRatioMediumBouncy
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BasicTooltipBox
 import androidx.compose.foundation.BasicTooltipDefaults
@@ -15,14 +14,15 @@ import androidx.compose.foundation.BasicTooltipState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.MutatorMutex
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
@@ -38,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
@@ -52,13 +51,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
+import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -67,6 +69,7 @@ import kotlin.time.Duration.Companion.milliseconds
 fun Tooltip(
     position: Position,
     contentDescription: StringResource,
+    icon: DrawableResource? = null,
     modifier: Modifier = Modifier,
     allowUserInput: Boolean = true,
     state: TooltipState = rememberTooltipState(isPersistent = true),
@@ -89,18 +92,18 @@ fun Tooltip(
                         val strokeWidth = 2.dp.toPx()
                         val arrowX = (size.width * relativeX).coerceIn(
                             cornerRadius.toPx() + arrowWidth / 2,
-                            size.width - cornerRadius.toPx() - arrowWidth / 2
+                            size.width - cornerRadius.toPx() - arrowWidth / 2,
                         )
-                        
+
                         val path = androidx.compose.ui.graphics.Path().apply {
                             val rectRadius = cornerRadius.toPx()
                             val topY = if (isFlipped) arrowHeight else 0f
                             val bottomY = size.height - if (isFlipped) 0f else arrowHeight
                             val leftX = 0f
                             val rightX = size.width
-                            
+
                             moveTo(leftX + rectRadius, topY)
-                            
+
                             if (isFlipped) {
                                 lineTo(arrowX - arrowWidth / 2, topY)
                                 lineTo(arrowX, 0f)
@@ -108,10 +111,10 @@ fun Tooltip(
                             }
                             lineTo(rightX - rectRadius, topY)
                             quadraticTo(rightX, topY, rightX, topY + rectRadius)
-                            
+
                             lineTo(rightX, bottomY - rectRadius)
                             quadraticTo(rightX, bottomY, rightX - rectRadius, bottomY)
-                            
+
                             if (!isFlipped) {
                                 lineTo(arrowX + arrowWidth / 2, bottomY)
                                 lineTo(arrowX, size.height)
@@ -119,53 +122,75 @@ fun Tooltip(
                             }
                             lineTo(leftX + rectRadius, bottomY)
                             quadraticTo(leftX, bottomY, leftX, bottomY - rectRadius)
-                            
+
                             lineTo(leftX, topY + rectRadius)
                             quadraticTo(leftX, topY, leftX + rectRadius, topY)
                             close()
                         }
-                        
+
                         drawPath(
                             path = path,
                             brush = Brush.verticalGradient(
-                                listOf(primaryColor.copy(alpha = 0.2f), Color.Transparent)
+                                listOf(primaryColor.copy(alpha = 0.2f), Color.Transparent),
                             ),
-                            style = Stroke(width = strokeWidth * 2f)
+                            style = Stroke(width = strokeWidth * 2f),
                         )
-                        
+
                         drawPath(
                             path = path,
                             color = surfaceColor.copy(alpha = 0.95f),
                         )
-                        
+
                         drawPath(
                             path = path,
                             brush = Brush.verticalGradient(
                                 listOf(
                                     primaryColor.copy(alpha = 0.5f),
-                                    primaryColor.copy(alpha = 0.1f)
-                                )
+                                    primaryColor.copy(alpha = 0.1f),
+                                ),
                             ),
-                            style = Stroke(width = 1.dp.toPx())
+                            style = Stroke(width = 1.dp.toPx()),
                         )
                     }
                     .padding(
                         top = if (isFlipped) 8.dp else 0.dp,
-                        bottom = if (isFlipped) 0.dp else 8.dp
+                        bottom = if (isFlipped) 0.dp else 8.dp,
                     )
                     .padding(
                         horizontal = MaterialTheme.spacing.medium,
                         vertical = MaterialTheme.spacing.small,
-                    )
-            ) {
-                Text(
-                    text = stringResource(contentDescription),
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.2.sp
                     ),
-                    textAlign = TextAlign.Center,
-                )
+            ) {
+                if (icon != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small.scaled),
+                    ) {
+                        Icon(
+                            painter = painterResource(icon),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp.scaled),
+                            tint = Color.Unspecified,
+                        )
+                        Text(
+                            text = stringResource(contentDescription),
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.2.sp,
+                            ),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                } else {
+                    Text(
+                        text = stringResource(contentDescription),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.2.sp,
+                        ),
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
         },
         state = state,
@@ -212,9 +237,9 @@ fun Tooltip(
                 targetValue = if (position == Position.ABOVE) -2f else 2f,
                 animationSpec = infiniteRepeatable(
                     animation = tween(2000),
-                    repeatMode = RepeatMode.Reverse
+                    repeatMode = RepeatMode.Reverse,
                 ),
-                label = "hover"
+                label = "hover",
             )
 
             LaunchedEffect(state.isVisible, state.isHiding) {
@@ -233,7 +258,7 @@ fun Tooltip(
 
             Box(
                 modifier = Modifier
-                    .onGloballyPositioned { 
+                    .onGloballyPositioned {
                         tooltipScreenPosition = it.positionOnScreen()
                         tooltipWidth = it.size.width.toFloat()
                         tooltipHeight = it.size.height.toFloat()
@@ -250,16 +275,16 @@ fun Tooltip(
                         if (isReady) {
                             val anchorCenterX = anchorScreenPosition.x + anchorWidth / 2f
                             val relativeX = (anchorCenterX - tooltipScreenPosition.x) / tooltipWidth
-                            
+
                             val anchorCenterY = anchorScreenPosition.y + anchorHeight / 2f
                             val tooltipCenterY = tooltipScreenPosition.y + tooltipHeight / 2f
                             val isFlipped = tooltipCenterY > anchorCenterY
-                            
+
                             val relativeY = if (isFlipped) 0f else 1f
 
                             this.transformOrigin = TransformOrigin(
                                 pivotFractionX = relativeX.coerceIn(0f, 1f),
-                                pivotFractionY = relativeY
+                                pivotFractionY = relativeY,
                             )
                         } else {
                             this.transformOrigin = when (position) {
@@ -269,8 +294,10 @@ fun Tooltip(
                         }
                     },
                 content = {
-                    val isFlipped = if (isReady) tooltipScreenPosition.y + tooltipHeight / 2f > anchorScreenPosition.y + anchorHeight / 2f else position == Position.ABOVE
-                    val relativeX = if (isReady) ((anchorScreenPosition.x + anchorWidth / 2f) - tooltipScreenPosition.x) / tooltipWidth else 0.5f
+                    val isFlipped =
+                        if (isReady) tooltipScreenPosition.y + tooltipHeight / 2f > anchorScreenPosition.y + anchorHeight / 2f else position == Position.ABOVE
+                    val relativeX =
+                        if (isReady) ((anchorScreenPosition.x + anchorWidth / 2f) - tooltipScreenPosition.x) / tooltipWidth else 0.5f
                     tooltipContent(isFlipped, relativeX.coerceIn(0f, 1f))
                 },
             )
@@ -285,7 +312,7 @@ fun Tooltip(
                     anchorWidth = it.size.width.toFloat()
                     anchorHeight = it.size.height.toFloat()
                 },
-                content = { content() }
+                content = { content() },
             )
         },
     )

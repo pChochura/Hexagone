@@ -2,12 +2,12 @@ package com.pointlessgames.hexagone.game.ui.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,7 +15,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,7 +25,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -62,14 +60,15 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pointlessgames.hexagone.game.model.Perk
+import com.pointlessgames.hexagone.game.model.TipTarget.SHOP_BUTTON
 import com.pointlessgames.hexagone.ui.theme.cornerRadius
 import com.pointlessgames.hexagone.ui.theme.scaled
 import com.pointlessgames.hexagone.ui.theme.spacing
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.add_label
-import hexagone.shared.generated.resources.shop_title
 import hexagone.shared.generated.resources.ic_add
 import hexagone.shared.generated.resources.ic_diamond
+import hexagone.shared.generated.resources.shop_title
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -150,7 +149,10 @@ fun PerkBar(
         Box(
             modifier = modifier
                 .fillMaxHeight()
-                .width(expectedContentSize + WindowInsets.safeDrawing.asPaddingValues().calculateRightPadding(LayoutDirection.Ltr))
+                .width(
+                    expectedContentSize + WindowInsets.safeDrawing.asPaddingValues()
+                        .calculateRightPadding(LayoutDirection.Ltr),
+                )
                 .background(barBackground, shelfShape)
                 .border(spacing.extraTiny, Color.White.copy(alpha = 0.1f), shelfShape)
                 .clip(shelfShape)
@@ -220,7 +222,10 @@ fun PerkBar(
         Box(
             modifier = modifier
                 .fillMaxWidth()
-                .height(expectedContentSize + WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding())
+                .height(
+                    expectedContentSize + WindowInsets.safeDrawing.asPaddingValues()
+                        .calculateBottomPadding(),
+                )
                 .background(barBackground, shelfShape)
                 .border(spacing.extraTiny, Color.White.copy(alpha = 0.1f), shelfShape)
                 .clip(shelfShape)
@@ -277,6 +282,7 @@ fun PerkBar(
                             onClick = onShopClick,
                             isHighlighted = isStuck,
                             size = buttonWidth,
+                            modifier = Modifier.trackTipTarget(SHOP_BUTTON, onTargetPosition),
                         )
                     }
                 }
@@ -366,16 +372,17 @@ private fun ShopActionButton(
             modifier = Modifier
                 .size(width = size, height = size * heightScale)
                 .drawBehind {
-                    val outline = FlatTopHexagonShape().createOutline(this.size, layoutDirection, this)
+                    val outline =
+                        FlatTopHexagonShape().createOutline(this.size, layoutDirection, this)
                     if (outline is androidx.compose.ui.graphics.Outline.Generic) {
                         drawPath(
                             outline.path,
-                            color = perkColor.copy(alpha = if (isHighlighted) glowAlphaState.value else 0.1f)
+                            color = perkColor.copy(alpha = if (isHighlighted) glowAlphaState.value else 0.1f),
                         )
                         drawPath(
                             outline.path,
                             color = if (isHighlighted) perkColor else perkColor.copy(alpha = 0.4f),
-                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx()),
                         )
                     }
                 },

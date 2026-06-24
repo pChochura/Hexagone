@@ -31,13 +31,14 @@ import com.pointlessgames.hexagone.game.model.MissionRefreshState
 import com.pointlessgames.hexagone.game.model.Perk
 import com.pointlessgames.hexagone.game.model.TipId
 import com.pointlessgames.hexagone.game.model.TipId.DAILY
+import com.pointlessgames.hexagone.game.model.TipId.DAILY_LOGIN
 import com.pointlessgames.hexagone.game.model.TipId.MERGE
 import com.pointlessgames.hexagone.game.model.TipId.PERK
 import com.pointlessgames.hexagone.game.model.TipId.POST_GAME
 import com.pointlessgames.hexagone.game.model.TipTarget
 import hexagone.shared.generated.resources.Res
-import hexagone.shared.generated.resources.daily_login_reward_message
-import hexagone.shared.generated.resources.daily_login_reward_title
+import hexagone.shared.generated.resources.daily_login_reward_tooltip
+import hexagone.shared.generated.resources.ic_diamond
 import hexagone.shared.generated.resources.onboarding_nickname_empty
 import hexagone.shared.generated.resources.onboarding_nickname_error
 import hexagone.shared.generated.resources.shop_buy_confirmation_message
@@ -171,6 +172,7 @@ internal class GameViewModel(
                 PERK -> settingsRepository.setHasShownPerkTip(true)
                 POST_GAME -> settingsRepository.setHasShownPostGameTip(true)
                 DAILY -> settingsRepository.setHasShownDailyChallengeTip(true)
+                DAILY_LOGIN -> {}
             }
             _uiState.update { it.copy(activeTip = null) }
         }
@@ -182,14 +184,23 @@ internal class GameViewModel(
             PERK -> TipTarget.PERK_BAR
             POST_GAME -> TipTarget.GAME_OVER_BUTTONS
             DAILY -> TipTarget.SCORE_SECTION
+            DAILY_LOGIN -> TipTarget.SHOP_BUTTON
         }
         _uiState.update {
-            it.copy(activeTip = GameTip(id, when (id) {
-                MERGE -> Res.string.tip_merge_message
-                PERK -> Res.string.tip_perk_message
-                POST_GAME -> Res.string.tip_post_game_message
-                DAILY -> Res.string.tip_daily_message
-            }, targetId))
+            it.copy(
+                activeTip = GameTip(
+                    id = id,
+                    message = when (id) {
+                        MERGE -> Res.string.tip_merge_message
+                        PERK -> Res.string.tip_perk_message
+                        POST_GAME -> Res.string.tip_post_game_message
+                        DAILY -> Res.string.tip_daily_message
+                        DAILY_LOGIN -> Res.string.daily_login_reward_tooltip
+                    },
+                    targetId = targetId,
+                    icon = if (id == DAILY_LOGIN) Res.drawable.ic_diamond else null
+                ),
+            )
         }
     }
 
@@ -238,19 +249,16 @@ internal class GameViewModel(
             if (dateSeed > dailyLoginDateSeed) {
                 isDailyLoginClaimed = true
                 settingsRepository.setDailyLoginDateSeed(dateSeed)
-                
+
                 // Award 1 diamond directly via monetizationRepository
                 inFlightActions.update { it + 1 }
                 monetizationRepository.awardStreakRewards(
-                    com.pointlessgames.hexagone.game.logic.StreakReward(diamonds = 1)
+                    com.pointlessgames.hexagone.game.logic.StreakReward(diamonds = 1),
                 )
                 inFlightActions.update { it - 1 }
-                
-                // Set up the dialog to show
-                activeDialog = Info(
-                    title = Res.string.daily_login_reward_title,
-                    message = Res.string.daily_login_reward_message,
-                )
+
+                // Show the daily reward tooltip instead of a dialog
+                triggerTip(DAILY_LOGIN)
             }
 
             var currentDailyMissionDate = dailyMissionDate
@@ -258,7 +266,8 @@ internal class GameViewModel(
             if (dailyMissionDate != 0L && dailyMissionDate != dateSeed) {
                 if (dailyMissionDate == yesterdaySeed) {
                     if (completedDates.contains(dailyMissionDate)) {
-                        missionRefreshState = MissionRefreshState.MISSIONS_COMPLETED_REFRESH(dailyMissionDate)
+                        missionRefreshState =
+                            MissionRefreshState.MISSIONS_COMPLETED_REFRESH(dailyMissionDate)
                         settingsRepository.setDailyMissionDate(dateSeed)
                         currentDailyMissionDate = dateSeed
                         settingsRepository.clearPersistentCompletedMissionIds()
@@ -284,7 +293,8 @@ internal class GameViewModel(
                 today
             }
 
-            var challengeStreak = DailyMissionUtils.calculateStreak(completedDates, effectiveMissionDate)
+            var challengeStreak =
+                DailyMissionUtils.calculateStreak(completedDates, effectiveMissionDate)
 
             val currentDailyChallenges =
                 DailyChallengeProvider.getChallengesForDate(effectiveMissionDate, challengeStreak)
@@ -420,9 +430,11 @@ internal class GameViewModel(
             recalculateHints()
 
             if (!settingsRepository.getHasShownMergeTip() && _uiState.value.totalMerges == 0) {
-                val mergeHints = engine.findMergeHints(_uiState.value.grid, _uiState.value.preview, 0, null)
+                val mergeHints =
+                    engine.findMergeHints(_uiState.value.grid, _uiState.value.preview, 0, null)
                 val hint = mergeHints.maxByOrNull { it.weight }
-                val cell = hint?.let { h -> _uiState.value.grid.find { it.x == h.x && it.y == h.y } }
+                val cell =
+                    hint?.let { h -> _uiState.value.grid.find { it.x == h.x && it.y == h.y } }
                 if (cell != null) {
                     triggerTip(MERGE, "CELL_${cell.id}")
                 } else {
@@ -463,9 +475,12 @@ internal class GameViewModel(
 
                     _uiState.update {
                         val vouchers = mapOf(
-                            PerkCategory.COMMON to (balances["VCMN"] ?: it.vouchers[PerkCategory.COMMON] ?: 0),
-                            PerkCategory.RARE to (balances["VRARE"] ?: it.vouchers[PerkCategory.RARE] ?: 0),
-                            PerkCategory.LEGENDARY to (balances["VLGD"] ?: it.vouchers[PerkCategory.LEGENDARY] ?: 0),
+                            PerkCategory.COMMON to (balances["VCMN"]
+                                ?: it.vouchers[PerkCategory.COMMON] ?: 0),
+                            PerkCategory.RARE to (balances["VRARE"]
+                                ?: it.vouchers[PerkCategory.RARE] ?: 0),
+                            PerkCategory.LEGENDARY to (balances["VLGD"]
+                                ?: it.vouchers[PerkCategory.LEGENDARY] ?: 0),
                         )
                         it.copy(
                             diamonds = balances["diamonds"] ?: it.diamonds,
@@ -769,11 +784,12 @@ internal class GameViewModel(
                     }
                 } else {
                     val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-                    val effectiveDate = if (it.missionRefreshState is MissionRefreshState.CAN_KEEP) {
-                        today.minus(1, DateTimeUnit.DAY)
-                    } else {
-                        today
-                    }
+                    val effectiveDate =
+                        if (it.missionRefreshState is MissionRefreshState.CAN_KEEP) {
+                            today.minus(1, DateTimeUnit.DAY)
+                        } else {
+                            today
+                        }
                     DailyChallengeProvider.getChallengesForDate(effectiveDate, it.challengeStreak)
                         .map { DailyChallengeProgress(it) }
                 },

@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import com.pointlessgames.hexagone.achievements.GameAchievement
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 
 @Immutable
@@ -152,15 +153,17 @@ data class GameTip(
     val id: TipId,
     val message: StringResource,
     val targetId: String = "",
+    val icon: DrawableResource? = null,
 )
 
-enum class TipId { MERGE, PERK, POST_GAME, DAILY }
+enum class TipId { MERGE, PERK, POST_GAME, DAILY, DAILY_LOGIN }
 object TipTarget {
     const val GRID = "GRID"
     const val PERK_BAR = "PERK_BAR"
     const val SCORE_SECTION = "SCORE_SECTION"
     const val GAME_OVER_BUTTONS = "GAME_OVER_BUTTONS"
     const val DAILY_MISSIONS_BUTTON = "DAILY_MISSIONS_BUTTON"
+    const val SHOP_BUTTON = "SHOP_BUTTON"
 }
 
 @Immutable

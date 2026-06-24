@@ -159,8 +159,7 @@
     <string name="streak_milestone_reward_details">REWARD DETAILS</string>
     <string name="streak_milestone_diamonds">%1$d Diamonds</string>
     <string name="streak_milestone_perks">%1$d %2$s Perk(s)</string>
-    <string name="daily_login_reward_title">DAILY LOGIN REWARD</string>
-    <string name="daily_login_reward_message">You received 1 diamond for opening the app today!</string>
+    <string name="daily_login_reward_tooltip">+1 diamond</string>
     <string name="daily_completion_reward_title">TODAY'S REWARD</string>
     <string name="daily_completion_reward_hint">Complete today's missions to earn this reward!</string>
     <string name="daily_completion_reward_claimed">Reward already claimed today!</string>

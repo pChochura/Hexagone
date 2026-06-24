@@ -49,6 +49,7 @@ fun TipOverlay(
             Tooltip(
                 position = if (tip.targetId.startsWith("PERK_") || tip.targetId == TipTarget.GAME_OVER_BUTTONS) Position.ABOVE else Position.BELOW,
                 contentDescription = tip.message,
+                icon = tip.icon,
                 state = tooltipState,
                 allowUserInput = false,
                 content = { Box(Modifier.fillMaxSize()) },

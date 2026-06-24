@@ -111,6 +111,9 @@ internal class Navigator(private val backStack: NavBackStack<NavKey>) {
         }
         backStack.add(route)
     }
+
+    val currentRoute: Route?
+        get() = backStack.lastOrNull() as? Route
 }
 
 internal val LocalNavigator: ProvidableCompositionLocal<Navigator> =

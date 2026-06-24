@@ -1060,11 +1060,19 @@ internal fun GameScreen(
             },
         )
 
-        TipOverlay(
-            activeTip = activeTip,
-            targetRects = targetRects,
-            onDismiss = viewModel::onDismissTip,
-        )
+        val hasOverlay = uiState.value.activeDialog != null ||
+            isNicknamePopupVisibleState.value ||
+            isPerksBankVisible ||
+            missionRefreshState.value !is MissionRefreshState.NONE ||
+            navigator.currentRoute != Route.Game
+
+        if (!hasOverlay) {
+            TipOverlay(
+                activeTip = activeTip,
+                targetRects = targetRects,
+                onDismiss = viewModel::onDismissTip,
+            )
+        }
 
         MissionRefreshPopup(
             state = missionRefreshState.value,

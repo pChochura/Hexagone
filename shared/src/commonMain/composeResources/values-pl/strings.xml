@@ -135,8 +135,7 @@
     <string name="streak_milestone_reward_details">SZCZEGÓŁY NAGRODY</string>
     <string name="streak_milestone_diamonds">%1$d Diamentów</string>
     <string name="streak_milestone_perks">%1$d %2$s Perk(ów)</string>
-    <string name="daily_login_reward_title">CODZIENNA NAGRODA</string>
-    <string name="daily_login_reward_message">Dostałeś 1 diament za włączenie gry dzisiaj!</string>
+    <string name="daily_login_reward_tooltip">+1 diament</string>
     <string name="daily_completion_reward_title">DZISIEJSZA NAGRODA</string>
     <string name="daily_completion_reward_hint">Zakończ dzisiejsze misje, aby dostać nagrodę!</string>
     <string name="daily_completion_reward_claimed">Nagroda została już dzisiaj odebrana!</string>
