@@ -1,6 +1,15 @@
 # Hexagone ⬡
 
+<img width="1024" height="500" alt="Frame 16 (1)" src="https://github.com/user-attachments/assets/f134398c-b80c-4098-b577-282e29381fdc" />
+
+---
+
 **Hexagone** is a high-polish, strategic hexagonal puzzle game built with **Compose Multiplatform**. It combines deep strategic mechanics, a reactive state-driven architecture, and a vibrant "glowing hardware" aesthetic to deliver a premium puzzle experience.
+
+
+<a href="https://play.google.com/store/apps/details?id=com.pointlessgames.hexagone"><img width="195" height="58" alt="GetItOnGooglePlay_Badge_Web_color_English 1" src="https://github.com/user-attachments/assets/10e2a000-2d60-43d8-88c7-dd210237c18c"/></a>
+<a href="https://apps.apple.com/us/app/hexagone-merge/id6782570490"><img width="175" height="58" alt="Download_on_the_App_Store_Badge_US-UK_RGB_blk_092917 1" src="https://github.com/user-attachments/assets/932a8504-9a48-44d1-b253-83165fbe4200" /></a>
+
 
 ## ✨ Features
 
@@ -14,13 +23,12 @@
 
 ## 📸 Screenshots
 
-| Main Game | Achievements | Daily Challenges |
-| :---: | :---: | :---: |
-| ![Main Game Screen](screenshots/main_screen.png) | ![Achievements List](screenshots/achievements.png) | ![Daily Missions](screenshots/daily_missions.png) |
+<img width="19%" height="1600" alt="Frame 39" src="https://github.com/user-attachments/assets/20ede7f9-0347-4b0d-a57c-df356bf14f9e" />
+<img width="19%" height="1600" alt="Frame 40" src="https://github.com/user-attachments/assets/51157bdd-09b2-4ba7-a487-8cc3f8158fbe" />
+<img width="19%" height="1600" alt="Frame 41" src="https://github.com/user-attachments/assets/6e8a1db9-c06b-4ba9-bdc7-af6bf9a74471" />
+<img width="19%" height="1600" alt="Frame 42" src="https://github.com/user-attachments/assets/71b7cfa9-bb20-431c-8946-38e5767843a1" />
+<img width="19%" height="1600" alt="Frame 43" src="https://github.com/user-attachments/assets/aceb37d2-12af-486b-9c08-e554f37a1d5e" />
 
-| Perk Bar | Level Up | Game Over |
-| :---: | :---: | :---: |
-| ![Perk Bar](screenshots/perk_bar.png) | ![Level Up Overlay](screenshots/level_up.png) | ![Game Over Summary](screenshots/game_over.png) |
 
 ## 🕹️ Core Mechanics
 
