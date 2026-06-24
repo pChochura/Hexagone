@@ -98,6 +98,7 @@ internal fun GameGridOverlay(
     onCellTouchUp: () -> Unit,
     onCellClick: (HexagonCell) -> Unit,
     onMergeAnimationFinished: () -> Unit,
+    onTargetPosition: (String, androidx.compose.ui.geometry.Rect) -> Unit = { _, _ -> },
     isSwiping: () -> Boolean,
 ) {
     // Providers used in DrawModifiers or asynchronous callbacks get latest state automatically.
@@ -648,6 +649,7 @@ internal fun GameGridOverlay(
                     itemHeight = itemHeight,
                     onAnimationFinishedLambda = onAnimationFinishedLambda,
                     spacing = spacing,
+                    onTargetPosition = onTargetPosition,
                 )
             }
 
@@ -681,6 +683,7 @@ private fun HexagonGridCells(
     itemHeight: Float,
     onAnimationFinishedLambda: () -> Unit,
     spacing: com.pointlessgames.hexagone.ui.theme.Spacing,
+    onTargetPosition: (String, androidx.compose.ui.geometry.Rect) -> Unit,
 ) {
     val cellIds = remember { androidx.compose.runtime.derivedStateOf { gridStateProvider().map { it.id } } }
     Box {
@@ -703,6 +706,7 @@ private fun HexagonGridCells(
                     itemHeight = itemHeight,
                     onAnimationFinished = onAnimationFinishedLambda,
                     spacing = spacing,
+                    modifier = Modifier.trackTipTarget("CELL_$cellId", onTargetPosition),
                 )
             }
         }

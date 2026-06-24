@@ -106,7 +106,7 @@ fun ScoreSection(
     onAchievementsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onDailyChallengeClick: () -> Unit = {},
-    onTargetPosition: (TipTarget, Rect) -> Unit = { _, _ -> },
+    onTargetPosition: (String, Rect) -> Unit = { _, _ -> },
 ) {
     val playSound = com.pointlessgames.hexagone.utils.rememberPlayButtonSound()
 
@@ -550,7 +550,7 @@ private fun DailyChallengeButtonWrapper(
     isDailyChallengeCompletedProvider: () -> Boolean,
     onDailyChallengeClick: () -> Unit,
     iconSize: androidx.compose.ui.unit.Dp,
-    onTargetPosition: (TipTarget, Rect) -> Unit
+    onTargetPosition: (String, Rect) -> Unit
 ) {
     val isCompleted = isDailyChallengeCompletedProvider()
     HexagonIconButton(

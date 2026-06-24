@@ -84,6 +84,7 @@ fun PerkBar(
     onVoucherClick: () -> Unit = {},
     onShopClick: () -> Unit,
     isVertical: Boolean = false,
+    onTargetPosition: (String, androidx.compose.ui.geometry.Rect) -> Unit = { _, _ -> },
 ) {
     val collectedPerks = collectedPerksProvider()
     val activePerk = activePerkProvider()
@@ -185,7 +186,7 @@ fun PerkBar(
                         modifier = Modifier.graphicsLayer {
                             scaleX = scale
                             scaleY = scale
-                        },
+                        }.trackTipTarget("PERK_${distinctPerks.indexOf(perk)}", onTargetPosition),
                     )
                 }
 
@@ -255,7 +256,7 @@ fun PerkBar(
                         modifier = Modifier.graphicsLayer {
                             scaleX = scale
                             scaleY = scale
-                        },
+                        }.trackTipTarget("PERK_${distinctPerks.indexOf(perk)}", onTargetPosition),
                     )
                 }
 

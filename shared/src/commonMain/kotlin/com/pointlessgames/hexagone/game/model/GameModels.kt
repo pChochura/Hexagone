@@ -151,11 +151,17 @@ sealed interface HexDialogState {
 data class GameTip(
     val id: TipId,
     val message: StringResource,
-    val targetType: TipTarget = TipTarget.NONE,
+    val targetId: String = "",
 )
 
 enum class TipId { MERGE, PERK, POST_GAME, DAILY }
-enum class TipTarget { GRID, PERK_BAR, SCORE_SECTION, GAME_OVER_BUTTONS, DAILY_MISSIONS_BUTTON, NONE }
+object TipTarget {
+    const val GRID = "GRID"
+    const val PERK_BAR = "PERK_BAR"
+    const val SCORE_SECTION = "SCORE_SECTION"
+    const val GAME_OVER_BUTTONS = "GAME_OVER_BUTTONS"
+    const val DAILY_MISSIONS_BUTTON = "DAILY_MISSIONS_BUTTON"
+}
 
 @Immutable
 data class RankingInfo(

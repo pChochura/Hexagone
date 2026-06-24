@@ -297,7 +297,7 @@ internal fun GameScreen(
     val selectedCellIdState = remember(uiState) {
         uiState.map { it.selectedCellId }.distinctUntilChanged()
     }.collectAsState(viewModel.uiState.value.selectedCellId)
-    val targetRects = remember { mutableStateMapOf<TipTarget, Rect>() }
+    val targetRects = remember { mutableStateMapOf<String, Rect>() }
 
     val tierRewardQueue = remember { mutableStateListOf<Pair<ComboTier, Perk>>() }
     val challengeRewardQueue = remember { mutableStateListOf<GameEffect.DailyChallengeComplete>() }
@@ -692,6 +692,11 @@ internal fun GameScreen(
                             } else onCellClick,
                             onMergeAnimationFinished = onMergeAnimationFinished,
                             isSwiping = { swipeOffset.value > 0f || isAnyOverlayVisible },
+                            onTargetPosition = { target, rect ->
+                                if (swipeOffset.value == 0f) {
+                                    targetRects[target] = rect
+                                }
+                            },
                             modifier = Modifier
                                 .fillMaxSize()
                                 .trackTipTarget(TipTarget.GRID) { target, rect ->
@@ -787,6 +792,11 @@ internal fun GameScreen(
                             } else onCellClick,
                             onMergeAnimationFinished = onMergeAnimationFinished,
                             isSwiping = { swipeOffset.value > 0f || isAnyOverlayVisible },
+                            onTargetPosition = { target, rect ->
+                                if (swipeOffset.value == 0f) {
+                                    targetRects[target] = rect
+                                }
+                            },
                             modifier = Modifier
                                 .weight(1f, fill = false)
                                 .fillMaxWidth()
@@ -891,6 +901,11 @@ internal fun GameScreen(
                                 onVoucherClick = onAddPerkClick,
                                 onShopClick = onShopClick,
                                 isVertical = true,
+                                onTargetPosition = { target, rect ->
+                                    if (swipeOffset.value == 0f) {
+                                        targetRects[target] = rect
+                                    }
+                                },
                                 modifier = Modifier
                                     .fillMaxHeight()
                                     .graphicsLayer { clip = false }
@@ -917,6 +932,11 @@ internal fun GameScreen(
                                 onVoucherClick = onAddPerkClick,
                                 onShopClick = onShopClick,
                                 isVertical = false,
+                                onTargetPosition = { target, rect ->
+                                    if (swipeOffset.value == 0f) {
+                                        targetRects[target] = rect
+                                    }
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .graphicsLayer { clip = false }

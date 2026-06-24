@@ -34,10 +34,7 @@ import com.pointlessgames.hexagone.game.model.TipId.DAILY
 import com.pointlessgames.hexagone.game.model.TipId.MERGE
 import com.pointlessgames.hexagone.game.model.TipId.PERK
 import com.pointlessgames.hexagone.game.model.TipId.POST_GAME
-import com.pointlessgames.hexagone.game.model.TipTarget.GAME_OVER_BUTTONS
-import com.pointlessgames.hexagone.game.model.TipTarget.GRID
-import com.pointlessgames.hexagone.game.model.TipTarget.PERK_BAR
-import com.pointlessgames.hexagone.game.model.TipTarget.SCORE_SECTION
+import com.pointlessgames.hexagone.game.model.TipTarget
 import hexagone.shared.generated.resources.Res
 import hexagone.shared.generated.resources.daily_login_reward_message
 import hexagone.shared.generated.resources.daily_login_reward_title
@@ -179,15 +176,20 @@ internal class GameViewModel(
         }
     }
 
-    private fun triggerTip(id: TipId) {
-        val tipData = when (id) {
-            MERGE -> Res.string.tip_merge_message to GRID
-            PERK -> Res.string.tip_perk_message to PERK_BAR
-            POST_GAME -> Res.string.tip_post_game_message to GAME_OVER_BUTTONS
-            DAILY -> Res.string.tip_daily_message to SCORE_SECTION
+    private fun triggerTip(id: TipId, specificTargetId: String? = null) {
+        val targetId = specificTargetId ?: when (id) {
+            MERGE -> TipTarget.GRID
+            PERK -> TipTarget.PERK_BAR
+            POST_GAME -> TipTarget.GAME_OVER_BUTTONS
+            DAILY -> TipTarget.SCORE_SECTION
         }
         _uiState.update {
-            it.copy(activeTip = GameTip(id, tipData.first, tipData.second))
+            it.copy(activeTip = GameTip(id, when (id) {
+                MERGE -> Res.string.tip_merge_message
+                PERK -> Res.string.tip_perk_message
+                POST_GAME -> Res.string.tip_post_game_message
+                DAILY -> Res.string.tip_daily_message
+            }, targetId))
         }
     }
 
@@ -418,7 +420,14 @@ internal class GameViewModel(
             recalculateHints()
 
             if (!settingsRepository.getHasShownMergeTip() && _uiState.value.totalMerges == 0) {
-                triggerTip(MERGE)
+                val mergeHints = engine.findMergeHints(_uiState.value.grid, _uiState.value.preview, 0, null)
+                val hint = mergeHints.maxByOrNull { it.weight }
+                val cell = hint?.let { h -> _uiState.value.grid.find { it.x == h.x && it.y == h.y } }
+                if (cell != null) {
+                    triggerTip(MERGE, "CELL_${cell.id}")
+                } else {
+                    triggerTip(MERGE)
+                }
             } else if (!settingsRepository.getHasShownDailyChallengeTip()) {
                 triggerTip(DAILY)
             }
@@ -638,7 +647,7 @@ internal class GameViewModel(
         }
         viewModelScope.launch {
             if (!settingsRepository.getHasShownPerkTip()) {
-                triggerTip(PERK)
+                triggerTip(PERK, "PERK_0")
             }
         }
         if (_uiState.value.collectedPerks.size >= 10) {

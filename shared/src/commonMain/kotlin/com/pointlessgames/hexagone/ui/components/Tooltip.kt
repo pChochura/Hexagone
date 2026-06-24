@@ -74,35 +74,84 @@ fun Tooltip(
 ) {
     Tooltip(
         position = position,
-        tooltipContent = @Composable {
+        tooltipContent = { isFlipped, relativeX ->
             val primaryColor = MaterialTheme.colorScheme.primary
+            val surfaceColor = MaterialTheme.colorScheme.surface
             val cornerRadius = MaterialTheme.cornerRadius.small
+            val density = LocalDensity.current
+            val arrowWidth = with(density) { 16.dp.toPx() }
+            val arrowHeight = with(density) { 8.dp.toPx() }
+
             Box(
                 modifier = Modifier
                     .widthIn(max = 240.dp)
                     .drawBehind {
                         val strokeWidth = 2.dp.toPx()
-                        drawRoundRect(
+                        val arrowX = (size.width * relativeX).coerceIn(
+                            cornerRadius.toPx() + arrowWidth / 2,
+                            size.width - cornerRadius.toPx() - arrowWidth / 2
+                        )
+                        
+                        val path = androidx.compose.ui.graphics.Path().apply {
+                            val rectRadius = cornerRadius.toPx()
+                            val topY = if (isFlipped) arrowHeight else 0f
+                            val bottomY = size.height - if (isFlipped) 0f else arrowHeight
+                            val leftX = 0f
+                            val rightX = size.width
+                            
+                            moveTo(leftX + rectRadius, topY)
+                            
+                            if (isFlipped) {
+                                lineTo(arrowX - arrowWidth / 2, topY)
+                                lineTo(arrowX, 0f)
+                                lineTo(arrowX + arrowWidth / 2, topY)
+                            }
+                            lineTo(rightX - rectRadius, topY)
+                            quadraticTo(rightX, topY, rightX, topY + rectRadius)
+                            
+                            lineTo(rightX, bottomY - rectRadius)
+                            quadraticTo(rightX, bottomY, rightX - rectRadius, bottomY)
+                            
+                            if (!isFlipped) {
+                                lineTo(arrowX + arrowWidth / 2, bottomY)
+                                lineTo(arrowX, size.height)
+                                lineTo(arrowX - arrowWidth / 2, bottomY)
+                            }
+                            lineTo(leftX + rectRadius, bottomY)
+                            quadraticTo(leftX, bottomY, leftX, bottomY - rectRadius)
+                            
+                            lineTo(leftX, topY + rectRadius)
+                            quadraticTo(leftX, topY, leftX + rectRadius, topY)
+                            close()
+                        }
+                        
+                        drawPath(
+                            path = path,
                             brush = Brush.verticalGradient(
                                 listOf(primaryColor.copy(alpha = 0.2f), Color.Transparent)
                             ),
-                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx()),
                             style = Stroke(width = strokeWidth * 2f)
                         )
+                        
+                        drawPath(
+                            path = path,
+                            color = surfaceColor.copy(alpha = 0.95f),
+                        )
+                        
+                        drawPath(
+                            path = path,
+                            brush = Brush.verticalGradient(
+                                listOf(
+                                    primaryColor.copy(alpha = 0.5f),
+                                    primaryColor.copy(alpha = 0.1f)
+                                )
+                            ),
+                            style = Stroke(width = 1.dp.toPx())
+                        )
                     }
-                    .background(
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                        shape = RoundedCornerShape(cornerRadius)
-                    )
-                    .border(
-                        width = 1.dp,
-                        brush = Brush.verticalGradient(
-                            listOf(
-                                primaryColor.copy(alpha = 0.5f),
-                                primaryColor.copy(alpha = 0.1f)
-                            )
-                        ),
-                        shape = RoundedCornerShape(cornerRadius)
+                    .padding(
+                        top = if (isFlipped) 8.dp else 0.dp,
+                        bottom = if (isFlipped) 0.dp else 8.dp
                     )
                     .padding(
                         horizontal = MaterialTheme.spacing.medium,
@@ -115,7 +164,6 @@ fun Tooltip(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.2.sp
                     ),
-                    color = Color.White,
                     textAlign = TextAlign.Center,
                 )
             }
@@ -131,7 +179,7 @@ fun Tooltip(
 @Composable
 fun Tooltip(
     position: Position,
-    tooltipContent: @Composable BoxScope.() -> Unit,
+    tooltipContent: @Composable BoxScope.(isFlipped: Boolean, relativeX: Float) -> Unit,
     modifier: Modifier = Modifier,
     allowUserInput: Boolean = true,
     state: TooltipState = rememberTooltipState(isPersistent = true),
@@ -220,7 +268,11 @@ fun Tooltip(
                             }
                         }
                     },
-                content = tooltipContent,
+                content = {
+                    val isFlipped = if (isReady) tooltipScreenPosition.y + tooltipHeight / 2f > anchorScreenPosition.y + anchorHeight / 2f else position == Position.ABOVE
+                    val relativeX = if (isReady) ((anchorScreenPosition.x + anchorWidth / 2f) - tooltipScreenPosition.x) / tooltipWidth else 0.5f
+                    tooltipContent(isFlipped, relativeX.coerceIn(0f, 1f))
+                },
             )
         },
         state = state,
