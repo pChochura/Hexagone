@@ -160,7 +160,6 @@ enum class TipId { MERGE, PERK, POST_GAME, DAILY, DAILY_LOGIN }
 object TipTarget {
     const val GRID = "GRID"
     const val PERK_BAR = "PERK_BAR"
-    const val SCORE_SECTION = "SCORE_SECTION"
     const val GAME_OVER_BUTTONS = "GAME_OVER_BUTTONS"
     const val DAILY_MISSIONS_BUTTON = "DAILY_MISSIONS_BUTTON"
     const val SHOP_BUTTON = "SHOP_BUTTON"

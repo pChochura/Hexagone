@@ -189,7 +189,7 @@ internal class GameViewModel(
             MERGE -> TipTarget.GRID
             PERK -> TipTarget.PERK_BAR
             POST_GAME -> TipTarget.GAME_OVER_BUTTONS
-            DAILY -> TipTarget.SCORE_SECTION
+            DAILY -> TipTarget.DAILY_MISSIONS_BUTTON
             DAILY_LOGIN -> TipTarget.SHOP_BUTTON
         }
         _uiState.update {

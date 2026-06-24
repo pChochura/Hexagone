@@ -32,7 +32,6 @@ buildkonfig {
         buildConfigField(FieldSpec.Type.STRING, "SUPABASE_KEY", supabaseKey)
         buildConfigField(FieldSpec.Type.STRING, "REVENUECAT_ANDROID_KEY", revenueCatAndroidKey)
         buildConfigField(FieldSpec.Type.STRING, "REVENUECAT_IOS_KEY", revenueCatIosKey)
-        buildConfigField(FieldSpec.Type.BOOLEAN, "IS_DEBUG", "true")
     }
 }
 

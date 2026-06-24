@@ -650,11 +650,6 @@ internal fun GameScreen(
                                         targetRects[target] = rect
                                     }
                                 },
-                                modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
-                                    if (swipeOffset.value == 0f) {
-                                        targetRects[target] = rect
-                                    }
-                                },
                             )
                         }
                     }
@@ -753,11 +748,6 @@ internal fun GameScreen(
                                 onDailyChallengeClick = { navigator.navigateTo(Route.DailyMissions) },
                                 isDailyChallengeCompletedProvider = isDailyChallengeCompletedProvider,
                                 onTargetPosition = { target, rect ->
-                                    if (swipeOffset.value == 0f) {
-                                        targetRects[target] = rect
-                                    }
-                                },
-                                modifier = Modifier.trackTipTarget(TipTarget.SCORE_SECTION) { target, rect ->
                                     if (swipeOffset.value == 0f) {
                                         targetRects[target] = rect
                                     }
