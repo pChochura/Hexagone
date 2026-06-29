@@ -432,24 +432,7 @@ data class MergeStep(
     val baseScore: Int = 0,
 )
 
-@Serializable
-enum class Perk(val baseWeight: Int) {
-    UNDO(baseWeight = 100),
-    MOVE_TILE(baseWeight = 80),
-    REMOVE_TILE(baseWeight = 80),
-    ADVANCE_QUEUE(baseWeight = 50),
-    SWAP_TILES(baseWeight = 50),
-    FUSION(baseWeight = 20),
-    CHAIN_MERGE(baseWeight = 20),
-    DUPLICATE_TILE(baseWeight = 50),
-    SKIP_SPAWN(baseWeight = 50),
-    INCREMENT_TILE(baseWeight = 80),
-    FREEZE_TILE(baseWeight = 60),
-    PATH_MERGE(baseWeight = 10),
-    MIMIC(baseWeight = 25);
 
-    val isLegendary: Boolean get() = baseWeight <= 20
-}
 
 @Immutable
 data class MergeHint(

@@ -25,6 +25,28 @@ internal class ActionDelegate(
     private val onUpdateLevel: () -> Unit,
     private val onHoveredMergeChanged: (MergeTransition?) -> Unit,
 ) {
+    
+    fun onEmptySpaceTouchDown(x: Int, y: Int) {
+        val state = uiState.value
+        if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
+
+        val mergeResult = state.activePerk?.onEmptySpaceTouchDown(x, y, state, engine) ?: run {
+            val (m, _) = engine.calculateMerge(x, y, state.grid, 0)
+            m?.copy(resultId = "preview_merge")
+        }
+        val finalResult = mergeResult?.copy(baseScore = calculatePotentialScore(mergeResult, state))
+        onHoveredMergeChanged(finalResult)
+    }
+
+    fun onCellTouchDown(cell: HexagonCell) {
+        val state = uiState.value
+        if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
+
+        val mergeResult = state.activePerk?.onCellTouchDown(cell, state, engine)
+        val finalResult = mergeResult?.copy(baseScore = calculatePotentialScore(mergeResult, state))
+        onHoveredMergeChanged(finalResult)
+    }
+
     fun onEmptySpaceClicked(x: Int, y: Int) {
         val state = uiState.value
         if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
@@ -33,380 +55,26 @@ internal class ActionDelegate(
         achievementDelegate.onNonUndoAction()
 
         val perk = state.activePerk
-        val selectedId = state.selectedCellId
-        val previewAtPos = state.preview.find { it.x == x && it.y == y }
-
-        if (perk == Perk.PATH_MERGE) return
-        val isTileOnlyPerk =
-            perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES || perk == Perk.MIMIC
-        if (isTileOnlyPerk && previewAtPos == null) return
-
-        if (perk != null && perk != Perk.FUSION && perk != Perk.CHAIN_MERGE && perk != Perk.SKIP_SPAWN && previewAtPos != null) {
-            if (selectedId == previewAtPos.id) {
-                uiState.update { it.copy(selectedCellId = null) }
-                return
-            }
-            if (selectedId == null || perk == Perk.REMOVE_TILE || (perk == Perk.SWAP_TILES && selectedId != previewAtPos.id)) {
-                onPreviewClicked(previewAtPos)
-                return
-            }
+        val actionResult = perk?.onEmptySpaceClicked(x, y, state, engine) ?: run {
+            if (state.grid.any { it.x == x && it.y == y }) return
+            val (merge, nextIdCounter) = engine.calculateMerge(x, y, state.grid, state.cellIdCounter)
+            if (merge != null) com.pointlessgames.hexagone.game.model.PerkActionResult.TriggerMerge(merge) else com.pointlessgames.hexagone.game.model.PerkActionResult.None
         }
-
-        if (perk == Perk.MOVE_TILE && selectedId != null) {
-            moveTile(selectedId, x, y)
-            return
-        }
-
-        if (perk == Perk.DUPLICATE_TILE && selectedId != null) {
-            duplicateTile(selectedId, x, y)
-            return
-        }
-
-        if (state.grid.any { it.x == x && it.y == y }) return
-
-        val (merge, nextIdCounter) = if (perk == Perk.FUSION) {
-            engine.calculateFusion(x, y, state.grid, state.cellIdCounter)
-        } else {
-            engine.calculateMerge(x, y, state.grid, state.cellIdCounter)
-        }
-
-        if (merge != null) {
-            if (perk != null) achievementDelegate.checkPerkAchievements(perk, state)
-            challengeDelegate.onMovePerformed()
-            stateDelegate.saveState()
-            uiState.update { currentState ->
-                val firstStep = merge.steps.first()
-                val isPathMerge = merge.resultId.contains("path_merge")
-                val nextComboValue = Scoring.getNextStepCombo(currentState.combo, 0, isPathMerge)
-                val stepScore = Scoring.getStepScore(firstStep.baseScore, nextComboValue)
-
-                val stateAfterMergeStart = currentState.copy(
-                    grid = currentState.grid.map { cell ->
-                        if (firstStep.mergingCells.any { it.id == cell.id }) cell.copy(
-                            x = x,
-                            y = y,
-                        ) else cell
-                    },
-                    preview = currentState.preview.filterNot { it.x == x && it.y == y },
-                    pendingMerge = merge.copy(
-                        isPerkAssisted = perk != null,
-                        startingCombo = currentState.combo
-                    ),
-                    activeMergeStepIndex = 0,
-                    pendingMergeScore = stepScore,
-                    combo = nextComboValue,
-                    isBusy = true,
-                    cellIdCounter = nextIdCounter
-                )
-                if (perk == Perk.FUSION) {
-                    stateAfterMergeStart.consumePerk(Perk.FUSION)
-                } else {
-                    stateAfterMergeStart
-                }
-            }
-        }
+        processPerkActionResult(actionResult, perk)
     }
 
-    fun onEmptySpaceTouchDown(x: Int, y: Int) {
+    fun onCellClicked(cell: HexagonCell) {
         val state = uiState.value
         if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
 
-        val perk = state.activePerk
-        val selectedId = state.selectedCellId
-        val ghostAtPos = state.preview.find { it.x == x && it.y == y }
-
-        if (perk != null && selectedId != null && ghostAtPos?.id == selectedId) return
-
-        if (perk == Perk.PATH_MERGE) return
-        val isTileOnlyPerk =
-            perk == Perk.REMOVE_TILE || perk == Perk.INCREMENT_TILE || perk == Perk.SWAP_TILES || perk == Perk.MIMIC || perk == Perk.FREEZE_TILE
-        if (isTileOnlyPerk && ghostAtPos == null) return
-
-        val mergeResult = when (perk) {
-            Perk.REMOVE_TILE -> {
-                if (ghostAtPos != null) {
-                    val m = MergeTransition(
-                        targetX = x,
-                        targetY = y,
-                        steps = emptyList(),
-                        finalValue = 0,
-                        totalCells = 1,
-                        uniqueGroups = 0,
-                        baseScore = ghostAtPos.value * 10,
-                        resultId = "preview_remove_queue",
-                        isRemoval = true,
-                        participatingIds = setOf(ghostAtPos.id),
-                    )
-                    m.copy(baseScore = calculatePotentialScore(m, state))
-                } else null
-            }
-
-            Perk.FREEZE_TILE -> null
-
-            Perk.INCREMENT_TILE -> {
-                if (ghostAtPos != null && !ghostAtPos.isMimic) {
-                    val nextValue = ghostAtPos.value + 1
-                    val m = MergeTransition(
-                        targetX = x,
-                        targetY = y,
-                        steps = emptyList(),
-                        finalValue = 0,
-                        totalCells = 1,
-                        uniqueGroups = 0,
-                        baseScore = 0,
-                        resultId = "preview_increment_queue",
-                        participatingIds = setOf(ghostAtPos.id),
-                        previewValues = mapOf(ghostAtPos.id to nextValue),
-                    )
-                    m.copy(baseScore = calculatePotentialScore(m, state))
-                } else null
-            }
-
-            Perk.PATH_MERGE -> {
-                if (ghostAtPos?.isMimic == true) null
-                else {
-                    val (m, _) = engine.calculatePathMerge(x, y, state.grid, 0)
-                    m?.let {
-                        val nextId = "preview_path_merge"
-                        it.copy(
-                            resultId = nextId,
-                            forceSolidIds = setOf(nextId),
-                            previewValues = ghostAtPos?.let { g -> mapOf(g.id to it.finalValue) }
-                                ?: emptyMap(),
-                            baseScore = calculatePotentialScore(it, state),
-                            isPerkAssisted = true
-                        )
-                    }
-                }
-            }
-
-            Perk.MOVE_TILE, Perk.DUPLICATE_TILE -> {
-                if (selectedId != null && (ghostAtPos == null || selectedId != ghostAtPos.id)) {
-                    val source = getGameItem(selectedId)
-                    if (source != null) {
-                        val resultId = when {
-                            perk == Perk.MOVE_TILE -> "preview_move"
-                            source.isMimic -> "preview_duplicate_mimic"
-                            else -> "preview_duplicate"
-                        }
-                        val swaps =
-                            if (perk == Perk.MOVE_TILE) mapOf(selectedId to (x to y)) else null
-                        val isSourceSolid = !source.isGhost
-                        val forceSolidIds = if (isSourceSolid) setOf(resultId) else emptySet()
-                        val forceGhostAtSource =
-                            if (perk == Perk.MOVE_TILE && source.isGhost) setOf(selectedId) else emptySet()
-
-                        MergeTransition(
-                            targetX = x,
-                            targetY = y,
-                            steps = emptyList(),
-                            finalValue = source.value,
-                            totalCells = 1,
-                            uniqueGroups = 0,
-                            baseScore = 0,
-                            resultId = resultId,
-                            participatingIds = setOf(selectedId) + listOfNotNull(ghostAtPos?.id),
-                            previewSwaps = swaps,
-                            forceSolidIds = forceSolidIds + forceGhostAtSource,
-                        )
-                    } else null
-                } else null
-            }
-
-            Perk.SWAP_TILES -> {
-                if (selectedId != null && ghostAtPos != null && selectedId != ghostAtPos.id) {
-                    val source = getGameItem(selectedId)
-                    val target = ghostAtPos
-                    if (source != null) {
-                        val swaps = mapOf(
-                            source.id to (target.x to target.y),
-                            target.id to (source.x to source.y),
-                        )
-
-                        MergeTransition(
-                            targetX = x,
-                            targetY = y,
-                            steps = emptyList(),
-                            finalValue = 0,
-                            totalCells = 1,
-                            uniqueGroups = 0,
-                            baseScore = 0,
-                            resultId = "preview_swap",
-                            previewSwaps = swaps,
-                            participatingIds = setOf(source.id, target.id),
-                        )
-                    } else null
-                } else null
-            }
-
-            Perk.FUSION -> {
-                val (m, _) = engine.calculateFusion(x, y, state.grid, 0)
-                m?.let {
-                    it.copy(
-                        baseScore = calculatePotentialScore(it, state),
-                        resultId = "preview_fusion",
-                    )
-                }
-            }
-
-            Perk.MIMIC -> {
-                if (ghostAtPos != null && !ghostAtPos.isMimic) {
-                    MergeTransition(
-                        targetX = x,
-                        targetY = y,
-                        steps = emptyList(),
-                        finalValue = ghostAtPos.value,
-                        totalCells = 1,
-                        uniqueGroups = 0,
-                        baseScore = 0,
-                        resultId = "preview_mimic",
-                        participatingIds = setOf(ghostAtPos.id),
-                    )
-                } else null
-            }
-
-            null, Perk.CHAIN_MERGE, Perk.SKIP_SPAWN -> {
-                val (m, _) = if (perk == Perk.CHAIN_MERGE) {
-                    engine.simulateChainMerge(x, y, state.grid, state.combo) to 0
-                } else {
-                    engine.calculateMerge(x, y, state.grid, 0)
-                }
-                m?.let {
-                    it.copy(
-                        baseScore = calculatePotentialScore(it, state),
-                        resultId = "preview_merge",
-                    )
-                }
-            }
-
-            else -> null
+        onHoveredMergeChanged(null)
+        if (state.activePerk != null) {
+            challengeDelegate.onPerkUsed(state.activePerk)
         }
-        onHoveredMergeChanged(mergeResult)
-    }
-
-    fun onCellTouchDown(cell: HexagonCell) {
-        val state = uiState.value
-        if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
 
         val perk = state.activePerk
-        val selectedId = state.selectedCellId
-
-        if (perk != null && selectedId == cell.id) return
-
-        val mergeResult = when (perk) {
-            Perk.PATH_MERGE -> {
-                if (cell.isMimic) null
-                else {
-                    val (m, _) = engine.calculatePathMerge(cell.x, cell.y, state.grid, 0)
-                    m?.let {
-                        val nextId = "preview_path_merge"
-                        it.copy(
-                            resultId = nextId,
-                            forceSolidIds = setOf(nextId),
-                            previewValues = mapOf(cell.id to it.finalValue),
-                            baseScore = calculatePotentialScore(it, state),
-                            isPerkAssisted = true
-                        )
-                    }
-                }
-            }
-
-            Perk.MIMIC -> {
-                if (!cell.isMimic) {
-                    MergeTransition(
-                        targetX = cell.x,
-                        targetY = cell.y,
-                        steps = emptyList(),
-                        finalValue = cell.value,
-                        totalCells = 1,
-                        uniqueGroups = 0,
-                        baseScore = 0,
-                        resultId = "preview_mimic",
-                        participatingIds = setOf(cell.id),
-                    )
-                } else null
-            }
-
-            Perk.REMOVE_TILE -> {
-                val m = MergeTransition(
-                    targetX = cell.x,
-                    targetY = cell.y,
-                    steps = emptyList(),
-                    finalValue = 0,
-                    totalCells = 1,
-                    uniqueGroups = 0,
-                    baseScore = cell.value * 10,
-                    resultId = "preview_remove",
-                    isRemoval = true,
-                    participatingIds = setOf(cell.id),
-                )
-                m.copy(baseScore = calculatePotentialScore(m, state))
-            }
-
-            Perk.FREEZE_TILE -> {
-                MergeTransition(
-                    targetX = cell.x,
-                    targetY = cell.y,
-                    steps = emptyList(),
-                    finalValue = 0,
-                    totalCells = 1,
-                    uniqueGroups = 0,
-                    baseScore = 0,
-                    resultId = "preview_freeze",
-                    participatingIds = setOf(cell.id),
-                    previewFrozenIds = setOf(cell.id)
-                )
-            }
-
-            Perk.INCREMENT_TILE -> {
-                if (!cell.isMimic) {
-                    val nextValue = cell.value + 1
-                    val m = MergeTransition(
-                        targetX = cell.x,
-                        targetY = cell.y,
-                        steps = emptyList(),
-                        finalValue = 0,
-                        totalCells = 1,
-                        uniqueGroups = 0,
-                        baseScore = 0,
-                        resultId = "preview_increment",
-                        participatingIds = setOf(cell.id),
-                        previewValues = mapOf(cell.id to nextValue),
-                    )
-                    m.copy(baseScore = calculatePotentialScore(m, state))
-                } else null
-            }
-
-            Perk.SWAP_TILES -> {
-                if (selectedId != null && selectedId != cell.id) {
-                    val source = getGameItem(selectedId)
-                    val target = cell
-                    if (source != null) {
-                        val swaps = mapOf(
-                            source.id to (target.x to target.y),
-                            target.id to (source.x to source.y),
-                        )
-
-                        MergeTransition(
-                            targetX = cell.x,
-                            targetY = cell.y,
-                            steps = emptyList(),
-                            finalValue = 0,
-                            totalCells = 1,
-                            uniqueGroups = 0,
-                            baseScore = 0,
-                            resultId = "preview_swap",
-                            previewSwaps = swaps,
-                            participatingIds = setOf(source.id, target.id),
-                        )
-                    } else null
-                } else null
-            }
-
-            null -> null
-            else -> null
-        }
-        onHoveredMergeChanged(mergeResult)
+        val actionResult = perk?.onCellClicked(cell, state, engine) ?: com.pointlessgames.hexagone.game.model.PerkActionResult.None
+        processPerkActionResult(actionResult, perk)
     }
 
     fun onPreviewClicked(preview: PreviewCell) {
@@ -417,486 +85,193 @@ internal class ActionDelegate(
             challengeDelegate.onPerkUsed(state.activePerk)
         }
 
-        when (val perk = state.activePerk) {
-            Perk.MOVE_TILE -> {
-                val selectedId = state.selectedCellId
-                if (selectedId != null && selectedId != preview.id) {
-                    moveTile(selectedId, preview.x, preview.y)
-                } else {
-                    uiState.update { it.copy(selectedCellId = preview.id) }
-                }
-            }
+        val perk = state.activePerk
+        val actionResult = perk?.onPreviewClicked(preview, state, engine) ?: com.pointlessgames.hexagone.game.model.PerkActionResult.None
+        processPerkActionResult(actionResult, perk)
+    }
 
-            Perk.DUPLICATE_TILE -> {
-                uiState.update { it.copy(selectedCellId = if (it.selectedCellId == preview.id) null else preview.id) }
+    private fun processPerkActionResult(result: com.pointlessgames.hexagone.game.model.PerkActionResult, perk: Perk?) {
+        when (result) {
+            is com.pointlessgames.hexagone.game.model.PerkActionResult.None -> return
+            is com.pointlessgames.hexagone.game.model.PerkActionResult.SelectCell -> {
+                uiState.update { it.copy(selectedCellId = result.cellId) }
             }
-
-            Perk.REMOVE_TILE -> {
+            is com.pointlessgames.hexagone.game.model.PerkActionResult.MoveTile -> moveTile(result.sourceId, result.targetX, result.targetY)
+            is com.pointlessgames.hexagone.game.model.PerkActionResult.DuplicateTile -> duplicateTile(result.sourceId, result.targetX, result.targetY)
+            is com.pointlessgames.hexagone.game.model.PerkActionResult.SwapTiles -> {
                 stateDelegate.saveState()
-                var result: ScoreResult? = null
-                var targetPos: Pair<Int, Int>? = null
-                var mergeReport: MergeTransition? = null
-
-                uiState.update { currentState ->
-                    val previewToTarget = currentState.preview.find { it.id == preview.id }
-                        ?: return@update currentState
-                    targetPos = previewToTarget.x to previewToTarget.y
-
-                    val merge = MergeTransition(
-                        targetX = previewToTarget.x,
-                        targetY = previewToTarget.y,
-                        steps = emptyList(),
-                        finalValue = 0,
-                        totalCells = 1,
-                        uniqueGroups = 0,
-                        baseScore = previewToTarget.value * 10,
-                        resultId = "preview_remove_queue",
-                        isRemoval = true,
-                        participatingIds = setOf(previewToTarget.id),
-                    )
-                    mergeReport = merge
-                    val scoreResult = Scoring.calculateFinalScore(
-                        merge = merge,
-                        grid = currentState.grid,
-                        preview = currentState.preview,
-                        initialCombo = currentState.combo,
-                        activePerk = currentState.activePerk,
-                        redemptionBaseline = stateDelegate.redemptionBaseline,
-                    )
-                    result = scoreResult
-
-                    val nextScore = currentState.score + scoreResult.totalScore
-                    currentState.copy(
-                        preview = currentState.preview.filter { it.id != previewToTarget.id },
-                        score = nextScore,
-                        bestScore = maxOf(currentState.bestScore, nextScore),
-                    ).consumePerk(Perk.REMOVE_TILE).copy(activePerk = null, selectedCellId = null)
-                }
-
-                result?.let { scoreResult ->
-                    targetPos?.let { (tx, ty) ->
-                        stateDelegate.persistBestScore(uiState.value.score)
-                        stateDelegate.setRedemptionBaseline(null)
-
-                        effectDelegate.handlePopups(
-                            targetX = tx,
-                            targetY = ty,
-                            totalScore = scoreResult.totalScore,
-                            isRedemption = scoreResult.redemptionBonus > 0,
-                            isBarRaised = scoreResult.barRaisedBonus > 0,
-                            isSacrifice = scoreResult.sacrificeBonus > 0,
-                            isTactical = scoreResult.isTactical,
-                            isExecution = scoreResult.isExecution
-                        )
-                        effectDelegate.addTileRemoved(tx, ty)
-                        achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, scoreResult.sacrificeBonus > 0)
-                        mergeReport?.let { challengeDelegate.onMerge(it, scoreResult) }
-                    }
-                }
-
-                achievementDelegate.checkCleanse(state.grid, uiState.value.grid)
-                achievementDelegate.checkScoreAchievements(uiState.value.score)
-                achievementDelegate.checkPerkAchievements(Perk.REMOVE_TILE, uiState.value, isTargetGhost = true)
-                achievementDelegate.onNonUndoAction()
-                challengeDelegate.onScoreChanged(uiState.value.score)
-                finalizeAction()
+                swapTiles(result.id1, result.id2)
             }
-
-            Perk.MIMIC -> {
-                if (preview.isMimic) return
-                var barRaisedBonus = 0
-                uiState.update { currentState ->
-                    val nextPreview = currentState.preview.map {
-                        if (it.id == preview.id) it.copy(isMimic = true, isTactical = true) else it
-                    }
-                    barRaisedBonus = Scoring.calculateBarRaisedBonus(
-                        currentState.grid, currentState.preview,
-                        currentState.grid, nextPreview
-                    )
-                    val nextScore = currentState.score + barRaisedBonus
-                    currentState.copy(
-                        preview = nextPreview,
-                        score = nextScore,
-                        bestScore = maxOf(currentState.bestScore, nextScore),
-                    ).consumePerk(Perk.MIMIC).copy(activePerk = null, selectedCellId = null)
-                }
-
-                achievementDelegate.onGhostMarkedTactical()
-
-                if (barRaisedBonus > 0) {
-                    stateDelegate.persistBestScore(uiState.value.score)
-                    effectDelegate.handlePopups(
-                        targetX = preview.x,
-                        targetY = preview.y,
-                        totalScore = barRaisedBonus,
-                        isRedemption = false,
-                        isBarRaised = true,
-                        isSacrifice = false,
-                        isTactical = true,
-                        isExecution = false
-                    )
-                    achievementDelegate.onMergeDetails(isTactical = true, isBarRaised = true, isSacrifice = false)
-                }
-
-                achievementDelegate.checkPerkAchievements(Perk.MIMIC, uiState.value, isTargetGhost = true)
-                achievementDelegate.checkScoreAchievements(uiState.value.score)
-                achievementDelegate.onNonUndoAction()
-                challengeDelegate.onScoreChanged(uiState.value.score)
-                finalizeAction()
-            }
-
-            Perk.SWAP_TILES -> {
-                val selectedId = state.selectedCellId
-                if (selectedId == null) {
-                    uiState.update { it.copy(selectedCellId = preview.id) }
-                } else if (selectedId != preview.id) {
-                    swapTiles(selectedId, preview.id)
-                }
-            }
-
-            Perk.INCREMENT_TILE -> {
-                if (preview.isMimic) return
-                stateDelegate.saveState()
-                var result: ScoreResult? = null
-                var targetPos: Pair<Int, Int>? = null
-
-                uiState.update { currentState ->
-                    val previewToUpdate = currentState.preview.find { it.id == preview.id }
-                        ?: return@update currentState
-                    targetPos = previewToUpdate.x to previewToUpdate.y
-
-                    val merge = MergeTransition(
-                        targetX = previewToUpdate.x,
-                        targetY = previewToUpdate.y,
-                        steps = emptyList(),
-                        finalValue = 0,
-                        totalCells = 1,
-                        uniqueGroups = 0,
-                        baseScore = 0,
-                        resultId = "preview_increment_queue",
-                        participatingIds = setOf(previewToUpdate.id),
-                        previewValues = mapOf(previewToUpdate.id to previewToUpdate.value + 1),
-                    )
-                    val scoreResult = Scoring.calculateFinalScore(
-                        merge = merge,
-                        grid = currentState.grid,
-                        preview = currentState.preview,
-                        initialCombo = currentState.combo,
-                        activePerk = currentState.activePerk,
-                        redemptionBaseline = stateDelegate.redemptionBaseline,
-                    )
-                    result = scoreResult
-
-                    val nextPreview = currentState.preview.map {
-                        if (it.id == previewToUpdate.id) it.copy(
-                            value = it.value + 1,
-                            isTactical = true,
-                        ) else it
-                    }
-
-                    val nextScore = currentState.score + scoreResult.totalScore
-                    currentState.copy(
-                        preview = nextPreview,
-                        score = nextScore,
-                        bestScore = maxOf(currentState.bestScore, nextScore),
-                    ).consumePerk(Perk.INCREMENT_TILE)
-                        .copy(activePerk = null, selectedCellId = null)
-                }
-
-                achievementDelegate.onGhostMarkedTactical()
-                result?.let { scoreResult ->
-                    targetPos?.let { (tx, ty) ->
-                        stateDelegate.persistBestScore(uiState.value.score)
-                        stateDelegate.setRedemptionBaseline(null)
-                        effectDelegate.handlePopups(
-                            targetX = tx,
-                            targetY = ty,
-                            totalScore = scoreResult.totalScore,
-                            isRedemption = scoreResult.redemptionBonus > 0,
-                            isBarRaised = scoreResult.barRaisedBonus > 0,
-                            isSacrifice = false,
-                            isTactical = scoreResult.isTactical,
-                            isExecution = scoreResult.isExecution
-                        )
-
-                        if (scoreResult.barRaisedBonus > 0) {
-                            achievementDelegate.onAdvancedJanitor()
-                        }
-                        achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, false)
-                    }
-                }
-                achievementDelegate.checkPerkAchievements(Perk.INCREMENT_TILE, uiState.value, isTargetGhost = true)
-                achievementDelegate.checkScoreAchievements(uiState.value.score)
-                challengeDelegate.onScoreChanged(uiState.value.score)
-                finalizeAction()
-            }
-
-            else -> {}
+            is com.pointlessgames.hexagone.game.model.PerkActionResult.TriggerMerge -> executeTriggerMerge(result.merge, perk)
+            is com.pointlessgames.hexagone.game.model.PerkActionResult.RemoveTile -> executeRemoveTile(result.targetId, perk)
+            is com.pointlessgames.hexagone.game.model.PerkActionResult.IncrementTile -> executeIncrementTile(result.targetId, perk)
+            is com.pointlessgames.hexagone.game.model.PerkActionResult.MimicTile -> executeMimicTile(result.targetId, perk)
+            is com.pointlessgames.hexagone.game.model.PerkActionResult.FreezeTile -> executeFreezeTile(result.targetId, perk)
         }
     }
 
-    fun onCellClicked(cell: HexagonCell) {
+    private fun executeTriggerMerge(merge: MergeTransition, perk: Perk?) {
         val state = uiState.value
-        if (state.pendingMerge != null || state.isBusy || state.isGameOver || (state.isStuck && state.activePerk == null) || state.perkOptions.isNotEmpty()) return
+        if (perk != null) achievementDelegate.checkPerkAchievements(perk, state)
+        challengeDelegate.onMovePerformed()
+        stateDelegate.saveState()
+        uiState.update { currentState ->
+            val firstStep = merge.steps.firstOrNull()
+            val isPathMerge = merge.resultId.contains("path_merge")
+            val nextComboValue = Scoring.getNextStepCombo(currentState.combo, 0, isPathMerge)
+            val stepScore = if (firstStep != null) Scoring.getStepScore(firstStep.baseScore, nextComboValue) else 0
 
-        if (state.activePerk != null) {
-            challengeDelegate.onPerkUsed(state.activePerk)
+            val stateAfterMergeStart = currentState.copy(
+                grid = currentState.grid.map { cell ->
+                    if (firstStep?.mergingCells?.any { it.id == cell.id } == true) cell.copy(
+                        x = merge.targetX,
+                        y = merge.targetY,
+                    ) else cell
+                },
+                preview = currentState.preview.filterNot { it.x == merge.targetX && it.y == merge.targetY },
+                pendingMerge = merge.copy(
+                    isPerkAssisted = perk != null,
+                    startingCombo = currentState.combo
+                ),
+                activeMergeStepIndex = 0,
+                pendingMergeScore = stepScore,
+                combo = nextComboValue,
+                isBusy = true,
+                cellIdCounter = state.cellIdCounter + 1
+            )
+            if (perk != null) {
+                stateAfterMergeStart.consumePerk(perk)
+            } else {
+                stateAfterMergeStart
+            }
+        }
+    }
+
+    private fun executeRemoveTile(targetId: String, perk: Perk?) {
+        val state = uiState.value
+        stateDelegate.saveState()
+        var result: ScoreResult? = null
+        var targetPos: Pair<Int, Int>? = null
+        var mergeReport: MergeTransition? = null
+
+        uiState.update { currentState ->
+            val itemToRemove = getGameItem(targetId) ?: return@update currentState
+            targetPos = itemToRemove.x to itemToRemove.y
+
+            val merge = MergeTransition(
+                targetX = itemToRemove.x,
+                targetY = itemToRemove.y,
+                steps = emptyList(),
+                finalValue = 0,
+                totalCells = 1,
+                uniqueGroups = 0,
+                baseScore = itemToRemove.value * 10,
+                resultId = "preview_remove",
+                isRemoval = true,
+                participatingIds = setOf(itemToRemove.id),
+            )
+            mergeReport = merge
+            val scoreResult = Scoring.calculateFinalScore(
+                merge = merge,
+                grid = currentState.grid,
+                preview = currentState.preview,
+                initialCombo = currentState.combo,
+                activePerk = currentState.activePerk,
+                redemptionBaseline = stateDelegate.redemptionBaseline,
+            )
+            result = scoreResult
+
+            val nextScore = currentState.score + scoreResult.totalScore
+            val nextGrid = currentState.grid.filter { it.id != targetId }
+            val nextPreview = currentState.preview.filter { it.id != targetId }
+            val nextState = currentState.copy(
+                grid = nextGrid,
+                preview = nextPreview,
+                score = nextScore,
+                bestScore = maxOf(currentState.bestScore, nextScore),
+            )
+            if (perk != null) nextState.consumePerk(perk).copy(activePerk = null, selectedCellId = null) else nextState
         }
 
-        when (val perk = state.activePerk) {
-            Perk.MOVE_TILE -> {
-                uiState.update { it.copy(selectedCellId = if (it.selectedCellId == cell.id) null else cell.id) }
+        result?.let { scoreResult ->
+            targetPos?.let { (tx, ty) ->
+                stateDelegate.persistBestScore(uiState.value.score)
+                stateDelegate.setRedemptionBaseline(null)
+
+                effectDelegate.handlePopups(
+                    targetX = tx,
+                    targetY = ty,
+                    totalScore = scoreResult.totalScore,
+                    isRedemption = scoreResult.redemptionBonus > 0,
+                    isBarRaised = scoreResult.barRaisedBonus > 0,
+                    isSacrifice = scoreResult.sacrificeBonus > 0,
+                    isTactical = scoreResult.isTactical,
+                    isExecution = scoreResult.isExecution
+                )
+                effectDelegate.addTileRemoved(tx, ty)
+                achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, scoreResult.sacrificeBonus > 0)
+                mergeReport?.let { challengeDelegate.onMerge(it, scoreResult) }
             }
-
-            Perk.DUPLICATE_TILE -> {
-                uiState.update { it.copy(selectedCellId = if (it.selectedCellId == cell.id) null else cell.id) }
-            }
-
-            Perk.INCREMENT_TILE -> {
-                if (cell.isMimic) return
-                stateDelegate.saveState()
-                var result: ScoreResult? = null
-                var targetPos: Pair<Int, Int>? = null
-
-                uiState.update { currentState ->
-                    val cellToUpdate =
-                        currentState.grid.find { it.id == cell.id } ?: return@update currentState
-                    targetPos = cellToUpdate.x to cellToUpdate.y
-
-                    val merge = MergeTransition(
-                        targetX = cellToUpdate.x,
-                        targetY = cellToUpdate.y,
-                        steps = emptyList(),
-                        finalValue = 0,
-                        totalCells = 1,
-                        uniqueGroups = 0,
-                        baseScore = 0,
-                        resultId = "preview_increment",
-                        participatingIds = setOf(cellToUpdate.id),
-                        previewValues = mapOf(cellToUpdate.id to cellToUpdate.value + 1),
-                    )
-                    val scoreResult = Scoring.calculateFinalScore(
-                        merge = merge,
-                        grid = currentState.grid,
-                        preview = currentState.preview,
-                        initialCombo = currentState.combo,
-                        activePerk = currentState.activePerk,
-                        redemptionBaseline = stateDelegate.redemptionBaseline,
-                    )
-                    result = scoreResult
-
-                    val nextGrid = currentState.grid.map {
-                        if (it.id == cellToUpdate.id) it.copy(
-                            value = it.value + 1,
-                            isTactical = true,
-                        ) else it
-                    }
-
-                    val nextScore = currentState.score + scoreResult.totalScore
-                    currentState.copy(
-                        grid = nextGrid,
-                        score = nextScore,
-                        bestScore = maxOf(currentState.bestScore, nextScore),
-                    ).consumePerk(Perk.INCREMENT_TILE)
-                        .copy(activePerk = null, selectedCellId = null)
-                }
-
-                result?.let { scoreResult ->
-                    targetPos?.let { (tx, ty) ->
-                        stateDelegate.persistBestScore(uiState.value.score)
-                        stateDelegate.setRedemptionBaseline(null)
-                        effectDelegate.handlePopups(
-                            targetX = tx,
-                            targetY = ty,
-                            totalScore = scoreResult.totalScore,
-                            isRedemption = scoreResult.redemptionBonus > 0,
-                            isBarRaised = scoreResult.barRaisedBonus > 0,
-                            isSacrifice = false,
-                            isTactical = scoreResult.isTactical,
-                            isExecution = scoreResult.isExecution
-                        )
-
-                        if (scoreResult.barRaisedBonus > 0) {
-                            achievementDelegate.onAdvancedJanitor()
-                        }
-                        achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, false)
-                    }
-                }
-                achievementDelegate.checkPerkAchievements(Perk.INCREMENT_TILE, uiState.value, isTargetGhost = false)
-                achievementDelegate.checkScoreAchievements(uiState.value.score)
-                challengeDelegate.onScoreChanged(uiState.value.score)
-                finalizeAction()
-            }
-
-            Perk.MIMIC -> {
-                if (cell.isMimic) return
-                var barRaisedBonus = 0
-                uiState.update { currentState ->
-                    val nextGrid = currentState.grid.map {
-                        if (it.id == cell.id) it.copy(isMimic = true, isTactical = true) else it
-                    }
-                    barRaisedBonus = Scoring.calculateBarRaisedBonus(
-                        currentState.grid, currentState.preview,
-                        nextGrid, currentState.preview
-                    )
-                    val nextScore = currentState.score + barRaisedBonus
-                    currentState.copy(
-                        grid = nextGrid,
-                        score = nextScore,
-                        bestScore = maxOf(currentState.bestScore, nextScore),
-                    ).consumePerk(Perk.MIMIC).copy(activePerk = null, selectedCellId = null)
-                }
-
-                if (barRaisedBonus > 0) {
-                    stateDelegate.persistBestScore(uiState.value.score)
-                    effectDelegate.handlePopups(
-                        targetX = cell.x,
-                        targetY = cell.y,
-                        totalScore = barRaisedBonus,
-                        isRedemption = false,
-                        isBarRaised = true,
-                        isSacrifice = false,
-                        isTactical = true,
-                        isExecution = false
-                    )
-                    achievementDelegate.onMergeDetails(isTactical = true, isBarRaised = true, isSacrifice = false)
-                }
-
-                achievementDelegate.checkPerkAchievements(Perk.MIMIC, uiState.value, isTargetGhost = false)
-                achievementDelegate.checkScoreAchievements(uiState.value.score)
-                achievementDelegate.onNonUndoAction()
-                challengeDelegate.onScoreChanged(uiState.value.score)
-                finalizeAction()
-            }
-
-            Perk.PATH_MERGE -> {
-                val (merge, nextIdCounter) = engine.calculatePathMerge(cell.x, cell.y, state.grid, state.cellIdCounter)
-                if (merge != null) {
-                    achievementDelegate.checkPerkAchievements(Perk.PATH_MERGE, state)
-                    stateDelegate.saveState()
-                    uiState.update { currentState ->
-                        val firstStep = merge.steps.first()
-                        val nextComboValue = Scoring.getNextStepCombo(currentState.combo, 0, true)
-                        val stepScore = Scoring.getStepScore(firstStep.baseScore, nextComboValue)
-
-                        currentState.copy(
-                            grid = currentState.grid.map { c ->
-                                if (firstStep.mergingCells.any { it.id == c.id }) c.copy(
-                                    x = cell.x,
-                                    y = cell.y,
-                                ) else c
-                            },
-                            pendingMerge = merge.copy(
-                                isPerkAssisted = true,
-                                startingCombo = currentState.combo
-                            ),
-                            activeMergeStepIndex = 0,
-                            pendingMergeScore = stepScore,
-                            combo = nextComboValue,
-                            isBusy = true,
-                            cellIdCounter = nextIdCounter
-                        )
-                    }
-                }
-            }
-
-            Perk.REMOVE_TILE -> {
-                stateDelegate.saveState()
-                var result: ScoreResult? = null
-                var targetPos: Pair<Int, Int>? = null
-                var mergeReport: MergeTransition? = null
-
-                uiState.update { currentState ->
-                    val cellToRemove =
-                        currentState.grid.find { it.id == cell.id } ?: return@update currentState
-                    targetPos = cellToRemove.x to cellToRemove.y
-
-                    val merge = MergeTransition(
-                        targetX = cellToRemove.x,
-                        targetY = cellToRemove.y,
-                        steps = emptyList(),
-                        finalValue = 0,
-                        totalCells = 1,
-                        uniqueGroups = 0,
-                        baseScore = cellToRemove.value * 10,
-                        resultId = "preview_remove",
-                        isRemoval = true,
-                        participatingIds = setOf(cellToRemove.id),
-                    )
-                    mergeReport = merge
-                    val scoreResult = Scoring.calculateFinalScore(
-                        merge = merge,
-                        grid = currentState.grid,
-                        preview = currentState.preview,
-                        initialCombo = currentState.combo,
-                        activePerk = currentState.activePerk,
-                        redemptionBaseline = stateDelegate.redemptionBaseline,
-                    )
-                    result = scoreResult
-
-                    val nextScore = currentState.score + scoreResult.totalScore
-                    currentState.copy(
-                        grid = currentState.grid.filter { it.id != cellToRemove.id },
-                        score = nextScore,
-                        bestScore = maxOf(currentState.bestScore, nextScore),
-                    ).consumePerk(Perk.REMOVE_TILE).copy(activePerk = null, selectedCellId = null)
-                }
-
-                result?.let { scoreResult ->
-                    targetPos?.let { (tx, ty) ->
-                        stateDelegate.persistBestScore(uiState.value.score)
-                        stateDelegate.setRedemptionBaseline(null)
-
-                        effectDelegate.handlePopups(
-                            targetX = tx,
-                            targetY = ty,
-                            totalScore = scoreResult.totalScore,
-                            isRedemption = scoreResult.redemptionBonus > 0,
-                            isBarRaised = scoreResult.barRaisedBonus > 0,
-                            isSacrifice = scoreResult.sacrificeBonus > 0,
-                            isTactical = scoreResult.isTactical,
-                            isExecution = scoreResult.isExecution
-                        )
-                        effectDelegate.addTileRemoved(tx, ty)
-                        achievementDelegate.onMergeDetails(scoreResult.isTactical, scoreResult.barRaisedBonus > 0, scoreResult.sacrificeBonus > 0)
-                        mergeReport?.let { challengeDelegate.onMerge(it, scoreResult) }
-                    }
-                }
-
-                achievementDelegate.checkCleanse(state.grid, uiState.value.grid)
-                achievementDelegate.checkScoreAchievements(uiState.value.score)
-                achievementDelegate.checkPerkAchievements(Perk.REMOVE_TILE, uiState.value, isTargetGhost = false)
-                achievementDelegate.onNonUndoAction()
-                challengeDelegate.onScoreChanged(uiState.value.score)
-                finalizeAction()
-            }
-
-            Perk.FREEZE_TILE -> {
-                stateDelegate.saveState()
-                uiState.update { currentState ->
-                    val cellToFreeze = currentState.grid.find { it.id == cell.id } ?: return@update currentState
-                    val nextGrid = currentState.grid.map {
-                        if (it.id == cellToFreeze.id) it.copy(isFrozen = true) else it
-                    }
-                    currentState.copy(grid = nextGrid).consumePerk(Perk.FREEZE_TILE).copy(activePerk = null, selectedCellId = null)
-                }
-                finalizeAction()
-            }
-
-            Perk.SWAP_TILES -> {
-                val selectedId = state.selectedCellId
-                if (selectedId == null) {
-                    uiState.update { it.copy(selectedCellId = cell.id) }
-                } else if (selectedId == cell.id) {
-                    uiState.update { it.copy(selectedCellId = null) }
-                } else {
-                    stateDelegate.saveState()
-                    swapTiles(selectedId, cell.id)
-                }
-            }
-
-            else -> {}
         }
+
+        achievementDelegate.checkCleanse(state.grid, uiState.value.grid)
+        achievementDelegate.checkScoreAchievements(uiState.value.score)
+        if (perk != null) achievementDelegate.checkPerkAchievements(perk, uiState.value, isTargetGhost = false)
+        achievementDelegate.onNonUndoAction()
+        challengeDelegate.onScoreChanged(uiState.value.score)
+        finalizeAction()
+    }
+
+    private fun executeIncrementTile(targetId: String, perk: Perk?) {
+        val state = uiState.value
+        stateDelegate.saveState()
+        uiState.update { currentState ->
+            val itemToUpdate = getGameItem(targetId) ?: return@update currentState
+            val nextGrid = currentState.grid.map {
+                if (it.id == targetId) it.copy(value = it.value + 1) else it
+            }
+            val nextPreview = currentState.preview.map {
+                if (it.id == targetId) it.copy(value = it.value + 1) else it
+            }
+            val nextState = currentState.copy(grid = nextGrid, preview = nextPreview)
+            if (perk != null) nextState.consumePerk(perk).copy(activePerk = null, selectedCellId = null) else nextState
+        }
+        if (perk != null) achievementDelegate.checkPerkAchievements(perk, uiState.value, isTargetGhost = false)
+        finalizeAction()
+    }
+
+    private fun executeMimicTile(targetId: String, perk: Perk?) {
+        val state = uiState.value
+        stateDelegate.saveState()
+        uiState.update { currentState ->
+            val itemToUpdate = getGameItem(targetId) ?: return@update currentState
+            val nextGrid = currentState.grid.map {
+                if (it.id == targetId) it.copy(isMimic = true) else it
+            }
+            val nextPreview = currentState.preview.map {
+                if (it.id == targetId) it.copy(isMimic = true) else it
+            }
+            val nextState = currentState.copy(grid = nextGrid, preview = nextPreview)
+            if (perk != null) nextState.consumePerk(perk).copy(activePerk = null, selectedCellId = null) else nextState
+        }
+        if (perk != null) achievementDelegate.checkPerkAchievements(perk, uiState.value, isTargetGhost = false)
+        finalizeAction()
+    }
+
+    private fun executeFreezeTile(targetId: String, perk: Perk?) {
+        val state = uiState.value
+        stateDelegate.saveState()
+        uiState.update { currentState ->
+            val itemToUpdate = getGameItem(targetId) ?: return@update currentState
+            val nextGrid = currentState.grid.map {
+                if (it.id == targetId) it.copy(isFrozen = true) else it
+            }
+            val nextPreview = currentState.preview
+            val nextState = currentState.copy(grid = nextGrid, preview = nextPreview)
+            if (perk != null) nextState.consumePerk(perk).copy(activePerk = null, selectedCellId = null) else nextState
+        }
+        if (perk != null) achievementDelegate.checkPerkAchievements(perk, uiState.value, isTargetGhost = false)
+        finalizeAction()
     }
 
     private fun moveTile(selectedId: String, x: Int, y: Int) {

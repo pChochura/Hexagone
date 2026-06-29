@@ -413,7 +413,7 @@ internal class GameEngine(
         for (y in 0 until rows) {
             for (x in 0 until columns) {
                 if (x to y !in occupied) {
-                    val merge = if (activePerk == Perk.FUSION) {
+                    val merge = if (activePerk is Perk.FUSION) {
                         calculateFusion(x, y, grid, 0).first
                     } else {
                         calculateMerge(x, y, grid, 0).first
@@ -427,7 +427,7 @@ internal class GameEngine(
                         var finalValue = merge.finalValue
 
                         // 2. Simulate Chain Merge if active
-                        if (activePerk == Perk.CHAIN_MERGE) {
+                        if (activePerk is Perk.CHAIN_MERGE) {
                             var currentGrid = grid.filter { cell ->
                                 merge.steps.none { step -> step.mergingCells.any { it.id == cell.id } } &&
                                         (cell.x != x || cell.y != y)
@@ -686,103 +686,7 @@ internal class GameEngine(
         previews: List<PreviewCell>,
         previousState: GameState?
     ): Boolean {
-        return when (perk) {
-            Perk.UNDO -> previousState != null && previousState.availableChoices > 1
-            Perk.REMOVE_TILE -> grid.isNotEmpty()
-            Perk.MOVE_TILE -> {
-                val occupied = grid.map { it.x to it.y }.toSet()
-                if (occupied.size >= columns * rows) return false
-                
-                for (cell in grid) {
-                    val otherCells = grid.filter { it.id != cell.id }
-                    for (y in 0 until rows) {
-                        for (x in 0 until columns) {
-                            if (x to y !in occupied) {
-                                val tempGrid = otherCells + cell.copy(x = x, y = y)
-                                if (isMovePossible(tempGrid) || hasAnyMergePotential(tempGrid)) return true
-                            }
-                        }
-                    }
-                }
-                false
-            }
-            Perk.SWAP_TILES -> {
-                val allItems = grid.map { Triple(it.id, it.x, it.y) } + previews.map { Triple(it.id, it.x, it.y) }
-                for (i in allItems.indices) {
-                    for (j in i + 1 until allItems.size) {
-                        val (id1, x1, y1) = allItems[i]
-                        val (id2, x2, y2) = allItems[j]
-                        
-                        val tempGrid = grid.map {
-                            when (it.id) {
-                                id1 -> it.copy(x = x2, y = y2)
-                                id2 -> it.copy(x = x1, y = y1)
-                                else -> it
-                            }
-                        }
-                        if (isMovePossible(tempGrid) || hasAnyMergePotential(tempGrid)) return true
-                    }
-                }
-                false
-            }
-            Perk.INCREMENT_TILE -> {
-                grid.any { cell ->
-                    val tempGridInc = grid.map { if (it.id == cell.id) it.copy(value = it.value + 1) else it }
-                    val tempGridDec = if (cell.value > 1) {
-                        grid.map { if (it.id == cell.id) it.copy(value = it.value - 1) else it }
-                    } else null
-                    isMovePossible(tempGridInc) || hasAnyMergePotential(tempGridInc) || 
-                            (tempGridDec != null && (isMovePossible(tempGridDec) || hasAnyMergePotential(tempGridDec)))
-                }
-            }
-            Perk.MIMIC -> grid.isNotEmpty() || previews.isNotEmpty()
-            Perk.DUPLICATE_TILE -> {
-                val occupied = grid.map { it.x to it.y }.toSet()
-                if (occupied.size >= columns * rows) return false
-                for (cell in grid) {
-                    for (y in 0 until rows) {
-                        for (x in 0 until columns) {
-                            if (x to y !in occupied) {
-                                val tempGrid = grid + cell.copy(id = "temp", x = x, y = y)
-                                if (isMovePossible(tempGrid) || hasAnyMergePotential(tempGrid)) return true
-                            }
-                        }
-                    }
-                }
-                false
-            }
-            Perk.FUSION -> {
-                val fromCells = grid.any { cell ->
-                    !cell.isFrozen &&
-                            getNeighbors(cell.x, cell.y).count { n ->
-                                grid.any { it.x == n.first && it.y == n.second && !it.isFrozen }
-                            } >= 2
-                }
-                if (fromCells) return true
-                
-                val occupied = grid.map { it.x to it.y }.toSet()
-                for (y in 0 until rows) {
-                    for (x in 0 until columns) {
-                        if (x to y !in occupied) {
-                            val neighbors = getNeighbors(x, y)
-                            if (grid.count { it.x to it.y in neighbors.toSet() && !it.isFrozen } >= 2) return true
-                        }
-                    }
-                }
-                false
-            }
-            Perk.PATH_MERGE -> hasAnyMergePotential(grid)
-            Perk.ADVANCE_QUEUE -> {
-                val tempGrid = grid.toMutableList()
-                previews.forEach { p ->
-                    if (tempGrid.none { it.x == p.x && it.y == p.y }) {
-                        tempGrid.add(createCell(p.x, p.y, p.value))
-                    }
-                }
-                isMovePossible(tempGrid) || hasAnyMergePotential(tempGrid) || (columns * rows - tempGrid.size) >= 3
-            }
-            else -> false
-        }
+        return perk.canResolveStuck(grid, previews, this, previousState)
     }
 
     private fun hasAnyMergePotential(grid: List<HexagonCell>): Boolean {
